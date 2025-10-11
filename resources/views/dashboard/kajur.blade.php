@@ -1,204 +1,146 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Kepala Jurusan - Sistem Fakultas</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+@extends('layouts.app')
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-        }
+@section('title', 'Dashboard Kepala Jurusan')
 
-        .navbar {
-            background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
-            color: white;
-            padding: 1rem 2rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-        }
+@section('content')
 
-        .navbar h1 {
-            font-size: 1.5rem;
-        }
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-0">Dashboard Kepala Jurusan</h1>
+        <p class="mb-0 text-muted">Selamat datang, {{ auth()->user()->Name_User ?? 'Kepala Jurusan' }}. Kelola persetujuan surat dan monitor aktivitas jurusan Anda.</p>
+    </div>
+</div>
 
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .logout-btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            padding: 0.5rem 1rem;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
-        }
-
-        .role-badge {
-            background: #007bff;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: bold;
-        }
-
-        .welcome-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            margin-bottom: 2rem;
-            border-left: 5px solid #007bff;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            border-top: 4px solid #007bff;
-        }
-
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            color: #007bff;
-            margin-bottom: 0.5rem;
-        }
-
-        .kajur-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 2rem;
-        }
-
-        .action-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            cursor: pointer;
-            transition: transform 0.3s;
-            border: 2px solid transparent;
-        }
-
-        .action-card:hover {
-            transform: translateY(-5px);
-            border-color: #007bff;
-        }
-
-        .action-icon {
-            font-size: 2rem;
-            color: #007bff;
-            margin-bottom: 1rem;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <div>
-            <h1>🏢 Dashboard Kepala Jurusan</h1>
-            <span class="role-badge">Kepala Jurusan</span>
-        </div>
-        <div class="user-info">
-            <span>{{ Auth::user()->Name_User ?? 'Kajur' }}</span>
-            <form method="POST" action="{{ route('logout') }}" style="display: inline;">
-                @csrf
-                <button type="submit" class="logout-btn">Keluar</button>
-            </form>
-        </div>
-    </nav>
-
-    <div class="container">
-        <div class="welcome-card">
-            <h2>Selamat Datang, Kepala Jurusan!</h2>
-            <p>Dashboard untuk mengelola program studi dan koordinasi akademik di tingkat jurusan.</p>
-        </div>
-
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number">4</div>
-                <div class="stat-label">Program Studi</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">12</div>
-                <div class="stat-label">Dosen Jurusan</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">400</div>
-                <div class="stat-label">Mahasiswa Aktif</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">32</div>
-                <div class="stat-label">Mata Kuliah</div>
-            </div>
-        </div>
-
-        <div class="kajur-actions">
-            <div class="action-card">
-                <div class="action-icon">📚</div>
-                <h3>Kelola Kurikulum</h3>
-                <p>Pengembangan kurikulum</p>
-            </div>
-            <div class="action-card">
-                <div class="action-icon">👨‍🏫</div>
-                <h3>Manajemen Dosen</h3>
-                <p>Koordinasi dosen jurusan</p>
-            </div>
-            <div class="action-card">
-                <div class="action-icon">📊</div>
-                <h3>Monitoring Prodi</h3>
-                <p>Evaluasi program studi</p>
-            </div>
-            <div class="action-card">
-                <div class="action-icon">🎯</div>
-                <h3>Target Akademik</h3>
-                <p>Pencapaian target jurusan</p>
-            </div>
-            <div class="action-card">
-                <div class="action-icon">📋</div>
-                <h3>Jadwal Kuliah</h3>
-                <p>Koordinasi jadwal</p>
-            </div>
-            <div class="action-card">
-                <div class="action-icon">🏆</div>
-                <h3>Akreditasi</h3>
-                <p>Persiapan akreditasi</p>
+<div class="row">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start border-danger border-4 shadow-sm h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">Permohonan Persetujuan</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">1</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-inbox fa-2x text-gray-300"></i>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-</body>
-</html>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start border-primary border-4 shadow-sm h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Surat Dikirim ke Fakultas</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">5</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-paper-plane fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start border-success border-4 shadow-sm h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Dosen di Jurusan</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">12</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-chalkboard-teacher fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start border-secondary border-4 shadow-sm h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Total Arsip Jurusan</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">75</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-archive fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-header bg-white py-3">
+        <h6 class="m-0 fw-bold text-primary">Antrian Persetujuan Surat Dosen</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Pemohon</th>
+                        <th>Jenis Surat</th>
+                        <th>Tgl. Masuk</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Dr. Anisa Rahmawati, M.T.</td>
+                        <td>Surat Tugas Penelitian</td>
+                        <td>11 Okt 2025</td>
+                        <td class="text-center">
+                            <a href="#" class="btn btn-info btn-sm">Detail</a>
+                            <a href="#" class="btn btn-success btn-sm">Setujui</a>
+                            <a href="#" class="btn btn-danger btn-sm">Tolak</a>
+                        </td>
+                    </tr>
+                    {{-- Baris lain akan muncul jika ada pengajuan baru --}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <a href="#" class="card lift h-100 text-decoration-none">
+            <div class="card-body text-center">
+                <i class="fas fa-file-alt fa-3x text-primary mb-3"></i>
+                <h5 class="card-title mb-2">Ajukan Surat Pribadi</h5>
+                <p class="card-text text-muted">Buat pengajuan surat tugas untuk diri sendiri.</p>
+            </div>
+        </a>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <a href="#" class="card lift h-100 text-decoration-none">
+            <div class="card-body text-center">
+                <i class="fas fa-history fa-3x text-secondary mb-3"></i>
+                <h5 class="card-title mb-2">Riwayat & Arsip Jurusan</h5>
+                <p class="card-text text-muted">Lihat semua surat yang telah diproses oleh jurusan.</p>
+            </div>
+        </a>
+    </div>
+</div>
+
+@push('styles')
+<style>
+    .card.lift {
+        transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+    .card.lift:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+</style>
+@endpush
+
+@endsection
