@@ -1,59 +1,65 @@
+<div>
+    <!-- You must be the change you wish to see in the world. - Mahatma Gandhi -->
+</div>
 @extends('layouts.mahasiswa')
 
 @section('title', 'Riwayat Pengajuan Surat')
 
 @section('content')
-    <h1 class="h3 fw-bold mb-4">Riwayat Pengajuan Surat</h1>
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover">
-                    <thead>
-                        <tr>
-                            <th scope="col">#</th>
-                            <th scope="col">Jenis Surat</th>
-                            <th scope="col">Tanggal Pengajuan</th>
-                            <th scope="col">Status</th>
-                            <th scope="col" class="text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th scope="row">1</th>
-                            <td>Surat Keterangan Aktif Kuliah</td>
-                            <td>10 Okt 2025</td>
-                            <td><span class="badge bg-success">Selesai</span></td>
-                            <td class="text-center">
-                                <a href="#" class="btn btn-primary btn-sm"><i class="fas fa-download"></i> Unduh</a>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th scope="row">2</th>
-                            <td>Surat Pengantar Kerja Praktik</td>
-                            <td>08 Okt 2025</td>
-                            <td><span class="badge bg-info">Ditandatangani</span></td>
-                            <td class="text-center">-</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">3</th>
-                            <td>Surat Keterangan Tidak Menerima Beasiswa</td>
-                            <td>05 Okt 2025</td>
-                            <td><span class="badge bg-warning text-dark">Diproses Admin</span></td>
-                            <td class="text-center">-</td>
-                        </tr>
-                        <tr>
-                            <th scope="row">4</th>
-                            <td>Surat Keterangan Aktif Kuliah</td>
-                            <td>01 Okt 2025</td>
-                            <td><span class="badge bg-danger">Ditolak</span></td>
-                            <td class="text-center">
-                                <a href="#" class="btn btn-secondary btn-sm"><i class="fas fa-info-circle"></i> Detail</a>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+{{-- Header Halaman --}}
+<div class="d-sm-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3 mb-0 text-gray-800">Riwayat Pengajuan Surat</h1>
+</div>
+
+<div class="card shadow mb-4">
+    <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Daftar Pengajuan Saya</h6>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Tanggal</th>
+                        <th>Jenis Surat</th>
+                        <th>Keperluan</th>
+                        <th class="text-center">Status</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>10 Okt 2025</td>
+                        <td>Surat Rekomendasi Beasiswa</td>
+                        <td>Pengajuan beasiswa Bank Indonesia...</td>
+                        <td class="text-center"><span class="badge bg-warning text-dark">Proses Validasi Dosen</span></td>
+                        <td class="text-center">
+                            <a href="#" class="btn btn-info btn-sm" title="Lacak Detail"><i class="fas fa-search"></i></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>05 Sep 2025</td>
+                        <td>Surat Izin Penelitian</td>
+                        <td>Penelitian untuk skripsi di PT...</td>
+                        <td class="text-center"><span class="badge bg-success">Selesai & Disetujui</span></td>
+                        <td class="text-center">
+                            <a href="#" class="btn btn-primary btn-sm" title="Unduh Surat"><i class="fas fa-download"></i></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>01 Agu 2025</td>
+                        <td>Surat Keterangan Aktif Kuliah</td>
+                        <td>Keperluan administrasi orang tua...</td>
+                        <td class="text-center"><span class="badge bg-danger">Ditolak</span></td>
+                        <td class="text-center">
+                            <a href="#" class="btn btn-secondary btn-sm" title="Lihat Alasan Penolakan"><i class="fas fa-info-circle"></i></a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
+</div>
+
 @endsection

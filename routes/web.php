@@ -2,13 +2,6 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-// Controller Dekan
-use App\Http\Controllers\Dekan\PersetujuanController;
-use App\Http\Controllers\Dekan\ArsipController;
-// Controller Mahasiswa
-use App\Http\Controllers\Mahasiswa\PengajuanController;
-use App\Http\Controllers\Mahasiswa\RiwayatController;
-use App\Http\Controllers\Mahasiswa\LegalisirController;
 
 /*
 |--------------------------------------------------------------------------
@@ -18,10 +11,10 @@ use App\Http\Controllers\Mahasiswa\LegalisirController;
 
 // Redirect root ke halaman login
 Route::get('/', function () {
-    return redirect('/login');
+    return redirect()->route('login');
 });
 
-// Routes untuk autentikasi (hanya untuk guest/pengguna belum login)
+// Routes untuk autentikasi
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login']);
@@ -32,7 +25,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 
 // =========================================================================
-// AREA KHUSUS PENGGUNA YANG SUDAH LOGIN
+// AREA PENGGUNA YANG SUDAH LOGIN
 // =========================================================================
 Route::middleware('auth')->group(function () {
     
@@ -46,22 +39,46 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/mahasiswa', [AuthController::class, 'dashboardMahasiswa'])->name('dashboard.mahasiswa');
     Route::get('/dashboard/default', [AuthController::class, 'dashboardDefault'])->name('dashboard.default');
 
-    // --------------------------------------------------------------------
-    // FITUR DEKANAT
-    // --------------------------------------------------------------------
-    Route::prefix('dekan')->name('dekan.')->group(function () {
-        Route::get('/persetujuan-surat', [PersetujuanController::class, 'index'])->name('persetujuan.index');
-        Route::get('/arsip-surat', [ArsipController::class, 'index'])->name('arsip.index');
+    // FITUR ADMIN
+    Route::prefix('admin')->name('admin.')->group(function () {
+        Route::get('/kelola-pengguna', function () { return view('admin.kelola_pengguna'); })->name('users.index');
+        Route::get('/manajemen-surat', function () { return view('admin.manajemen_surat'); })->name('surat.manage');
+        Route::get('/arsip-surat', function () { return view('admin.arsip_surat'); })->name('surat.archive');
+        Route::get('/pengaturan', function () { return view('admin.pengaturan'); })->name('settings.index');
     });
 
-    // --------------------------------------------------------------------
+    // FITUR DEKAN
+    Route::prefix('dekan')->name('dekan.')->group(function () {
+        Route::get('/persetujuan-surat', function () { return view('dekan.persetujuan_surat'); })->name('persetujuan.index');
+        Route::get('/arsip-surat', function () { return view('dekan.arsip_surat'); })->name('arsip.index');
+    });
+
+    // FITUR DOSEN
+    Route::prefix('dosen')->name('dosen.')->group(function () {
+        Route::get('/pengajuan', function () { return view('dosen.pengajuan'); })->name('pengajuan.index');
+        // PENANDA: Rute yang hilang ditambahkan di sini
+        Route::get('/riwayat', function () { return view('dosen.riwayat'); })->name('riwayat.index');
+        Route::get('/input-nilai', function () { return view('dosen.input_nilai'); })->name('nilai.index');
+        Route::get('/bimbingan', function () { return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
+    });
+
+    // FITUR KAJUR
+    Route::prefix('kajur')->name('kajur.')->group(function () {
+        Route::get('/verifikasi-rps', function () { return view('kajur.verifikasi_rps'); })->name('rps.index');
+        Route::get('/laporan', function () { return view('kajur.laporan_jurusan'); })->name('laporan.index');
+    });
+
+    // FITUR KAPRODI
+    Route::prefix('kaprodi')->name('kaprodi.')->group(function () {
+        Route::get('/kurikulum', function () { return view('kaprodi.kurikulum'); })->name('kurikulum.index');
+        Route::get('/jadwal-kuliah', function () { return view('kaprodi.jadwal_kuliah'); })->name('jadwal.index');
+    });
+
     // FITUR MAHASISWA
-    // --------------------------------------------------------------------
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
-        Route::get('/pengajuan/baru', [PengajuanController::class, 'create'])->name('pengajuan.create');
-        Route::post('/pengajuan', [PengajuanController::class, 'store'])->name('pengajuan.store');
-        Route::get('/riwayat', [RiwayatController::class, 'index'])->name('riwayat.index');
-        Route::get('/legalisir', [LegalisirController::class, 'create'])->name('legalisir.create');
+        Route::get('/pengajuan-surat', function () { return view('mahasiswa.pengajuan_surat'); })->name('pengajuan.create');
+        Route::get('/riwayat', function () { return view('mahasiswa.riwayat'); })->name('riwayat.index');
+        Route::get('/legalisir', function () { return view('mahasiswa.legalisir'); })->name('legalisir.create');
     });
 
 });

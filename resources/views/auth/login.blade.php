@@ -13,7 +13,10 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-image: url("{{ asset('images/images.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -21,7 +24,7 @@
         }
 
         .login-container {
-            background: white;
+            background: rgba(255, 255, 255, 0.9); /* Sedikit transparan agar gambar background terlihat */
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);

@@ -1,4 +1,4 @@
-@extends('layouts.app')
+@extends('layouts.dekan')
 
 @section('title', 'Dashboard Dekan')
 
