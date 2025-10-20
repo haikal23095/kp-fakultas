@@ -28,7 +28,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // AREA PENGGUNA YANG SUDAH LOGIN
 // =========================================================================
 Route::middleware('auth')->group(function () {
-    
+
     // DASHBOARD UTAMA & ROLE
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard/admin', [AuthController::class, 'dashboardAdmin'])->name('dashboard.admin');
@@ -41,44 +41,63 @@ Route::middleware('auth')->group(function () {
 
     // FITUR ADMIN
     Route::prefix('admin')->name('admin.')->group(function () {
-        Route::get('/kelola-pengguna', function () { return view('admin.kelola_pengguna'); })->name('users.index');
-        Route::get('/manajemen-surat', function () { return view('admin.manajemen_surat'); })->name('surat.manage');
-        Route::get('/arsip-surat', function () { return view('admin.arsip_surat'); })->name('surat.archive');
-        Route::get('/pengaturan', function () { return view('admin.pengaturan'); })->name('settings.index');
+        Route::get('/kelola-pengguna', function () {
+            return view('admin.kelola_pengguna'); })->name('users.index');
+        Route::get('/manajemen-surat', function () {
+            return view('admin.manajemen_surat'); })->name('surat.manage');
+        Route::get('/arsip-surat', function () {
+            return view('admin.arsip_surat'); })->name('surat.archive');
+        Route::get('/pengaturan', function () {
+            return view('admin.pengaturan'); })->name('settings.index');
     });
 
     // FITUR DEKAN
     Route::prefix('dekan')->name('dekan.')->group(function () {
-        Route::get('/persetujuan-surat', function () { return view('dekan.persetujuan_surat'); })->name('persetujuan.index');
-        Route::get('/arsip-surat', function () { return view('dekan.arsip_surat'); })->name('arsip.index');
+        Route::get('/persetujuan-surat', function () {
+            return view('dekan.persetujuan_surat'); })->name('persetujuan.index');
+        Route::get('/arsip-surat', function () {
+            return view('dekan.arsip_surat'); })->name('arsip.index');
     });
 
     // FITUR DOSEN
     Route::prefix('dosen')->name('dosen.')->group(function () {
-        Route::get('/pengajuan', function () { return view('dosen.pengajuan'); })->name('pengajuan.index');
+        Route::get('/pengajuan', function () {
+            return view('dosen.pengajuan'); })->name('pengajuan.index');
         // PENANDA: Rute yang hilang ditambahkan di sini
-        Route::get('/riwayat', function () { return view('dosen.riwayat'); })->name('riwayat.index');
-        Route::get('/input-nilai', function () { return view('dosen.input_nilai'); })->name('nilai.index');
-        Route::get('/bimbingan', function () { return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
+        Route::get('/riwayat', function () {
+            return view('dosen.riwayat'); })->name('riwayat.index');
+        Route::get('/input-nilai', function () {
+            return view('dosen.input_nilai'); })->name('nilai.index');
+        Route::get('/bimbingan', function () {
+            return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
     });
 
     // FITUR KAJUR
     Route::prefix('kajur')->name('kajur.')->group(function () {
-        Route::get('/verifikasi-rps', function () { return view('kajur.verifikasi_rps'); })->name('rps.index');
-        Route::get('/laporan', function () { return view('kajur.laporan_jurusan'); })->name('laporan.index');
+        Route::get('/verifikasi-rps', function () {
+            return view('kajur.verifikasi_rps'); })->name('rps.index');
+        Route::get('/laporan', function () {
+            return view('kajur.laporan_jurusan'); })->name('laporan.index');
+        Route::get('/persetujuan-surat', function () {
+            return view('kajur.persetujuan-surat'); })->name('persetujuan.index');
     });
 
     // FITUR KAPRODI
     Route::prefix('kaprodi')->name('kaprodi.')->group(function () {
-        Route::get('/kurikulum', function () { return view('kaprodi.kurikulum'); })->name('kurikulum.index');
-        Route::get('/jadwal-kuliah', function () { return view('kaprodi.jadwal_kuliah'); })->name('jadwal.index');
+        Route::get('/kurikulum', function () {
+            return view('kaprodi.kurikulum'); })->name('kurikulum.index');
+        Route::get('/jadwal-kuliah', function () {
+            return view('kaprodi.jadwal_kuliah'); })->name('jadwal.index');
     });
 
     // FITUR MAHASISWA
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
-        Route::get('/pengajuan-surat', function () { return view('mahasiswa.pengajuan_surat'); })->name('pengajuan.create');
-        Route::get('/riwayat', function () { return view('mahasiswa.riwayat'); })->name('riwayat.index');
-        Route::get('/legalisir', function () { return view('mahasiswa.legalisir'); })->name('legalisir.create');
+        Route::get('/pengajuan-surat', function () {
+            return view('mahasiswa.pengajuan_surat'); })->name('pengajuan.create');
+        Route::get('/riwayat', function () {
+            return view('mahasiswa.riwayat'); })->name('riwayat.index');
+        Route::get('/legalisir', function () {
+            return view('mahasiswa.legalisir'); })->name('legalisir.create');
     });
 
 });
