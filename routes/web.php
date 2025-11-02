@@ -1,7 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth; 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PengajuanSuratController;
+
+// Impor Model untuk route pengajuan
+use App\Models\Mahasiswa;
+use App\Models\Dosen;
+use App\Models\Prodi;
+use App\Models\JenisSurat; // Pastikan ini ada
 
 /*
 |--------------------------------------------------------------------------
@@ -56,7 +64,6 @@ Route::middleware('auth')->group(function () {
     // FITUR DOSEN
     Route::prefix('dosen')->name('dosen.')->group(function () {
         Route::get('/pengajuan', function () { return view('dosen.pengajuan'); })->name('pengajuan.index');
-        // PENANDA: Rute yang hilang ditambahkan di sini
         Route::get('/riwayat', function () { return view('dosen.riwayat'); })->name('riwayat.index');
         Route::get('/input-nilai', function () { return view('dosen.input_nilai'); })->name('nilai.index');
         Route::get('/bimbingan', function () { return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
@@ -76,7 +83,47 @@ Route::middleware('auth')->group(function () {
 
     // FITUR MAHASISWA
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
-        Route::get('/pengajuan-surat', function () { return view('mahasiswa.pengajuan_surat'); })->name('pengajuan.create');
+        
+        // --- INI RUTE YANG KITA MODIFIKASI ---
+        Route::get('/pengajuan-surat', function () {
+            
+            $user = Auth::user();
+            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
+            
+            $prodi = null;
+            if ($mahasiswa && $mahasiswa->Id_Prodi) {
+                $prodi = Prodi::find($mahasiswa->Id_Prodi);
+            }
+
+            $dosens = Dosen::orderBy('Nama_Dosen', 'asc')->get();
+            
+            // --- INI DIA PERBAIKAN STATISNYA ---
+            // 1. Definisikan SECARA STATIS surat apa saja yang boleh diajukan Mahasiswa
+            $namaSuratMahasiswa = [
+                'Surat Keterangan Aktif Kuliah',
+                'Surat Rekomendasi',
+                'Surat Pengantar Penelitian' // Ini untuk form Magang/KP Anda
+            ];
+
+            // 2. Ambil dari DB HANYA surat-surat yang ada di daftar statis itu
+            $jenis_surats = JenisSurat::whereIn('Nama_Surat', $namaSuratMahasiswa)
+                                       ->orderBy('Nama_Surat', 'asc')
+                                       ->get();
+            // --- AKHIR PERBAIKAN ---
+
+            return view('mahasiswa.pengajuan_surat', [
+                'mahasiswa' => $mahasiswa,
+                'prodi' => $prodi,
+                'dosens' => $dosens,
+                'jenis_surats' => $jenis_surats
+            ]);
+
+        })->name('pengajuan.create');
+        
+        // Route POST untuk MENYIMPAN data
+        Route::post('/pengajuan-surat', [PengajuanSuratController::class, 'store'])->name('pengajuan.store');
+        
+        // Rute sisa Anda
         Route::get('/riwayat', function () { return view('mahasiswa.riwayat'); })->name('riwayat.index');
         Route::get('/legalisir', function () { return view('mahasiswa.legalisir'); })->name('legalisir.create');
     });
