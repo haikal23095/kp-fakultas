@@ -21,8 +21,35 @@ class TugasSurat extends Model
      */
     public $timestamps = false;
 
-    // PASTIKAN TIDAK ADA BARIS "public $incrementing = false;" DI SINI
-    // Jika ada, HAPUS baris itu.
+    /**
+     * Primary key adalah auto-increment
+     */
+    public $incrementing = true;
+
+    /**
+     * Tipe data primary key
+     */
+    protected $keyType = 'int';
+
+    /**
+     * Kolom-kolom yang boleh diisi secara mass assignment
+     */
+    protected $fillable = [
+        'Id_Penerima_Tugas_Surat',
+        'Id_Jenis_Surat',
+        'Judul_Tugas_Surat',
+        'Deskripsi_Tugas_Surat',
+        'data_spesifik',
+        'Status',
+        'Tanggal_Diberikan_Tugas_Surat',
+        'Id_Pemberi_Tugas_Surat',
+        'Id_Jenis_Pekerjaan',
+        'dokumen_pendukung',
+        'File_Surat',
+        'Nomor_Surat',
+        'Tanggal_Tenggat_Tugas_Surat',
+        'Tanggal_Diselesaikan',
+    ];
 
     /**
      * SANGAT PENTING: Ini mengubah 'data_spesifik'

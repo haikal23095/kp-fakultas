@@ -22,9 +22,7 @@ class PengajuanSuratController extends Controller
         // === 1. VALIDASI DATA ===
         $validator = Validator::make($request->all(), [
             'Id_Jenis_Surat' => 'required|numeric',
-            // Anda bisa tambahkan validasi lain di sini jika perlu
-            // 'data_spesifik.semester' => 'required_if:Id_Jenis_Surat,3|numeric', // Contoh
-            // 'file_pendukung_aktif' => 'required_if:Id_Jenis_Surat,3|file|mimes:pdf|max:2048', // Contoh
+
         ]);
 
         if ($validator->fails()) {
@@ -46,42 +44,50 @@ class PengajuanSuratController extends Controller
 
         // Cek file mana yang diupload berdasarkan jenis surat (lebih baik dari has())
         if ($request->file('file_pendukung_aktif') && $request->file('file_pendukung_aktif')->isValid()) {
-             $filePendukung = $request->file('file_pendukung_aktif');
-             $deskripsi = $request->input('Deskripsi_Tugas_Surat_Aktif');
+            $filePendukung = $request->file('file_pendukung_aktif');
+            $deskripsi = $request->input('Deskripsi_Tugas_Surat_Aktif');
         } else if ($request->file('file_pendukung_magang') && $request->file('file_pendukung_magang')->isValid()) {
-             $filePendukung = $request->file('file_pendukung_magang');
-             $instansi = $dataSpesifik['nama_instansi'] ?? 'Instansi Tujuan';
-             $deskripsi = "Pengajuan surat pengantar magang/KP ke " . $instansi;
+            $filePendukung = $request->file('file_pendukung_magang');
+            $instansi = $dataSpesifik['nama_instansi'] ?? 'Instansi Tujuan';
+            $deskripsi = "Pengajuan surat pengantar magang/KP ke " . $instansi;
         }
-  // ... di dalam public function store(Request $request)
 
-    // ...
-    // === 4. SIMPAN KE TABEL Tugas_Surat ===
 
-    $tugasSurat = new TugasSurat();
-    $tugasSurat->Id_Penerima_Tugas_Surat = $mahasiswaId;
-    $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
-    $tugasSurat->Judul_Tugas_Surat = $judul;
-    $tugasSurat->Deskripsi_Tugas_Surat = $deskripsi;
-    $tugasSurat->data_spesifik = $dataSpesifik;
-    
-    // ======================================================
-    // 				INI PERBAIKANNYA
-    // ======================================================
-    
-    // $tugasSurat->Status = 'tugas_baru'; // <-- INI PENYEBAB ERROR
-    
-    // Ganti dengan nilai yang sesuai dengan kolom database kamu
-    // Misalnya, jika database hanya mau 'baru'
-    $tugasSurat->Status = 'baru'; 
-    
-    // ======================================================
-    
-    $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
-    $tugasSurat->Id_Pemberi_Tugas_Surat = 1; // Asumsi ID 1 adalah Admin
+        // === 4. UPLOAD FILE PENDUKUNG TERLEBIH DAHULU ===
+        $pathDokumenPendukung = null;
 
-    if ($jenisSurat) {
-     
+        if ($filePendukung) {
+            try {
+                // Simpan file ke storage/app/public/uploads/pendukung
+                $pathDokumenPendukung = $filePendukung->store('uploads/pendukung', 'public');
+                Log::info("File uploaded successfully", ['path' => $pathDokumenPendukung]);
+            } catch (\Exception $e) {
+                Log::error("Gagal upload file: " . $e->getMessage());
+                return redirect()->back()->with('error', 'Gagal mengunggah file pendukung: ' . $e->getMessage())->withInput();
+            }
+        }
+
+        // === 5. SIMPAN KE TABEL Tugas_Surat ===
+
+        $tugasSurat = new TugasSurat();
+        $tugasSurat->Id_Penerima_Tugas_Surat = $mahasiswaId;
+        $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
+        $tugasSurat->Judul_Tugas_Surat = $judul;
+        $tugasSurat->Deskripsi_Tugas_Surat = $deskripsi;
+        $tugasSurat->data_spesifik = $dataSpesifik;
+        $tugasSurat->dokumen_pendukung = $pathDokumenPendukung; // Simpan path file ke kolom dokumen_pendukung
+
+        // Set status pengajuan
+        $tugasSurat->Status = 'baru';
+        $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
+
+        // Cari admin pertama yang ada di sistem untuk Id_Pemberi_Tugas_Surat
+        // Karena mahasiswa mengajukan sendiri, maka admin yang akan memproses
+        $adminUser = \DB::table('Users')->where('Id_Role', 1)->first();
+        $tugasSurat->Id_Pemberi_Tugas_Surat = $adminUser ? $adminUser->Id_User : $mahasiswaId;
+
+        if ($jenisSurat) {
+
 
             // Menggunakan getAttribute() untuk memastikan kita membaca kolom DB
             $pekerjaan = $jenisSurat->getAttribute('Jenis_Pekerjaan');
@@ -108,42 +114,19 @@ class PengajuanSuratController extends Controller
         }
 
         try {
-            $tugasSurat->save(); // Ia mencoba menyimpan
+            $tugasSurat->save();
+            Log::info("Tugas Surat saved successfully", [
+                'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
+                'dokumen_pendukung' => $tugasSurat->dokumen_pendukung,
+            ]);
         } catch (\Exception $e) {
-            // ... dan ia BERHASIL menangkap error database!
-            Log::error("Gagal menyimpan Tugas Surat: " . $e->getMessage()); 
-            return redirect()->back()->with('error', 'Terjadi kesalahan...');
-    }
-
-
-        // === 5. SIMPAN FILE PENDUKUNG (JIKA ADA) ===
-
-        if ($filePendukung) { // Cukup cek $filePendukung sudah diisi atau belum
-
-            try {
-                // Simpan file ke storage
-                $path = $filePendukung->store('uploads/pendukung', 'public');
-
-                $fileArsip = new FileArsip();
-                $fileArsip->Id_Tugas_Surat = $tugasSurat->Id_Tugas_Surat; // Gunakan Primary Key yang benar
-                $fileArsip->Keterangan = 'Dokumen Pendukung Mahasiswa';
-                $fileArsip->Path_File = $path;
-                $fileArsip->Id_Penerima_Tugas_Surat = $mahasiswaId;
-                $fileArsip->Id_Pemberi_Tugas_Surat = 1; // Asumsi ID 1 adalah Admin
-
-                $fileArsip->save();
-
-            } catch (\Exception $e) {
-                 Log::error("Gagal menyimpan File Arsip: " . $e->getMessage());
-                 // Pertimbangkan: haruskah pengajuan dibatalkan jika file gagal disimpan?
-                 // Atau cukup berikan pesan warning?
-                 return redirect()->back()->with('error', 'Data pengajuan tersimpan, tetapi gagal mengunggah file pendukung.')->withInput();
-            }
+            Log::error("Gagal menyimpan Tugas Surat: " . $e->getMessage());
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyimpan pengajuan: ' . $e->getMessage())->withInput();
         }
 
         // === 6. KEMBALIKAN KE HALAMAN FORM ===
 
         return redirect()->route('mahasiswa.pengajuan.create')
-                         ->with('success', 'Pengajuan surat Anda (' . $judul . ') telah berhasil terkirim!');
+            ->with('success', 'Pengajuan surat Anda (' . $judul . ') telah berhasil terkirim!');
     }
 }

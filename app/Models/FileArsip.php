@@ -20,4 +20,25 @@ class FileArsip extends Model
      * karena tidak ada di tabel 'File_Arsip' Anda.
      */
     public $timestamps = false;
+
+    /**
+     * Primary key adalah auto-increment
+     */
+    public $incrementing = true;
+
+    /**
+     * Tipe data primary key
+     */
+    protected $keyType = 'int';
+
+    /**
+     * Kolom-kolom yang boleh diisi secara mass assignment
+     */
+    protected $fillable = [
+        'Id_Tugas_Surat',
+        'Keterangan',
+        'Path_File',
+        'Id_Penerima_Tugas_Surat',
+        'Id_Pemberi_Tugas_Surat',
+    ];
 }

@@ -217,9 +217,14 @@
             dynamicForms.forEach(function(form) {
                 form.style.display = 'none';
                 
-                // Menonaktifkan 'required' pada input yang tersembunyi
-                form.querySelectorAll('input[required], select[required], textarea[required]').forEach(function(input) {
-                    input.required = false;
+                // Simpan status required asli dan nonaktifkan validasi
+                form.querySelectorAll('input, select, textarea').forEach(function(input) {
+                    if (input.required) {
+                        input.setAttribute('data-was-required', 'true');
+                        input.required = false;
+                    }
+                    // Disable input agar tidak tersubmit jika kosong
+                    input.disabled = true;
                 });
             });
         }
@@ -235,12 +240,10 @@
                 if (targetForm) {
                     targetForm.style.display = 'block';
                     
-                    // Mengaktifkan kembali 'required' pada input yang ditampilkan
+                    // Aktifkan kembali input dan restore status required
                     targetForm.querySelectorAll('input, select, textarea').forEach(function(input) {
-                        // Cek apakah elemen punya atribut 'data-required' (yang kita set manual)
-                        // atau jika Anda ingin semua yg terlihat jadi required
-                        // Di sini kita aktifkan semua yang punya atribut 'required' di HTML aslinya
-                        if (input.hasAttribute('required')) {
+                        input.disabled = false;
+                        if (input.getAttribute('data-was-required') === 'true') {
                             input.required = true;
                         }
                     });
