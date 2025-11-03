@@ -76,14 +76,18 @@ Route::middleware('auth')->group(function () {
     // FITUR DOSEN
     Route::prefix('dosen')->name('dosen.')->group(function () {
         Route::get('/pengajuan', function () {
-            return view('dosen.pengajuan'); })->name('pengajuan.index');
+            return view('dosen.pengajuan');
+        })->name('pengajuan.index');
         // PENANDA: Rute yang hilang ditambahkan di sini
         Route::get('/riwayat', function () {
-            return view('dosen.riwayat'); })->name('riwayat.index');
+            return view('dosen.riwayat');
+        })->name('riwayat.index');
         Route::get('/input-nilai', function () {
-            return view('dosen.input_nilai'); })->name('nilai.index');
+            return view('dosen.input_nilai');
+        })->name('nilai.index');
         Route::get('/bimbingan', function () {
-            return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
+            return view('dosen.bimbingan_akademik');
+        })->name('bimbingan.index');
     });
 
     // FITUR KAJUR
@@ -129,7 +133,7 @@ Route::middleware('auth')->group(function () {
             $namaSuratMahasiswa = [
                 'Surat Keterangan Aktif Kuliah',
                 'Surat Rekomendasi',
-                'Surat Pengantar Penelitian' // Untuk form Magang/KP
+                'Surat Pengantar KP/Magang'
             ];
 
             // Ambil dari DB HANYA surat-surat yang ada di daftar statis
@@ -151,9 +155,11 @@ Route::middleware('auth')->group(function () {
 
         // Rute lainnya
         Route::get('/riwayat', function () {
-            return view('mahasiswa.riwayat'); })->name('riwayat.index');
+            return view('mahasiswa.riwayat');
+        })->name('riwayat.index');
         Route::get('/legalisir', function () {
-            return view('mahasiswa.legalisir'); })->name('legalisir.create');
+            return view('mahasiswa.legalisir');
+        })->name('legalisir.create');
     });
 
 });
