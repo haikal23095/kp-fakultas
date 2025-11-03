@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Auth; 
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PengajuanSuratController;
 
@@ -50,66 +50,81 @@ Route::middleware('auth')->group(function () {
     // FITUR ADMIN
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/kelola-pengguna', function () {
-            return view('admin.kelola_pengguna'); })->name('users.index');
+            return view('admin.kelola_pengguna');
+        })->name('users.index');
         Route::get('/manajemen-surat', function () {
-            return view('admin.manajemen_surat'); })->name('surat.manage');
+            return view('admin.manajemen_surat');
+        })->name('surat.manage');
         Route::get('/arsip-surat', function () {
-            return view('admin.arsip_surat'); })->name('surat.archive');
+            return view('admin.arsip_surat');
+        })->name('surat.archive');
         Route::get('/pengaturan', function () {
-            return view('admin.pengaturan'); })->name('settings.index');
+            return view('admin.pengaturan');
+        })->name('settings.index');
     });
 
     // FITUR DEKAN
     Route::prefix('dekan')->name('dekan.')->group(function () {
         Route::get('/persetujuan-surat', function () {
-            return view('dekan.persetujuan_surat'); })->name('persetujuan.index');
+            return view('dekan.persetujuan_surat');
+        })->name('persetujuan.index');
         Route::get('/arsip-surat', function () {
-            return view('dekan.arsip_surat'); })->name('arsip.index');
+            return view('dekan.arsip_surat');
+        })->name('arsip.index');
     });
 
     // FITUR DOSEN
     Route::prefix('dosen')->name('dosen.')->group(function () {
-        Route::get('/pengajuan', function () { return view('dosen.pengajuan'); })->name('pengajuan.index');
+        Route::get('/pengajuan', function () {
+            return view('dosen.pengajuan'); })->name('pengajuan.index');
         // PENANDA: Rute yang hilang ditambahkan di sini
-        Route::get('/riwayat', function () { return view('dosen.riwayat'); })->name('riwayat.index');
-        Route::get('/input-nilai', function () { return view('dosen.input_nilai'); })->name('nilai.index');
-        Route::get('/bimbingan', function () { return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
+        Route::get('/riwayat', function () {
+            return view('dosen.riwayat'); })->name('riwayat.index');
+        Route::get('/input-nilai', function () {
+            return view('dosen.input_nilai'); })->name('nilai.index');
+        Route::get('/bimbingan', function () {
+            return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
     });
 
     // FITUR KAJUR
     Route::prefix('kajur')->name('kajur.')->group(function () {
         Route::get('/verifikasi-rps', function () {
-            return view('kajur.verifikasi_rps'); })->name('rps.index');
+            return view('kajur.verifikasi_rps');
+        })->name('rps.index');
         Route::get('/laporan', function () {
-            return view('kajur.laporan_jurusan'); })->name('laporan.index');
+            return view('kajur.laporan_jurusan');
+        })->name('laporan.index');
         Route::get('/persetujuan-surat', function () {
-            return view('kajur.persetujuan-surat'); })->name('persetujuan.index');
+            return view('kajur.persetujuan-surat');
+        })->name('persetujuan.index');
     });
 
     // FITUR KAPRODI
     Route::prefix('kaprodi')->name('kaprodi.')->group(function () {
         Route::get('/kurikulum', function () {
-            return view('kaprodi.kurikulum'); })->name('kurikulum.index');
+            return view('kaprodi.kurikulum');
+        })->name('kurikulum.index');
         Route::get('/jadwal-kuliah', function () {
-            return view('kaprodi.jadwal_kuliah'); })->name('jadwal.index');
+            return view('kaprodi.jadwal_kuliah');
+        })->name('jadwal.index');
     });
 
     // FITUR MAHASISWA
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
-        
+
         // --- ROUTE GET: FORM PENGAJUAN SURAT ---
         Route::get('/pengajuan-surat', function () {
-            
+
             $user = Auth::user();
             $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
-            
+
             $prodi = null;
             if ($mahasiswa && $mahasiswa->Id_Prodi) {
                 $prodi = Prodi::find($mahasiswa->Id_Prodi);
             }
 
             $dosens = Dosen::orderBy('Nama_Dosen', 'asc')->get();
-            
+
             // Definisikan surat apa saja yang boleh diajukan Mahasiswa
             $namaSuratMahasiswa = [
                 'Surat Keterangan Aktif Kuliah',
@@ -119,8 +134,8 @@ Route::middleware('auth')->group(function () {
 
             // Ambil dari DB HANYA surat-surat yang ada di daftar statis
             $jenis_surats = JenisSurat::whereIn('Nama_Surat', $namaSuratMahasiswa)
-                                       ->orderBy('Nama_Surat', 'asc')
-                                       ->get();
+                ->orderBy('Nama_Surat', 'asc')
+                ->get();
 
             return view('mahasiswa.pengajuan_surat', [
                 'mahasiswa' => $mahasiswa,
@@ -130,13 +145,15 @@ Route::middleware('auth')->group(function () {
             ]);
 
         })->name('pengajuan.create');
-        
+
         // --- ROUTE POST: MENYIMPAN PENGAJUAN SURAT ---
         Route::post('/pengajuan-surat', [PengajuanSuratController::class, 'store'])->name('pengajuan.store');
-        
+
         // Rute lainnya
-        Route::get('/riwayat', function () { return view('mahasiswa.riwayat'); })->name('riwayat.index');
-        Route::get('/legalisir', function () { return view('mahasiswa.legalisir'); })->name('legalisir.create');
+        Route::get('/riwayat', function () {
+            return view('mahasiswa.riwayat'); })->name('riwayat.index');
+        Route::get('/legalisir', function () {
+            return view('mahasiswa.legalisir'); })->name('legalisir.create');
     });
 
 });
