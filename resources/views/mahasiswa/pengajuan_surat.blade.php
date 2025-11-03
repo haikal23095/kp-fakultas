@@ -151,9 +151,9 @@
                         </select>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="dospem2" class="form-label"><strong>Dosen Pembimbing 2 (jika ada)</strong></label>
+                        <label for="dospem2" class="form-label"><strong>Dosen Pembimbing 2</strong></label>
                         <select class="form-select" name="data_spesifik[dosen_pembimbing_2]">
-                            <option value="" selected>-- (Opsional) Pilih Dosen Pembimbing 2 --</option>
+                            <option value="" selected>-- Pilih Dosen Pembimbing 2 --</option>
                             @foreach ($dosens as $dosen)
                                 <option value="{{ $dosen->Nama_Dosen }}">{{ $dosen->Nama_Dosen }}</option>
                             @endforeach

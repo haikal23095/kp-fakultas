@@ -13,24 +13,17 @@ class User extends Authenticatable
     use HasFactory, Notifiable;
 
     /**
-     * The table associated with the model.
-     *
-     * @var string
+     * ======================================================
+     * PENGATURAN DARI FILE ANDA (PENTING!)
+     * ======================================================
      */
     protected $table = 'Users';
-
-    /**
-     * The primary key associated with the table.
-     *
-     * @var string
-     */
     protected $primaryKey = 'Id_User';
+    
+    // Matikan timestamps jika Anda tidak punya created_at/updated_at
+    // Jika Anda punya, hapus baris ini
+    public $timestamps = false; 
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var list<string>
-     */
     protected $fillable = [
         'Username',
         'password',
@@ -39,21 +32,11 @@ class User extends Authenticatable
         'Id_Role',
     ];
 
-    /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var list<string>
-     */
     protected $hidden = [
         'password',
         'remember_token',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -62,11 +45,22 @@ class User extends Authenticatable
         ];
     }
 
-    /**
-     * Get the name attribute for display
-     */
     public function getNameAttribute()
     {
         return $this->Name_User;
     }
+
+    /**
+     * ======================================================
+     * FUNGSI RELASI ROLE (YANG KITA BUTUHKAN)
+     * ======================================================
+     * Menghubungkan ke Model 'Role' (tabel 'Roles')
+     */
+    public function role()
+    {
+        // Foreign Key: 'Id_Role' (di tabel Users)
+        // Owner Key: 'Id_Role' (di tabel Roles)
+        return $this->belongsTo(Role::class, 'Id_Role', 'Id_Role');
+    }
 }
+

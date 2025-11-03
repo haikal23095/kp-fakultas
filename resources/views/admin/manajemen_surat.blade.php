@@ -15,37 +15,87 @@
                 <thead class="table-light">
                     <tr>
                         <th>Tgl. Masuk</th>
-                        <th>No. Tiket</th>
+                        <th>Nomor Surat</th>
                         <th>Pengaju</th>
                         <th>Jenis Surat</th>
                         <th>Proses Saat Ini</th>
-                        <th class="text-center">Aksi</th>
+                        <th class="text-center">Kirim</th>
                     </tr>
                 </thead>
                 <tbody>
+                    @php
+                        // Sembunyikan tugas yang sudah selesai dari tampilan manajemen
+                        $visibleTugas = $daftarTugas->filter(function($t) {
+                            return strtolower(trim($t->Status)) !== 'selesai';
+                        });
+                    @endphp
+
+                    @forelse($visibleTugas as $tugas)
                     <tr>
-                        <td>14 Okt 2025</td>
-                        <td>SK-20251014-001</td>
-                        <td>Rina Amelia (Mahasiswa)</td>
-                        <td>Surat Rekomendasi Beasiswa</td>
-                        <td><span class="badge bg-warning text-dark">Pending Persetujuan Dosen</span></td>
+                        {{-- 1. Tgl. Masuk --}}
+                        <td>{{ $tugas->Tanggal_Diberikan_Tugas_Surat->format('d M Y') }}</td>
+
+                        {{-- 2. Nomor Surat --}}
+                        <td>{{ $tugas->Nomor_Surat }}</td>
+
+                        {{-- 3. Pengaju (DIPERBAIKI) --}}
+                        <td>
+                            {{-- Menggunakan 'Name_User' dari ERD --}}
+                            {{ $tugas->pemberiTugas->Name_User ?? 'User Dihapus' }}
+                            
+                            {{-- MENGGANTI 'Nama_Pekerjaan' menjadi 'Jenis_Pekerjaan' --}}
+                            {{-- Asumsi tabel Jenis_Pekerjaan punya kolom 'Jenis_Pekerjaan' untuk nama role --}}
+                            ({{ optional($tugas->pemberiTugas->role)->Name_Role ?? 'Role N/A' }})
+                        </td>
+
+                        {{-- 4. Jenis Surat (DIPERBAIKI) --}}
+                        <td>
+                            {{-- Menggunakan 'Nama_Surat' dari ERD --}}
+                            {{ $tugas->jenisSurat->Nama_Surat ?? 'Jenis Dihapus' }}
+                        </td>
+
+                        {{-- 5. Status (read-only untuk admin) --}}
+                        <td class="align-middle text-center">
+                            @php $status = trim($tugas->Status ?? ''); @endphp
+                            @if(strtolower($status) === 'selesai' || strtolower($status) === 'disetujui')
+                                <span class="badge bg-success">{{ $tugas->Status }}</span>
+                            @elseif(strtolower($status) === 'terlambat')
+                                <span class="badge bg-danger">{{ $tugas->Status }}</span>
+                            @elseif(strtolower($status) === 'proses')
+                                <span class="badge bg-primary">{{ $tugas->Status }}</span>
+                            @else
+                                <span class="badge bg-secondary">{{ $tugas->Status }}</span>
+                            @endif
+                        </td>
+
+                        {{-- 6. Kirim (admin only): pilih role target dan upload file opsional --}}
                         <td class="text-center">
-                            <a href="#" class="btn btn-info btn-sm" title="Lacak Proses"><i class="fas fa-search-location"></i></a>
+                            @if(auth()->check() && auth()->user()->Id_Role == 1)
+                                <form method="POST" action="{{ route('admin.surat.assign', $tugas->Id_Tugas_Surat) }}" enctype="multipart/form-data" class="d-flex justify-content-center align-items-center">
+                                    @csrf
+                                    <select name="role_id" class="form-select form-select-sm me-2" style="width:150px;">
+                                        @foreach($roles as $role)
+                                            <option value="{{ $role->Id_Role }}">{{ $role->Name_Role }}</option>
+                                        @endforeach
+                                    </select>
+                                    <input type="file" name="file" class="form-control form-control-sm me-2" style="width:160px;">
+                                    <button type="submit" class="btn btn-sm btn-success">Kirim</button>
+                                </form>
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
                         </td>
                     </tr>
+                    @empty
                     <tr>
-                        <td>13 Okt 2025</td>
-                        <td>SK-20251013-005</td>
-                        <td>Dr. Bambang, M.T. (Dosen)</td>
-                        <td>Pengajuan Dana Riset</td>
-                        <td><span class="badge bg-warning text-dark">Pending Persetujuan Dekan</span></td>
-                        <td class="text-center">
-                            <a href="#" class="btn btn-info btn-sm" title="Lacak Proses"><i class="fas fa-search-location"></i></a>
-                        </td>
+                        <td colspan="5" class="text-center">Tidak ada data surat aktif.</td>
                     </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
     </div>
 </div>
 @endsection
+
+

@@ -77,9 +77,11 @@ class PengajuanSuratController extends Controller
         $tugasSurat->data_spesifik = $dataSpesifik;
         $tugasSurat->dokumen_pendukung = $pathDokumenPendukung; // Simpan path file ke kolom dokumen_pendukung
 
-        // Set status pengajuan
-        $tugasSurat->Status = 'baru';
-        $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
+    // Set status pengajuan
+    $tugasSurat->Status = 'baru';
+    $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
+    // Atur tenggat oleh sistem: maksimal 3 hari dari sekarang
+    $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(3);
 
         // Cari admin pertama yang ada di sistem untuk Id_Pemberi_Tugas_Surat
         // Karena mahasiswa mengajukan sendiri, maka admin yang akan memproses

@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PengajuanSuratController;
 
@@ -10,6 +11,9 @@ use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use App\Models\Prodi;
 use App\Models\JenisSurat; // Pastikan ini ada
+use App\Models\TugasSurat;
+use App\Models\Role;
+use Carbon\Carbon;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,12 +56,121 @@ Route::middleware('auth')->group(function () {
         Route::get('/kelola-pengguna', function () {
             return view('admin.kelola_pengguna');
         })->name('users.index');
-        Route::get('/manajemen-surat', function () {
-            return view('admin.manajemen_surat');
+        
+        // ... (route /kelola-pengguna) ...
+
+    Route::get('/manajemen-surat', function () {
+            
+            // ======================================================
+            // UBAH BARIS DI BAWAH INI
+            // ======================================================
+            
+            // KODE LAMA ANDA:
+            // $daftarTugas = TugasSurat::with(['pemberiTugas', 'jenisSurat']) 
+            
+            // KODE BARU:
+            // 1) Tandai tugas yang melewati tenggat sebagai 'Terlambat' (kecuali yang sudah Selesai/Terlambat)
+            TugasSurat::whereNotIn('Status', ['Selesai', 'Terlambat'])
+                ->whereDate('Tanggal_Tenggat_Tugas_Surat', '<', Carbon::now()->toDateString())
+                ->update(['Status' => 'Terlambat']);
+
+            // 2) Ambil daftar tugas yang masih relevan (termasuk Terlambat)
+            $daftarTugas = TugasSurat::with(['pemberiTugas.role', 'jenisSurat'])
+                                ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+                                ->get();
+
+            // 3) Ambil daftar role untuk dropdown pengiriman (admin)
+            $roles = Role::orderBy('Name_Role')->get();
+
+            return view('admin.manajemen_surat', [
+                'daftarTugas' => $daftarTugas,
+                'roles' => $roles,
+            ]);
+
         })->name('surat.manage');
+
+        // Route: update status tugas (hanya admin)
+        Route::post('/manajemen-surat/{id}/update-status', function (Request $request, $id) {
+            $user = Auth::user();
+            if (! $user || $user->Id_Role != 1) {
+                abort(403);
+            }
+
+            $validated = $request->validate([
+                'status' => 'required|in:Belum,Proses,Selesai'
+            ]);
+
+            $tugas = \App\Models\TugasSurat::find($id);
+            if (! $tugas) {
+                return redirect()->back()->with('error', 'Tugas tidak ditemukan.');
+            }
+
+            $tugas->Status = $validated['status'];
+            if (strtolower($validated['status']) === 'selesai') {
+                $tugas->Tanggal_Diselesaikan = Carbon::now();
+            } else {
+                // Jika status bukan selesai, pastikan Tanggal_Diselesaikan dikosongkan
+                $tugas->Tanggal_Diselesaikan = null;
+            }
+            $tugas->save();
+
+            return redirect()->back()->with('success', 'Status berhasil diperbarui.');
+        })->name('surat.updateStatus');
+
+        // Route: assign tugas ke sebuah role dan upload file opsional (hanya admin)
+        Route::post('/manajemen-surat/{id}/assign', function (Request $request, $id) {
+            $user = Auth::user();
+            if (! $user || $user->Id_Role != 1) {
+                abort(403);
+            }
+
+            $validated = $request->validate([
+                'role_id' => 'required|numeric|exists:Roles,Id_Role',
+                'file' => 'nullable|file|max:10240', // max 10MB
+            ]);
+
+            $tugas = \App\Models\TugasSurat::find($id);
+            if (! $tugas) {
+                return redirect()->back()->with('error', 'Tugas tidak ditemukan.');
+            }
+
+            // Simpan file jika ada
+            if ($request->hasFile('file') && $request->file('file')->isValid()) {
+                $path = $request->file('file')->store('uploads/admin', 'public');
+                $tugas->File_Surat = $path;
+            }
+
+            // Cari user pertama yang memiliki role yang dipilih (simple routing ke role)
+            $receiver = \DB::table('Users')->where('Id_Role', $validated['role_id'])->first();
+            if ($receiver) {
+                $tugas->Id_Penerima_Tugas_Surat = $receiver->Id_User;
+            }
+
+            // Set status menjadi 'Proses' saat dikirim (admin hanya memicu pengiriman)
+            $tugas->Status = 'Proses';
+
+            // Atur tenggat maksimal 3 hari dari sekarang
+            $tugas->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(3);
+
+            $tugas->save();
+
+            return redirect()->back()->with('success', 'Tugas berhasil dikirim ke role yang dipilih.');
+        })->name('surat.assign');
+
+        // ... (route /arsip-surat) ...
+        
         Route::get('/arsip-surat', function () {
-            return view('admin.arsip_surat');
+            // Ambil tugas yang sudah selesai (arsip)
+            $arsipTugas = TugasSurat::with(['pemberiTugas.role', 'jenisSurat'])
+                ->whereRaw("LOWER(TRIM(Status)) = 'selesai'")
+                ->orderBy('Tanggal_Diselesaikan', 'desc')
+                ->get();
+
+            return view('admin.arsip_surat', [
+                'arsipTugas' => $arsipTugas
+            ]);
         })->name('surat.archive');
+        
         Route::get('/pengaturan', function () {
             return view('admin.pengaturan');
         })->name('settings.index');
