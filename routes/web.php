@@ -96,7 +96,45 @@ Route::middleware('auth')->group(function () {
 
     // FITUR MAHASISWA
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
-        Route::get('/pengajuan-surat', function () { return view('mahasiswa.pengajuan_surat'); })->name('pengajuan.create');
+        
+        // --- ROUTE GET: FORM PENGAJUAN SURAT ---
+        Route::get('/pengajuan-surat', function () {
+            
+            $user = Auth::user();
+            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
+            
+            $prodi = null;
+            if ($mahasiswa && $mahasiswa->Id_Prodi) {
+                $prodi = Prodi::find($mahasiswa->Id_Prodi);
+            }
+
+            $dosens = Dosen::orderBy('Nama_Dosen', 'asc')->get();
+            
+            // Definisikan surat apa saja yang boleh diajukan Mahasiswa
+            $namaSuratMahasiswa = [
+                'Surat Keterangan Aktif Kuliah',
+                'Surat Rekomendasi',
+                'Surat Pengantar Penelitian' // Untuk form Magang/KP
+            ];
+
+            // Ambil dari DB HANYA surat-surat yang ada di daftar statis
+            $jenis_surats = JenisSurat::whereIn('Nama_Surat', $namaSuratMahasiswa)
+                                       ->orderBy('Nama_Surat', 'asc')
+                                       ->get();
+
+            return view('mahasiswa.pengajuan_surat', [
+                'mahasiswa' => $mahasiswa,
+                'prodi' => $prodi,
+                'dosens' => $dosens,
+                'jenis_surats' => $jenis_surats
+            ]);
+
+        })->name('pengajuan.create');
+        
+        // --- ROUTE POST: MENYIMPAN PENGAJUAN SURAT ---
+        Route::post('/pengajuan-surat', [PengajuanSuratController::class, 'store'])->name('pengajuan.store');
+        
+        // Rute lainnya
         Route::get('/riwayat', function () { return view('mahasiswa.riwayat'); })->name('riwayat.index');
         Route::get('/legalisir', function () { return view('mahasiswa.legalisir'); })->name('legalisir.create');
     });
