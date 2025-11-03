@@ -1,7 +1,15 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth; 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PengajuanSuratController;
+
+// Impor Model untuk route pengajuan
+use App\Models\Mahasiswa;
+use App\Models\Dosen;
+use App\Models\Prodi;
+use App\Models\JenisSurat; // Pastikan ini ada
 
 /*
 |--------------------------------------------------------------------------
@@ -61,15 +69,11 @@ Route::middleware('auth')->group(function () {
 
     // FITUR DOSEN
     Route::prefix('dosen')->name('dosen.')->group(function () {
-        Route::get('/pengajuan', function () {
-            return view('dosen.pengajuan'); })->name('pengajuan.index');
+        Route::get('/pengajuan', function () { return view('dosen.pengajuan'); })->name('pengajuan.index');
         // PENANDA: Rute yang hilang ditambahkan di sini
-        Route::get('/riwayat', function () {
-            return view('dosen.riwayat'); })->name('riwayat.index');
-        Route::get('/input-nilai', function () {
-            return view('dosen.input_nilai'); })->name('nilai.index');
-        Route::get('/bimbingan', function () {
-            return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
+        Route::get('/riwayat', function () { return view('dosen.riwayat'); })->name('riwayat.index');
+        Route::get('/input-nilai', function () { return view('dosen.input_nilai'); })->name('nilai.index');
+        Route::get('/bimbingan', function () { return view('dosen.bimbingan_akademik'); })->name('bimbingan.index');
     });
 
     // FITUR KAJUR
@@ -92,12 +96,9 @@ Route::middleware('auth')->group(function () {
 
     // FITUR MAHASISWA
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
-        Route::get('/pengajuan-surat', function () {
-            return view('mahasiswa.pengajuan_surat'); })->name('pengajuan.create');
-        Route::get('/riwayat', function () {
-            return view('mahasiswa.riwayat'); })->name('riwayat.index');
-        Route::get('/legalisir', function () {
-            return view('mahasiswa.legalisir'); })->name('legalisir.create');
+        Route::get('/pengajuan-surat', function () { return view('mahasiswa.pengajuan_surat'); })->name('pengajuan.create');
+        Route::get('/riwayat', function () { return view('mahasiswa.riwayat'); })->name('riwayat.index');
+        Route::get('/legalisir', function () { return view('mahasiswa.legalisir'); })->name('legalisir.create');
     });
 
 });
