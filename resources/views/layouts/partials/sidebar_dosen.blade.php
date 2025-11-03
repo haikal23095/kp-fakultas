@@ -28,18 +28,6 @@
                 Riwayat Surat
             </a>
         </li>
-        <li>
-            <a href="{{ route('dosen.nilai.index') }}" class="nav-link text-white {{ request()->routeIs('dosen.nilai.index') ? 'active' : '' }}">
-                <i class="fas fa-marker me-2"></i>
-                Input Nilai
-            </a>
-        </li>
-        <li>
-            <a href="{{ route('dosen.bimbingan.index') }}" class="nav-link text-white {{ request()->routeIs('dosen.bimbingan.index') ? 'active' : '' }}">
-                <i class="fas fa-users me-2"></i>
-                Bimbingan Akademik
-            </a>
-        </li>
     </ul>
     <hr>
     
