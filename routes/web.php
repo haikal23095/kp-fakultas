@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PengajuanSuratController;
+use App\Http\Controllers\Admin\DetailSuratController;
 
 // Impor Model untuk route pengajuan
 use App\Models\Mahasiswa;
@@ -88,6 +89,13 @@ Route::middleware('auth')->group(function () {
             ]);
 
         })->name('surat.manage');
+
+        // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
+        Route::get('/surat/{id}/detail', [DetailSuratController::class, 'show'])->name('surat.detail');
+    // Download dokumen pendukung (admin)
+    Route::get('/surat/{id}/download', [DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
+        // Proses upload draft final / ajukan ke Dekan
+        Route::post('/surat/{id}/process-draft', [DetailSuratController::class, 'processDraft'])->name('surat.process_draft');
 
         // Route: update status tugas (hanya admin)
         Route::post('/manajemen-surat/{id}/update-status', function (Request $request, $id) {

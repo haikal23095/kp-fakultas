@@ -19,7 +19,7 @@
                         <th>Pengaju</th>
                         <th>Jenis Surat</th>
                         <th>Proses Saat Ini</th>
-                        <th class="text-center">Kirim</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,22 +68,9 @@
                             @endif
                         </td>
 
-                        {{-- 6. Kirim (admin only): pilih role target dan upload file opsional --}}
+                        {{-- 6. Aksi --}}
                         <td class="text-center">
-                            @if(auth()->check() && auth()->user()->Id_Role == 1)
-                                <form method="POST" action="{{ route('admin.surat.assign', $tugas->Id_Tugas_Surat) }}" enctype="multipart/form-data" class="d-flex justify-content-center align-items-center">
-                                    @csrf
-                                    <select name="role_id" class="form-select form-select-sm me-2" style="width:150px;">
-                                        @foreach($roles as $role)
-                                            <option value="{{ $role->Id_Role }}">{{ $role->Name_Role }}</option>
-                                        @endforeach
-                                    </select>
-                                    <input type="file" name="file" class="form-control form-control-sm me-2" style="width:160px;">
-                                    <button type="submit" class="btn btn-sm btn-success">Kirim</button>
-                                </form>
-                            @else
-                                <span class="text-muted">-</span>
-                            @endif
+                            <a href="{{ route('admin.surat.detail', $tugas->Id_Tugas_Surat) }}" class="btn btn-sm btn-info">Lihat Detail</a>
                         </td>
                     </tr>
                     @empty

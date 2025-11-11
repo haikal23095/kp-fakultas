@@ -77,16 +77,26 @@ class PengajuanSuratController extends Controller
         $tugasSurat->data_spesifik = $dataSpesifik;
         $tugasSurat->dokumen_pendukung = $pathDokumenPendukung; // Simpan path file ke kolom dokumen_pendukung
 
-    // Set status pengajuan
-    $tugasSurat->Status = 'baru';
-    $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
-    // Atur tenggat oleh sistem: maksimal 3 hari dari sekarang
-    $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(3);
+            // ===== Perbaikan: pastikan pemberi dan penerima tugas diisi dengan benar =====
+            // Pemberi tugas = user yang sedang login (mahasiswa)
+            $pemberi_tugas_id = auth()->user()->Id_User ?? auth()->id();
 
-        // Cari admin pertama yang ada di sistem untuk Id_Pemberi_Tugas_Surat
-        // Karena mahasiswa mengajukan sendiri, maka admin yang akan memproses
-        $adminUser = \DB::table('Users')->where('Id_Role', 1)->first();
-        $tugasSurat->Id_Pemberi_Tugas_Surat = $adminUser ? $adminUser->Id_User : $mahasiswaId;
+            // Cari admin fakultas berdasarkan relasi role (jika ada)
+            $adminUser = \App\Models\User::whereHas('role', function($q) {
+                $q->where('Name_Role', 'Admin Fakultas');
+            })->first();
+
+            // Fallback: jika tidak ditemukan, coba cari user dengan Id_Role = 1 (legacy)
+            $penerima_tugas_id = $adminUser ? $adminUser->Id_User : (\DB::table('Users')->where('Id_Role', 1)->value('Id_User') ?? $pemberi_tugas_id);
+
+            $tugasSurat->Id_Pemberi_Tugas_Surat = $pemberi_tugas_id;
+            $tugasSurat->Id_Penerima_Tugas_Surat = $penerima_tugas_id;
+
+            // Status awal sesuai rule bisnis
+            $tugasSurat->Status = 'Diterima Admin';
+            $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
+            // Atur tenggat oleh sistem: maksimal 3 hari dari sekarang
+            $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(3);
 
         if ($jenisSurat) {
 

@@ -83,4 +83,12 @@ class TugasSurat extends Model
         // Jika PK-nya 'id', ganti parameter ketiga menjadi 'id'
         return $this->belongsTo(JenisPekerjaan::class, 'Id_Jenis_Pekerjaan', 'Id_Jenis_Pekerjaan');
     }
+
+    /**
+     * Relasi ke FileArsip (one-to-one)
+     */
+    public function fileArsip()
+    {
+        return $this->hasOne(FileArsip::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
 }
