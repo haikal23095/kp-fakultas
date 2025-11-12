@@ -127,7 +127,15 @@ Route::middleware('auth')->group(function () {
                 $prodi = Prodi::find($mahasiswa->Id_Prodi);
             }
 
-            $dosens = Dosen::orderBy('Nama_Dosen', 'asc')->get();
+            // Filter dosen berdasarkan prodi mahasiswa
+            // Jika mahasiswa punya prodi, tampilkan dosen dari prodi tersebut
+            // Jika tidak, tampilkan semua dosen (fallback)
+            $dosens = Dosen::query()
+                ->when($mahasiswa && $mahasiswa->Id_Prodi, function ($query) use ($mahasiswa) {
+                    return $query->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                })
+                ->orderBy('Nama_Dosen', 'asc')
+                ->get();
 
             // Definisikan surat apa saja yang boleh diajukan Mahasiswa
             $namaSuratMahasiswa = [

@@ -13,7 +13,30 @@ class Dosen extends Model
     protected $table = 'Dosen';
     protected $primaryKey = 'Id_Dosen';
 
-    // Matikan fitur-jfitur default Laravel yang tidak Anda gunakan
+    // Matikan fitur-fitur default Laravel yang tidak Anda gunakan
     public $incrementing = false;
     public $timestamps = false;
+
+    // Kolom yang bisa diisi (mass assignment)
+    protected $fillable = [
+        'Id_Dosen',
+        'NIP',
+        'Nama_Dosen',
+        'Alamat_Dosen',
+        'Id_User',
+        'Id_Prodi',
+        'Id_Pejabat'
+    ];
+
+    // Relasi ke Prodi
+    public function prodi()
+    {
+        return $this->belongsTo(Prodi::class, 'Id_Prodi', 'Id_Prodi');
+    }
+
+    // Relasi ke User
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'Id_User', 'Id_User');
+    }
 }

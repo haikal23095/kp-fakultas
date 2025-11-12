@@ -10,7 +10,8 @@ use App\Models\JenisPekerjaan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log; // <-- Pastikan ini ada untuk logging
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class PengajuanSuratController extends Controller
 {
@@ -40,16 +41,23 @@ class PengajuanSuratController extends Controller
         // === 3. LOGIKA BERDASARKAN JENIS SURAT ===
 
         $jenisSurat = JenisSurat::find($jenisSuratId);
+        if (!$jenisSurat) {
+            Log::error("Jenis Surat tidak ditemukan untuk ID: " . $jenisSuratId);
+            return redirect()->back()->with('error', 'Jenis surat tidak valid.')->withInput();
+        }
         $judul = $jenisSurat ? "Pengajuan " . $jenisSurat->Nama_Surat : "Pengajuan Surat";
 
-        // Cek file mana yang diupload berdasarkan jenis surat (lebih baik dari has())
         if ($request->file('file_pendukung_aktif') && $request->file('file_pendukung_aktif')->isValid()) {
             $filePendukung = $request->file('file_pendukung_aktif');
             $deskripsi = $request->input('Deskripsi_Tugas_Surat_Aktif');
         } else if ($request->file('file_pendukung_magang') && $request->file('file_pendukung_magang')->isValid()) {
             $filePendukung = $request->file('file_pendukung_magang');
-            $instansi = $dataSpesifik['nama_instansi'] ?? 'Instansi Tujuan';
+            $instansi = (isset($dataSpesifik['nama_instansi']) && $dataSpesifik['nama_instansi']) ? $dataSpesifik['nama_instansi'] : 'Instansi Tujuan';
+
             $deskripsi = "Pengajuan surat pengantar magang/KP ke " . $instansi;
+        } else {
+            $deskripsi = $deskripsi ?? "Pengajuan " . $jenisSurat->Nama_Surat;
+
         }
 
 
@@ -70,25 +78,26 @@ class PengajuanSuratController extends Controller
         // === 5. SIMPAN KE TABEL Tugas_Surat ===
 
         $tugasSurat = new TugasSurat();
-        $tugasSurat->Id_Penerima_Tugas_Surat = $mahasiswaId;
+        $tugasSurat->Id_Pemberi_Tugas_Surat = $mahasiswaId;
+
+        $adminUser = DB::table('Users')->where('Id_Role', 1)->first();
+        if (!$adminUser) {
+            Log::critical("Tidak ditemukan admin (Id_Role=1) untuk menerima tugas surat.");
+            return redirect()->back()->with('error', 'Sistem error: Tidak ada admin pemroses yang ditemukan.')->withInput();
+        }
+        $tugasSurat->Id_Penerima_Tugas_Surat = $adminUser->Id_User;
         $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
         $tugasSurat->Judul_Tugas_Surat = $judul;
         $tugasSurat->Deskripsi_Tugas_Surat = $deskripsi;
-        $tugasSurat->data_spesifik = $dataSpesifik;
+        $tugasSurat->data_spesifik = is_array($dataSpesifik) ? json_encode($dataSpesifik) : $dataSpesifik;
         $tugasSurat->dokumen_pendukung = $pathDokumenPendukung; // Simpan path file ke kolom dokumen_pendukung
 
         // Set status pengajuan
         $tugasSurat->Status = 'baru';
         $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
 
-        // Cari admin pertama yang ada di sistem untuk Id_Pemberi_Tugas_Surat
-        // Karena mahasiswa mengajukan sendiri, maka admin yang akan memproses
-        $adminUser = \DB::table('Users')->where('Id_Role', 1)->first();
-        $tugasSurat->Id_Pemberi_Tugas_Surat = $adminUser ? $adminUser->Id_User : $mahasiswaId;
 
         if ($jenisSurat) {
-
-
             // Menggunakan getAttribute() untuk memastikan kita membaca kolom DB
             $pekerjaan = $jenisSurat->getAttribute('Jenis_Pekerjaan');
 
