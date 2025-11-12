@@ -19,10 +19,10 @@ class User extends Authenticatable
      */
     protected $table = 'Users';
     protected $primaryKey = 'Id_User';
-    
+
     // Matikan timestamps jika Anda tidak punya created_at/updated_at
     // Jika Anda punya, hapus baris ini
-    public $timestamps = false; 
+    public $timestamps = false;
 
     protected $fillable = [
         'Username',
@@ -61,6 +61,30 @@ class User extends Authenticatable
         // Foreign Key: 'Id_Role' (di tabel Users)
         // Owner Key: 'Id_Role' (di tabel Roles)
         return $this->belongsTo(Role::class, 'Id_Role', 'Id_Role');
+    }
+
+    /**
+     * Relasi ke tabel Mahasiswa
+     */
+    public function mahasiswa()
+    {
+        return $this->hasOne(Mahasiswa::class, 'Id_User', 'Id_User');
+    }
+
+    /**
+     * Relasi ke tabel Dosen
+     */
+    public function dosen()
+    {
+        return $this->hasOne(Dosen::class, 'Id_User', 'Id_User');
+    }
+
+    /**
+     * Relasi ke tabel Pegawai
+     */
+    public function pegawai()
+    {
+        return $this->hasOne(Pegawai::class, 'Id_User', 'Id_User');
     }
 }
 

@@ -4,8 +4,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PengajuanSuratController;
 use App\Http\Controllers\Admin\DetailSuratController;
+
+// Import Controller untuk Pengajuan Surat (Modular)
+use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
+use App\Http\Controllers\PengajuanSurat\SuratPengantarMagangController;
 
 // Impor Model untuk route pengajuan
 use App\Models\Mahasiswa;
@@ -57,30 +60,48 @@ Route::middleware('auth')->group(function () {
         Route::get('/kelola-pengguna', function () {
             return view('admin.kelola_pengguna');
         })->name('users.index');
-        
+
         // ... (route /kelola-pengguna) ...
 
-    Route::get('/manajemen-surat', function () {
-            
+        Route::get('/manajemen-surat', function () {
+
             // ======================================================
             // UBAH BARIS DI BAWAH INI
             // ======================================================
-            
+
             // KODE LAMA ANDA:
             // $daftarTugas = TugasSurat::with(['pemberiTugas', 'jenisSurat']) 
-            
+
             // KODE BARU:
             // 1) Tandai tugas yang melewati tenggat sebagai 'Terlambat' (kecuali yang sudah Selesai/Terlambat)
             TugasSurat::whereNotIn('Status', ['Selesai', 'Terlambat'])
                 ->whereDate('Tanggal_Tenggat_Tugas_Surat', '<', Carbon::now()->toDateString())
                 ->update(['Status' => 'Terlambat']);
 
-            // 2) Ambil daftar tugas yang masih relevan (termasuk Terlambat)
-            $daftarTugas = TugasSurat::with(['pemberiTugas.role', 'jenisSurat'])
-                                ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
-                                ->get();
+            // 2) Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
+            $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai']);
+            $prodiId = $user->dosen?->Id_Prodi ?? $user->mahasiswa?->Id_Prodi ?? $user->pegawai?->Id_Prodi;
 
-            // 3) Ambil daftar role untuk dropdown pengiriman (admin)
+            // 3) Ambil daftar tugas yang terfilter berdasarkan prodi (filter berdasarkan PEMBERI tugas = yang mengajukan)
+            $daftarTugas = TugasSurat::with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai', 'jenisSurat'])
+                ->where(function ($q) use ($prodiId) {
+                    // Filter surat yang diajukan oleh mahasiswa dari prodi yang sama
+                    $q->whereHas('pemberiTugas.mahasiswa', function ($subQ) use ($prodiId) {
+                        $subQ->where('Id_Prodi', $prodiId);
+                    })
+                        // ATAU filter surat yang diajukan oleh dosen dari prodi yang sama
+                        ->orWhereHas('pemberiTugas.dosen', function ($subQ) use ($prodiId) {
+                        $subQ->where('Id_Prodi', $prodiId);
+                    })
+                        // ATAU filter surat yang diajukan oleh pegawai dari prodi yang sama
+                        ->orWhereHas('pemberiTugas.pegawai', function ($subQ) use ($prodiId) {
+                        $subQ->where('Id_Prodi', $prodiId);
+                    });
+                })
+                ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+                ->get();
+
+            // 4) Ambil daftar role untuk dropdown pengiriman (admin)
             $roles = Role::orderBy('Name_Role')->get();
 
             return view('admin.manajemen_surat', [
@@ -92,15 +113,15 @@ Route::middleware('auth')->group(function () {
 
         // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
         Route::get('/surat/{id}/detail', [DetailSuratController::class, 'show'])->name('surat.detail');
-    // Download dokumen pendukung (admin)
-    Route::get('/surat/{id}/download', [DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
+        // Download dokumen pendukung (admin)
+        Route::get('/surat/{id}/download', [DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
         // Proses upload draft final / ajukan ke Dekan
         Route::post('/surat/{id}/process-draft', [DetailSuratController::class, 'processDraft'])->name('surat.process_draft');
 
         // Route: update status tugas (hanya admin)
         Route::post('/manajemen-surat/{id}/update-status', function (Request $request, $id) {
             $user = Auth::user();
-            if (! $user || $user->Id_Role != 1) {
+            if (!$user || $user->Id_Role != 1) {
                 abort(403);
             }
 
@@ -109,7 +130,7 @@ Route::middleware('auth')->group(function () {
             ]);
 
             $tugas = \App\Models\TugasSurat::find($id);
-            if (! $tugas) {
+            if (!$tugas) {
                 return redirect()->back()->with('error', 'Tugas tidak ditemukan.');
             }
 
@@ -128,7 +149,7 @@ Route::middleware('auth')->group(function () {
         // Route: assign tugas ke sebuah role dan upload file opsional (hanya admin)
         Route::post('/manajemen-surat/{id}/assign', function (Request $request, $id) {
             $user = Auth::user();
-            if (! $user || $user->Id_Role != 1) {
+            if (!$user || $user->Id_Role != 1) {
                 abort(403);
             }
 
@@ -138,7 +159,7 @@ Route::middleware('auth')->group(function () {
             ]);
 
             $tugas = \App\Models\TugasSurat::find($id);
-            if (! $tugas) {
+            if (!$tugas) {
                 return redirect()->back()->with('error', 'Tugas tidak ditemukan.');
             }
 
@@ -166,7 +187,7 @@ Route::middleware('auth')->group(function () {
         })->name('surat.assign');
 
         // ... (route /arsip-surat) ...
-        
+
         Route::get('/arsip-surat', function () {
             // Ambil tugas yang sudah selesai (arsip)
             $arsipTugas = TugasSurat::with(['pemberiTugas.role', 'jenisSurat'])
@@ -178,7 +199,7 @@ Route::middleware('auth')->group(function () {
                 'arsipTugas' => $arsipTugas
             ]);
         })->name('surat.archive');
-        
+
         Route::get('/pengaturan', function () {
             return view('admin.pengaturan');
         })->name('settings.index');
@@ -271,8 +292,14 @@ Route::middleware('auth')->group(function () {
 
         })->name('pengajuan.create');
 
-        // --- ROUTE POST: MENYIMPAN PENGAJUAN SURAT ---
-        Route::post('/pengajuan-surat', [PengajuanSuratController::class, 'store'])->name('pengajuan.store');
+        // --- ROUTE POST: MENYIMPAN PENGAJUAN SURAT (MODULAR) ---
+        // Route untuk Surat Keterangan Mahasiswa Aktif
+        Route::post('/pengajuan-surat/aktif', [SuratKeteranganAktifController::class, 'store'])
+            ->name('pengajuan.aktif.store');
+
+        // Route untuk Surat Pengantar Magang/KP
+        Route::post('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'store'])
+            ->name('pengajuan.magang.store');
 
         // Rute lainnya
         Route::get('/riwayat', function () {

@@ -48,7 +48,7 @@
     </div>
     <div class="card-body">
         
-        <form method="POST" action="{{ route('mahasiswa.pengajuan.store') }}" enctype="multipart/form-data">
+        <form method="POST" action="" id="formPengajuan" enctype="multipart/form-data">
             @csrf {{-- Wajib untuk keamanan Laravel --}}
 
             {{-- Pilihan Jenis Surat (The "Trigger") --}}
@@ -60,7 +60,7 @@
                     <option selected disabled value="">-- Silakan pilih jenis surat --</option>
                     @foreach ($jenis_surats as $surat)
                         {{-- Value-nya adalah ID dari database, misal '3' --}}
-                        <option value="{{ $surat->Id_Jenis_Surat }}">{{ $surat->Nama_Surat }}</option>
+                        <option value="{{ $surat->Id_Jenis_Surat }}" data-nama="{{ $surat->Nama_Surat }}">{{ $surat->Nama_Surat }}</option>
                     @endforeach
                 </select>
             </div>
@@ -202,14 +202,18 @@
         
         const jenisSuratSelect = document.getElementById('jenisSurat');
         const dynamicForms = document.querySelectorAll('.dynamic-form');
+        const formPengajuan = document.getElementById('formPengajuan');
 
-        // --- PENTING: PETA ID DARI DATABASE KE ID FORM ---
-        // Sesuaikan ID ini ('3', '6') dengan ID di tabel 'Jenis_Surat' Anda
+        // --- PENTING: PETA ID DARI DATABASE KE ID FORM & ROUTE ---
         const formIdMap = {
-            '3': 'form-surat-aktif',  // ID 3 = 'Surat Keterangan Aktif Kuliah'
-            '6': 'form-surat-magang', // ID 6 = 'Surat Pengantar Penelitian' (kita asumsikan ini untuk magang)
-            // '5': 'form-surat-rekomendasi', // Jika Anda membuatnya
-            // '...': '...' 
+            '3': {
+                formId: 'form-surat-aktif',
+                route: "{{ route('mahasiswa.pengajuan.aktif.store') }}"
+            },
+            '6': {
+                formId: 'form-surat-magang',
+                route: "{{ route('mahasiswa.pengajuan.magang.store') }}"
+            }
         };
         // --- Akhir Peta ---
 
@@ -233,10 +237,13 @@
             hideAllDynamicForms();
 
             const selectedValue = this.value; // Ini adalah ID, misal '3'
-            const targetFormId = formIdMap[selectedValue]; // Cari ID form, misal 'form-surat-aktif'
+            const formConfig = formIdMap[selectedValue];
             
-            if (targetFormId) {
-                const targetForm = document.getElementById(targetFormId);
+            if (formConfig) {
+                // Set action form sesuai jenis surat
+                formPengajuan.action = formConfig.route;
+                
+                const targetForm = document.getElementById(formConfig.formId);
                 if (targetForm) {
                     targetForm.style.display = 'block';
                     
@@ -248,6 +255,10 @@
                         }
                     });
                 }
+            } else {
+                // Jika jenis surat tidak ada mapping, kosongkan action
+                formPengajuan.action = '';
+                alert('Jenis surat ini belum tersedia. Silakan pilih jenis surat lain.');
             }
         });
 
