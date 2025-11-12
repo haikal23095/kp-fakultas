@@ -103,7 +103,50 @@ class AuthController extends Controller
     // Dashboard untuk setiap role
     public function dashboardAdmin()
     {
-        return view('dashboard.admin');
+        // Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
+        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai']);
+        $prodiId = $user->dosen?->Id_Prodi ?? $user->mahasiswa?->Id_Prodi ?? $user->pegawai?->Id_Prodi;
+
+        // Base query dengan filter prodi (filter berdasarkan PEMBERI tugas = yang mengajukan)
+        $baseQuery = function () use ($prodiId) {
+            return \App\Models\TugasSurat::query()
+                ->where(function ($q) use ($prodiId) {
+                    $q->whereHas('pemberiTugas.mahasiswa', function ($subQ) use ($prodiId) {
+                        $subQ->where('Id_Prodi', $prodiId);
+                    })
+                        ->orWhereHas('pemberiTugas.dosen', function ($subQ) use ($prodiId) {
+                            $subQ->where('Id_Prodi', $prodiId);
+                        })
+                        ->orWhereHas('pemberiTugas.pegawai', function ($subQ) use ($prodiId) {
+                            $subQ->where('Id_Prodi', $prodiId);
+                        });
+                });
+        };
+
+        // Ambil statistik surat berdasarkan status dengan filter prodi
+        $permohonanBaru = $baseQuery()->whereIn('Status', ['baru', 'Diterima Admin'])->count();
+        $menungguTTE = $baseQuery()->whereIn('Status', ['Disetujui Dekan', 'Menunggu TTE'])->count();
+        $suratSelesaiBulanIni = $baseQuery()->where('Status', 'Selesai')
+            ->whereMonth('Tanggal_Diselesaikan', date('m'))
+            ->whereYear('Tanggal_Diselesaikan', date('Y'))
+            ->count();
+        $totalArsip = $baseQuery()->where('Status', 'Selesai')->count();
+
+        // Ambil antrian permohonan terbaru (5 terakhir) dengan filter prodi
+        $antrianSurat = $baseQuery()
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai', 'jenisSurat'])
+            ->whereIn('Status', ['baru', 'Diterima Admin', 'Diproses Admin'])
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('dashboard.admin', compact(
+            'permohonanBaru',
+            'menungguTTE',
+            'suratSelesaiBulanIni',
+            'totalArsip',
+            'antrianSurat'
+        ));
     }
 
     public function dashboardDekan()
