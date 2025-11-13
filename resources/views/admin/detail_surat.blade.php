@@ -5,6 +5,12 @@
 @section('content')
 @php $status = trim(optional($surat)->Status ?? ''); @endphp
 
+<div class="mb-3">
+    <a href="{{ route('admin.surat.manage') }}" class="btn btn-outline-secondary btn-sm">
+        <i class="fa fa-arrow-left me-1"></i> Kembali ke Manajemen Surat
+    </a>
+</div>
+
 <div class="card mb-4 shadow-sm">
 	<div class="card-body d-flex align-items-center justify-content-between">
 		<div>

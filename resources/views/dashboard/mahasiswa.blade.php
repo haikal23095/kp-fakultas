@@ -35,7 +35,7 @@
                 </div>
                 <div class="flex-grow-1">
                     <p class="text-muted mb-1">Menunggu Proses</p>
-                    <h4 class="fw-bold mb-0">1</h4>
+                    <h4 class="fw-bold mb-0">{{ $menungguProses ?? 0 }}</h4>
                 </div>
             </div>
         </div>
@@ -51,7 +51,7 @@
                 </div>
                 <div class="flex-grow-1">
                     <p class="text-muted mb-1">Selesai & Dapat Diunduh</p>
-                    <h4 class="fw-bold mb-0">3</h4>
+                    <h4 class="fw-bold mb-0">{{ $selesai ?? 0 }}</h4>
                 </div>
             </div>
         </div>
@@ -67,7 +67,7 @@
                 </div>
                 <div class="flex-grow-1">
                     <p class="text-muted mb-1">Total Pengajuan</p>
-                    <h4 class="fw-bold mb-0">4</h4>
+                    <h4 class="fw-bold mb-0">{{ $totalPengajuan ?? 0 }}</h4>
                 </div>
             </div>
         </div>
@@ -92,28 +92,39 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @forelse($riwayatTerkini ?? [] as $surat)
+                    @php
+                        $status = strtolower(trim($surat->Status ?? ''));
+                        $badgeClass = match($status) {
+                            'selesai' => 'bg-success',
+                            'baru' => 'bg-warning text-dark',
+                            'proses' => 'bg-info',
+                            'terlambat' => 'bg-danger',
+                            'ditolak' => 'bg-danger',
+                            'disetujui' => 'bg-primary',
+                            default => 'bg-secondary'
+                        };
+                        $statusText = ucfirst($surat->Status ?? '-');
+                    @endphp
                     <tr>
-                        <td>Surat Keterangan Aktif Kuliah</td>
-                        <td>10 Okt 2025</td>
-                        <td><span class="badge bg-success">Selesai</span></td>
+                        <td>{{ $surat->jenisSurat->Nama_Surat ?? 'Tidak Diketahui' }}</td>
+                        <td>{{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') }}</td>
+                        <td><span class="badge {{ $badgeClass }}">{{ $statusText }}</span></td>
                         <td class="text-center">
-                            <a href="#" class="btn btn-primary btn-sm">
-                                <i class="fas fa-download"></i>
-                            </a>
+                            @if($status === 'selesai' && $surat->File_Surat)
+                                <a href="{{ asset('storage/' . $surat->File_Surat) }}" class="btn btn-primary btn-sm" download>
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            @else
+                                -
+                            @endif
                         </td>
                     </tr>
+                    @empty
                     <tr>
-                        <td>Surat Keterangan Tidak Menerima Beasiswa</td>
-                        <td>08 Okt 2025</td>
-                        <td><span class="badge bg-info">Ditandatangani</span></td>
-                        <td class="text-center">-</td>
+                        <td colspan="4" class="text-center text-muted">Belum ada riwayat pengajuan</td>
                     </tr>
-                     <tr>
-                        <td>Surat Pengantar Kerja Praktik</td>
-                        <td>05 Okt 2025</td>
-                        <td><span class="badge bg-warning text-dark">Diproses Admin</span></td>
-                         <td class="text-center">-</td>
-                    </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>

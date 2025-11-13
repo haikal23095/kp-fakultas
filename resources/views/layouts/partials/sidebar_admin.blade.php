@@ -12,16 +12,11 @@
             </a>
         </li>
         <li class="nav-heading mt-3 mb-1 text-muted small">ADMIN MENU</li>
-        <!-- <li>
-            <a href="{{ route('admin.users.index') }}" class="nav-link text-white {{ request()->routeIs('admin.users.index') ? 'active' : '' }}">
-                <i class="fas fa-users-cog me-2"></i>
-                Kelola Pengguna
-            </a>
-        </li> -->
-        <li>
-            <a href="{{ route('admin.surat.manage') }}" class="nav-link text-white {{ request()->routeIs('admin.surat.manage') ? 'active' : '' }}">
-                <i class="fas fa-envelope-open-text me-2"></i>
-                Manajemen Surat
+        <li class="nav-item">
+            <a href="{{ route('admin.surat.manage') }}" 
+            class="nav-link {{ request()->routeIs('admin.surat.manage') || request()->routeIs('admin.surat.detail') ? 'active' : '' }}">
+                <i class="fa fa-envelope me-2"></i>
+                <span>Manajemen Surat</span>
             </a>
         </li>
         <li>

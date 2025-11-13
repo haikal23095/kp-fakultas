@@ -33,7 +33,7 @@ class DetailSuratController extends Controller
         $tugasSurat = TugasSurat::with($with)->find($id);
 
         // Jika data tidak ditemukan, return 404
-        if (! $tugasSurat) {
+        if (!$tugasSurat) {
             abort(404);
         }
 
@@ -55,6 +55,7 @@ class DetailSuratController extends Controller
         return view('admin.detail_surat', [
             'surat' => $tugasSurat,
             'detailPengaju' => $detailPengaju,
+            'activeMenu' => 'manajemen-surat' // ← Tambahkan ini untuk highlight menu
         ]);
     }
 
@@ -71,7 +72,7 @@ class DetailSuratController extends Controller
         // Path disimpan di kolom 'dokumen_pendukung'
         $path = $tugasSurat->dokumen_pendukung;
 
-        if (! $path) {
+        if (!$path) {
             return response('Dokumen Pendukung tidak ditemukan.', 404);
         }
 
@@ -92,7 +93,7 @@ class DetailSuratController extends Controller
     public function processDraft(HttpRequest $request, $id)
     {
         $user = Auth::user();
-        if (! $user || $user->Id_Role != 1) {
+        if (!$user || $user->Id_Role != 1) {
             abort(403);
         }
 
@@ -113,7 +114,7 @@ class DetailSuratController extends Controller
             $tugas->save();
 
             return redirect()->route('admin.surat.detail', $tugas->Id_Tugas_Surat)
-                             ->with('success', 'Tugas telah diajukan ke Dekan.');
+                ->with('success', 'Tugas telah diajukan ke Dekan.');
         }
 
         // Validasi upload draft final (wajib)
@@ -122,7 +123,7 @@ class DetailSuratController extends Controller
         ]);
 
         $file = $request->file('draft_surat');
-        if (! $file || ! $file->isValid()) {
+        if (!$file || !$file->isValid()) {
             return redirect()->back()->with('error', 'File tidak valid atau tidak ditemukan.');
         }
 
@@ -131,7 +132,7 @@ class DetailSuratController extends Controller
 
         // Perbarui/masukkan pada tabel File_Arsip
         $fileArsip = FileArsip::where('Id_Tugas_Surat', $tugas->Id_Tugas_Surat)->first();
-        if (! $fileArsip) {
+        if (!$fileArsip) {
             $fileArsip = new FileArsip();
             $fileArsip->Id_Tugas_Surat = $tugas->Id_Tugas_Surat;
         }
@@ -160,6 +161,6 @@ class DetailSuratController extends Controller
         $tugas->save();
 
         return redirect()->route('admin.surat.detail', $tugas->Id_Tugas_Surat)
-                         ->with('success', 'Draft final berhasil diupload dan diajukan ke Dekan.');
+            ->with('success', 'Draft final berhasil diupload dan diajukan ke Dekan.');
     }
 }

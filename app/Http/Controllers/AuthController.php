@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
+use App\Models\TugasSurat;
 
 class AuthController extends Controller
 {
@@ -171,7 +172,34 @@ class AuthController extends Controller
 
     public function dashboardMahasiswa()
     {
-        return view('dashboard.mahasiswa');
+        $user = Auth::user();
+
+        // Ambil semua pengajuan surat mahasiswa dari tabel Tugas_Surat
+        $totalPengajuan = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->count();
+
+        // Menunggu Proses (status = 'baru')
+        $menungguProses = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->whereRaw("LOWER(TRIM(Status)) = 'baru'")
+            ->count();
+
+        // Selesai & Dapat Diunduh (status = 'Selesai')
+        $selesai = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->whereRaw("LOWER(TRIM(Status)) = 'selesai'")
+            ->count();
+
+        // Ambil 5 riwayat pengajuan terkini
+        $riwayatTerkini = TugasSurat::with(['jenisSurat'])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('dashboard.mahasiswa', [
+            'totalPengajuan' => $totalPengajuan,
+            'menungguProses' => $menungguProses,
+            'selesai' => $selesai,
+            'riwayatTerkini' => $riwayatTerkini
+        ]);
     }
 
     public function dashboardDefault()

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class TugasSurat extends Model
 {
@@ -42,10 +43,6 @@ class TugasSurat extends Model
         'Tanggal_Diselesaikan' => 'date',
     ];
 
-    // ===================================================================
-    //  FUNGSI RELASI (SUDAH DIPERBAIKI)
-    // ===================================================================
-
     /**
      * Relasi ke PEMBERI TUGAS (Pengaju).
      * Menghubungkan 'Id_Pemberi_Tugas_Surat' ke 'Id_User' di tabel Users.
@@ -69,9 +66,74 @@ class TugasSurat extends Model
      */
     public function jenisSurat()
     {
-        // ASUMSI: Primary Key di tabel JenisSurat adalah 'Id_Jenis_Surat'
-        // Jika PK-nya 'id', ganti parameter ketiga menjadi 'id'
         return $this->belongsTo(JenisSurat::class, 'Id_Jenis_Surat', 'Id_Jenis_Surat');
+    }
+
+    /**
+     * Update status tugas yang melewati tenggat menjadi 'Terlambat'
+     */
+    public static function updateStatusTerlambat()
+    {
+        return self::whereNotIn('Status', ['Selesai', 'Terlambat'])
+            ->whereDate('Tanggal_Tenggat_Tugas_Surat', '<', Carbon::now()->toDateString())
+            ->update(['Status' => 'Terlambat']);
+    }
+
+    /**
+     * Ambil daftar tugas berdasarkan prodi
+     * Filter berdasarkan PEMBERI tugas (yang mengajukan surat)
+     */
+    public static function getByProdi($prodiId)
+    {
+        return self::with([
+            'pemberiTugas.role',
+            'pemberiTugas.mahasiswa',
+            'pemberiTugas.dosen',
+            'pemberiTugas.pegawai',
+            'jenisSurat'
+        ])
+            ->where(function ($q) use ($prodiId) {
+                // Filter surat yang diajukan oleh mahasiswa dari prodi yang sama
+                $q->whereHas('pemberiTugas.mahasiswa', function ($subQ) use ($prodiId) {
+                    $subQ->where('Id_Prodi', $prodiId);
+                })
+                    // ATAU filter surat yang diajukan oleh dosen dari prodi yang sama
+                    ->orWhereHas('pemberiTugas.dosen', function ($subQ) use ($prodiId) {
+                    $subQ->where('Id_Prodi', $prodiId);
+                })
+                    // ATAU filter surat yang diajukan oleh pegawai dari prodi yang sama
+                    ->orWhereHas('pemberiTugas.pegawai', function ($subQ) use ($prodiId) {
+                    $subQ->where('Id_Prodi', $prodiId);
+                });
+            })
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+    }
+
+    /**
+     * Update status tugas berdasarkan ID
+     */
+    public static function updateStatusById($id, $status)
+    {
+        $tugas = self::find($id);
+
+        if (!$tugas) {
+            return null;
+        }
+
+        $tugas->Status = $status;
+
+        // Jika status selesai, set tanggal diselesaikan
+        if (strtolower($status) === 'selesai') {
+            $tugas->Tanggal_Diselesaikan = Carbon::now();
+        } else {
+            // Jika status bukan selesai, kosongkan tanggal diselesaikan
+            $tugas->Tanggal_Diselesaikan = null;
+        }
+
+        $tugas->save();
+
+        return $tugas;
     }
 
     /**
@@ -87,6 +149,15 @@ class TugasSurat extends Model
     /**
      * Relasi ke FileArsip (one-to-one)
      */
+
+    public static function getArsipSelesai()
+    {
+        return self::with(['pemberiTugas.role', 'jenisSurat'])
+            ->whereRaw("LOWER(TRIM(Status)) = 'selesai'")
+            ->orderBy('Tanggal_Diselesaikan', 'desc')
+            ->get();
+    }
+    
     public function fileArsip()
     {
         return $this->hasOne(FileArsip::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');

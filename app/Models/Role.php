@@ -8,21 +8,24 @@ use Illuminate\Database\Eloquent\Model;
 class Role extends Model
 {
     use HasFactory;
-
-    /**
-     * PENTING: Beri tahu Laravel nama tabelnya adalah 'Roles' (huruf besar R)
-     */
     protected $table = 'Roles';
-
-    /**
-     * PENTING: Beri tahu Laravel Primary Key-nya adalah 'Id_Role'
-     */
     protected $primaryKey = 'Id_Role';
 
-    /**
-     * Matikan timestamps jika Anda tidak punya created_at/updated_at
-     */
     public $timestamps = false;
+    protected $fillable = ['Id_Role', 'Name_Role'];
+
+    public function users()
+    {
+        return $this->hasMany(User::class, 'Id_Role', 'Id_Role');
+    }
+
+    /**
+     * Ambil semua role yang diurutkan berdasarkan nama
+     */
+    public static function getAllOrdered()
+    {
+        return self::orderBy('Name_Role')->get();
+    }
 }
 
 
