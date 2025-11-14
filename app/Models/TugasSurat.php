@@ -17,27 +17,21 @@ class TugasSurat extends Model
     protected $keyType = 'int';
 
     protected $fillable = [
+        'Id_Pemberi_Tugas_Surat',
         'Id_Penerima_Tugas_Surat',
         'Id_Jenis_Surat',
+        'Id_Jenis_Pekerjaan',
         'Judul_Tugas_Surat',
-        'Deskripsi_Tugas_Surat',
-        'data_spesifik',
         'Status',
         'Tanggal_Diberikan_Tugas_Surat',
-        'Id_Pemberi_Tugas_Surat',
-        'Id_Jenis_Pekerjaan',
-        'dokumen_pendukung',
-        'File_Surat',
-        'Nomor_Surat',
         'Tanggal_Tenggat_Tugas_Surat',
         'Tanggal_Diselesaikan',
     ];
 
     /**
-     * Mengubah kolom JSON dan Tanggal secara otomatis.
+     * Mengubah kolom Tanggal secara otomatis.
      */
     protected $casts = [
-        'data_spesifik' => 'array',
         'Tanggal_Diberikan_Tugas_Surat' => 'date',
         'Tanggal_Tenggat_Tugas_Surat' => 'date',
         'Tanggal_Diselesaikan' => 'date',
@@ -157,9 +151,17 @@ class TugasSurat extends Model
             ->orderBy('Tanggal_Diselesaikan', 'desc')
             ->get();
     }
-    
+
     public function fileArsip()
     {
         return $this->hasOne(FileArsip::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
+     * Relasi ke SuratMagang (one-to-one)
+     */
+    public function suratMagang()
+    {
+        return $this->hasOne(SuratMagang::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
     }
 }

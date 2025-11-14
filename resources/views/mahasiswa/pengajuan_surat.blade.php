@@ -78,9 +78,53 @@
         font-style: italic;
     }
     #preview-ttd-image {
-        max-height: 60px; /* Batas tinggi ttd */
+        max-height: 80px; /* Batas tinggi ttd */
+        max-width: 200px;
         display: none; /* Sembunyi sampai ada gambar */
-        margin: 5px 0;
+        margin: 10px auto;
+    }
+    
+    /* Style untuk autocomplete */
+    .autocomplete-results {
+        position: absolute;
+        background: white;
+        border: 1px solid #ddd;
+        max-height: 200px;
+        overflow-y: auto;
+        width: calc(100% - 30px);
+        z-index: 1000;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .autocomplete-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+    }
+    .autocomplete-item:hover {
+        background-color: #f0f8ff;
+    }
+    .autocomplete-item strong {
+        color: #333;
+    }
+    .autocomplete-item small {
+        color: #666;
+    }
+    
+    /* Style untuk card mahasiswa */
+    .mahasiswa-item {
+        border-left: 3px solid #4e73df;
+        position: relative;
+    }
+    
+    /* Style untuk preview mahasiswa list */
+    .preview-mahasiswa-item {
+        margin-bottom: 8px;
+    }
+    .preview-mahasiswa-item:last-child {
+        margin-bottom: 0;
+    }
+    #preview-mahasiswa-list .preview-mhs-nama {
+        font-weight: normal;
     }
 </style>
 @endpush
@@ -143,9 +187,7 @@
 
             <hr>
 
-            {{-- ====================================================== --}}
             {{-- FORM SPESIFIK: SURAT KETERANGAN MAHASISWA AKTIF --}}
-            {{-- ====================================================== --}}
             <div id="form-surat-aktif" class="dynamic-form" style="display: none;">
                 <h5 class="mb-3">Formulir Surat Keterangan Mahasiswa Aktif</h5>
                 
@@ -208,26 +250,109 @@
                 
                 <h5 class="mb-3">Formulir Surat Pengantar Magang/KP</h5>
         
-                {{-- Data Mahasiswa (Sekarang terisi otomatis dari Auth) --}}
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label"><strong>Nama Mahasiswa</strong></label>
-                        <input type="text" class="form-control" value="{{ $mahasiswa->Nama_Mahasiswa ?? Auth::user()->Name_User }}" readonly 
-                               id="input-nama-magang"> {{-- ID untuk JS --}}
+                {{-- Container untuk daftar mahasiswa yang ikut magang --}}
+                <div id="mahasiswa-container">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="mb-0">Data Mahasiswa</h6>
+                        <button type="button" class="btn btn-success btn-sm" id="btn-tambah-mahasiswa">
+                            <i class="fas fa-plus"></i> Tambah Mahasiswa
+                        </button>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label class="form-label"><strong>NPM/NIM</strong></label>
-                        <input type="text" class="form-control" value="{{ $mahasiswa->NIM ?? 'NIM Tidak Ditemukan' }}" readonly 
-                               id="input-nim-magang"> {{-- ID untuk JS --}}
+
+                    {{-- Item mahasiswa pertama (yang login) - tidak bisa dihapus --}}
+                    <div class="mahasiswa-item card mb-3 p-3" data-index="0">
+                        <div class="row">
+                            <div class="col-md-5 mb-3">
+                                <label class="form-label"><strong>Nama Mahasiswa</strong></label>
+                                <input type="text" class="form-control mahasiswa-nama" 
+                                       name="mahasiswa[0][nama]"
+                                       value="{{ $mahasiswa->Nama_Mahasiswa ?? Auth::user()->Name_User }}" 
+                                       readonly
+                                       data-index="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><strong>NPM/NIM</strong></label>
+                                <input type="text" class="form-control mahasiswa-nim" 
+                                       name="mahasiswa[0][nim]"
+                                       value="{{ $mahasiswa->NIM ?? 'NIM Tidak Ditemukan' }}" 
+                                       readonly
+                                       data-index="0">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label"><strong>Semester</strong></label>
+                                <select class="form-select mahasiswa-semester" name="mahasiswa[0][semester]" required data-index="0">
+                                    <option value="">--Pilih--</option>
+                                    @for($i = 1; $i <= 14; $i++)
+                                        <option value="{{ $i }}" {{ $i == 6 ? 'selected' : '' }}>{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label"><strong>Jurusan</strong></label>
+                                <input type="text" class="form-control mahasiswa-jurusan" 
+                                       name="mahasiswa[0][jurusan]"
+                                       value="{{ $prodi->Nama_Prodi ?? 'Jurusan Tidak Ditemukan' }}" 
+                                       readonly
+                                       data-index="0">
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label"><strong>Jurusan</strong></label>
-                    <input type="text" class="form-control" value="{{ $prodi->Nama_Prodi ?? 'Jurusan Tidak Ditemukan' }}" readonly 
-                           id="input-jurusan-magang"> {{-- ID untuk JS --}}
                 </div>
 
-                {{-- Input Dosen (Sekarang menjadi Dropdown dari tabel 'Dosen') --}}
+                {{-- Hidden template untuk mahasiswa tambahan --}}
+                <template id="mahasiswa-template">
+                    <div class="mahasiswa-item card mb-3 p-3" data-index="">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h6 class="mb-0">Mahasiswa #<span class="item-number"></span></h6>
+                            <button type="button" class="btn btn-danger btn-sm btn-hapus-mahasiswa">
+                                <i class="fas fa-times"></i> Hapus
+                            </button>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-5 mb-3">
+                                <label class="form-label"><strong>Nama Mahasiswa</strong></label>
+                                <input type="text" class="form-control mahasiswa-nama autocomplete-mahasiswa" 
+                                       name="" 
+                                       placeholder="Ketik nama atau NIM..."
+                                       autocomplete="off"
+                                       data-index="">
+                                <div class="autocomplete-results" style="display:none;"></div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><strong>NPM/NIM</strong></label>
+                                <input type="text" class="form-control mahasiswa-nim" 
+                                       name=""
+                                       placeholder="NIM otomatis terisi"
+                                       readonly
+                                       data-index="">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label"><strong>Semester</strong></label>
+                                <select class="form-select mahasiswa-semester" name="" required data-index="">
+                                    <option value="">--Pilih--</option>
+                                    @for($i = 1; $i <= 14; $i++)
+                                        <option value="{{ $i }}">{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label"><strong>Jurusan</strong></label>
+                                <input type="text" class="form-control mahasiswa-jurusan" 
+                                       name=""
+                                       placeholder="Jurusan otomatis terisi"
+                                       readonly
+                                       data-index="">
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <hr>
+
                 <div class="mb-3">
                     <label for="dospem1" class="form-label"><strong>Dosen Pembimbing 1</strong></label>
                     <select class="form-select" name="data_spesifik[dosen_pembimbing_1]" required 
@@ -300,7 +425,13 @@
                 <div class="mb-4">
                     <label for="file_tanda_tangan" class="form-label"><strong>Unggah Foto Tanda Tangan</strong></label>
                     <input class="form-control" type="file" name="file_tanda_tangan" id="input-ttd-magang" required accept="image/png, image/jpeg">
-                    <div class="form-text">Wajib diunggah. Tanda tangan di atas kertas putih. Format: PNG, JPG (Maks. 1MB).</div>
+                    <div class="form-text">Wajib diunggah. Tanda tangan di atas kertas putih. Format: PNG, JPG (Maks. 1MB). Background akan dihapus otomatis.</div>
+                    <div id="ttd-processing" style="display:none;" class="mt-2">
+                        <div class="spinner-border spinner-border-sm text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <span class="ms-2">Memproses gambar...</span>
+                    </div>
                 </div>
 
                 {{-- PREVIEW DITARUH DI BAWAH FORM --}}
@@ -326,15 +457,16 @@
 
                         {{-- Tabel Data Pratinjau --}}
                         <table class="preview-table">
+                            {{-- Daftar Mahasiswa (Dinamis) --}}
                             <tr>
-                                <td>Nama</td>
-                                <td>:</td>
-                                <td id="preview-nama-magang"><span class="preview-placeholder">[Nama Mahasiswa]</span></td>
-                            </tr>
-                            <tr>
-                                <td>NIM</td>
-                                <td>:</td>
-                                <td id="preview-nim-magang"><span class="preview-placeholder">[NIM]</span></td>
+                                <td style="vertical-align: top;">Nama</td>
+                                <td style="vertical-align: top;">:</td>
+                                <td id="preview-mahasiswa-list">
+                                    <div class="preview-mahasiswa-item" data-index="0">
+                                        <strong>1. <span class="preview-mhs-nama"><span class="preview-placeholder">[Nama Mahasiswa]</span></span></strong><br>
+                                        <small>NIM: <span class="preview-mhs-nim"><span class="preview-placeholder">[NIM]</span></span> | Semester: <span class="preview-mhs-semester"><span class="preview-placeholder">-</span></span></small>
+                                    </div>
+                                </td>
                             </tr>
                             <tr>
                                 <td>Jurusan</td>
@@ -404,10 +536,10 @@
                                 <div class="col-6 text-center">
                                     <p class="mb-1">Bangkalan, <span id="preview-tanggal-magang"></span></p>
                                     <p class="mb-1">Pemohon</p>
-                                    {{-- [BARU] Tempat untuk gambar TTD --}}
-                                    <img src="" alt="Tanda Tangan" id="preview-ttd-image">
+                                    {{-- [BARU] Tempat untuk gambar TTD - diantara nama dan NIM --}}
+                                    <img src="" alt="Tanda Tangan" id="preview-ttd-image" style="display:none;">
                                     <p class="mb-0">( <span id="preview-nama-magang-ttd"><span class="preview-placeholder">[Nama Mahasiswa]</span></span> )</p>
-                                    <p>NIM. <span id="preview-nim-magang-ttd"><span class="preview-placeholder">[NIM]</span></span></p>
+                                    <p class="mt-1">NIM. <span id="preview-nim-magang-ttd"><span class="preview-placeholder">[NIM]</span></span></p>
                                 </div>
                             </div>
                         </div>
@@ -512,49 +644,66 @@
         hideAllDynamicForms();
 
         // ====================================================== //
-        // === SCRIPT KHUSUS UNTUK PREVIEW SURAT MAGANG === //
+        // === SCRIPT KHUSUS UNTUK SURAT MAGANG === //
         // ====================================================== //
+        
+        let mahasiswaIndex = 1; // Mulai dari 1 karena 0 sudah ada (mahasiswa yang login)
+        let autocompleteTimeout = null;
 
-        // Ambil elemen input
-        const inputNama = document.getElementById('input-nama-magang');
-        const inputNIM = document.getElementById('input-nim-magang');
-        const inputJurusan = document.getElementById('input-jurusan-magang');
-        const inputDospem1 = document.getElementById('input-dospem1-magang');
-        const inputInstansi = document.getElementById('input-instansi-magang');
-        const inputJudul = document.getElementById('input-judul-magang'); // [BARU]
-        const inputMulai = document.getElementById('input-mulai-magang');
-        const inputSelesai = document.getElementById('input-selesai-magang');
-        const inputTTD = document.getElementById('input-ttd-magang'); // [BARU]
+        // Fungsi untuk inisialisasi form magang
+        function initMagangPreview() {
+            // Set tanggal hari ini di preview
+            const previewTanggal = document.getElementById('preview-tanggal-magang');
+            if (previewTanggal) {
+                previewTanggal.textContent = formatTanggal(new Date().toISOString().split('T')[0]);
+            }
 
-        // Ambil elemen input dosen 2
-        const inputDospem2 = document.getElementById('input-dospem2-magang');
+            // Tambah event listener untuk tombol tambah mahasiswa
+            document.getElementById('btn-tambah-mahasiswa').addEventListener('click', tambahMahasiswa);
 
-        // Ambil elemen preview dosen 2
-        const previewDospem2 = document.getElementById('preview-dospem2-magang');
-        const previewDospem2Ttd = document.getElementById('preview-dospem2-magang-ttd');
+            // Event listener untuk mahasiswa pertama (yang sudah ada) - dengan multiple approach
+            const firstMhsNama = document.querySelector('.mahasiswa-nama[data-index="0"]');
+            const firstMhsNim = document.querySelector('.mahasiswa-nim[data-index="0"]');
+            const firstMhsSemester = document.querySelector('.mahasiswa-semester[data-index="0"]');
+            
+            if (firstMhsNama) {
+                firstMhsNama.addEventListener('input', updateMahasiswaPreviewList);
+                firstMhsNama.addEventListener('change', updateMahasiswaPreviewList);
+            }
+            if (firstMhsNim) {
+                firstMhsNim.addEventListener('input', updateMahasiswaPreviewList);
+                firstMhsNim.addEventListener('change', updateMahasiswaPreviewList);
+            }
+            if (firstMhsSemester) {
+                firstMhsSemester.addEventListener('change', updateMahasiswaPreviewList);
+                firstMhsSemester.addEventListener('input', updateMahasiswaPreviewList);
+            }
 
-        // Ambil elemen preview
-        const previewNama = document.getElementById('preview-nama-magang');
-        const previewNIM = document.getElementById('preview-nim-magang');
-        const previewJurusan = document.getElementById('preview-jurusan-magang');
-        const previewDospem1 = document.getElementById('preview-dospem1-magang');
-        const previewInstansi = document.getElementById('preview-instansi-magang');
-        const previewJudul = document.getElementById('preview-judul-magang'); // [BARU]
-        const previewJangkaWaktu = document.getElementById('preview-jangka-waktu-magang');
-        const previewTanggal = document.getElementById('preview-tanggal-magang');
-        const previewNamaTtd = document.getElementById('preview-nama-magang-ttd');
-        const previewNIMTtd = document.getElementById('preview-nim-magang-ttd');
-        const previewDospem1Ttd = document.getElementById('preview-dospem1-magang-ttd');
-        const previewTTDImage = document.getElementById('preview-ttd-image'); // [BARU]
+            // Event delegation untuk semua input mahasiswa (termasuk yang ditambah nanti)
+            document.addEventListener('input', function(e) {
+                if (e.target.matches('.mahasiswa-nama, .mahasiswa-nim, .mahasiswa-semester')) {
+                    updateMahasiswaPreviewList();
+                }
+            });
+            
+            document.addEventListener('change', function(e) {
+                if (e.target.matches('.mahasiswa-semester')) {
+                    updateMahasiswaPreviewList();
+                }
+            });
 
-        // Placeholder
-        const phNama = '<span class="preview-placeholder">[Nama Mahasiswa]</span>';
-        const phNIM = '<span class="preview-placeholder">[NIM]</span>';
-        const phJurusan = '<span class="preview-placeholder">[Jurusan]</span>';
-        const phDospem = '<span class="preview-placeholder">[Pilih Dosen]</span>';
-        const phInstansi = '<span class="preview-placeholder">[Nama Instansi]</span>';
-        const phJudul = '<span class="preview-placeholder">[Judul Penelitian]</span>';
-        const phTanggal = '<span class="preview-placeholder">[Tanggal]</span>';
+            // Update preview dari input yang sudah ada
+            setupPreviewListeners();
+            
+            // Initial update preview mahasiswa - dipanggil multiple kali untuk memastikan
+            updateMahasiswaPreviewList();
+            setTimeout(() => {
+                updateMahasiswaPreviewList();
+            }, 100);
+            setTimeout(() => {
+                updateMahasiswaPreviewList();
+            }, 300);
+        }
 
         // Helper function to format date
         function formatTanggal(dateStr) {
@@ -564,84 +713,325 @@
             return date.toLocaleDateString('id-ID', options);
         }
 
+        // Setup listeners untuk update preview
+        function setupPreviewListeners() {
+            const inputInstansi = document.getElementById('input-instansi-magang');
+            const inputJudul = document.getElementById('input-judul-magang');
+            const inputDospem1 = document.getElementById('input-dospem1-magang');
+            const inputDospem2 = document.getElementById('input-dospem2-magang');
+            const inputMulai = document.getElementById('input-mulai-magang');
+            const inputSelesai = document.getElementById('input-selesai-magang');
+
+            if (inputInstansi) inputInstansi.addEventListener('input', updatePreview);
+            if (inputJudul) inputJudul.addEventListener('input', updatePreview);
+            if (inputDospem1) inputDospem1.addEventListener('change', updatePreview);
+            if (inputDospem2) inputDospem2.addEventListener('change', updatePreview);
+            if (inputMulai) inputMulai.addEventListener('change', updatePreview);
+            if (inputSelesai) inputSelesai.addEventListener('change', updatePreview);
+
+            // Event listener untuk upload TTD dengan background removal
+            const inputTTD = document.getElementById('input-ttd-magang');
+            if (inputTTD) {
+                inputTTD.addEventListener('change', handleTTDUpload);
+            }
+
+            // Initial preview
+            updatePreview();
+        }
+
         // Fungsi untuk update preview
         function updatePreview() {
-            // Update Teks Biasa
-            previewNama.innerHTML = inputNama.value || phNama;
-            previewNIM.innerHTML = inputNIM.value || phNIM;
-            previewJurusan.innerHTML = inputJurusan.value || phJurusan;
-            previewInstansi.innerHTML = inputInstansi.value || phInstansi;
-            previewJudul.innerHTML = inputJudul.value || phJudul; // [BARU]
-            
-            // Update Dropdown Dosen 1
-            previewDospem1.innerHTML = inputDospem1.value ? inputDospem1.value : phDospem;
+            const inputInstansi = document.getElementById('input-instansi-magang');
+            const inputJudul = document.getElementById('input-judul-magang');
+            const inputDospem1 = document.getElementById('input-dospem1-magang');
+            const inputDospem2 = document.getElementById('input-dospem2-magang');
+            const inputMulai = document.getElementById('input-mulai-magang');
+            const inputSelesai = document.getElementById('input-selesai-magang');
 
-            // [BARU] Update Dropdown Dosen 2 (opsional)
-            previewDospem2.innerHTML = inputDospem2.value ? inputDospem2.value : phDospem2;
+            const previewInstansi = document.getElementById('preview-instansi-magang');
+            const previewJudul = document.getElementById('preview-judul-magang');
+            const previewDospem1 = document.getElementById('preview-dospem1-magang');
+            const previewDospem2 = document.getElementById('preview-dospem2-magang');
+            const previewJangkaWaktu = document.getElementById('preview-jangka-waktu-magang');
+            const previewDospem1Ttd = document.getElementById('preview-dospem1-magang-ttd');
 
-            // Update Jangka Waktu
-            const mulai = formatTanggal(inputMulai.value);
-            const selesai = formatTanggal(inputSelesai.value);
-            if (mulai && selesai) {
-                previewJangkaWaktu.innerHTML = `${mulai} – ${selesai}`;
-            } else if (mulai) {
-                previewJangkaWaktu.innerHTML = `${mulai} – ...`;
-            } else {
-                previewJangkaWaktu.innerHTML = phTanggal;
+            if (previewInstansi) {
+                previewInstansi.innerHTML = inputInstansi?.value || '<span class="preview-placeholder">[Nama Instansi]</span>';
             }
-
-            // Update Tanda Tangan
-            previewNamaTtd.innerHTML = inputNama.value || phNama;
-            previewNIMTtd.innerHTML = inputNIM.value || phNIM;
-            previewDospem1Ttd.innerHTML = inputDospem1.value ? inputDospem1.value : phDospem;
-        }
-
-        // [BARU] Fungsi untuk pratinjau Tanda Tangan
-        function previewTandaTangan() {
-            const file = inputTTD.files[0];
-            if (file) {
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    previewTTDImage.src = e.target.result;
-                    previewTTDImage.style.display = 'block';
+            if (previewJudul) {
+                previewJudul.innerHTML = inputJudul?.value || '<span class="preview-placeholder">[Judul Penelitian]</span>';
+            }
+            if (previewDospem1) {
+                previewDospem1.innerHTML = inputDospem1?.value || '<span class="preview-placeholder">[Pilih Dosen]</span>';
+            }
+            if (previewDospem2) {
+                previewDospem2.innerHTML = inputDospem2?.value || '<span class="preview-placeholder">[Opsional]</span>';
+            }
+            if (previewDospem1Ttd) {
+                previewDospem1Ttd.innerHTML = inputDospem1?.value || '<span class="preview-placeholder">[Nama Dosen]</span>';
+            }
+            if (previewJangkaWaktu) {
+                const mulai = formatTanggal(inputMulai?.value);
+                const selesai = formatTanggal(inputSelesai?.value);
+                if (mulai && selesai) {
+                    previewJangkaWaktu.innerHTML = `${mulai} – ${selesai}`;
+                } else if (mulai) {
+                    previewJangkaWaktu.innerHTML = `${mulai} – ...`;
+                } else {
+                    previewJangkaWaktu.innerHTML = '<span class="preview-placeholder">[Tanggal]</span>';
                 }
-                
-                reader.readAsDataURL(file);
-            } else {
-                previewTTDImage.src = '';
-                previewTTDImage.style.display = 'none';
+            }
+
+            // Update daftar mahasiswa di preview
+            updateMahasiswaPreviewList();
+
+            // Update jurusan di preview (ambil dari mahasiswa pertama)
+            const firstMhsJurusan = document.querySelector('.mahasiswa-jurusan[data-index="0"]');
+            const previewJurusan = document.getElementById('preview-jurusan-magang');
+            if (previewJurusan && firstMhsJurusan) {
+                previewJurusan.innerHTML = firstMhsJurusan.value || '<span class="preview-placeholder">[Jurusan]</span>';
+            }
+
+            // Update nama dan NIM di bagian tanda tangan (mahasiswa pertama)
+            const firstMhsNama = document.querySelector('.mahasiswa-nama[data-index="0"]');
+            const firstMhsNim = document.querySelector('.mahasiswa-nim[data-index="0"]');
+            const previewNamaTtd = document.getElementById('preview-nama-magang-ttd');
+            const previewNIMTtd = document.getElementById('preview-nim-magang-ttd');
+            
+            if (previewNamaTtd && firstMhsNama) {
+                previewNamaTtd.innerHTML = firstMhsNama.value || '<span class="preview-placeholder">[Nama Mahasiswa]</span>';
+            }
+            if (previewNIMTtd && firstMhsNim) {
+                previewNIMTtd.innerHTML = firstMhsNim.value || '<span class="preview-placeholder">[NIM]</span>';
             }
         }
 
-        // Fungsi untuk inisialisasi dan pasang listener
-        function initMagangPreview() {
-            // Set tanggal hari ini
-            previewTanggal.textContent = formatTanggal(new Date().toISOString().split('T')[0]);
+        // Fungsi untuk update daftar mahasiswa di preview
+        function updateMahasiswaPreviewList() {
+            const previewList = document.getElementById('preview-mahasiswa-list');
+            if (!previewList) {
+                console.log('Preview list element not found');
+                return;
+            }
 
-            // Pasang listener ke input
-            inputInstansi.addEventListener('input', updatePreview);
-            inputJudul.addEventListener('input', updatePreview); // [BARU]
-            inputDospem1.addEventListener('change', updatePreview);
-            inputDospem2.addEventListener('change', updatePreview); // [BARU]
-            inputMulai.addEventListener('change', updatePreview);
-            inputSelesai.addEventListener('change', updatePreview);
-            inputTTD.addEventListener('change', previewTandaTangan); // [BARU]
+            previewList.innerHTML = '';
 
-            // Panggil sekali saat load untuk mengisi data readonly
-            updatePreview();
+            // Ambil semua mahasiswa item
+            const mahasiswaItems = document.querySelectorAll('.mahasiswa-item');
+            console.log('Found mahasiswa items:', mahasiswaItems.length);
             
-            // Reset gambar ttd jika form di-reset
-            const form = inputTTD.closest('form');
-            if (form) {
-                form.addEventListener('reset', () => {
-                    previewTTDImage.src = '';
-                    previewTTDImage.style.display = 'none';
-                    // Panggil updatePreview untuk reset placeholder
-                    // butuh timeout kecil agar reset-nya selesai dulu
-                    setTimeout(updatePreview, 0);
+            mahasiswaItems.forEach((item, index) => {
+                const dataIndex = item.getAttribute('data-index');
+                const namaInput = item.querySelector(`.mahasiswa-nama[data-index="${dataIndex}"]`);
+                const nimInput = item.querySelector(`.mahasiswa-nim[data-index="${dataIndex}"]`);
+                const semesterInput = item.querySelector(`.mahasiswa-semester[data-index="${dataIndex}"]`);
+                
+                const nama = namaInput?.value || '';
+                const nim = nimInput?.value || '';
+                const semester = semesterInput?.value || '';
+
+                console.log(`Mahasiswa ${index}:`, {nama, nim, semester, dataIndex});
+
+                const previewItem = document.createElement('div');
+                previewItem.className = 'preview-mahasiswa-item';
+                previewItem.setAttribute('data-preview-index', dataIndex);
+                
+                const namaDisplay = nama ? nama : '<span class="preview-placeholder">[Nama Mahasiswa]</span>';
+                const nimDisplay = nim ? nim : '<span class="preview-placeholder">[NIM]</span>';
+                const semesterDisplay = semester ? semester : '<span class="preview-placeholder">-</span>';
+                
+                previewItem.innerHTML = `
+                    <strong>${index + 1}. <span class="preview-mhs-nama">${namaDisplay}</span></strong><br>
+                    <small>NIM: <span class="preview-mhs-nim">${nimDisplay}</span> | Semester: <span class="preview-mhs-semester">${semesterDisplay}</span></small>
+                `;
+                
+                previewList.appendChild(previewItem);
+            });
+        }
+
+        // Fungsi tambah mahasiswa
+        function tambahMahasiswa() {
+            const container = document.getElementById('mahasiswa-container');
+            const template = document.getElementById('mahasiswa-template');
+            const clone = template.content.cloneNode(true);
+
+            // Update index
+            const item = clone.querySelector('.mahasiswa-item');
+            item.setAttribute('data-index', mahasiswaIndex);
+            
+            // Update nomor item
+            clone.querySelector('.item-number').textContent = mahasiswaIndex + 1;
+
+            // Update name attributes
+            clone.querySelector('.mahasiswa-nama').setAttribute('name', `mahasiswa[${mahasiswaIndex}][nama]`);
+            clone.querySelector('.mahasiswa-nama').setAttribute('data-index', mahasiswaIndex);
+            
+            clone.querySelector('.mahasiswa-nim').setAttribute('name', `mahasiswa[${mahasiswaIndex}][nim]`);
+            clone.querySelector('.mahasiswa-nim').setAttribute('data-index', mahasiswaIndex);
+            
+            clone.querySelector('.mahasiswa-jurusan').setAttribute('name', `mahasiswa[${mahasiswaIndex}][jurusan]`);
+            clone.querySelector('.mahasiswa-jurusan').setAttribute('data-index', mahasiswaIndex);
+            
+            clone.querySelector('.mahasiswa-semester').setAttribute('name', `mahasiswa[${mahasiswaIndex}][semester]`);
+            clone.querySelector('.mahasiswa-semester').setAttribute('data-index', mahasiswaIndex);
+
+            // Event listener untuk tombol hapus
+            clone.querySelector('.btn-hapus-mahasiswa').addEventListener('click', function() {
+                item.remove();
+                updateItemNumbers();
+                updateMahasiswaPreviewList(); // Update preview setelah hapus
+            });
+
+            // Event listener untuk autocomplete
+            const inputNama = clone.querySelector('.autocomplete-mahasiswa');
+            inputNama.addEventListener('input', function(e) {
+                handleAutocomplete(e.target);
+            });
+
+            // Event listener untuk update preview tidak perlu karena sudah pakai delegation
+
+            container.appendChild(clone);
+            mahasiswaIndex++;
+            
+            // Update preview setelah menambah mahasiswa baru
+            setTimeout(updateMahasiswaPreviewList, 50);
+        }
+
+        // Fungsi hapus dan update nomor urut
+        function updateItemNumbers() {
+            document.querySelectorAll('.mahasiswa-item').forEach((item, index) => {
+                const number = item.querySelector('.item-number');
+                if (number) {
+                    number.textContent = index + 1;
+                }
+            });
+        }
+
+        // Fungsi autocomplete
+        function handleAutocomplete(input) {
+            clearTimeout(autocompleteTimeout);
+            
+            const query = input.value.trim();
+            const resultsDiv = input.nextElementSibling;
+
+            if (query.length < 2) {
+                resultsDiv.style.display = 'none';
+                return;
+            }
+
+            autocompleteTimeout = setTimeout(() => {
+                fetch(`{{ route('mahasiswa.api.mahasiswa.search') }}?q=${encodeURIComponent(query)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.length === 0) {
+                            resultsDiv.innerHTML = '<div class="autocomplete-item"><small>Tidak ada hasil</small></div>';
+                            resultsDiv.style.display = 'block';
+                            return;
+                        }
+
+                        resultsDiv.innerHTML = '';
+                        data.forEach(mhs => {
+                            const div = document.createElement('div');
+                            div.className = 'autocomplete-item';
+                            div.innerHTML = `<strong>${mhs.nama}</strong><br><small>NIM: ${mhs.nim} - ${mhs.jurusan}</small>`;
+                            div.addEventListener('click', () => {
+                                selectMahasiswa(input, mhs);
+                                resultsDiv.style.display = 'none';
+                            });
+                            resultsDiv.appendChild(div);
+                        });
+                        resultsDiv.style.display = 'block';
+                    })
+                    .catch(error => {
+                        console.error('Error fetching mahasiswa:', error);
+                    });
+            }, 300);
+        }
+
+        // Fungsi select mahasiswa dari autocomplete
+        function selectMahasiswa(input, mhs) {
+            const index = input.getAttribute('data-index');
+            
+            // Set nilai
+            input.value = mhs.nama;
+            const nimInput = document.querySelector(`.mahasiswa-nim[data-index="${index}"]`);
+            const jurusanInput = document.querySelector(`.mahasiswa-jurusan[data-index="${index}"]`);
+            
+            if (nimInput) nimInput.value = mhs.nim;
+            if (jurusanInput) jurusanInput.value = mhs.jurusan;
+            
+            // Tutup autocomplete
+            input.nextElementSibling.style.display = 'none';
+            
+            // Update preview setelah select
+            updateMahasiswaPreviewList();
+        }
+
+        // Close autocomplete ketika klik di luar
+        document.addEventListener('click', function(e) {
+            if (!e.target.classList.contains('autocomplete-mahasiswa')) {
+                document.querySelectorAll('.autocomplete-results').forEach(div => {
+                    div.style.display = 'none';
                 });
             }
+        });
+
+        // Fungsi untuk handle upload TTD dan preview
+        function handleTTDUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const previewImg = document.getElementById('preview-ttd-image');
+            const processingDiv = document.getElementById('ttd-processing');
+
+            // Show processing indicator
+            if (processingDiv) processingDiv.style.display = 'block';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    // Create canvas for background removal
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    
+                    // Draw image
+                    ctx.drawImage(img, 0, 0);
+                    
+                    // Get image data
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    
+                    // Simple background removal - remove white/light colors
+                    for (let i = 0; i < data.length; i += 4) {
+                        const red = data[i];
+                        const green = data[i + 1];
+                        const blue = data[i + 2];
+                        
+                        // If pixel is mostly white/light (threshold = 200)
+                        if (red > 200 && green > 200 && blue > 200) {
+                            data[i + 3] = 0; // Make transparent
+                        }
+                    }
+                    
+                    ctx.putImageData(imageData, 0, 0);
+                    
+                    // Set preview image
+                    const processedImage = canvas.toDataURL('image/png');
+                    previewImg.src = processedImage;
+                    previewImg.style.display = 'block';
+                    previewImg.style.maxHeight = '80px';
+                    previewImg.style.margin = '10px auto';
+                    
+                    // Hide processing indicator
+                    if (processingDiv) processingDiv.style.display = 'none';
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
         }
 
         // Note: initMagangPreview() dipanggil dari event 'change' dropdown jenis surat

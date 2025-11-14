@@ -58,7 +58,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
 
         Route::get('/manajemen-surat', [ManajemenSuratController::class, 'index'])
-        ->name('surat.manage');
+            ->name('surat.manage');
 
         // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
         Route::get('/surat/{id}/detail', [DetailSuratController::class, 'show'])->name('surat.detail');
@@ -69,11 +69,11 @@ Route::middleware('auth')->group(function () {
 
         // Route: update status tugas (hanya admin)
         Route::post('/manajemen-surat/{id}/update-status', [ManajemenSuratController::class, 'updateStatus'])
-        ->name('surat.updateStatus');
+            ->name('surat.updateStatus');
 
         // ... (route /arsip-surat) ...
         Route::get('/arsip-surat', [ManajemenSuratController::class, 'archive'])
-        ->name('surat.archive');
+            ->name('surat.archive');
 
         Route::get('/pengaturan', function () {
             return view('admin.pengaturan');
@@ -183,6 +183,10 @@ Route::middleware('auth')->group(function () {
         // Route untuk Surat Pengantar Magang/KP
         Route::post('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'store'])
             ->name('pengajuan.magang.store');
+
+        // API untuk mendapatkan daftar mahasiswa satu prodi (untuk autocomplete)
+        Route::get('/api/mahasiswa/search', [SuratPengantarMagangController::class, 'searchMahasiswa'])
+            ->name('api.mahasiswa.search');
 
         // Rute lainnya
         Route::get('/riwayat', function () {
