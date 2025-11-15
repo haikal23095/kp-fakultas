@@ -11,18 +11,12 @@
     </div>
 @endif
 
-{{-- ====================================================== --}}
-{{-- 				INI PERBAIKANNYA 				--}}
-{{-- ====================================================== --}}
 {{-- Menampilkan pesan error dari Controller (try...catch) --}}
 @if (session('error'))
     <div class="alert alert-danger">
         <strong>Terjadi Kesalahan:</strong> {{ session('error') }}
     </div>
 @endif
-{{-- ====================================================== --}}
-{{-- 			  AKHIR DARI PERBAIKAN 				--}}
-{{-- ====================================================== --}}
 
 
 {{-- Menampilkan pesan error jika validasi gagal --}}
@@ -67,9 +61,7 @@
 
             <hr>
 
-            {{-- ====================================================== --}}
             {{-- FORM SPESIFIK: SURAT KETERANGAN MAHASISWA AKTIF --}}
-            {{-- ====================================================== --}}
             <div id="form-surat-aktif" class="dynamic-form" style="display: none;">
                 <h5 class="mb-3">Formulir Surat Keterangan Mahasiswa Aktif</h5>
                 
@@ -123,9 +115,8 @@
                 </div>
             </div>
 
-            {{-- ====================================================== --}}
+            
             {{-- FORM SPESIFIK: SURAT PENGANTAR MAGANG/KP --}}
-            {{-- ====================================================== --}}
             <div id="form-surat-magang" class="dynamic-form" style="display: none;">
                 <h5 class="mb-3">Formulir Surat Pengantar Magang/KP</h5>
                 
@@ -215,8 +206,8 @@
                 route: "{{ route('mahasiswa.pengajuan.magang.store') }}"
             }
         };
+        
         // --- Akhir Peta ---
-
         function hideAllDynamicForms() {
             dynamicForms.forEach(function(form) {
                 form.style.display = 'none';
