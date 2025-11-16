@@ -13,19 +13,21 @@
 
 <div class="row">
     <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-start border-danger border-4 shadow-sm h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col me-2">
-                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">Persetujuan Baru</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">2</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-inbox fa-2x text-gray-300"></i>
+        <a href="{{ route('kaprodi.surat.index') }}" class="text-decoration-none">
+            <div class="card border-start border-danger border-4 shadow-sm h-100 hover-shadow">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col me-2">
+                            <div class="text-xs fw-bold text-danger text-uppercase mb-1">Surat Masuk</div>
+                            <div class="h5 mb-0 fw-bold text-gray-800">{{ $suratMasuk ?? 0 }}</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-inbox fa-2x text-gray-300"></i>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </a>
     </div>
 
     <div class="col-xl-3 col-md-6 mb-4">
@@ -33,8 +35,8 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col me-2">
-                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Diteruskan ke Jurusan</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">4</div>
+                        <div class="text-xs fw-bold text-primary text-uppercase mb-1">Surat Keluar</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ $suratKeluar ?? 4 }}</div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-paper-plane fa-2x text-gray-300"></i>
@@ -50,7 +52,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col me-2">
                         <div class="text-xs fw-bold text-success text-uppercase mb-1">Dosen di Prodi</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">8</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ $jumlahDosen ?? 0 }}</div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-chalkboard-teacher fa-2x text-gray-300"></i>
@@ -66,7 +68,7 @@
                 <div class="row no-gutters align-items-center">
                     <div class="col me-2">
                         <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Total Arsip Prodi</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">45</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ $totalArsip ?? 45 }}</div>
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-archive fa-2x text-gray-300"></i>
@@ -148,6 +150,14 @@
     .card.lift:hover {
         transform: translateY(-5px);
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    .card.hover-shadow {
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+        cursor: pointer;
+    }
+    .card.hover-shadow:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.35rem 0.75rem rgba(0, 0, 0, 0.12) !important;
     }
 </style>
 @endpush

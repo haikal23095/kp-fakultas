@@ -122,6 +122,15 @@ Route::middleware('auth')->group(function () {
 
     // FITUR KAPRODI
     Route::prefix('kaprodi')->name('kaprodi.')->group(function () {
+        Route::get('/permintaan-surat', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'index'])
+            ->name('surat.index');
+        Route::post('/permintaan-surat/{id}/approve', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'approve'])
+            ->name('surat.approve');
+        Route::post('/permintaan-surat/{id}/reject', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'reject'])
+            ->name('surat.reject');
+        Route::get('/permintaan-surat/{id}/download-proposal', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'downloadProposal'])
+            ->name('surat.download');
+
         Route::get('/kurikulum', function () {
             return view('kaprodi.kurikulum');
         })->name('kurikulum.index');
@@ -154,6 +163,42 @@ Route::middleware('auth')->group(function () {
                 ->orderBy('Nama_Dosen', 'asc')
                 ->get();
 
+            // Ambil Kaprodi (user dengan role 4) sesuai prodi mahasiswa
+            $kaprodi = null;
+            $kaprodiName = null;
+            $kaprodiNIP = null;
+
+            if ($mahasiswa && $mahasiswa->Id_Prodi) {
+                // Cari User dengan role Kaprodi (Id_Role = 4)
+                // Bisa dari Dosen atau Pegawai yang berada di prodi yang sama
+                $kaprodiUser = \App\Models\User::where('Id_Role', 4)
+                    ->where(function ($query) use ($mahasiswa) {
+                        // Cek apakah dia Dosen di prodi ini
+                        $query->whereHas('dosen', function ($q) use ($mahasiswa) {
+                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                        })
+                            // ATAU Pegawai di prodi ini
+                            ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
+                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                        });
+                    })
+                    ->with(['dosen', 'pegawai'])
+                    ->first();
+
+                if ($kaprodiUser) {
+                    $kaprodi = $kaprodiUser;
+
+                    // Ambil nama dan NIP dari Dosen atau Pegawai
+                    if ($kaprodiUser->dosen) {
+                        $kaprodiName = $kaprodiUser->dosen->Nama_Dosen;
+                        $kaprodiNIP = $kaprodiUser->dosen->NIP;
+                    } elseif ($kaprodiUser->pegawai) {
+                        $kaprodiName = $kaprodiUser->pegawai->Nama_Pegawai;
+                        $kaprodiNIP = $kaprodiUser->pegawai->NIP;
+                    }
+                }
+            }
+
             // Definisikan surat apa saja yang boleh diajukan Mahasiswa
             $namaSuratMahasiswa = [
                 'Surat Keterangan Aktif Kuliah',
@@ -170,7 +215,10 @@ Route::middleware('auth')->group(function () {
                 'mahasiswa' => $mahasiswa,
                 'prodi' => $prodi,
                 'dosens' => $dosens,
-                'jenis_surats' => $jenis_surats
+                'jenis_surats' => $jenis_surats,
+                'kaprodi' => $kaprodi,
+                'kaprodiName' => $kaprodiName,
+                'kaprodiNIP' => $kaprodiNIP
             ]);
 
         })->name('pengajuan.create');

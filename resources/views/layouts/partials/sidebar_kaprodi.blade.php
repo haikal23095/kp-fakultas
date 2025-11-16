@@ -12,11 +12,11 @@
             </a>
         </li>
         <li class="nav-heading mt-3 mb-1 text-muted small">KAPRODI MENU</li>
-        {{-- Contoh menu untuk Kaprodi --}}
+        {{-- Menu untuk Kaprodi --}}
         <li>
-            <a href="#" class="nav-link text-white">
-                <i class="fas fa-check-double me-2"></i>
-                Validasi KRS
+            <a href="{{ route('kaprodi.surat.index') }}" class="nav-link text-white {{ request()->routeIs('kaprodi.surat.*') ? 'active' : '' }}">
+                <i class="fa fa-envelope me-2"></i>
+                Permintaan Pengantar KP/Magang
             </a>
         </li>
     </ul>
