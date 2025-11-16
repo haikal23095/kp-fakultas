@@ -5,12 +5,14 @@ namespace App\Http\Controllers\PengajuanSurat;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\TugasSurat;
+use App\Models\SuratMagang;
 use App\Models\JenisSurat;
 use App\Models\JenisPekerjaan;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class SuratPengantarMagangController extends Controller
 {
@@ -25,14 +27,36 @@ class SuratPengantarMagangController extends Controller
             'data_spesifik.dosen_pembimbing_1' => 'required|string',
             'data_spesifik.nama_instansi' => 'required|string|max:255',
             'data_spesifik.alamat_instansi' => 'required|string|max:500',
+            'data_spesifik.judul_penelitian' => 'nullable|string|max:255',
+            'data_spesifik.tanggal_mulai' => 'required|date',
+            'data_spesifik.tanggal_selesai' => 'required|date|after_or_equal:data_spesifik.tanggal_mulai',
             'file_pendukung_magang' => 'required|file|mimes:pdf|max:2048', // Max 2MB
+            'file_tanda_tangan' => 'required|file|image|mimes:jpg,jpeg,png|max:1024', // Satu file TTD untuk semua
+            // [BARU] Support multiple mahasiswa
+            'mahasiswa' => 'required|array|min:1|max:5', // Minimal 1, maksimal 5 mahasiswa
+            'mahasiswa.*.nama' => 'required|string|max:255',
+            'mahasiswa.*.nim' => 'required|numeric',
+            'mahasiswa.*.jurusan' => 'required|string|max:255',
+            'mahasiswa.*.semester' => 'required|integer|min:1|max:14',
         ], [
-            'data_spesifik.dosen_pembimbing_1.required' => 'Dosen pembimbing 1 wajib dipilih',
+            'data_spesifik.dosen_pembimbing_1.required' => 'Dosen pembimbing wajib dipilih',
             'data_spesifik.nama_instansi.required' => 'Nama instansi/perusahaan wajib diisi',
             'data_spesifik.alamat_instansi.required' => 'Alamat instansi wajib diisi',
-            'file_pendukung_magang.required' => 'Form pengajuan KP wajib diunggah',
-            'file_pendukung_magang.mimes' => 'File harus berformat PDF',
-            'file_pendukung_magang.max' => 'Ukuran file maksimal 2MB',
+            'data_spesifik.tanggal_mulai.required' => 'Tanggal mulai magang wajib diisi.',
+            'data_spesifik.tanggal_selesai.required' => 'Tanggal selesai magang wajib diisi.',
+            'data_spesifik.tanggal_selesai.after_or_equal' => 'Tanggal selesai harus setelah atau sama dengan tanggal mulai.',
+            'file_pendukung_magang.required' => 'Proposal wajib diunggah.',
+            'file_pendukung_magang.mimes' => 'Proposal harus berformat PDF.',
+            'file_pendukung_magang.max' => 'Ukuran proposal maksimal 2MB.',
+            'file_tanda_tangan.required' => 'Foto tanda tangan wajib diunggah.',
+            'file_tanda_tangan.image' => 'File tanda tangan harus berupa gambar.',
+            'file_tanda_tangan.mimes' => 'Format tanda tangan harus JPG, JPEG, atau PNG.',
+            'file_tanda_tangan.max' => 'Ukuran file tanda tangan maksimal 1MB.',
+            'mahasiswa.required' => 'Minimal harus ada 1 mahasiswa.',
+            'mahasiswa.*.nama.required' => 'Nama mahasiswa wajib diisi.',
+            'mahasiswa.*.nim.required' => 'NIM mahasiswa wajib diisi.',
+            'mahasiswa.*.jurusan.required' => 'Jurusan mahasiswa wajib diisi.',
+            'mahasiswa.*.semester.required' => 'Semester mahasiswa wajib diisi.',
         ]);
 
         if ($validator->fails()) {
@@ -49,24 +73,56 @@ class SuratPengantarMagangController extends Controller
         $instansi = $dataSpesifik['nama_instansi'] ?? 'Instansi Tujuan';
         $deskripsi = "Pengajuan surat pengantar magang/KP ke " . $instansi;
 
-        // === 3. UPLOAD FILE FORM KP ===
+        // === 3. UPLOAD FILE PROPOSAL & TANDA TANGAN ===
         $pathDokumenPendukung = null;
+        $pathTandaTangan = null;
+        $dataMahasiswaArray = [];
 
+        // Upload Proposal (file_pendukung_magang)
         try {
             $filePendukung = $request->file('file_pendukung_magang');
             $pathDokumenPendukung = $filePendukung->store('uploads/pendukung/surat-magang', 'public');
 
-            Log::info("File Form KP uploaded", [
+            Log::info("File Proposal KP/Magang uploaded", [
                 'path' => $pathDokumenPendukung,
                 'original_name' => $filePendukung->getClientOriginalName(),
                 'size' => $filePendukung->getSize(),
             ]);
         } catch (\Exception $e) {
-            Log::error("Gagal upload file Form KP: " . $e->getMessage());
+            Log::error("Gagal upload file Proposal: " . $e->getMessage());
             return redirect()->back()
-                ->with('error', 'Gagal mengunggah file Form KP: ' . $e->getMessage())
+                ->with('error', 'Gagal mengunggah file Proposal: ' . $e->getMessage())
                 ->withInput();
         }
+
+        // Upload Tanda Tangan (satu file untuk semua mahasiswa)
+        try {
+            $fileTandaTangan = $request->file('file_tanda_tangan');
+            $pathTandaTangan = $fileTandaTangan->store('uploads/tanda-tangan', 'public');
+
+            Log::info("File Tanda Tangan uploaded", [
+                'path' => $pathTandaTangan,
+                'original_name' => $fileTandaTangan->getClientOriginalName(),
+                'size' => $fileTandaTangan->getSize(),
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Gagal upload file Tanda Tangan: " . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Gagal mengunggah file Tanda Tangan: ' . $e->getMessage())
+                ->withInput();
+        }
+
+        // Build array data mahasiswa (tanpa file tanda tangan per mahasiswa)
+        $mahasiswaData = $request->input('mahasiswa');
+        foreach ($mahasiswaData as $mhs) {
+            $dataMahasiswaArray[] = [
+                'nama' => $mhs['nama'],
+                'nim' => $mhs['nim'],
+                'jurusan' => $mhs['jurusan'],
+                'semester' => $mhs['semester'],
+            ];
+        }
+
 
         // === 4. AMBIL DATA JENIS SURAT ===
         $jenisSurat = JenisSurat::find($jenisSuratId);
@@ -90,52 +146,186 @@ class SuratPengantarMagangController extends Controller
 
         $penerima_tugas_id = $adminUser ? $adminUser->Id_User : $pemberi_tugas_id;
 
-        // === 6. SIMPAN KE DATABASE ===
-        $tugasSurat = new TugasSurat();
-        $tugasSurat->Id_Pemberi_Tugas_Surat = $pemberi_tugas_id;
-        $tugasSurat->Id_Penerima_Tugas_Surat = $penerima_tugas_id;
-        $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
-        $tugasSurat->Judul_Tugas_Surat = $judul;
-        $tugasSurat->Deskripsi_Tugas_Surat = $deskripsi;
-        $tugasSurat->data_spesifik = $dataSpesifik;
-        $tugasSurat->dokumen_pendukung = $pathDokumenPendukung;
-        $tugasSurat->Status = 'Diterima Admin';
-        $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now()->format('Y-m-d');
-        $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(5)->format('Y-m-d'); // 5 hari untuk magang
+        // === 5.1 AMBIL DATA KOORDINATOR KP SESUAI PRODI MAHASISWA ===
+        $namaKoordinatorKP = null;
+        $mahasiswa = \App\Models\Mahasiswa::where('Id_User', $mahasiswaId)->first();
 
-        // === 7. SET ID JENIS PEKERJAAN ===
-        if ($jenisSurat->Jenis_Pekerjaan) {
-            $jenisPekerjaan = JenisPekerjaan::where('Jenis_Pekerjaan', $jenisSurat->Jenis_Pekerjaan)->first();
+        if ($mahasiswa && $mahasiswa->Id_Prodi) {
+            // Cari User dengan role Kaprodi (Id_Role = 4) sesuai prodi mahasiswa
+            $kaprodiUser = \App\Models\User::where('Id_Role', 4)
+                ->where(function ($query) use ($mahasiswa) {
+                    // Cek apakah dia Dosen di prodi ini
+                    $query->whereHas('dosen', function ($q) use ($mahasiswa) {
+                        $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                    })
+                        // ATAU Pegawai di prodi ini
+                        ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
+                        $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                    });
+                })
+                ->with(['dosen', 'pegawai'])
+                ->first();
 
-            if ($jenisPekerjaan) {
-                $tugasSurat->Id_Jenis_Pekerjaan = $jenisPekerjaan->Id_Jenis_Pekerjaan;
-            } else {
-                Log::warning("Jenis Pekerjaan tidak ditemukan", [
-                    'Jenis_Pekerjaan' => $jenisSurat->Jenis_Pekerjaan
-                ]);
+            if ($kaprodiUser) {
+                // Ambil nama dari Dosen atau Pegawai
+                if ($kaprodiUser->dosen) {
+                    $namaKoordinatorKP = $kaprodiUser->dosen->Nama_Dosen;
+                } elseif ($kaprodiUser->pegawai) {
+                    $namaKoordinatorKP = $kaprodiUser->pegawai->Nama_Pegawai;
+                }
             }
         }
 
-        // === 8. SIMPAN KE DATABASE ===
+        // === 6. SIMPAN KE DATABASE (NORMALISASI) ===
+        DB::beginTransaction();
+
         try {
+            // 6.1 Simpan ke tabel Tugas_Surat (data umum)
+            $tugasSurat = new TugasSurat();
+            $tugasSurat->Id_Pemberi_Tugas_Surat = $pemberi_tugas_id;
+            $tugasSurat->Id_Penerima_Tugas_Surat = $penerima_tugas_id;
+            $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
+            $tugasSurat->Judul_Tugas_Surat = $judul;
+            $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now()->format('Y-m-d');
+            $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(5)->format('Y-m-d');
+
+            // Ambil ENUM status yang valid dari database
+            $col = DB::select("SHOW COLUMNS FROM `Tugas_Surat` LIKE 'Status'");
+            $allowedStatuses = [];
+            if (!empty($col) && isset($col[0]->Type)) {
+                if (preg_match("/^enum\\((.*)\\)$/i", $col[0]->Type, $matches)) {
+                    $vals = str_getcsv($matches[1], ',', "'");
+                    $allowedStatuses = array_map(function ($v) {
+                        return $v;
+                    }, $vals);
+                }
+            }
+
+            // Set status (gunakan yang pertama atau 'baru' jika ada)
+            if (in_array('baru', $allowedStatuses, true)) {
+                $tugasSurat->Status = 'baru';
+            } elseif (in_array('Dikerjakan', $allowedStatuses, true)) {
+                $tugasSurat->Status = 'Dikerjakan';
+            } else {
+                $tugasSurat->Status = $allowedStatuses[0] ?? null;
+            }
+
+            // === 7. SET ID JENIS PEKERJAAN ===
+            if ($jenisSurat->Jenis_Pekerjaan) {
+                $jenisPekerjaan = JenisPekerjaan::where('Jenis_Pekerjaan', $jenisSurat->Jenis_Pekerjaan)->first();
+                if ($jenisPekerjaan) {
+                    $tugasSurat->Id_Jenis_Pekerjaan = $jenisPekerjaan->Id_Jenis_Pekerjaan;
+                }
+            }
+
             $tugasSurat->save();
 
-            Log::info("Surat Pengantar Magang berhasil disimpan", [
+            // 6.2 Simpan ke tabel Surat_Magang (data spesifik magang)
+            $suratMagang = new SuratMagang();
+            $suratMagang->Id_Tugas_Surat = $tugasSurat->Id_Tugas_Surat;
+
+            // Nama Instansi
+            $suratMagang->Nama_Instansi = $instansi;
+
+            // Tanggal Mulai dan Selesai Magang
+            $suratMagang->Tanggal_Mulai = $dataSpesifik['tanggal_mulai'] ?? null;
+            $suratMagang->Tanggal_Selesai = $dataSpesifik['tanggal_selesai'] ?? null;
+
+            // Foto Tanda Tangan (satu file untuk semua mahasiswa)
+            $suratMagang->Foto_ttd = $pathTandaTangan;
+
+            // Data Mahasiswa (Array of JSON) - tanpa path tanda tangan
+            $suratMagang->Data_Mahasiswa = $dataMahasiswaArray;
+
+            // Data Dosen Pembimbing (JSON)
+            $dataDosenPembimbing = [
+                'dosen_pembimbing_1' => $dataSpesifik['dosen_pembimbing_1'] ?? null,
+                'dosen_pembimbing_2' => $dataSpesifik['dosen_pembimbing_2'] ?? null,
+            ];
+            $suratMagang->Data_Dosen_pembiming = $dataDosenPembimbing;
+
+            // Dokumen Proposal
+            $suratMagang->Dokumen_Proposal = $pathDokumenPendukung;
+
+            // Surat Pengantar Fakultas akan diisi setelah admin approve (null dulu)
+            $suratMagang->Surat_Pengantar_Fakultas = null;
+
+            // Surat Pengantar Magang akan diisi setelah instansi approve (null dulu)
+            $suratMagang->Surat_Pengantar_Magang = null;
+
+            // Nomor Surat akan diisi saat selesai (null dulu)
+            $suratMagang->Nomor_Surat = null;
+
+            // Nama Koordinator KP (Kaprodi sesuai prodi mahasiswa)
+            $suratMagang->Nama_Koordinator_KP = $namaKoordinatorKP;
+
+            $suratMagang->save();
+
+            DB::commit();
+
+            Log::info("Surat Pengantar Magang berhasil disimpan (NORMALISASI)", [
                 'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
+                'id_no_surat_magang' => $suratMagang->id_no,
                 'Id_Pemberi' => $pemberi_tugas_id,
-                'Instansi' => $instansi,
-                'dokumen_pendukung' => $tugasSurat->dokumen_pendukung,
+                'Nama_Instansi' => $instansi,
+                'Tanggal_Mulai' => $suratMagang->Tanggal_Mulai,
+                'Tanggal_Selesai' => $suratMagang->Tanggal_Selesai,
+                'Foto_TTD' => $pathTandaTangan,
+                'jumlah_mahasiswa' => count($dataMahasiswaArray),
+                'dokumen_proposal' => $pathDokumenPendukung,
             ]);
 
             return redirect()->route('mahasiswa.pengajuan.create')
                 ->with('success', 'Pengajuan Surat Pengantar Magang/KP ke ' . $instansi . ' berhasil dikirim! Nomor pengajuan: #' . $tugasSurat->Id_Tugas_Surat);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error("Gagal menyimpan Surat Pengantar Magang: " . $e->getMessage());
 
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat menyimpan pengajuan: ' . $e->getMessage())
                 ->withInput();
         }
+    }
+
+    /**
+     * API untuk mencari mahasiswa berdasarkan nama atau NIM dalam satu prodi
+     */
+    public function searchMahasiswa(Request $request)
+    {
+        $query = $request->get('q', '');
+        $currentUser = Auth::user();
+
+        // Ambil data mahasiswa yang sedang login
+        $currentMahasiswa = \App\Models\Mahasiswa::where('Id_User', $currentUser->Id_User)->first();
+
+        if (!$currentMahasiswa) {
+            return response()->json([]);
+        }
+
+        // Ambil mahasiswa satu prodi (kecuali diri sendiri)
+        $mahasiswaList = \App\Models\Mahasiswa::query()
+            ->where('Id_Prodi', $currentMahasiswa->Id_Prodi)
+            ->where('Id_Mahasiswa', '!=', $currentMahasiswa->Id_Mahasiswa)
+            ->where(function ($q) use ($query) {
+                $q->where('Nama_Mahasiswa', 'LIKE', '%' . $query . '%')
+                    ->orWhere('NIM', 'LIKE', '%' . $query . '%');
+            })
+            ->with('prodi') // Load relasi prodi
+            ->limit(10)
+            ->get();
+
+        // Format response
+        $results = $mahasiswaList->map(function ($mahasiswa) {
+            return [
+                'id' => $mahasiswa->Id_Mahasiswa,
+                'nama' => $mahasiswa->Nama_Mahasiswa,
+                'nim' => $mahasiswa->NIM,
+                'jurusan' => $mahasiswa->prodi->Nama_Prodi ?? 'Tidak Diketahui',
+                'label' => $mahasiswa->Nama_Mahasiswa . ' - ' . $mahasiswa->NIM,
+            ];
+        });
+
+        return response()->json($results);
     }
 }
