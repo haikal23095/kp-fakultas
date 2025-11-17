@@ -94,12 +94,23 @@ class SuratKeteranganAktifController extends Controller
         $tugasSurat->Id_Penerima_Tugas_Surat = $penerima_tugas_id;
         $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
         $tugasSurat->Judul_Tugas_Surat = $judul;
-        $tugasSurat->Deskripsi_Tugas_Surat = $deskripsi;
-        $tugasSurat->data_spesifik = $dataSpesifik;
-        $tugasSurat->dokumen_pendukung = $pathDokumenPendukung;
-        $tugasSurat->Status = 'Diterima Admin';
-        $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
-        $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(3);
+        
+        // Gabungkan semua data ke data_spesifik (JSON) - jangan assign ke kolom yang tidak ada
+        $ds = is_array($dataSpesifik) ? $dataSpesifik : [];
+        $ds['deskripsi'] = $deskripsi;
+        $ds['dokumen_pendukung'] = $pathDokumenPendukung;
+        // pastikan semester & tahun akademik tersimpan
+        if (empty($ds['semester']) && !empty($dataSpesifik['semester'])) {
+            $ds['semester'] = $dataSpesifik['semester'];
+        }
+        if (empty($ds['tahun_akademik']) && !empty($dataSpesifik['tahun_akademik'])) {
+            $ds['tahun_akademik'] = $dataSpesifik['tahun_akademik'];
+        }
+        $tugasSurat->data_spesifik = json_encode($ds);
+        
+         $tugasSurat->Status = 'Diterima Admin';
+         $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
+         $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(3);
 
         // === 7. SET ID JENIS PEKERJAAN ===
         if ($jenisSurat->Jenis_Pekerjaan) {

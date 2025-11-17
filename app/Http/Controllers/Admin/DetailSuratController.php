@@ -272,7 +272,7 @@ class DetailSuratController extends Controller
 
         // update status dan tanggal selesai (pastikan nilai status sesuai ENUM di DB)
         $tugas->Status = 'Selesai';
-        $tugas->Tanggal_Diseselesaikan = Carbon::now();
+        $tugas->Tanggal_Diselesaikan = Carbon::now();
 
         // simpan
         $tugas->save();
