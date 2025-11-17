@@ -3,7 +3,12 @@
 @section('title', 'Detail Surat')
 
 @section('content')
-@php $status = trim(optional($surat)->Status ?? ''); @endphp
+@php
+    $status = trim(optional($surat)->Status ?? '');
+    $now = \Illuminate\Support\Carbon::now();
+    $defaultStart = ($now->month >= 7) ? $now->year : $now->year - 1;
+    $defaultAcademic = $defaultStart . '/' . ($defaultStart + 1);
+@endphp
 
 <div class="mb-3">
     <a href="{{ route('admin.surat.manage') }}" class="btn btn-outline-secondary btn-sm">
@@ -29,18 +34,53 @@
 				<span class="badge bg-secondary fs-6">{{ $surat->Status ?? '-' }}</span>
 			@endif
 
-			@if(auth()->check() && auth()->user()->Id_Role == 1 && (trim($surat->Status) == 'baru' || trim($surat->Status) == 'Diterima Admin'))
-				<form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" class="mt-2 d-inline" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses dan mengajukan surat ini ke Dekan?');">
-					@csrf
-					<input type="hidden" name="action" value="proses_ajukan_dekan">
-					<button type="submit" class="btn btn-sm btn-warning"><i class="fa fa-paper-plane me-1"></i> Proses & Ajukan</button>
-				</form>
+			{{-- [MODIFIKASI] Tombol Aksi Dibuat Kondisional --}}
+			@php
+				// Asumsi 3 = Surat Ket. Aktif (sesuai pengajuan_surat.blade.php)
+				$isSuratAktif = ($surat->Id_Jenis_Surat == 3); 
+				$isProcessed = (strtolower($status) == 'proses');
+				$needsProcess = (strtolower($status) == 'baru' || strtolower($status) == 'diterima admin');
+			@endphp
+
+			@if(auth()->check() && auth()->user()->Id_Role == 1)
+
+				{{-- 1. Tombol untuk Surat Keterangan Aktif (ID 3) --}}
+				@if($isSuratAktif && ($needsProcess || $isProcessed))
+					<form method="GET" action="{{ route('admin.surat.generate.aktif', $surat->Id_Tugas_Surat) }}" class="d-inline mt-2">
+                        <div class="d-flex align-items-center">
+                            <select name="semester" class="form-select form-select-sm me-2" style="width:130px;">
+                                <option value="Ganjil" {{ (request('semester', 'Ganjil') == 'Ganjil') ? 'selected' : '' }}>Ganjil</option>
+                                <option value="Genap" {{ (request('semester') == 'Genap') ? 'selected' : '' }}>Genap</option>
+                                <option value="Pendek" {{ (request('semester') == 'Pendek') ? 'selected' : '' }}>Pendek</option>
+                            </select>
+
+                            <input type="text" name="tahun_akademik" value="{{ request('tahun_akademik', $defaultAcademic) }}" class="form-control form-control-sm me-2" style="width:150px;" />
+
+                            <button type="submit" class="btn btn-sm btn-primary">
+                                <i class="fa {{ $isProcessed ? 'fa-eye' : 'fa-cogs' }} me-1"></i>
+                                {{ $isProcessed ? 'Lihat Preview' : 'Proses & Generate Preview' }}
+                            </button>
+                        </div>
+                    </form>
+				
+				{{-- 2. Tombol "Proses & Ajukan" (NON-Surat Aktif) --}}
+				@elseif(!$isSuratAktif && $needsProcess)
+					<form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" class="mt-2 d-inline" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses dan mengajukan surat ini ke Dekan?');">
+						@csrf
+						<input type="hidden" name="action" value="proses_ajukan_dekan">
+						<button type="submit" class="btn btn-sm btn-warning"><i class="fa fa-paper-plane me-1"></i> Proses & Ajukan</button>
+					</form>
+				@endif
+
 			@endif
+			{{-- Akhir Modifikasi Tombol Aksi --}}
+
 		</div>
 	</div>
 	</div>
 
 <div class="row g-4">
+	{{-- Kolom Detail Pengaju --}}
 	<div class="col-lg-4">
 		<div class="card h-100 shadow-sm">
 			<div class="card-header bg-white border-bottom d-flex align-items-center">
@@ -56,12 +96,15 @@
 				@if(!empty($detailPengaju))
 					<hr />
 					<p class="mb-1"><small class="text-muted">NIM</small><br>{{ $detailPengaju->NIM ?? '-' }}</p>
+					{{-- [BARU] Menambahkan Prodi --}}
+					<p class="mb-1"><small class="text-muted">Program Studi</small><br>{{ $detailPengaju->prodi->Nama_Prodi ?? '-' }}</p>
 					<p class="mb-0"><small class="text-muted">Alamat</small><br>{{ $detailPengaju->Alamat_Mahasiswa ?? '-' }}</p>
 				@endif
 			</div>
 		</div>
 	</div>
 
+	{{-- Kolom Informasi Surat --}}
 	<div class="col-lg-4">
 		<div class="card h-100 shadow-sm">
 			<div class="card-header bg-white border-bottom d-flex align-items-center">
@@ -76,6 +119,7 @@
 		</div>
 	</div>
 
+	{{-- Kolom Dokumen & Proses --}}
 	<div class="col-lg-4">
 		<div class="card h-100 shadow-sm">
 			<div class="card-header bg-white border-bottom d-flex align-items-center">
@@ -103,7 +147,8 @@
 					@endif
 				</div>
 
-				@if(auth()->check() && auth()->user()->Id_Role == 1 && (trim($surat->Status) == 'Diterima Admin' || trim($surat->Status) == 'Proses'))
+				{{-- [MODIFIKASI] Sembunyikan form upload ini jika ini adalah Surat Aktif --}}
+				@if(auth()->check() && auth()->user()->Id_Role == 1 && $isProcessed && !$isSuratAktif)
 					<hr />
 					<form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin mengupload draft final dan mengajukan ke Dekan?');">
 						@csrf

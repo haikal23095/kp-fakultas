@@ -66,7 +66,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat/{id}/download', [DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
         // Proses upload draft final / ajukan ke Dekan
         Route::post('/surat/{id}/process-draft', [DetailSuratController::class, 'processDraft'])->name('surat.process_draft');
-
+        
         // Route: update status tugas (hanya admin)
         Route::post('/manajemen-surat/{id}/update-status', [ManajemenSuratController::class, 'updateStatus'])
             ->name('surat.updateStatus');
@@ -78,7 +78,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/pengaturan', function () {
             return view('admin.pengaturan');
         })->name('settings.index');
-    });
+
+        // Route untuk generate/preview Surat Aktif (akses via link di halaman detail)
+        Route::get('/surat/{id}/generate-aktif', [DetailSuratController::class, 'generateSuratAktif'])
+            ->name('surat.generate.aktif');
+
+        // [BARU] Route untuk memfinalisasi dan menyelesaikan Surat Aktif
+        Route::post('/surat/finalize/aktif/{id}', [App\Http\Controllers\Admin\DetailSuratController::class, 'finalizeSuratAktif'])
+            ->name('surat.finalize.aktif');
+        });
 
     // FITUR DEKAN
     Route::prefix('dekan')->name('dekan.')->group(function () {
