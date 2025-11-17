@@ -25,6 +25,8 @@ class SuratMagang extends Model
         'Surat_Pengantar_Fakultas',
         'Dokumen_Proposal',
         'Surat_Pengantar_Magang',
+        'Acc_Koordinator',
+        'Nama_Koordinator_KP',
     ];
 
     /**

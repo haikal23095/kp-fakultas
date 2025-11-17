@@ -162,7 +162,45 @@ class AuthController extends Controller
 
     public function dashboardKaprodi()
     {
-        return view('dashboard.kaprodi');
+        $user = Auth::user();
+
+        // Ambil data Kaprodi (bisa dari Dosen atau Pegawai)
+        $kaprodiDosen = $user->dosen;
+        $kaprodiPegawai = $user->pegawai;
+
+        // Ambil Id_Prodi dari Kaprodi
+        $prodiId = $kaprodiDosen?->Id_Prodi ?? $kaprodiPegawai?->Id_Prodi;
+
+        if (!$prodiId) {
+            return view('dashboard.kaprodi', [
+                'suratMasuk' => 0,
+                'suratKeluar' => 4, // statis
+                'jumlahDosen' => 0,
+                'totalArsip' => 45, // statis
+            ]);
+        }
+
+        // Hitung Surat Masuk: Surat Magang dengan Acc_Koordinator = false dari mahasiswa di prodi ini
+        $suratMasuk = \App\Models\SuratMagang::query()
+            ->whereHas('tugasSurat.pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
+                $q->where('Id_Prodi', $prodiId);
+            })
+            ->where('Acc_Koordinator', false)
+            ->count();
+
+        // Hitung Jumlah Dosen di prodi ini
+        $jumlahDosen = \App\Models\Dosen::where('Id_Prodi', $prodiId)->count();
+
+        // Surat Keluar dan Total Arsip tetap statis dulu
+        $suratKeluar = 4;
+        $totalArsip = 45;
+
+        return view('dashboard.kaprodi', compact(
+            'suratMasuk',
+            'suratKeluar',
+            'jumlahDosen',
+            'totalArsip'
+        ));
     }
 
     public function dashboardDosen()

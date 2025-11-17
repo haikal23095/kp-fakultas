@@ -146,6 +146,36 @@ class SuratPengantarMagangController extends Controller
 
         $penerima_tugas_id = $adminUser ? $adminUser->Id_User : $pemberi_tugas_id;
 
+        // === 5.1 AMBIL DATA KOORDINATOR KP SESUAI PRODI MAHASISWA ===
+        $namaKoordinatorKP = null;
+        $mahasiswa = \App\Models\Mahasiswa::where('Id_User', $mahasiswaId)->first();
+
+        if ($mahasiswa && $mahasiswa->Id_Prodi) {
+            // Cari User dengan role Kaprodi (Id_Role = 4) sesuai prodi mahasiswa
+            $kaprodiUser = \App\Models\User::where('Id_Role', 4)
+                ->where(function ($query) use ($mahasiswa) {
+                    // Cek apakah dia Dosen di prodi ini
+                    $query->whereHas('dosen', function ($q) use ($mahasiswa) {
+                        $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                    })
+                        // ATAU Pegawai di prodi ini
+                        ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
+                        $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                    });
+                })
+                ->with(['dosen', 'pegawai'])
+                ->first();
+
+            if ($kaprodiUser) {
+                // Ambil nama dari Dosen atau Pegawai
+                if ($kaprodiUser->dosen) {
+                    $namaKoordinatorKP = $kaprodiUser->dosen->Nama_Dosen;
+                } elseif ($kaprodiUser->pegawai) {
+                    $namaKoordinatorKP = $kaprodiUser->pegawai->Nama_Pegawai;
+                }
+            }
+        }
+
         // === 6. SIMPAN KE DATABASE (NORMALISASI) ===
         DB::beginTransaction();
 
@@ -225,6 +255,9 @@ class SuratPengantarMagangController extends Controller
 
             // Nomor Surat akan diisi saat selesai (null dulu)
             $suratMagang->Nomor_Surat = null;
+
+            // Nama Koordinator KP (Kaprodi sesuai prodi mahasiswa)
+            $suratMagang->Nama_Koordinator_KP = $namaKoordinatorKP;
 
             $suratMagang->save();
 
