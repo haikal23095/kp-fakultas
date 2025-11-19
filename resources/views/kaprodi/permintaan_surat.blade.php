@@ -189,16 +189,30 @@
                                         <div class="col-md-4 fw-bold">Foto Tanda Tangan:</div>
                                         <div class="col-md-8">
                                             @if($surat->Foto_ttd && !empty(trim($surat->Foto_ttd)))
+                                                @php
+                                                    $ttdUrl = str_starts_with($surat->Foto_ttd, 'uploads/') 
+                                                        ? asset('storage/' . $surat->Foto_ttd)
+                                                        : asset($surat->Foto_ttd);
+                                                    $ttdFilePath = storage_path('app/public/' . $surat->Foto_ttd);
+                                                    $fileExists = file_exists($ttdFilePath);
+                                                @endphp
+                                                @if($fileExists)
                                                 <div class="mb-2">
-                                                    <img src="{{ asset('storage/' . $surat->Foto_ttd) }}" 
+                                                    <img src="{{ $ttdUrl }}" 
                                                          alt="Tanda Tangan" 
-                                                         style="max-height: 80px; border: 1px solid #ddd; padding: 5px;"
+                                                         style="max-height: 80px; border: 1px solid #ddd; padding: 5px; background: white;"
                                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                                                     <div style="display: none; color: red;">
-                                                        <i class="fas fa-exclamation-triangle"></i> Gambar tidak dapat dimuat
+                                                        <i class="fas fa-exclamation-triangle"></i> Gambar gagal dimuat
                                                     </div>
                                                 </div>
-                                                <small class="text-muted">Path: {{ $surat->Foto_ttd }}</small>
+                                                <small class="text-muted d-block">✓ File tersedia</small>
+                                                @else
+                                                <div class="alert alert-warning mb-2" style="font-size: 0.875rem;">
+                                                    <i class="fas fa-exclamation-triangle"></i> File tanda tangan tidak ditemukan di server.<br>
+                                                    <small>Path: {{ $surat->Foto_ttd }}</small>
+                                                </div>
+                                                @endif
                                             @else
                                                 <span class="text-muted">Tidak ada foto tanda tangan</span>
                                             @endif
@@ -344,16 +358,22 @@
                                                             <p style="margin: 0 0 5px 0;">Pemohon</p>
                                                             @if($surat->Foto_ttd && !empty(trim($surat->Foto_ttd)))
                                                                 @php
-                                                                    // Debug: Check if file exists
-                                                                    $ttdPath = $surat->Foto_ttd;
-                                                                    $fullPath = storage_path('app/public/' . $ttdPath);
-                                                                    $fileExists = file_exists($fullPath);
+                                                                    $ttdUrl = str_starts_with($surat->Foto_ttd, 'uploads/') 
+                                                                        ? asset('storage/' . $surat->Foto_ttd)
+                                                                        : asset($surat->Foto_ttd);
+                                                                    $ttdFilePath = storage_path('app/public/' . $surat->Foto_ttd);
+                                                                    $fileExists = file_exists($ttdFilePath);
                                                                 @endphp
-                                                                <img src="{{ asset('storage/' . $surat->Foto_ttd) }}" 
+                                                                @if($fileExists)
+                                                                <img src="{{ $ttdUrl }}" 
                                                                      alt="TTD" 
-                                                                     style="max-height: 60px; max-width: 150px; display: block; margin: 0 auto;"
-                                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                                <small style="display: none; color: red;">Gambar tidak ditemukan</small>
+                                                                     style="max-height: 60px; max-width: 150px; display: block; margin: 0 auto; background: white;"
+                                                                     onerror="console.error('Failed to load:', this.src);">
+                                                                @else
+                                                                <div style="height: 60px; display: flex; align-items: center; justify-content: center;">
+                                                                    <small style="color: #999; font-size: 8pt;">[File TTD tidak tersedia]</small>
+                                                                </div>
+                                                                @endif
                                                             @else
                                                             <div style="height: 60px;"></div>
                                                             @endif
