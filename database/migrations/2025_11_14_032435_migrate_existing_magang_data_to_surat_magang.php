@@ -11,6 +11,11 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // TEMPORARILY DISABLED: Skip data migration to allow structure migrations to run first
+        // Will need to run this manually later if needed
+        
+        return; // Exit early - don't run data migration
+        
         // Ambil semua data Tugas_Surat yang merupakan Surat Pengantar KP/Magang
         // Asumsi: Id_Jenis_Surat untuk "Surat Pengantar KP/Magang" adalah 6
         $tugasSuratMagang = DB::table('Tugas_Surat')

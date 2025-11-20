@@ -59,7 +59,9 @@ class DetailSuratController extends Controller
     {
         $tugasSurat = TugasSurat::findOrFail($id);
 
-        $path = $tugasSurat->dokumen_pendukung;
+        // Path disimpan di data_spesifik['dokumen_pendukung']
+        $dataSpesifik = $tugasSurat->data_spesifik;
+        $path = $dataSpesifik['dokumen_pendukung'] ?? null;
 
         if (! $path) {
             return response('Dokumen Pendukung tidak ditemukan.', 404);
@@ -73,17 +75,7 @@ class DetailSuratController extends Controller
     }
 
     /**
-     * Approve (setujui) surat dan beri tanda tangan elektronik.
-     * 
-     * TODO: Integrasi TTE dengan QR Code
-     * - Generate QR Code yang berisi: ID Surat, Nama Penandatangan, Timestamp, Hash
-     * - Simpan QR signature data ke kolom 'signature_qr_data' (JSON: {qr_image, qr_url, signed_by, signed_at})
-     * - API endpoint untuk verifikasi QR: GET /verify-signature/{qr_token}
-     * - Halaman publik untuk scan QR menampilkan identitas penandatangan
-     * 
-     * Library yang bisa dipakai nanti:
-     * - SimpleSoftwareIO/simple-qrcode untuk generate QR
-     * - Atau API external seperti QRServer, GoQR
+     * Approve (setujui) surat dan beri tanda tangan elektronik dengan QR Code.
      * 
      * @param Request $request
      * @param mixed $id
@@ -99,22 +91,69 @@ class DetailSuratController extends Controller
             return redirect()->back()->with('error', 'Surat tidak dalam status menunggu tanda tangan.');
         }
 
-        // Update status menjadi 'Telah Ditandatangani Dekan'
-        $tugasSurat->Status = 'Telah Ditandatangani Dekan';
-        
-        // TODO: Simpan data TTE dummy (nanti diganti dengan QR signature)
-        // $tugasSurat->signature_qr_data = json_encode([
-        //     'signed_by' => $user->Name_User,
-        //     'signed_by_id' => $user->Id_User,
-        //     'signed_at' => Carbon::now()->toIso8601String(),
-        //     'qr_token' => Str::random(32), // token unik untuk verifikasi
-        //     'qr_image_url' => null, // nanti diisi path QR image
-        // ]);
+        try {
+            // 1. Generate token unik untuk verifikasi
+            $token = \Str::random(64);
+            
+            // 2. Simpan data verifikasi ke database
+            $verification = \App\Models\SuratVerification::create([
+                'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
+                'token' => $token,
+                'signed_by' => $user->Name_User,
+                'signed_by_user_id' => $user->Id_User,
+                'signed_at' => Carbon::now(),
+            ]);
 
-        $tugasSurat->save();
+            // 3. Generate QR Code (jika library sudah terinstall)
+            if (class_exists('\SimpleSoftwareIO\QrCode\Generator')) {
+                // URL verifikasi public
+                $verifyUrl = route('surat.verify', $token);
+                
+                // Generate QR Code image
+                $qrGenerator = new \SimpleSoftwareIO\QrCode\Generator();
+                $qrCode = $qrGenerator->format('png')
+                    ->size(300)
+                    ->margin(1)
+                    ->errorCorrection('H')
+                    ->generate($verifyUrl);
+                
+                // Simpan QR image ke storage
+                $qrFilename = 'qr_codes/' . $token . '.png';
+                \Storage::disk('public')->put($qrFilename, $qrCode);
+                
+                // Update path di database
+                $verification->qr_path = $qrFilename;
+                $verification->save();
+                
+                // Simpan info QR ke kolom signature_qr_data di Tugas_Surat (opsional)
+                $tugasSurat->signature_qr_data = json_encode([
+                    'signed_by' => $user->Name_User,
+                    'signed_by_id' => $user->Id_User,
+                    'signed_at' => Carbon::now()->toIso8601String(),
+                    'qr_token' => $token,
+                    'qr_image_path' => $qrFilename,
+                    'verify_url' => $verifyUrl
+                ]);
+                
+                $tugasSurat->qr_image_path = $qrFilename;
+            } else {
+                \Log::warning('QR Code library not installed. Install: composer require simplesoftwareio/simple-qrcode');
+            }
+            
+            // 4. Update status surat - SET STATUS FINAL = 'Selesai'
+            $tugasSurat->Status = 'Selesai';
+            $tugasSurat->Tanggal_Diselesaikan = Carbon::now();
+            $tugasSurat->save();
 
-        return redirect()->route('dekan.persetujuan.index')
-            ->with('success', 'Surat berhasil ditandatangani. (TTE QR akan diintegrasikan)');
+            return redirect()->route('dekan.persetujuan.index')
+                ->with('success', 'Surat berhasil ditandatangani dan siap didownload mahasiswa!');
+                
+        } catch (\Exception $e) {
+            \Log::error('Error saat approve surat dengan QR: ' . $e->getMessage());
+            
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan saat memproses persetujuan: ' . $e->getMessage());
+        }
     }
 
     /**

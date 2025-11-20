@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\DetailSuratController;
 use App\Http\Controllers\Admin\ManajemenSuratController;
+use App\Http\Controllers\SuratVerificationController;
 
 // Import Controller untuk Pengajuan Surat (Modular)
 use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
@@ -30,6 +31,12 @@ use Carbon\Carbon;
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+// ============================================================
+// PUBLIC ROUTES (Tanpa Auth - untuk Verifikasi QR Code)
+// ============================================================
+Route::get('/verify-surat/{token}', [SuratVerificationController::class, 'verify'])->name('surat.verify');
+Route::get('/api/verify-surat/{token}', [SuratVerificationController::class, 'verifyApi'])->name('surat.verify.api');
 
 // Routes untuk autentikasi
 Route::middleware('guest')->group(function () {
@@ -60,12 +67,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/manajemen-surat', [ManajemenSuratController::class, 'index'])
             ->name('surat.manage');
 
+        // Preview dokumen pendukung (PDF) di browser
+        Route::get('/surat/{id}/preview', [ManajemenSuratController::class, 'previewDokumen'])->name('surat.preview');
+        
         // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
         Route::get('/surat/{id}/detail', [DetailSuratController::class, 'show'])->name('surat.detail');
         // Download dokumen pendukung (admin)
         Route::get('/surat/{id}/download', [DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
         // Proses upload draft final / ajukan ke Dekan
         Route::post('/surat/{id}/process-draft', [DetailSuratController::class, 'processDraft'])->name('surat.process_draft');
+        
+        // Route: Tolak Surat
+        Route::post('/surat/{id}/reject', [DetailSuratController::class, 'reject'])->name('surat.reject');
 
         // Route: update status tugas (hanya admin)
         Route::post('/manajemen-surat/{id}/update-status', [ManajemenSuratController::class, 'updateStatus'])
@@ -190,10 +203,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/api/mahasiswa/search', [SuratPengantarMagangController::class, 'searchMahasiswa'])
             ->name('api.mahasiswa.search');
 
+        // Riwayat Surat Mahasiswa
+        Route::get('/riwayat', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'index'])
+            ->name('riwayat');
+        
+        // Download Surat dengan QR Code
+        Route::get('/surat/download/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadSurat'])
+            ->name('surat.download');
+
         // Rute lainnya
-        Route::get('/riwayat', function () {
-            return view('mahasiswa.riwayat');
-        })->name('riwayat.index');
         Route::get('/legalisir', function () {
             return view('mahasiswa.legalisir');
         })->name('legalisir.create');

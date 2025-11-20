@@ -94,9 +94,14 @@ class SuratKeteranganAktifController extends Controller
         $tugasSurat->Id_Penerima_Tugas_Surat = $penerima_tugas_id;
         $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
         $tugasSurat->Judul_Tugas_Surat = $judul;
-        $tugasSurat->Deskripsi_Tugas_Surat = $deskripsi;
-        $tugasSurat->data_spesifik = $dataSpesifik;
-        $tugasSurat->dokumen_pendukung = $pathDokumenPendukung;
+        
+        // Simpan deskripsi dan path dokumen ke data_spesifik (JSON)
+        $dataSpesifikFull = array_merge($dataSpesifik, [
+            'deskripsi' => $deskripsi,
+            'dokumen_pendukung' => $pathDokumenPendukung
+        ]);
+        $tugasSurat->data_spesifik = json_encode($dataSpesifikFull);
+        
         $tugasSurat->Status = 'Diterima Admin';
         $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
         $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(3);
@@ -121,7 +126,8 @@ class SuratKeteranganAktifController extends Controller
             Log::info("Surat Keterangan Aktif berhasil disimpan", [
                 'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
                 'Id_Pemberi' => $pemberi_tugas_id,
-                'dokumen_pendukung' => $tugasSurat->dokumen_pendukung,
+                'dokumen_pendukung' => $pathDokumenPendukung,
+                'data_spesifik' => $dataSpesifikFull,
             ]);
 
             return redirect()->route('mahasiswa.pengajuan.create')

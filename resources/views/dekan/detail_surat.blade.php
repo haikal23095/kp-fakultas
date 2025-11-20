@@ -85,7 +85,7 @@
 
                 <div class="mb-3">
                     <small class="text-muted d-block mb-1">Dokumen Pendukung</small>
-                    @if(!empty($surat->dokumen_pendukung))
+                    @if(!empty($surat->data_spesifik['dokumen_pendukung'] ?? null))
                         <a href="{{ route('dekan.surat.download', $surat->Id_Tugas_Surat) }}" class="btn btn-outline-primary btn-sm" title="Lihat / Unduh Dokumen Pendukung"><i class="fas fa-download me-1"></i> Lihat / Unduh</a>
                     @else
                         <span class="text-muted">-</span>

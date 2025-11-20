@@ -106,25 +106,17 @@ class AuthController extends Controller
     {
         // Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
         $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai']);
-        $prodiId = $user->dosen?->Id_Prodi ?? $user->mahasiswa?->Id_Prodi ?? $user->pegawai?->Id_Prodi;
+        
+        // NOTE: Untuk Admin Fakultas (Role 1), kita asumsikan mereka bisa melihat SEMUA surat dalam fakultas.
+        // Jadi kita TIDAK memfilter berdasarkan Prodi spesifik admin tersebut.
+        // Jika nanti ada kebutuhan "Admin Prodi", logika ini bisa disesuaikan.
 
-        // Base query dengan filter prodi (filter berdasarkan PEMBERI tugas = yang mengajukan)
-        $baseQuery = function () use ($prodiId) {
-            return \App\Models\TugasSurat::query()
-                ->where(function ($q) use ($prodiId) {
-                    $q->whereHas('pemberiTugas.mahasiswa', function ($subQ) use ($prodiId) {
-                        $subQ->where('Id_Prodi', $prodiId);
-                    })
-                        ->orWhereHas('pemberiTugas.dosen', function ($subQ) use ($prodiId) {
-                            $subQ->where('Id_Prodi', $prodiId);
-                        })
-                        ->orWhereHas('pemberiTugas.pegawai', function ($subQ) use ($prodiId) {
-                            $subQ->where('Id_Prodi', $prodiId);
-                        });
-                });
+        // Base query TANPA filter prodi (Menampilkan semua surat di Fakultas Teknik)
+        $baseQuery = function () {
+            return \App\Models\TugasSurat::query();
         };
 
-        // Ambil statistik surat berdasarkan status dengan filter prodi
+        // Ambil statistik surat berdasarkan status
         $permohonanBaru = $baseQuery()->whereIn('Status', ['baru', 'Diterima Admin'])->count();
         $menungguTTE = $baseQuery()->whereIn('Status', ['Disetujui Dekan', 'Menunggu TTE'])->count();
         $suratSelesaiBulanIni = $baseQuery()->where('Status', 'Selesai')
@@ -133,7 +125,7 @@ class AuthController extends Controller
             ->count();
         $totalArsip = $baseQuery()->where('Status', 'Selesai')->count();
 
-        // Ambil antrian permohonan terbaru (5 terakhir) dengan filter prodi
+        // Ambil antrian permohonan terbaru (5 terakhir)
         $antrianSurat = $baseQuery()
             ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai', 'jenisSurat'])
             ->whereIn('Status', ['baru', 'Diterima Admin', 'Diproses Admin'])
@@ -149,6 +141,7 @@ class AuthController extends Controller
             'antrianSurat'
         ));
     }
+
 
     public function dashboardDekan()
     {

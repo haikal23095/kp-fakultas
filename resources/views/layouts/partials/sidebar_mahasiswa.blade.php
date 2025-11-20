@@ -19,7 +19,7 @@
             </a>
         </li>
         <li>
-            <a href="{{ route('mahasiswa.riwayat.index') }}" class="nav-link text-white {{ request()->routeIs('mahasiswa.riwayat.*') ? 'active' : '' }}">
+            <a href="{{ route('mahasiswa.riwayat') }}" class="nav-link text-white {{ request()->routeIs('mahasiswa.riwayat') ? 'active' : '' }}">
                 <i class="fas fa-history me-2"></i>
                 Riwayat Surat
             </a>
