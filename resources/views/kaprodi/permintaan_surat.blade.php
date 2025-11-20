@@ -350,8 +350,8 @@
                                                         <td style="width: 50%; vertical-align: top;">
                                                             <p style="margin: 0 0 5px 0;">Menyetujui<br>Koordinator KP/TA</p>
                                                             <div style="height: 60px;"></div>
-                                                            <p style="margin: 0;">( {{ $surat->Nama_Koordinator_KP ?? '[Nama Kaprodi]' }} )</p>
-                                                            <p style="margin: 0;">NIP. {{ $kaprodiNIP ?? '...' }}</p>
+                                                            <p style="margin: 0;">( {{ $surat->koordinator->Nama_Dosen ?? '[Nama Kaprodi]' }} )</p>
+                                                            <p style="margin: 0;">NIP. {{ $surat->koordinator->NIP ?? $kaprodiNIP ?? '...' }}</p>
                                                         </td>
                                                         <td style="width: 50%; text-align: center; vertical-align: top;">
                                                             <p style="margin: 0 0 5px 0;">Bangkalan, {{ \Carbon\Carbon::now()->format('d M Y') }}</p>
@@ -420,12 +420,9 @@
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                                     @if(!$surat->Acc_Koordinator)
-                                    <form action="{{ route('kaprodi.surat.reject', $surat->id_no) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menolak surat ini? Status Tugas akan diubah menjadi Ditolak.')">
-                                            <i class="fas fa-times"></i> Tolak
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $surat->id_no }}" data-bs-dismiss="modal">
+                                        <i class="fas fa-times"></i> Tolak
+                                    </button>
                                     <form action="{{ route('kaprodi.surat.approve', $surat->id_no) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-success" onclick="return confirm('Apakah Anda yakin ingin menyetujui surat ini?')">
@@ -439,6 +436,56 @@
                             </div>
                         </div>
                     </div>
+
+{{-- Modal Tolak dengan Komentar --}}
+<div class="modal fade" id="rejectModal{{ $surat->id_no }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ $surat->id_no }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectModalLabel{{ $surat->id_no }}">
+                    <i class="fas fa-times-circle me-2"></i>Tolak Surat Pengantar Magang
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('kaprodi.surat.reject', $surat->id_no) }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Perhatian!</strong> Anda akan menolak surat dari <strong>{{ $namaMahasiswa }}</strong> untuk magang di <strong>{{ $surat->Nama_Instansi }}</strong>.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="komentar{{ $surat->id_no }}" class="form-label fw-bold">
+                            Alasan Penolakan <span class="text-danger">*</span>
+                        </label>
+                        <textarea 
+                            class="form-control @error('komentar') is-invalid @enderror" 
+                            id="komentar{{ $surat->id_no }}" 
+                            name="komentar" 
+                            rows="5" 
+                            placeholder="Jelaskan alasan penolakan surat ini (minimal 10 karakter)..."
+                            required
+                            minlength="10"
+                            maxlength="1000"></textarea>
+                        @error('komentar')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="form-text text-muted">
+                            Komentar ini akan dilihat oleh mahasiswa untuk perbaikan surat.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-2"></i>Tolak Surat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
                     <script>
                     function togglePreview{{ $surat->id_no }}() {

@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin\DetailSuratController;
 use App\Http\Controllers\Admin\ManajemenSuratController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\NotifikasiController;
 
 // Import Controller untuk Pengajuan Surat (Modular)
 use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
@@ -53,6 +55,18 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/dosen', [AuthController::class, 'dashboardDosen'])->name('dashboard.dosen');
     Route::get('/dashboard/mahasiswa', [AuthController::class, 'dashboardMahasiswa'])->name('dashboard.mahasiswa');
     Route::get('/dashboard/default', [AuthController::class, 'dashboardDefault'])->name('dashboard.default');
+
+    // PROFILE ROUTES (Available for all authenticated users)
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // NOTIFIKASI ROUTES (Available for all authenticated users)
+    Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
+    Route::get('/notifikasi/recent', [NotifikasiController::class, 'getRecent'])->name('notifikasi.recent');
+    Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.markRead');
+    Route::post('/notifikasi/mark-all-read', [NotifikasiController::class, 'markAllAsRead'])->name('notifikasi.markAllRead');
+    Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy'])->name('notifikasi.delete');
 
     // FITUR ADMIN
     Route::prefix('admin')->name('admin.')->group(function () {

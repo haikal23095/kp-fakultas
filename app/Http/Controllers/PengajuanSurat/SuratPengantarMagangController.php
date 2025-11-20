@@ -21,6 +21,19 @@ class SuratPengantarMagangController extends Controller
      */
     public function store(Request $request)
     {
+        // Check if files were uploaded (handle PHP upload limits)
+        if (!$request->hasFile('file_pendukung_magang')) {
+            return redirect()->back()
+                ->with('error', 'File Proposal tidak ditemukan. Pastikan ukuran file tidak melebihi 2MB dan format adalah PDF.')
+                ->withInput();
+        }
+
+        if (!$request->hasFile('file_tanda_tangan')) {
+            return redirect()->back()
+                ->with('error', 'File Tanda Tangan tidak ditemukan. Pastikan ukuran file tidak melebihi 1MB dan format adalah JPG/PNG.')
+                ->withInput();
+        }
+
         // === 1. VALIDASI DATA ===
         $validator = Validator::make($request->all(), [
             'Id_Jenis_Surat' => 'required|numeric',
@@ -147,7 +160,7 @@ class SuratPengantarMagangController extends Controller
         $penerima_tugas_id = $adminUser ? $adminUser->Id_User : $pemberi_tugas_id;
 
         // === 5.1 AMBIL DATA KOORDINATOR KP SESUAI PRODI MAHASISWA ===
-        $namaKoordinatorKP = null;
+        $idDosenKoordinator = null;
         $mahasiswa = \App\Models\Mahasiswa::where('Id_User', $mahasiswaId)->first();
 
         if ($mahasiswa && $mahasiswa->Id_Prodi) {
@@ -166,13 +179,9 @@ class SuratPengantarMagangController extends Controller
                 ->with(['dosen', 'pegawai'])
                 ->first();
 
-            if ($kaprodiUser) {
-                // Ambil nama dari Dosen atau Pegawai
-                if ($kaprodiUser->dosen) {
-                    $namaKoordinatorKP = $kaprodiUser->dosen->Nama_Dosen;
-                } elseif ($kaprodiUser->pegawai) {
-                    $namaKoordinatorKP = $kaprodiUser->pegawai->Nama_Pegawai;
-                }
+            if ($kaprodiUser && $kaprodiUser->dosen) {
+                // Ambil Id_Dosen untuk disimpan sebagai Nama_Koordinator
+                $idDosenKoordinator = $kaprodiUser->dosen->Id_Dosen;
             }
         }
 
@@ -181,7 +190,12 @@ class SuratPengantarMagangController extends Controller
 
         try {
             // 6.1 Simpan ke tabel Tugas_Surat (data umum)
+            // Get last ID and increment
+            $lastId = DB::table('Tugas_Surat')->max('Id_Tugas_Surat') ?? 0;
+            $newId = $lastId + 1;
+
             $tugasSurat = new TugasSurat();
+            $tugasSurat->Id_Tugas_Surat = $newId;
             $tugasSurat->Id_Pemberi_Tugas_Surat = $pemberi_tugas_id;
             $tugasSurat->Id_Penerima_Tugas_Surat = $penerima_tugas_id;
             $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
@@ -227,6 +241,9 @@ class SuratPengantarMagangController extends Controller
             // Nama Instansi
             $suratMagang->Nama_Instansi = $instansi;
 
+            // Alamat Instansi
+            $suratMagang->Alamat_Instansi = $dataSpesifik['alamat_instansi'] ?? null;
+
             // Tanggal Mulai dan Selesai Magang
             $suratMagang->Tanggal_Mulai = $dataSpesifik['tanggal_mulai'] ?? null;
             $suratMagang->Tanggal_Selesai = $dataSpesifik['tanggal_selesai'] ?? null;
@@ -247,17 +264,14 @@ class SuratPengantarMagangController extends Controller
             // Dokumen Proposal
             $suratMagang->Dokumen_Proposal = $pathDokumenPendukung;
 
-            // Surat Pengantar Fakultas akan diisi setelah admin approve (null dulu)
-            $suratMagang->Surat_Pengantar_Fakultas = null;
-
             // Surat Pengantar Magang akan diisi setelah instansi approve (null dulu)
             $suratMagang->Surat_Pengantar_Magang = null;
 
-            // Nomor Surat akan diisi saat selesai (null dulu)
-            $suratMagang->Nomor_Surat = null;
-
-            // Nama Koordinator KP (Kaprodi sesuai prodi mahasiswa)
-            $suratMagang->Nama_Koordinator_KP = $namaKoordinatorKP;
+            // Nama Koordinator adalah ID Dosen Kaprodi (relasi ke tabel Dosen)
+            // Simpan Id_Dosen Kaprodi jika ada
+            if ($idDosenKoordinator) {
+                $suratMagang->Nama_Koordinator = $idDosenKoordinator;
+            }
 
             $suratMagang->save();
 

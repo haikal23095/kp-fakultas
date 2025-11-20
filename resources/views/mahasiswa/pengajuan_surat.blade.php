@@ -585,11 +585,11 @@
 <script>
     // Set route configuration for JavaScript module
     window.formIdMap = {
-        '3': { // ID untuk "Surat Keterangan Aktif"
+        '3': { // ID untuk "Surat Keterangan Aktif Kuliah"
             formId: 'form-surat-aktif',
             route: "{{ route('mahasiswa.pengajuan.aktif.store') }}"
         },
-        '6': { // ID untuk "Surat Pengantar KP/Magang"
+        '13': { // ID untuk "Surat Pengantar KP/Magang"
             formId: 'form-surat-magang',
             route: "{{ route('mahasiswa.pengajuan.magang.store') }}"
         }
