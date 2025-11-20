@@ -189,16 +189,30 @@
                                         <div class="col-md-4 fw-bold">Foto Tanda Tangan:</div>
                                         <div class="col-md-8">
                                             @if($surat->Foto_ttd && !empty(trim($surat->Foto_ttd)))
+                                                @php
+                                                    $ttdUrl = str_starts_with($surat->Foto_ttd, 'uploads/') 
+                                                        ? asset('storage/' . $surat->Foto_ttd)
+                                                        : asset($surat->Foto_ttd);
+                                                    $ttdFilePath = storage_path('app/public/' . $surat->Foto_ttd);
+                                                    $fileExists = file_exists($ttdFilePath);
+                                                @endphp
+                                                @if($fileExists)
                                                 <div class="mb-2">
-                                                    <img src="{{ asset('storage/' . $surat->Foto_ttd) }}" 
+                                                    <img src="{{ $ttdUrl }}" 
                                                          alt="Tanda Tangan" 
-                                                         style="max-height: 80px; border: 1px solid #ddd; padding: 5px;"
+                                                         style="max-height: 80px; border: 1px solid #ddd; padding: 5px; background: white;"
                                                          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                                                     <div style="display: none; color: red;">
-                                                        <i class="fas fa-exclamation-triangle"></i> Gambar tidak dapat dimuat
+                                                        <i class="fas fa-exclamation-triangle"></i> Gambar gagal dimuat
                                                     </div>
                                                 </div>
-                                                <small class="text-muted">Path: {{ $surat->Foto_ttd }}</small>
+                                                <small class="text-muted d-block">✓ File tersedia</small>
+                                                @else
+                                                <div class="alert alert-warning mb-2" style="font-size: 0.875rem;">
+                                                    <i class="fas fa-exclamation-triangle"></i> File tanda tangan tidak ditemukan di server.<br>
+                                                    <small>Path: {{ $surat->Foto_ttd }}</small>
+                                                </div>
+                                                @endif
                                             @else
                                                 <span class="text-muted">Tidak ada foto tanda tangan</span>
                                             @endif
@@ -336,24 +350,30 @@
                                                         <td style="width: 50%; vertical-align: top;">
                                                             <p style="margin: 0 0 5px 0;">Menyetujui<br>Koordinator KP/TA</p>
                                                             <div style="height: 60px;"></div>
-                                                            <p style="margin: 0;">( {{ $surat->Nama_Koordinator_KP ?? '[Nama Kaprodi]' }} )</p>
-                                                            <p style="margin: 0;">NIP. {{ $kaprodiNIP ?? '...' }}</p>
+                                                            <p style="margin: 0;">( {{ $surat->koordinator->Nama_Dosen ?? '[Nama Kaprodi]' }} )</p>
+                                                            <p style="margin: 0;">NIP. {{ $surat->koordinator->NIP ?? $kaprodiNIP ?? '...' }}</p>
                                                         </td>
                                                         <td style="width: 50%; text-align: center; vertical-align: top;">
                                                             <p style="margin: 0 0 5px 0;">Bangkalan, {{ \Carbon\Carbon::now()->format('d M Y') }}</p>
                                                             <p style="margin: 0 0 5px 0;">Pemohon</p>
                                                             @if($surat->Foto_ttd && !empty(trim($surat->Foto_ttd)))
                                                                 @php
-                                                                    // Debug: Check if file exists
-                                                                    $ttdPath = $surat->Foto_ttd;
-                                                                    $fullPath = storage_path('app/public/' . $ttdPath);
-                                                                    $fileExists = file_exists($fullPath);
+                                                                    $ttdUrl = str_starts_with($surat->Foto_ttd, 'uploads/') 
+                                                                        ? asset('storage/' . $surat->Foto_ttd)
+                                                                        : asset($surat->Foto_ttd);
+                                                                    $ttdFilePath = storage_path('app/public/' . $surat->Foto_ttd);
+                                                                    $fileExists = file_exists($ttdFilePath);
                                                                 @endphp
-                                                                <img src="{{ asset('storage/' . $surat->Foto_ttd) }}" 
+                                                                @if($fileExists)
+                                                                <img src="{{ $ttdUrl }}" 
                                                                      alt="TTD" 
-                                                                     style="max-height: 60px; max-width: 150px; display: block; margin: 0 auto;"
-                                                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                                <small style="display: none; color: red;">Gambar tidak ditemukan</small>
+                                                                     style="max-height: 60px; max-width: 150px; display: block; margin: 0 auto; background: white;"
+                                                                     onerror="console.error('Failed to load:', this.src);">
+                                                                @else
+                                                                <div style="height: 60px; display: flex; align-items: center; justify-content: center;">
+                                                                    <small style="color: #999; font-size: 8pt;">[File TTD tidak tersedia]</small>
+                                                                </div>
+                                                                @endif
                                                             @else
                                                             <div style="height: 60px;"></div>
                                                             @endif
@@ -400,12 +420,9 @@
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
                                     @if(!$surat->Acc_Koordinator)
-                                    <form action="{{ route('kaprodi.surat.reject', $surat->id_no) }}" method="POST" class="d-inline">
-                                        @csrf
-                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menolak surat ini? Status Tugas akan diubah menjadi Ditolak.')">
-                                            <i class="fas fa-times"></i> Tolak
-                                        </button>
-                                    </form>
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $surat->id_no }}" data-bs-dismiss="modal">
+                                        <i class="fas fa-times"></i> Tolak
+                                    </button>
                                     <form action="{{ route('kaprodi.surat.approve', $surat->id_no) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-success" onclick="return confirm('Apakah Anda yakin ingin menyetujui surat ini?')">
@@ -419,6 +436,56 @@
                             </div>
                         </div>
                     </div>
+
+{{-- Modal Tolak dengan Komentar --}}
+<div class="modal fade" id="rejectModal{{ $surat->id_no }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ $surat->id_no }}" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="rejectModalLabel{{ $surat->id_no }}">
+                    <i class="fas fa-times-circle me-2"></i>Tolak Surat Pengantar Magang
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ route('kaprodi.surat.reject', $surat->id_no) }}" method="POST">
+                @csrf
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        <strong>Perhatian!</strong> Anda akan menolak surat dari <strong>{{ $namaMahasiswa }}</strong> untuk magang di <strong>{{ $surat->Nama_Instansi }}</strong>.
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="komentar{{ $surat->id_no }}" class="form-label fw-bold">
+                            Alasan Penolakan <span class="text-danger">*</span>
+                        </label>
+                        <textarea 
+                            class="form-control @error('komentar') is-invalid @enderror" 
+                            id="komentar{{ $surat->id_no }}" 
+                            name="komentar" 
+                            rows="5" 
+                            placeholder="Jelaskan alasan penolakan surat ini (minimal 10 karakter)..."
+                            required
+                            minlength="10"
+                            maxlength="1000"></textarea>
+                        @error('komentar')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                        <small class="form-text text-muted">
+                            Komentar ini akan dilihat oleh mahasiswa untuk perbaikan surat.
+                        </small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times me-2"></i>Tolak Surat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
                     <script>
                     function togglePreview{{ $surat->id_no }}() {

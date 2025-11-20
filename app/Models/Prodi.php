@@ -16,4 +16,42 @@ class Prodi extends Model
     // Matikan fitur-fitur default Laravel yang tidak Anda gunakan
     public $incrementing = false;
     public $timestamps = false;
+
+    protected $fillable = [
+        'Id_Prodi',
+        'Nama_Prodi',
+        'Id_Fakultas',
+    ];
+
+    /**
+     * Relasi ke Fakultas
+     */
+    public function fakultas()
+    {
+        return $this->belongsTo(Fakultas::class, 'Id_Fakultas', 'Id_Fakultas');
+    }
+
+    /**
+     * Relasi ke Mahasiswa
+     */
+    public function mahasiswa()
+    {
+        return $this->hasMany(Mahasiswa::class, 'Id_Prodi', 'Id_Prodi');
+    }
+
+    /**
+     * Relasi ke Dosen
+     */
+    public function dosen()
+    {
+        return $this->hasMany(Dosen::class, 'Id_Prodi', 'Id_Prodi');
+    }
+
+    /**
+     * Relasi ke Pegawai Prodi
+     */
+    public function pegawai()
+    {
+        return $this->hasMany(Pegawai::class, 'Id_Prodi', 'Id_Prodi');
+    }
 }

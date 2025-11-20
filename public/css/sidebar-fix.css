@@ -1,0 +1,36 @@
+/* Fixed Sidebar Width untuk semua roles */
+aside.bg-dark {
+    width: 280px !important;
+    min-width: 280px !important;
+    max-width: 280px !important;
+}
+
+/* Main content margin */
+main {
+    margin-left: 280px !important;
+}
+
+/* Active state untuk semua nav-link termasuk notifikasi */
+.nav-link.active,
+.nav-pills .nav-link.active,
+aside .nav-link.active {
+    background-color: #0d6efd !important;
+    color: white !important;
+}
+
+/* Hover state untuk nav-link yang tidak active */
+.nav-link:not(.active):hover,
+.nav-pills .nav-link:not(.active):hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Pastikan notifikasi badge tidak terpengaruh */
+.nav-link .badge {
+    font-size: 0.65rem;
+}
+
+/* Pastikan icon dan text dalam nav-link active tetap putih */
+.nav-link.active i,
+.nav-link.active span {
+    color: white !important;
+}

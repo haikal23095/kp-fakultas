@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin_Prodi;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request; // Menggunakan Request standar
@@ -53,11 +53,16 @@ class DetailSuratController extends Controller
             }
         }
 
+<<<<<<< HEAD:app/Http/Controllers/Admin/DetailSuratController.php
         // <-- Tambahkan pengiriman variabel tanggalHariIni dan data surat/detailPengaju ke view -->
         $tanggalHariIni = Carbon::now()->format('d F Y');
         return view('admin.detail_surat', [
             'activeMenu'    => 'manajemen-surat',
             'surat'         => $tugasSurat,
+=======
+        return view('admin_prodi.detail_surat', [
+            'surat' => $tugasSurat,
+>>>>>>> d48b47e4885b4d4e2c067a5d6a815b6e3b9e5222:app/Http/Controllers/Admin_Prodi/DetailSuratController.php
             'detailPengaju' => $detailPengaju,
             'tanggalHariIni'=> $tanggalHariIni,
         ]);

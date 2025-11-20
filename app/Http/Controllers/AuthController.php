@@ -85,7 +85,7 @@ class AuthController extends Controller
     {
         switch ($roleId) {
             case 1:
-                return redirect()->route('dashboard.admin');
+                return redirect()->route('dashboard.admin_prodi');
             case 2:
                 return redirect()->route('dashboard.dekan');
             case 3:
@@ -96,6 +96,8 @@ class AuthController extends Controller
                 return redirect()->route('dashboard.dosen');
             case 6:
                 return redirect()->route('dashboard.mahasiswa');
+            case 7:
+                return redirect()->route('dashboard.admin_fakultas');
             default:
                 return redirect()->route('dashboard.default');
         }
@@ -105,8 +107,14 @@ class AuthController extends Controller
     public function dashboardAdmin()
     {
         // Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
-        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai']);
+        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai.prodi']);
         $prodiId = $user->dosen?->Id_Prodi ?? $user->mahasiswa?->Id_Prodi ?? $user->pegawai?->Id_Prodi;
+
+        // Ambil nama prodi
+        $namaProdi = $user->dosen?->prodi?->Nama_Prodi ??
+            $user->mahasiswa?->prodi?->Nama_Prodi ??
+            $user->pegawai?->prodi?->Nama_Prodi ??
+            'Prodi';
 
         // Base query dengan filter prodi (filter berdasarkan PEMBERI tugas = yang mengajukan)
         $baseQuery = function () use ($prodiId) {
@@ -141,12 +149,65 @@ class AuthController extends Controller
             ->take(5)
             ->get();
 
-        return view('dashboard.admin', compact(
+        return view('dashboard.admin_prodi', compact(
             'permohonanBaru',
             'menungguTTE',
             'suratSelesaiBulanIni',
             'totalArsip',
-            'antrianSurat'
+            'antrianSurat',
+            'namaProdi'
+        ));
+    }
+
+    public function dashboardAdminFakultas()
+    {
+        // Ambil Id_Fakultas dari user yang login
+        $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
+
+        // Ambil nama fakultas
+        $namaFakultas = $user->pegawaiFakultas?->fakultas?->Nama_Fakultas ?? 'Fakultas';
+
+        // Base query dengan filter fakultas (filter berdasarkan PEMBERI tugas = yang mengajukan)
+        $baseQuery = function () use ($fakultasId) {
+            return \App\Models\TugasSurat::query()
+                ->where(function ($q) use ($fakultasId) {
+                    $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    })
+                        ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                            $subQ->where('Id_Fakultas', $fakultasId);
+                        })
+                        ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                            $subQ->where('Id_Fakultas', $fakultasId);
+                        });
+                });
+        };
+
+        // Ambil statistik surat berdasarkan status dengan filter fakultas
+        $permohonanBaru = $baseQuery()->whereIn('Status', ['baru', 'Diterima Admin'])->count();
+        $menungguTTE = $baseQuery()->whereIn('Status', ['Disetujui Dekan', 'Menunggu TTE'])->count();
+        $suratSelesaiBulanIni = $baseQuery()->where('Status', 'Selesai')
+            ->whereMonth('Tanggal_Diselesaikan', date('m'))
+            ->whereYear('Tanggal_Diselesaikan', date('Y'))
+            ->count();
+        $totalArsip = $baseQuery()->where('Status', 'Selesai')->count();
+
+        // Ambil antrian permohonan terbaru (5 terakhir) dengan filter fakultas
+        $antrianSurat = $baseQuery()
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai', 'jenisSurat'])
+            ->whereIn('Status', ['baru', 'Diterima Admin', 'Diproses Admin'])
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('dashboard.admin_fakultas', compact(
+            'permohonanBaru',
+            'menungguTTE',
+            'suratSelesaiBulanIni',
+            'totalArsip',
+            'antrianSurat',
+            'namaFakultas'
         ));
     }
 

@@ -1,12 +1,12 @@
-@extends('layouts.admin')
+@extends('layouts.admin_fakultas')
 
-@section('title', 'Dashboard Administrator')
+@section('title', 'Dashboard Administrator Fakultas')
 
 @section('content')
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-0">Dashboard Administrasi Surat</h1>
+        <h1 class="h3 fw-bold mb-0">Dashboard Administrasi Admin Fakultas {{ $namaFakultas ?? 'Fakultas' }}</h1>
         <p class="mb-0 text-muted">Selamat datang, {{ auth()->user()->Name_User ?? 'Administrator' }}. Berikut adalah ringkasan aktivitas sistem persuratan.</p>
     </div>
 </div>
@@ -82,7 +82,7 @@
         <div class="card shadow-sm border-0 h-100">
             <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                 <h6 class="m-0 fw-bold text-primary">Antrian Permohonan Surat Terkini</h6>
-                <a href="#" class="btn btn-outline-primary btn-sm">Lihat Semua Permohonan</a>
+                <a href="{{ route('admin_fakultas.surat.manage') }}" class="btn btn-outline-primary btn-sm">Lihat Semua Permohonan</a>
             </div>
             <div class="card-body p-0">
                 <div class="table-responsive">
@@ -128,7 +128,7 @@
                                     <span class="badge bg-{{ $badgeClass }}">{{ $roleName }}</span>
                                 </td>
                                 <td>
-                                    <a href="{{ route('admin.surat.detail', $surat->Id_Tugas_Surat) }}" class="btn btn-primary btn-sm">
+                                    <a href="{{ route('admin_fakultas.surat.detail', $surat->Id_Tugas_Surat) }}" class="btn btn-primary btn-sm">
                                         <i class="fas fa-eye"></i> Proses
                                     </a>
                                 </td>

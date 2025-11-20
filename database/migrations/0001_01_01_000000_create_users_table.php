@@ -11,16 +11,19 @@ return new class extends Migration {
     public function up(): void
     {
         Schema::create('Users', function (Blueprint $table) {
-            $table->id('Id_User');
-            $table->string('Username')->unique();
-            $table->string('password');
-            $table->string('Name_User');
-            $table->unsignedBigInteger('Id_Role');
-            $table->string('email')->unique();
-            $table->timestamps();
+            $table->integer('Id_User')->primary();
+            $table->string('Username', 255)->nullable();
+            $table->string('password', 255)->nullable();
+            $table->string('Name_User', 255)->nullable();
+            $table->integer('Id_Role')->nullable();
+            $table->string('email', 255)->nullable();
 
             // Foreign key constraint
-            $table->foreign('Id_Role')->references('id')->on('roles');
+            $table->foreign('Id_Role')
+                ->references('Id_Role')
+                ->on('Roles')
+                ->onDelete('cascade')
+                ->onUpdate('cascade');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

@@ -36,7 +36,8 @@ class PermintaanSuratController extends Controller
         $daftarSurat = SuratMagang::query()
             ->with([
                 'tugasSurat.pemberiTugas.mahasiswa.prodi',
-                'tugasSurat.jenisSurat'
+                'tugasSurat.jenisSurat',
+                'koordinator' // Load relasi ke Dosen (Koordinator)
             ])
             ->whereHas('tugasSurat.pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
                 $q->where('Id_Prodi', $prodiId);
@@ -71,18 +72,24 @@ class PermintaanSuratController extends Controller
      */
     public function reject(Request $request, $id)
     {
+        // Validasi komentar wajib diisi
+        $request->validate([
+            'komentar' => 'required|string|min:10|max:1000',
+        ], [
+            'komentar.required' => 'Komentar wajib diisi saat menolak surat.',
+            'komentar.min' => 'Komentar minimal 10 karakter.',
+            'komentar.max' => 'Komentar maksimal 1000 karakter.',
+        ]);
+
         $suratMagang = SuratMagang::findOrFail($id);
 
-        // Acc_Koordinator tetap false (tidak diubah)
-        // Hanya update status Tugas_Surat menjadi "Ditolak"
-        $tugasSurat = $suratMagang->tugasSurat;
-        if ($tugasSurat) {
-            $tugasSurat->Status = 'Ditolak';
-            $tugasSurat->save();
-        }
+        // Update Status menjadi "Ditolak" dan simpan Komentar di tabel Surat_Magang
+        $suratMagang->Status = 'Ditolak';
+        $suratMagang->Komentar = $request->komentar;
+        $suratMagang->save();
 
         return redirect()->route('kaprodi.surat.index')
-            ->with('success', 'Surat pengantar magang ditolak. Status tugas diubah menjadi Ditolak.');
+            ->with('success', 'Surat pengantar magang ditolak dengan komentar.');
     }
 
     /**
