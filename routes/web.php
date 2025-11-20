@@ -4,8 +4,8 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Admin\DetailSuratController;
-use App\Http\Controllers\Admin\ManajemenSuratController;
+use App\Http\Controllers\Admin_Prodi\DetailSuratController;
+use App\Http\Controllers\Admin_Prodi\ManajemenSuratController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotifikasiController;
 

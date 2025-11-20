@@ -105,8 +105,14 @@ class AuthController extends Controller
     public function dashboardAdmin()
     {
         // Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
-        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai']);
+        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai.prodi']);
         $prodiId = $user->dosen?->Id_Prodi ?? $user->mahasiswa?->Id_Prodi ?? $user->pegawai?->Id_Prodi;
+
+        // Ambil nama prodi
+        $namaProdi = $user->dosen?->prodi?->Nama_Prodi ??
+            $user->mahasiswa?->prodi?->Nama_Prodi ??
+            $user->pegawai?->prodi?->Nama_Prodi ??
+            'Prodi';
 
         // Base query dengan filter prodi (filter berdasarkan PEMBERI tugas = yang mengajukan)
         $baseQuery = function () use ($prodiId) {
@@ -146,7 +152,8 @@ class AuthController extends Controller
             'menungguTTE',
             'suratSelesaiBulanIni',
             'totalArsip',
-            'antrianSurat'
+            'antrianSurat',
+            'namaProdi'
         ));
     }
 
