@@ -6,7 +6,7 @@
 @php $status = trim(optional($surat)->Status ?? ''); @endphp
 
 <div class="mb-3">
-    <a href="{{ route('admin.surat.manage') }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ route('admin_prodi.surat.manage') }}" class="btn btn-outline-secondary btn-sm">
         <i class="fa fa-arrow-left me-1"></i> Kembali ke Manajemen Surat
     </a>
 </div>
@@ -41,7 +41,7 @@
                         <i class="fa fa-times-circle me-1"></i> Tolak
                     </button>
 
-                    <form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" class="d-inline" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses dan mengajukan surat ini ke Dekan?');">
+                    <form method="POST" action="{{ route('admin_prodi.surat.process_draft', $surat->Id_Tugas_Surat) }}" class="d-inline" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses dan mengajukan surat ini ke Dekan?');">
                         @csrf
                         <input type="hidden" name="action" value="proses_ajukan_dekan">
                         <button type="submit" class="btn btn-sm btn-warning"><i class="fa fa-paper-plane me-1"></i> Proses & Ajukan</button>
@@ -101,7 +101,7 @@
 				<div class="mb-3">
 					<small class="text-muted d-block mb-1">Dokumen Pendukung (Mahasiswa)</small>
 					@if(!empty($surat->data_spesifik['dokumen_pendukung'] ?? null))
-						<a href="{{ route('admin.surat.download', $surat->Id_Tugas_Surat) }}" class="btn btn-outline-primary btn-sm" title="Lihat / Unduh Dokumen Pendukung"><i class="fa fa-download me-1"></i> Lihat / Unduh</a>
+						<a href="{{ route('admin_prodi.surat.download', $surat->Id_Tugas_Surat) }}" class="btn btn-outline-primary btn-sm" title="Lihat / Unduh Dokumen Pendukung"><i class="fa fa-download me-1"></i> Lihat / Unduh</a>
 					@else
 						<span class="text-muted">-</span>
 					@endif
@@ -118,7 +118,7 @@
 
 				@if(auth()->check() && auth()->user()->Id_Role == 1 && (trim($surat->Status) == 'Diterima Admin' || trim($surat->Status) == 'Proses'))
 					<hr />
-					<form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin mengupload draft final dan mengajukan ke Dekan?');">
+					<form method="POST" action="{{ route('admin_prodi.surat.process_draft', $surat->Id_Tugas_Surat) }}" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin mengupload draft final dan mengajukan ke Dekan?');">
 						@csrf
 						<div class="mb-3">
 							<label for="draft_surat" class="form-label"><i class="fa fa-upload me-1"></i> Upload Draft Final (PDF)</label>
@@ -137,7 +137,7 @@
 <div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-            <form action="{{ route('admin.surat.reject', $surat->Id_Tugas_Surat) }}" method="POST">
+            <form action="{{ route('admin_prodi.surat.reject', $surat->Id_Tugas_Surat) }}" method="POST">
                 @csrf
                 <div class="modal-header bg-danger text-white">
                     <h5 class="modal-title" id="rejectModalLabel">Tolak Pengajuan Surat</h5>

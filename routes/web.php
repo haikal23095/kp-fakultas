@@ -111,6 +111,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('dekan')->name('dekan.')->group(function () {
         Route::get('/persetujuan-surat', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'index'])->name('persetujuan.index');
         Route::get('/surat/{id}/detail', [App\Http\Controllers\Dekan\DetailSuratController::class, 'show'])->name('surat.detail');
+        Route::get('/surat/{id}/preview', [App\Http\Controllers\Dekan\DetailSuratController::class, 'previewDraft'])->name('surat.preview');
         Route::get('/surat/{id}/download', [App\Http\Controllers\Dekan\DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
         Route::post('/surat/{id}/approve', [App\Http\Controllers\Dekan\DetailSuratController::class, 'approve'])->name('surat.approve');
         Route::post('/surat/{id}/reject', [App\Http\Controllers\Dekan\DetailSuratController::class, 'reject'])->name('surat.reject');

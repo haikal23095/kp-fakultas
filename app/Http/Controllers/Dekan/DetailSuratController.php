@@ -195,4 +195,27 @@ class DetailSuratController extends Controller
         return redirect()->route('dekan.persetujuan.index')
             ->with('success', 'Surat telah ditolak.');
     }
+
+    /**
+     * Preview draft final surat (PDF) di browser.
+     *
+     * @param mixed $id
+     * @return \Illuminate\Http\Response
+     */
+    public function previewDraft($id)
+    {
+        $tugasSurat = TugasSurat::with('fileArsip')->findOrFail($id);
+        
+        if (!$tugasSurat->fileArsip || !$tugasSurat->fileArsip->Path_File) {
+            return response('Draft surat belum tersedia.', 404);
+        }
+
+        $path = $tugasSurat->fileArsip->Path_File;
+
+        if (Storage::disk('public')->exists($path)) {
+            return Storage::disk('public')->response($path, 'draft_surat.pdf', ['Content-Disposition' => 'inline']);
+        }
+
+        return response('File draft tidak ditemukan di storage.', 404);
+    }
 }

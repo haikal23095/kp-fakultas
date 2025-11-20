@@ -8,7 +8,7 @@
         <h1 class="h3 text-gray-800">Manajemen Surat Fakultas</h1>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('dashboard.admin') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('dashboard.admin_prodi') }}">Dashboard</a></li>
                 <li class="breadcrumb-item active" aria-current="page">Manajemen Surat</li>
             </ol>
         </nav>
@@ -110,7 +110,7 @@
                                                         title="Preview Dokumen">
                                                     <i class="fa fa-eye"></i>
                                                 </button>
-                                                <a href="{{ route('admin.surat.detail', $tugas->Id_Tugas_Surat) }}" 
+                                                <a href="{{ route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat) }}" 
                                                    class="btn btn-sm btn-primary" 
                                                    title="Proses & Verifikasi">
                                                     Proses <i class="fa fa-arrow-right ms-1"></i>
@@ -219,7 +219,7 @@
                                                         title="Preview">
                                                     <i class="fa fa-file-pdf"></i>
                                                 </button>
-                                                <a href="{{ route('admin.surat.detail', $tugas->Id_Tugas_Surat) }}" 
+                                                <a href="{{ route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat) }}" 
                                                    class="btn btn-sm btn-outline-primary" 
                                                    title="Detail">
                                                     <i class="fa fa-info-circle"></i>
@@ -273,7 +273,7 @@
                         </div>
                         
                         <iframe 
-                            src="{{ route('admin.surat.preview', $tugas->Id_Tugas_Surat) }}" 
+                            src="{{ route('admin_prodi.surat.preview', $tugas->Id_Tugas_Surat) }}" 
                             width="100%" 
                             height="100%" 
                             style="border: none;"
@@ -281,11 +281,11 @@
                         </iframe>
                     </div>
                     <div class="modal-footer bg-white">
-                        <a href="{{ route('admin.surat.download', $tugas->Id_Tugas_Surat) }}" 
+                        <a href="{{ route('admin_prodi.surat.download', $tugas->Id_Tugas_Surat) }}" 
                            class="btn btn-outline-secondary" target="_blank">
                             <i class="fa fa-download me-1"></i> Download PDF
                         </a>
-                        <a href="{{ route('admin.surat.detail', $tugas->Id_Tugas_Surat) }}" class="btn btn-primary px-4">
+                        <a href="{{ route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat) }}" class="btn btn-primary px-4">
                             Proses Surat <i class="fa fa-arrow-right ms-2"></i>
                         </a>
                     </div>
@@ -307,7 +307,7 @@
                     </div>
                     <div class="modal-body p-0 bg-light" style="height: 80vh;">
                         <iframe 
-                            src="{{ route('admin.surat.preview', $tugas->Id_Tugas_Surat) }}" 
+                            src="{{ route('admin_prodi.surat.preview', $tugas->Id_Tugas_Surat) }}" 
                             width="100%" 
                             height="100%" 
                             style="border: none;"
@@ -316,7 +316,7 @@
                     </div>
                     <div class="modal-footer bg-white">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                        <a href="{{ route('admin.surat.detail', $tugas->Id_Tugas_Surat) }}" class="btn btn-info text-white">
+                        <a href="{{ route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat) }}" class="btn btn-info text-white">
                             <i class="fa fa-info-circle me-1"></i> Lihat Detail
                         </a>
                     </div>

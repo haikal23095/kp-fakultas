@@ -29,7 +29,7 @@ class NotifikasiController extends Controller
         // Determine the layout based on user role
         $roleId = $user->Id_Role;
         $layout = match ($roleId) {
-            1 => 'admin',
+            1 => 'admin_prodi',
             2 => 'dekan',
             3 => 'kajur',
             4 => 'kaprodi',

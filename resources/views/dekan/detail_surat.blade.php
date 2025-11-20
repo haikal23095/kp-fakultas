@@ -153,6 +153,25 @@
     </div>
 </div>
 
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="fas fa-file-pdf fa-lg text-danger me-2"></i>
+                    <strong>Preview Draft Surat</strong>
+                </div>
+                <a href="{{ route('dekan.surat.preview', $surat->Id_Tugas_Surat) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
+                    <i class="fas fa-external-link-alt me-1"></i> Buka di Tab Baru
+                </a>
+            </div>
+            <div class="card-body p-0" style="height: 800px;">
+                <iframe src="{{ route('dekan.surat.preview', $surat->Id_Tugas_Surat) }}" width="100%" height="100%" style="border: none;"></iframe>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="mt-3">
     <a href="{{ route('dekan.persetujuan.index') }}" class="btn btn-secondary">
         <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar

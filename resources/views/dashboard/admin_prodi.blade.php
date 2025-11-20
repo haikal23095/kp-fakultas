@@ -4,173 +4,191 @@
 
 @section('content')
 
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 fw-bold mb-0">Dashboard Administrasi Admin Prodi {{ $namaProdi ?? 'Prodi' }}</h1>
-        <p class="mb-0 text-muted">Selamat datang, {{ auth()->user()->Name_User ?? 'Administrator' }}. Berikut adalah ringkasan aktivitas sistem persuratan.</p>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-start border-danger border-4 shadow-sm h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col me-2">
-                        <div class="text-xs fw-bold text-danger text-uppercase mb-1">Permohonan Baru</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">{{ $permohonanBaru }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-inbox fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
+<div class="container-fluid px-0">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="h3 fw-bold text-dark mb-1">Dashboard Overview</h2>
+            <p class="text-muted mb-0">
+                Selamat datang kembali, <span class="fw-semibold text-primary">{{ auth()->user()->Name_User ?? 'Administrator' }}</span>.
+            </p>
+        </div>
+        <div class="d-none d-md-block">
+            <span class="badge bg-white text-secondary border px-3 py-2 shadow-sm">
+                <i class="far fa-calendar-alt me-2"></i> {{ now()->translatedFormat('l, d F Y') }}
+            </span>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-start border-warning border-4 shadow-sm h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col me-2">
-                        <div class="text-xs fw-bold text-warning text-uppercase mb-1">Menunggu TTE Dekan</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">{{ $menungguTTE }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-signature fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-start border-success border-4 shadow-sm h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col me-2">
-                        <div class="text-xs fw-bold text-success text-uppercase mb-1">Surat Selesai (Bulan Ini)</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">{{ $suratSelesaiBulanIni }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-start border-secondary border-4 shadow-sm h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col me-2">
-                        <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Total Arsip Surat</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">{{ number_format($totalArsip) }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-archive fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-lg-8 mb-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 fw-bold text-primary">Antrian Permohonan Surat Terkini</h6>
-                <a href="#" class="btn btn-outline-primary btn-sm">Lihat Semua Permohonan</a>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead>
-                            <tr>
-                                <th>Jenis Surat</th>
-                                <th>Pemohon</th>
-                                <th>Tgl. Masuk</th>
-                                <th>Civitas Akademika</th>
-                                <th>Aksi</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @forelse($antrianSurat as $surat)
-                            <tr>
-                                <td>{{ $surat->jenisSurat->Nama_Surat ?? 'N/A' }}</td>
-                                <td>
-                                    @php
-                                        // Ambil nama pemohon (pemberi tugas = yang mengajukan)
-                                        $namaPemohon = $surat->pemberiTugas->Name_User ?? 'N/A';
-                                    @endphp
-                                    {{ $namaPemohon }}
-                                </td>
-                                <td>{{ $surat->Tanggal_Diberikan_Tugas_Surat ? $surat->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}</td>
-                                <td>
-                                    @php
-                                        $roleName = $surat->pemberiTugas->role->Name_Role ?? 'N/A';
-                                        $badgeClass = 'secondary';
-                                        
-                                        if (str_contains($roleName, 'Dosen')) {
-                                            $badgeClass = 'primary';
-                                        } elseif (str_contains($roleName, 'Mahasiswa')) {
-                                            $badgeClass = 'info';
-                                        } elseif (str_contains($roleName, 'Dekan')) {
-                                            $badgeClass = 'danger';
-                                        } elseif (str_contains($roleName, 'Kajur') || str_contains($roleName, 'Kaprodi')) {
-                                            $badgeClass = 'warning';
-                                        } elseif (str_contains($roleName, 'Admin') || str_contains($roleName, 'Pegawai')) {
-                                            $badgeClass = 'success';
-                                        }
-                                    @endphp
-                                    <span class="badge bg-{{ $badgeClass }}">{{ $roleName }}</span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('admin.surat.detail', $surat->Id_Tugas_Surat) }}" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-eye"></i> Proses
-                                    </a>
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="text-center text-muted py-4">
-                                    <i class="fas fa-inbox fa-2x mb-2"></i>
-                                    <p class="mb-0">Tidak ada permohonan surat saat ini</p>
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-4 mb-4">
-        <div class="card shadow-sm border-0 h-100">
-            <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                <h6 class="m-0 fw-bold text-dark">Log Kendala Sistem</h6>
-                <a href="#" class="btn btn-outline-dark btn-sm"><i class="fas fa-plus"></i></a>
-            </div>
-            <div class="card-body">
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                        <div class="ms-2 me-auto">
-                            <div class="fw-bold">Server Unnes Down</div>
-                            <small class="text-muted">10 Okt 2025 - 14:30</small>
+    <!-- Stats Cards -->
+    <div class="row g-3 mb-4">
+        <!-- Card 1: Permohonan Baru -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body position-relative">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-uppercase fw-bold text-muted small mb-1">Permohonan Baru</p>
+                            <h3 class="fw-bold text-dark mb-0">{{ $permohonanBaru }}</h3>
                         </div>
-                        <span class="badge bg-danger rounded-pill">Major</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-start">
-                        <div class="ms-2 me-auto">
-                            <div class="fw-bold">Jaringan Lambat</div>
-                            <small class="text-muted">10 Okt 2025 - 09:00</small>
+                        <div class="bg-primary bg-opacity-10 p-2 rounded">
+                            <i class="fas fa-inbox text-primary fa-lg"></i>
                         </div>
-                        <span class="badge bg-warning rounded-pill text-dark">Minor</span>
-                    </li>
-                </ul>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-primary bg-opacity-10 text-primary">
+                            <i class="fas fa-arrow-up me-1"></i> Perlu Tindakan
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 2: Menunggu TTE -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body position-relative">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-uppercase fw-bold text-muted small mb-1">Menunggu TTE</p>
+                            <h3 class="fw-bold text-dark mb-0">{{ $menungguTTE }}</h3>
+                        </div>
+                        <div class="bg-warning bg-opacity-10 p-2 rounded">
+                            <i class="fas fa-signature text-warning fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="badge bg-warning bg-opacity-10 text-warning">
+                            Proses Dekan
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 3: Selesai Bulan Ini -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body position-relative">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-uppercase fw-bold text-muted small mb-1">Selesai (Bulan Ini)</p>
+                            <h3 class="fw-bold text-dark mb-0">{{ $suratSelesaiBulanIni }}</h3>
+                        </div>
+                        <div class="bg-success bg-opacity-10 p-2 rounded">
+                            <i class="fas fa-check-circle text-success fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-muted small">Dokumen diterbitkan</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 4: Total Arsip -->
+        <div class="col-xl-3 col-md-6">
+            <div class="card border-0 shadow-sm h-100 overflow-hidden">
+                <div class="card-body position-relative">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="text-uppercase fw-bold text-muted small mb-1">Total Arsip</p>
+                            <h3 class="fw-bold text-dark mb-0">{{ number_format($totalArsip) }}</h3>
+                        </div>
+                        <div class="bg-secondary bg-opacity-10 p-2 rounded">
+                            <i class="fas fa-archive text-secondary fa-lg"></i>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <span class="text-muted small">Seluruh Waktu</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Requests Table -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center border-bottom">
+            <div>
+                <h5 class="fw-bold mb-0 text-dark">Permohonan Surat Terbaru</h5>
+                <small class="text-muted">Daftar 5 pengajuan surat terakhir yang masuk</small>
+            </div>
+            <a href="{{ route('admin_prodi.surat.manage') }}" class="btn btn-sm btn-outline-primary px-3 rounded-pill">
+                Lihat Semua <i class="fas fa-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th class="px-4 py-3 text-uppercase small fw-bold text-muted">Jenis Surat</th>
+                            <th class="py-3 text-uppercase small fw-bold text-muted">Pemohon</th>
+                            <th class="py-3 text-uppercase small fw-bold text-muted">Tanggal</th>
+                            <th class="py-3 text-uppercase small fw-bold text-muted">Status Pemohon</th>
+                            <th class="py-3 text-end px-4 text-uppercase small fw-bold text-muted">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($antrianSurat as $surat)
+                        <tr>
+                            <td class="px-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-sm bg-primary bg-opacity-10 rounded p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-file-alt text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <span class="fw-semibold text-dark d-block">{{ $surat->jenisSurat->Nama_Surat ?? 'N/A' }}</span>
+                                        <small class="text-muted">ID: #{{ $surat->Id_Tugas_Surat }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="fw-medium text-dark">{{ $surat->pemberiTugas->Name_User ?? 'N/A' }}</div>
+                            </td>
+                            <td>
+                                <span class="text-muted">
+                                    <i class="far fa-clock me-1"></i>
+                                    {{ $surat->Tanggal_Diberikan_Tugas_Surat ? $surat->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}
+                                </span>
+                            </td>
+                            <td>
+                                @php
+                                    $roleName = $surat->pemberiTugas->role->Name_Role ?? 'N/A';
+                                    $badgeClass = 'bg-secondary';
+                                    
+                                    if (str_contains($roleName, 'Dosen')) {
+                                        $badgeClass = 'bg-info text-dark';
+                                    } elseif (str_contains($roleName, 'Mahasiswa')) {
+                                        $badgeClass = 'bg-success';
+                                    } elseif (str_contains($roleName, 'Dekan')) {
+                                        $badgeClass = 'bg-danger';
+                                    }
+                                @endphp
+                                <span class="badge {{ $badgeClass }} rounded-pill px-3">{{ $roleName }}</span>
+                            </td>
+                            <td class="text-end px-4">
+                                <a href="{{ route('admin_prodi.surat.detail', $surat->Id_Tugas_Surat) }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                    Proses <i class="fas fa-chevron-right ms-1"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="5" class="text-center py-5">
+                                <div class="d-flex flex-column align-items-center justify-content-center">
+                                    <div class="bg-light rounded-circle p-4 mb-3">
+                                        <i class="fas fa-inbox fa-3x text-muted"></i>
+                                    </div>
+                                    <h6 class="fw-bold text-muted">Tidak ada permohonan baru</h6>
+                                    <p class="text-muted small mb-0">Semua permohonan surat telah diproses.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>

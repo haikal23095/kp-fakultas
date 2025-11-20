@@ -129,7 +129,7 @@ class DetailSuratController extends Controller
             $tugas->Status = 'menunggu-ttd';
             $tugas->save();
 
-            return redirect()->route('admin.surat.detail', $tugas->Id_Tugas_Surat)
+            return redirect()->route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat)
                 ->with('success', 'Tugas telah diajukan ke Dekan.');
         }
 
@@ -182,7 +182,7 @@ class DetailSuratController extends Controller
         $tugas->Status = 'menunggu-ttd';
         $tugas->save();
 
-        return redirect()->route('admin.surat.detail', $tugas->Id_Tugas_Surat)
+        return redirect()->route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat)
             ->with('success', 'Draft final berhasil diupload dan diajukan ke Dekan.');
     }
 
@@ -212,7 +212,7 @@ class DetailSuratController extends Controller
         $tugas->data_spesifik = $dataSpesifik;
         $tugas->save();
 
-        return redirect()->route('admin.surat.detail', $tugas->Id_Tugas_Surat)
+        return redirect()->route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat)
             ->with('success', 'Surat telah ditolak.');
     }
 }
