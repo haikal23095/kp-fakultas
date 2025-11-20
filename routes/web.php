@@ -4,9 +4,11 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\Admin\DetailSuratController;
-use App\Http\Controllers\Admin\ManajemenSuratController;
+use App\Http\Controllers\Admin_Prodi\DetailSuratController;
+use App\Http\Controllers\Admin_Prodi\ManajemenSuratController;
 use App\Http\Controllers\SuratVerificationController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\NotifikasiController;
 
 // Import Controller untuk Pengajuan Surat (Modular)
 use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
@@ -53,7 +55,7 @@ Route::middleware('auth')->group(function () {
 
     // DASHBOARD UTAMA & ROLE
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
-    Route::get('/dashboard/admin', [AuthController::class, 'dashboardAdmin'])->name('dashboard.admin');
+    Route::get('/dashboard/admin', [AuthController::class, 'dashboardAdmin'])->name('dashboard.admin_prodi');
     Route::get('/dashboard/dekan', [AuthController::class, 'dashboardDekan'])->name('dashboard.dekan');
     Route::get('/dashboard/kajur', [AuthController::class, 'dashboardKajur'])->name('dashboard.kajur');
     Route::get('/dashboard/kaprodi', [AuthController::class, 'dashboardKaprodi'])->name('dashboard.kaprodi');
@@ -61,8 +63,20 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/mahasiswa', [AuthController::class, 'dashboardMahasiswa'])->name('dashboard.mahasiswa');
     Route::get('/dashboard/default', [AuthController::class, 'dashboardDefault'])->name('dashboard.default');
 
+    // PROFILE ROUTES (Available for all authenticated users)
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+
+    // NOTIFIKASI ROUTES (Available for all authenticated users)
+    Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
+    Route::get('/notifikasi/recent', [NotifikasiController::class, 'getRecent'])->name('notifikasi.recent');
+    Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.markRead');
+    Route::post('/notifikasi/mark-all-read', [NotifikasiController::class, 'markAllAsRead'])->name('notifikasi.markAllRead');
+    Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy'])->name('notifikasi.delete');
+
     // FITUR ADMIN
-    Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('admin')->name('admin_prodi.')->group(function () {
 
         Route::get('/manajemen-surat', [ManajemenSuratController::class, 'index'])
             ->name('surat.manage');
@@ -89,7 +103,7 @@ Route::middleware('auth')->group(function () {
             ->name('surat.archive');
 
         Route::get('/pengaturan', function () {
-            return view('admin.pengaturan');
+            return view('admin_prodi.pengaturan');
         })->name('settings.index');
     });
 
@@ -137,6 +151,15 @@ Route::middleware('auth')->group(function () {
 
     // FITUR KAPRODI
     Route::prefix('kaprodi')->name('kaprodi.')->group(function () {
+        Route::get('/permintaan-surat', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'index'])
+            ->name('surat.index');
+        Route::post('/permintaan-surat/{id}/approve', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'approve'])
+            ->name('surat.approve');
+        Route::post('/permintaan-surat/{id}/reject', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'reject'])
+            ->name('surat.reject');
+        Route::get('/permintaan-surat/{id}/download-proposal', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'downloadProposal'])
+            ->name('surat.download');
+
         Route::get('/kurikulum', function () {
             return view('kaprodi.kurikulum');
         })->name('kurikulum.index');
@@ -169,6 +192,42 @@ Route::middleware('auth')->group(function () {
                 ->orderBy('Nama_Dosen', 'asc')
                 ->get();
 
+            // Ambil Kaprodi (user dengan role 4) sesuai prodi mahasiswa
+            $kaprodi = null;
+            $kaprodiName = null;
+            $kaprodiNIP = null;
+
+            if ($mahasiswa && $mahasiswa->Id_Prodi) {
+                // Cari User dengan role Kaprodi (Id_Role = 4)
+                // Bisa dari Dosen atau Pegawai yang berada di prodi yang sama
+                $kaprodiUser = \App\Models\User::where('Id_Role', 4)
+                    ->where(function ($query) use ($mahasiswa) {
+                        // Cek apakah dia Dosen di prodi ini
+                        $query->whereHas('dosen', function ($q) use ($mahasiswa) {
+                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                        })
+                            // ATAU Pegawai di prodi ini
+                            ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
+                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                        });
+                    })
+                    ->with(['dosen', 'pegawai'])
+                    ->first();
+
+                if ($kaprodiUser) {
+                    $kaprodi = $kaprodiUser;
+
+                    // Ambil nama dan NIP dari Dosen atau Pegawai
+                    if ($kaprodiUser->dosen) {
+                        $kaprodiName = $kaprodiUser->dosen->Nama_Dosen;
+                        $kaprodiNIP = $kaprodiUser->dosen->NIP;
+                    } elseif ($kaprodiUser->pegawai) {
+                        $kaprodiName = $kaprodiUser->pegawai->Nama_Pegawai;
+                        $kaprodiNIP = $kaprodiUser->pegawai->NIP;
+                    }
+                }
+            }
+
             // Definisikan surat apa saja yang boleh diajukan Mahasiswa
             $namaSuratMahasiswa = [
                 'Surat Keterangan Aktif Kuliah',
@@ -185,7 +244,10 @@ Route::middleware('auth')->group(function () {
                 'mahasiswa' => $mahasiswa,
                 'prodi' => $prodi,
                 'dosens' => $dosens,
-                'jenis_surats' => $jenis_surats
+                'jenis_surats' => $jenis_surats,
+                'kaprodi' => $kaprodi,
+                'kaprodiName' => $kaprodiName,
+                'kaprodiNIP' => $kaprodiNIP
             ]);
 
         })->name('pengajuan.create');

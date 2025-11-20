@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.admin_prodi')
 
 @section('title', 'Dashboard Administrator')
 
@@ -6,7 +6,7 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-0">Dashboard Administrasi Surat</h1>
+        <h1 class="h3 fw-bold mb-0">Dashboard Administrasi Admin Prodi {{ $namaProdi ?? 'Prodi' }}</h1>
         <p class="mb-0 text-muted">Selamat datang, {{ auth()->user()->Name_User ?? 'Administrator' }}. Berikut adalah ringkasan aktivitas sistem persuratan.</p>
     </div>
 </div>

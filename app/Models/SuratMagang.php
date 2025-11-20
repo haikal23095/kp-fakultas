@@ -15,16 +15,19 @@ class SuratMagang extends Model
 
     protected $fillable = [
         'Id_Tugas_Surat',
-        'Nomor_Surat',
         'Nama_Instansi',
+        'Alamat_Instansi',
         'Tanggal_Mulai',
         'Tanggal_Selesai',
         'Foto_ttd',
         'Data_Mahasiswa',
         'Data_Dosen_pembiming',
-        'Surat_Pengantar_Fakultas',
         'Dokumen_Proposal',
         'Surat_Pengantar_Magang',
+        'Acc_Koordinator',
+        'Nama_Koordinator',
+        'Status',
+        'Komentar',
     ];
 
     /**
@@ -41,5 +44,13 @@ class SuratMagang extends Model
     public function tugasSurat()
     {
         return $this->belongsTo(TugasSurat::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
+     * Relasi ke Dosen (Koordinator KP/Magang)
+     */
+    public function koordinator()
+    {
+        return $this->belongsTo(Dosen::class, 'Nama_Koordinator', 'Id_Dosen');
     }
 }

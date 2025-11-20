@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+@extends('layouts.admin_prodi')
 
 @section('title', 'Manajemen Surat')
 

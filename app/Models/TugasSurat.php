@@ -13,7 +13,7 @@ class TugasSurat extends Model
     protected $table = 'Tugas_Surat';
     protected $primaryKey = 'Id_Tugas_Surat';
     public $timestamps = false;
-    public $incrementing = true;
+    public $incrementing = false; // ID di-set manual, bukan auto-increment
     protected $keyType = 'int';
 
     protected $fillable = [

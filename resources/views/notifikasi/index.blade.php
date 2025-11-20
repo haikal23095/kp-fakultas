@@ -1,0 +1,98 @@
+@extends('layouts.' . $layout)
+
+@section('title', 'Notifikasi')
+
+@section('content')
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-gray-800">Notifikasi</h1>
+        @if($unreadCount > 0)
+        <form action="{{ route('notifikasi.markAllRead') }}" method="POST" class="d-inline">
+            @csrf
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="fas fa-check-double me-1"></i>Tandai Semua Sudah Dibaca
+            </button>
+        </form>
+        @endif
+    </div>
+
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
+
+    <div class="card shadow">
+        <div class="card-body">
+            @forelse($notifikasis as $notif)
+            <div class="d-flex align-items-start mb-3 pb-3 border-bottom {{ !$notif->Is_Read ? 'bg-light p-3 rounded' : '' }}">
+                <div class="me-3">
+                    @if($notif->Tipe_Notifikasi == 'surat')
+                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-envelope fa-lg"></i>
+                        </div>
+                    @elseif($notif->Tipe_Notifikasi == 'approval')
+                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-check-circle fa-lg"></i>
+                        </div>
+                    @elseif($notif->Tipe_Notifikasi == 'rejection')
+                        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-times-circle fa-lg"></i>
+                        </div>
+                    @else
+                        <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
+                            <i class="fas fa-bell fa-lg"></i>
+                        </div>
+                    @endif
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <p class="mb-1 {{ !$notif->Is_Read ? 'fw-bold' : '' }}">{{ $notif->Pesan }}</p>
+                            <small class="text-muted">
+                                <i class="fas fa-user me-1"></i>
+                                Dari: {{ $notif->sourceUser->Name_User ?? 'Sistem' }}
+                            </small>
+                            <br>
+                            <small class="text-muted">
+                                <i class="fas fa-clock me-1"></i>
+                                {{ $notif->created_at->diffForHumans() }}
+                            </small>
+                        </div>
+                        <div class="btn-group">
+                            @if(!$notif->Is_Read)
+                            <form action="{{ route('notifikasi.markRead', $notif->Id_Notifikasi) }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Tandai sudah dibaca">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            @endif
+                            <form action="{{ route('notifikasi.delete', $notif->Id_Notifikasi) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus notifikasi ini?')">
+                                @csrf
+                                @method('DELETE')
+                                <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            @empty
+            <div class="text-center py-5">
+                <i class="fas fa-bell-slash fa-3x text-muted mb-3"></i>
+                <p class="text-muted">Tidak ada notifikasi</p>
+            </div>
+            @endforelse
+
+            @if($notifikasis->hasPages())
+            <div class="mt-3">
+                {{ $notifikasis->links() }}
+            </div>
+            @endif
+        </div>
+    </div>
+</div>
+@endsection

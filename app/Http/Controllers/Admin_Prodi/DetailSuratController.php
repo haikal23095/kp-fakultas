@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin_Prodi;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
@@ -52,7 +52,7 @@ class DetailSuratController extends Controller
             }
         }
 
-        return view('admin.detail_surat', [
+        return view('admin_prodi.detail_surat', [
             'surat' => $tugasSurat,
             'detailPengaju' => $detailPengaju,
             'activeMenu' => 'manajemen-surat' // ← Tambahkan ini untuk highlight menu

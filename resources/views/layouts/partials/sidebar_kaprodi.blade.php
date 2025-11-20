@@ -12,22 +12,30 @@
             </a>
         </li>
         <li class="nav-heading mt-3 mb-1 text-muted small">KAPRODI MENU</li>
-        {{-- Contoh menu untuk Kaprodi --}}
+        {{-- Menu untuk Kaprodi --}}
         <li>
-            <a href="#" class="nav-link text-white">
-                <i class="fas fa-check-double me-2"></i>
-                Validasi KRS
+            <a href="{{ route('kaprodi.surat.index') }}" class="nav-link text-white {{ request()->routeIs('kaprodi.surat.*') ? 'active' : '' }}">
+                <i class="fa fa-envelope me-2"></i>
+                Permintaan Pengantar KP/Magang
             </a>
         </li>
     </ul>
     <hr>
+    {{-- Notifikasi Link --}}
+    <div class="mb-2">
+        <a href="{{ route('notifikasi.index') }}" class="nav-link text-white d-flex align-items-center justify-content-between {{ request()->routeIs('notifikasi.*') ? 'active' : '' }}">
+            <span><i class="fas fa-bell me-2"></i>Notifikasi</span>
+            <span class="badge bg-danger rounded-pill" id="notifBadge" style="display: none;">0</span>
+        </a>
+    </div>
+    <hr>
     <div class="dropdown">
-        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle text-truncate w-100" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false" style="max-width: 240px;">
+        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="fas fa-user-circle fa-2x me-2"></i>
-            <strong class="text-truncate">{{ auth()->user()?->Name_User ?? 'Kaprodi' }}</strong>
+            <strong>{{ auth()->user()?->Name_User ?? 'Kaprodi' }}</strong>
         </a>
         <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
-            <li><a class="dropdown-item" href="#">Profil</a></li>
+            <li><a class="dropdown-item" href="{{ route('profile.index') }}">Profil</a></li>
             <li><hr class="dropdown-divider"></li>
             <li>
                 <a class="dropdown-item" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Sign out</a>

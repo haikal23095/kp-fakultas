@@ -85,7 +85,7 @@ class AuthController extends Controller
     {
         switch ($roleId) {
             case 1:
-                return redirect()->route('dashboard.admin');
+                return redirect()->route('dashboard.admin_prodi');
             case 2:
                 return redirect()->route('dashboard.dekan');
             case 3:
@@ -105,8 +105,14 @@ class AuthController extends Controller
     public function dashboardAdmin()
     {
         // Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
-        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai']);
+        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai.prodi']);
         
+        // Ambil nama prodi (untuk tampilan dashboard)
+        $namaProdi = $user->dosen?->prodi?->Nama_Prodi ??
+            $user->mahasiswa?->prodi?->Nama_Prodi ??
+            $user->pegawai?->prodi?->Nama_Prodi ??
+            'Fakultas Teknik'; // Default jika Admin Fakultas (tidak terikat prodi)
+
         // NOTE: Untuk Admin Fakultas (Role 1), kita asumsikan mereka bisa melihat SEMUA surat dalam fakultas.
         // Jadi kita TIDAK memfilter berdasarkan Prodi spesifik admin tersebut.
         // Jika nanti ada kebutuhan "Admin Prodi", logika ini bisa disesuaikan.
@@ -133,12 +139,13 @@ class AuthController extends Controller
             ->take(5)
             ->get();
 
-        return view('dashboard.admin', compact(
+        return view('dashboard.admin_prodi', compact(
             'permohonanBaru',
             'menungguTTE',
             'suratSelesaiBulanIni',
             'totalArsip',
-            'antrianSurat'
+            'antrianSurat',
+            'namaProdi'
         ));
     }
 
@@ -155,7 +162,45 @@ class AuthController extends Controller
 
     public function dashboardKaprodi()
     {
-        return view('dashboard.kaprodi');
+        $user = Auth::user();
+
+        // Ambil data Kaprodi (bisa dari Dosen atau Pegawai)
+        $kaprodiDosen = $user->dosen;
+        $kaprodiPegawai = $user->pegawai;
+
+        // Ambil Id_Prodi dari Kaprodi
+        $prodiId = $kaprodiDosen?->Id_Prodi ?? $kaprodiPegawai?->Id_Prodi;
+
+        if (!$prodiId) {
+            return view('dashboard.kaprodi', [
+                'suratMasuk' => 0,
+                'suratKeluar' => 4, // statis
+                'jumlahDosen' => 0,
+                'totalArsip' => 45, // statis
+            ]);
+        }
+
+        // Hitung Surat Masuk: Surat Magang dengan Acc_Koordinator = false dari mahasiswa di prodi ini
+        $suratMasuk = \App\Models\SuratMagang::query()
+            ->whereHas('tugasSurat.pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
+                $q->where('Id_Prodi', $prodiId);
+            })
+            ->where('Acc_Koordinator', false)
+            ->count();
+
+        // Hitung Jumlah Dosen di prodi ini
+        $jumlahDosen = \App\Models\Dosen::where('Id_Prodi', $prodiId)->count();
+
+        // Surat Keluar dan Total Arsip tetap statis dulu
+        $suratKeluar = 4;
+        $totalArsip = 45;
+
+        return view('dashboard.kaprodi', compact(
+            'suratMasuk',
+            'suratKeluar',
+            'jumlahDosen',
+            'totalArsip'
+        ));
     }
 
     public function dashboardDosen()

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Admin;
+namespace App\Http\Controllers\Admin_Prodi;
 
 
 use App\Http\Controllers\Controller;
@@ -49,7 +49,7 @@ class ManajemenSuratController extends Controller
             'semua_count' => $suratSemua->count(),
         ]);
 
-        return view('admin.manajemen_surat', [
+        return view('admin_prodi.manajemen_surat', [
             'daftarTugas' => $suratSemua,
             'suratPending' => $suratPending,
         ]);
@@ -89,7 +89,7 @@ class ManajemenSuratController extends Controller
         // Ambil arsip tugas yang sudah selesai (delegasi ke model)
         $arsipTugas = TugasSurat::getArsipSelesai();
 
-        return view('admin.arsip_surat', [
+        return view('admin_prodi.arsip_surat', [
             'arsipTugas' => $arsipTugas
         ]);
     }
