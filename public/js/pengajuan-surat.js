@@ -1,76 +1,18 @@
 /**
  * Pengajuan Surat - JavaScript Module
- * Menangani form dinamis dan preview surat
+ * Menangani form magang dan preview surat
  */
 
 document.addEventListener('DOMContentLoaded', function () {
 
-    const jenisSuratSelect = document.getElementById('jenisSurat');
-    const dynamicForms = document.querySelectorAll('.dynamic-form');
-    const formPengajuan = document.getElementById('formPengajuan');
-
-    // --- PENTING: PETA ID DARI DATABASE KE ID FORM & ROUTE ---
-    // Ini akan di-set dari Blade template melalui window.routeConfig
-    const formIdMap = window.formIdMap || {};
-    // --- Akhir Peta ---
-
-    function hideAllDynamicForms() {
-        dynamicForms.forEach(function (form) {
-            form.style.display = 'none';
-
-            // Simpan status required asli dan nonaktifkan validasi
-            form.querySelectorAll('input, select, textarea').forEach(function (input) {
-                if (input.required) {
-                    input.setAttribute('data-was-required', 'true');
-                    input.required = false;
-                }
-                // Disable input agar tidak tersubmit jika kosong
-                input.disabled = true;
-            });
-        });
-    }
-
-    jenisSuratSelect.addEventListener('change', function () {
-        hideAllDynamicForms();
-
-        const selectedValue = this.value; // Ini adalah ID, misal '3'
-        const formConfig = formIdMap[selectedValue];
-
-        if (formConfig) {
-            // Set action form sesuai jenis surat
-            formPengajuan.action = formConfig.route;
-
-            const targetForm = document.getElementById(formConfig.formId);
-            if (targetForm) {
-                targetForm.style.display = 'block';
-
-                // Aktifkan kembali input dan restore status required
-                targetForm.querySelectorAll('input, select, textarea').forEach(function (input) {
-                    input.disabled = false;
-                    if (input.getAttribute('data-was-required') === 'true') {
-                        input.required = true;
-                    }
-                });
-
-                // === [BARU] Jika form magang, inisialisasi preview ===
-                if (formConfig.formId === 'form-surat-magang') {
-                    initMagangPreview();
-                }
-            }
-        } else {
-            // Jika jenis surat tidak ada mapping, kosongkan action
-            formPengajuan.action = '';
-            alert('Jenis surat ini belum tersedia. Silakan pilih jenis surat lain.');
-        }
-    });
-
-    // Sembunyikan semua saat halaman baru dimuat
-    hideAllDynamicForms();
-
-
     // === SCRIPT KHUSUS UNTUK SURAT MAGANG === //
     let mahasiswaIndex = 1; // Mulai dari 1 karena 0 sudah ada (mahasiswa yang login)
     let autocompleteTimeout = null;
+
+    // Inisialisasi form magang jika ada
+    if (document.getElementById('mahasiswa-container')) {
+        initMagangPreview();
+    }
 
     // Fungsi untuk inisialisasi form magang
     function initMagangPreview() {
@@ -89,7 +31,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Event listener untuk mahasiswa pertama (yang sudah ada) - dengan multiple approach
         const firstMhsNama = document.querySelector('.mahasiswa-nama[data-index="0"]');
         const firstMhsNim = document.querySelector('.mahasiswa-nim[data-index="0"]');
-        const firstMhsSemester = document.querySelector('.mahasiswa-semester[data-index="0"]');
+        const firstMhsAngkatan = document.querySelector('.mahasiswa-angkatan[data-index="0"]');
 
         if (firstMhsNama) {
             firstMhsNama.addEventListener('input', updateMahasiswaPreviewList);
@@ -99,20 +41,20 @@ document.addEventListener('DOMContentLoaded', function () {
             firstMhsNim.addEventListener('input', updateMahasiswaPreviewList);
             firstMhsNim.addEventListener('change', updateMahasiswaPreviewList);
         }
-        if (firstMhsSemester) {
-            firstMhsSemester.addEventListener('change', updateMahasiswaPreviewList);
-            firstMhsSemester.addEventListener('input', updateMahasiswaPreviewList);
+        if (firstMhsAngkatan) {
+            firstMhsAngkatan.addEventListener('change', updateMahasiswaPreviewList);
+            firstMhsAngkatan.addEventListener('input', updateMahasiswaPreviewList);
         }
 
         // Event delegation untuk semua input mahasiswa (termasuk yang ditambah nanti)
         document.addEventListener('input', function (e) {
-            if (e.target.matches('.mahasiswa-nama, .mahasiswa-nim, .mahasiswa-semester')) {
+            if (e.target.matches('.mahasiswa-nama, .mahasiswa-nim, .mahasiswa-angkatan')) {
                 updateMahasiswaPreviewList();
             }
         });
 
         document.addEventListener('change', function (e) {
-            if (e.target.matches('.mahasiswa-semester')) {
+            if (e.target.matches('.mahasiswa-angkatan')) {
                 updateMahasiswaPreviewList();
             }
         });
@@ -246,13 +188,13 @@ document.addEventListener('DOMContentLoaded', function () {
             const dataIndex = item.getAttribute('data-index');
             const namaInput = item.querySelector(`.mahasiswa-nama[data-index="${dataIndex}"]`);
             const nimInput = item.querySelector(`.mahasiswa-nim[data-index="${dataIndex}"]`);
-            const semesterInput = item.querySelector(`.mahasiswa-semester[data-index="${dataIndex}"]`);
+            const angkatanInput = item.querySelector(`.mahasiswa-angkatan[data-index="${dataIndex}"]`);
 
             const nama = namaInput?.value || '';
             const nim = nimInput?.value || '';
-            const semester = semesterInput?.value || '';
+            const angkatan = angkatanInput?.value || '';
 
-            console.log(`Mahasiswa ${index}:`, { nama, nim, semester, dataIndex });
+            console.log(`Mahasiswa ${index}:`, { nama, nim, angkatan, dataIndex });
 
             const previewItem = document.createElement('div');
             previewItem.className = 'preview-mahasiswa-item';
@@ -260,11 +202,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const namaDisplay = nama ? nama : '<span class="preview-placeholder">[Nama Mahasiswa]</span>';
             const nimDisplay = nim ? nim : '<span class="preview-placeholder">[NIM]</span>';
-            const semesterDisplay = semester ? semester : '<span class="preview-placeholder">-</span>';
+            const angkatanDisplay = angkatan ? angkatan : '<span class="preview-placeholder">-</span>';
 
             previewItem.innerHTML = `
                 <strong>${index + 1}. <span class="preview-mhs-nama">${namaDisplay}</span></strong><br>
-                <small>NIM: <span class="preview-mhs-nim">${nimDisplay}</span> | Semester: <span class="preview-mhs-semester">${semesterDisplay}</span></small>
+                <small>NIM: <span class="preview-mhs-nim">${nimDisplay}</span> | Angkatan: <span class="preview-mhs-angkatan">${angkatanDisplay}</span></small>
             `;
 
             previewList.appendChild(previewItem);
@@ -294,8 +236,8 @@ document.addEventListener('DOMContentLoaded', function () {
         clone.querySelector('.mahasiswa-jurusan').setAttribute('name', `mahasiswa[${mahasiswaIndex}][jurusan]`);
         clone.querySelector('.mahasiswa-jurusan').setAttribute('data-index', mahasiswaIndex);
 
-        clone.querySelector('.mahasiswa-semester').setAttribute('name', `mahasiswa[${mahasiswaIndex}][semester]`);
-        clone.querySelector('.mahasiswa-semester').setAttribute('data-index', mahasiswaIndex);
+        clone.querySelector('.mahasiswa-angkatan').setAttribute('name', `mahasiswa[${mahasiswaIndex}][angkatan]`);
+        clone.querySelector('.mahasiswa-angkatan').setAttribute('data-index', mahasiswaIndex);
 
         // Event listener untuk tombol hapus
         clone.querySelector('.btn-hapus-mahasiswa').addEventListener('click', function () {
@@ -380,9 +322,11 @@ document.addEventListener('DOMContentLoaded', function () {
         input.value = mhs.nama;
         const nimInput = document.querySelector(`.mahasiswa-nim[data-index="${index}"]`);
         const jurusanInput = document.querySelector(`.mahasiswa-jurusan[data-index="${index}"]`);
+        const angkatanInput = document.querySelector(`.mahasiswa-angkatan[data-index="${index}"]`);
 
         if (nimInput) nimInput.value = mhs.nim;
         if (jurusanInput) jurusanInput.value = mhs.jurusan;
+        if (angkatanInput) angkatanInput.value = mhs.angkatan;
 
         // Tutup autocomplete
         input.nextElementSibling.style.display = 'none';

@@ -124,7 +124,7 @@ class SuratKeteranganAktifController extends Controller
                 'dokumen_pendukung' => $tugasSurat->dokumen_pendukung,
             ]);
 
-            return redirect()->route('mahasiswa.pengajuan.create')
+            return redirect()->route('mahasiswa.pengajuan.aktif.form')
                 ->with('success', 'Pengajuan Surat Keterangan Mahasiswa Aktif berhasil dikirim! Nomor pengajuan: #' . $tugasSurat->Id_Tugas_Surat);
 
         } catch (\Exception $e) {

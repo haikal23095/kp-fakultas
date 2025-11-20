@@ -50,7 +50,7 @@ class SuratPengantarMagangController extends Controller
             'mahasiswa.*.nama' => 'required|string|max:255',
             'mahasiswa.*.nim' => 'required|numeric',
             'mahasiswa.*.jurusan' => 'required|string|max:255',
-            'mahasiswa.*.semester' => 'required|integer|min:1|max:14',
+            'mahasiswa.*.angkatan' => 'required|integer|min:2000|max:' . (date('Y') + 1),
         ], [
             'data_spesifik.dosen_pembimbing_1.required' => 'Dosen pembimbing wajib dipilih',
             'data_spesifik.nama_instansi.required' => 'Nama instansi/perusahaan wajib diisi',
@@ -69,7 +69,7 @@ class SuratPengantarMagangController extends Controller
             'mahasiswa.*.nama.required' => 'Nama mahasiswa wajib diisi.',
             'mahasiswa.*.nim.required' => 'NIM mahasiswa wajib diisi.',
             'mahasiswa.*.jurusan.required' => 'Jurusan mahasiswa wajib diisi.',
-            'mahasiswa.*.semester.required' => 'Semester mahasiswa wajib diisi.',
+            'mahasiswa.*.angkatan.required' => 'Angkatan mahasiswa wajib diisi.',
         ]);
 
         if ($validator->fails()) {
@@ -132,7 +132,7 @@ class SuratPengantarMagangController extends Controller
                 'nama' => $mhs['nama'],
                 'nim' => $mhs['nim'],
                 'jurusan' => $mhs['jurusan'],
-                'semester' => $mhs['semester'],
+                'angkatan' => $mhs['angkatan'],
             ];
         }
 
@@ -270,7 +270,7 @@ class SuratPengantarMagangController extends Controller
                 'dokumen_proposal' => $pathDokumenPendukung,
             ]);
 
-            return redirect()->route('mahasiswa.pengajuan.create')
+            return redirect()->route('mahasiswa.pengajuan.magang.form')
                 ->with('success', 'Pengajuan Surat Pengantar Magang/KP ke ' . $instansi . ' berhasil dikirim! Nomor pengajuan: #' . $tugasSurat->Id_Tugas_Surat);
 
         } catch (\Exception $e) {
@@ -317,6 +317,7 @@ class SuratPengantarMagangController extends Controller
                 'nama' => $mahasiswa->Nama_Mahasiswa,
                 'nim' => $mahasiswa->NIM,
                 'jurusan' => $mahasiswa->prodi->Nama_Prodi ?? 'Tidak Diketahui',
+                'angkatan' => $mahasiswa->Angkatan,
                 'label' => $mahasiswa->Nama_Mahasiswa . ' - ' . $mahasiswa->NIM,
             ];
         });

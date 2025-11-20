@@ -29,13 +29,13 @@
         <div class="card border-0 shadow-sm">
             <div class="card-body d-flex align-items-center">
                 <div class="flex-shrink-0 me-3">
-                    <div class="bg-warning bg-opacity-10 text-warning rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                        <i class="fas fa-hourglass-half fs-5"></i>
+                    <div class="bg-danger bg-opacity-10 text-danger rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                        <i class="fas fa-times-circle fs-5"></i>
                     </div>
                 </div>
                 <div class="flex-grow-1">
-                    <p class="text-muted mb-1">Menunggu Proses</p>
-                    <h4 class="fw-bold mb-0">{{ $menungguProses ?? 0 }}</h4>
+                    <p class="text-muted mb-1">Ditolak</p>
+                    <h4 class="fw-bold mb-0">{{ $ditolak ?? 0 }}</h4>
                 </div>
             </div>
         </div>
@@ -50,8 +50,8 @@
                     </div>
                 </div>
                 <div class="flex-grow-1">
-                    <p class="text-muted mb-1">Selesai & Dapat Diunduh</p>
-                    <h4 class="fw-bold mb-0">{{ $selesai ?? 0 }}</h4>
+                    <p class="text-muted mb-1">Diterima</p>
+                    <h4 class="fw-bold mb-0">{{ $diterima ?? 0 }}</h4>
                 </div>
             </div>
         </div>
@@ -96,23 +96,29 @@
                     @php
                         $status = strtolower(trim($surat->Status ?? ''));
                         $badgeClass = match($status) {
-                            'selesai' => 'bg-success',
-                            'baru' => 'bg-warning text-dark',
-                            'proses' => 'bg-info',
-                            'terlambat' => 'bg-danger',
+                            'success' => 'bg-success',
                             'ditolak' => 'bg-danger',
-                            'disetujui' => 'bg-primary',
+                            'diajukan-ke-koordinator' => 'bg-warning text-dark',
+                            'dikerjakan-admin' => 'bg-info',
+                            'diajukan-ke-dekan' => 'bg-primary',
                             default => 'bg-secondary'
                         };
-                        $statusText = ucfirst($surat->Status ?? '-');
+                        $statusText = match($status) {
+                            'success' => 'Success',
+                            'ditolak' => 'Ditolak',
+                            'diajukan-ke-koordinator' => 'Diajukan ke Koordinator',
+                            'dikerjakan-admin' => 'Dikerjakan Admin',
+                            'diajukan-ke-dekan' => 'Diajukan ke Dekan',
+                            default => ucfirst($surat->Status ?? '-')
+                        };
                     @endphp
                     <tr>
-                        <td>{{ $surat->jenisSurat->Nama_Surat ?? 'Tidak Diketahui' }}</td>
-                        <td>{{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') }}</td>
+                        <td>{{ $surat->tugasSurat->jenisSurat->Nama_Surat ?? 'Tidak Diketahui' }}</td>
+                        <td>{{ $surat->tugasSurat ? \Carbon\Carbon::parse($surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') : '-' }}</td>
                         <td><span class="badge {{ $badgeClass }}">{{ $statusText }}</span></td>
                         <td class="text-center">
-                            @if($status === 'selesai' && $surat->File_Surat)
-                                <a href="{{ asset('storage/' . $surat->File_Surat) }}" class="btn btn-primary btn-sm" download>
+                            @if($status === 'success' && $surat->Surat_Pengantar_Magang)
+                                <a href="{{ asset('storage/' . $surat->Surat_Pengantar_Magang) }}" class="btn btn-primary btn-sm" download>
                                     <i class="fas fa-download"></i>
                                 </a>
                             @else

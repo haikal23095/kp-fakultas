@@ -179,9 +179,47 @@ Route::middleware('auth')->group(function () {
     // FITUR MAHASISWA
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
 
-        // --- ROUTE GET: FORM PENGAJUAN SURAT ---
+        // --- ROUTE GET: HALAMAN PILIHAN JENIS SURAT (CARD VIEW) ---
         Route::get('/pengajuan-surat', function () {
+            // Definisikan surat apa saja yang boleh diajukan Mahasiswa
+            $namaSuratMahasiswa = [
+                'Surat Keterangan Aktif Kuliah',
+                'Surat Rekomendasi',
+                'Surat Pengantar KP/Magang'
+            ];
 
+            // Ambil dari DB HANYA surat-surat yang ada di daftar statis
+            $jenis_surats = JenisSurat::whereIn('Nama_Surat', $namaSuratMahasiswa)
+                ->orderBy('Nama_Surat', 'asc')
+                ->get();
+
+            return view('mahasiswa.pilih_jenis_surat', [
+                'jenis_surats' => $jenis_surats
+            ]);
+        })->name('pengajuan.create');
+
+        // --- ROUTE GET: FORM SURAT KETERANGAN AKTIF ---
+        Route::get('/pengajuan-surat/aktif', function () {
+            $user = Auth::user();
+            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
+
+            $prodi = null;
+            if ($mahasiswa && $mahasiswa->Id_Prodi) {
+                $prodi = Prodi::find($mahasiswa->Id_Prodi);
+            }
+
+            // Ambil ID jenis surat
+            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Keterangan Aktif Kuliah')->first();
+
+            return view('mahasiswa.form_surat_aktif', [
+                'mahasiswa' => $mahasiswa,
+                'prodi' => $prodi,
+                'jenisSurat' => $jenisSurat
+            ]);
+        })->name('pengajuan.aktif.form');
+
+        // --- ROUTE GET: FORM SURAT PENGANTAR MAGANG ---
+        Route::get('/pengajuan-surat/magang', function () {
             $user = Auth::user();
             $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
 
@@ -191,8 +229,6 @@ Route::middleware('auth')->group(function () {
             }
 
             // Filter dosen berdasarkan prodi mahasiswa
-            // Jika mahasiswa punya prodi, tampilkan dosen dari prodi tersebut
-            // Jika tidak, tampilkan semua dosen (fallback)
             $dosens = Dosen::query()
                 ->when($mahasiswa && $mahasiswa->Id_Prodi, function ($query) use ($mahasiswa) {
                     return $query->where('Id_Prodi', $mahasiswa->Id_Prodi);
@@ -206,26 +242,20 @@ Route::middleware('auth')->group(function () {
             $kaprodiNIP = null;
 
             if ($mahasiswa && $mahasiswa->Id_Prodi) {
-                // Cari User dengan role Kaprodi (Id_Role = 4)
-                // Bisa dari Dosen atau Pegawai yang berada di prodi yang sama
                 $kaprodiUser = \App\Models\User::where('Id_Role', 4)
                     ->where(function ($query) use ($mahasiswa) {
-                        // Cek apakah dia Dosen di prodi ini
                         $query->whereHas('dosen', function ($q) use ($mahasiswa) {
                             $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
                         })
-                            // ATAU Pegawai di prodi ini
                             ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
-                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
-                        });
+                                $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                            });
                     })
                     ->with(['dosen', 'pegawai'])
                     ->first();
 
                 if ($kaprodiUser) {
                     $kaprodi = $kaprodiUser;
-
-                    // Ambil nama dan NIP dari Dosen atau Pegawai
                     if ($kaprodiUser->dosen) {
                         $kaprodiName = $kaprodiUser->dosen->Nama_Dosen;
                         $kaprodiNIP = $kaprodiUser->dosen->NIP;
@@ -236,37 +266,41 @@ Route::middleware('auth')->group(function () {
                 }
             }
 
-            // Definisikan surat apa saja yang boleh diajukan Mahasiswa
-            $namaSuratMahasiswa = [
-                'Surat Keterangan Aktif Kuliah',
-                'Surat Rekomendasi',
-                'Surat Pengantar KP/Magang'
-            ];
+            // Ambil ID jenis surat
+            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Pengantar KP/Magang')->first();
 
-            // Ambil dari DB HANYA surat-surat yang ada di daftar statis
-            $jenis_surats = JenisSurat::whereIn('Nama_Surat', $namaSuratMahasiswa)
-                ->orderBy('Nama_Surat', 'asc')
-                ->get();
-
-            return view('mahasiswa.pengajuan_surat', [
+            return view('mahasiswa.form_surat_magang', [
                 'mahasiswa' => $mahasiswa,
                 'prodi' => $prodi,
                 'dosens' => $dosens,
-                'jenis_surats' => $jenis_surats,
                 'kaprodi' => $kaprodi,
                 'kaprodiName' => $kaprodiName,
-                'kaprodiNIP' => $kaprodiNIP
+                'kaprodiNIP' => $kaprodiNIP,
+                'jenisSurat' => $jenisSurat
             ]);
+        })->name('pengajuan.magang.form');        // --- ROUTE GET: FORM SURAT REKOMENDASI ---
+        Route::get('/pengajuan-surat/rekomendasi', function () {
+            $user = Auth::user();
+            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
 
-        })->name('pengajuan.create');
+            $prodi = null;
+            if ($mahasiswa && $mahasiswa->Id_Prodi) {
+                $prodi = Prodi::find($mahasiswa->Id_Prodi);
+            }
+
+            return view('mahasiswa.form_surat_rekomendasi', [
+                'mahasiswa' => $mahasiswa,
+                'prodi' => $prodi
+            ]);
+        })->name('pengajuan.rekomendasi.form');
 
         // --- ROUTE POST: MENYIMPAN PENGAJUAN SURAT (MODULAR) ---
         // Route untuk Surat Keterangan Mahasiswa Aktif
-        Route::post('/pengajuan-surat/aktif', [SuratKeteranganAktifController::class, 'store'])
+        Route::post('/pengajuan-surat/aktif/store', [SuratKeteranganAktifController::class, 'store'])
             ->name('pengajuan.aktif.store');
 
         // Route untuk Surat Pengantar Magang/KP
-        Route::post('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'store'])
+        Route::post('/pengajuan-surat/magang/store', [SuratPengantarMagangController::class, 'store'])
             ->name('pengajuan.magang.store');
 
         // API untuk mendapatkan daftar mahasiswa satu prodi (untuk autocomplete)

@@ -132,15 +132,17 @@
 
 {{-- Menampilkan pesan sukses setelah submit --}}
 @if (session('success'))
-    <div class="alert alert-success">
-        {{ session('success') }}
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i> <strong>Berhasil!</strong> {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 @endif
 
 {{-- Menampilkan pesan error dari Controller (try...catch) --}}
 @if (session('error'))
-    <div class="alert alert-danger">
-        <strong>Terjadi Kesalahan:</strong> {{ session('error') }}
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i> <strong>Terjadi Kesalahan:</strong> {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
 @endif
 
@@ -276,13 +278,12 @@
                                        data-index="0">
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label"><strong>Semester</strong></label>
-                                <select class="form-select mahasiswa-semester" name="mahasiswa[0][semester]" required data-index="0">
-                                    <option value="">--Pilih--</option>
-                                    @for($i = 1; $i <= 14; $i++)
-                                        <option value="{{ $i }}" {{ $i == 6 ? 'selected' : '' }}>{{ $i }}</option>
-                                    @endfor
-                                </select>
+                                <label class="form-label"><strong>Angkatan</strong></label>
+                                <input type="text" class="form-control mahasiswa-angkatan" 
+                                       name="mahasiswa[0][angkatan]"
+                                       value="{{ $mahasiswa->Angkatan ?? 'Angkatan Tidak Ditemukan' }}" 
+                                       readonly
+                                       data-index="0">
                             </div>
                         </div>
                         <div class="row">
@@ -326,13 +327,12 @@
                                        data-index="">
                             </div>
                             <div class="col-md-3 mb-3">
-                                <label class="form-label"><strong>Semester</strong></label>
-                                <select class="form-select mahasiswa-semester" name="" required data-index="">
-                                    <option value="">--Pilih--</option>
-                                    @for($i = 1; $i <= 14; $i++)
-                                        <option value="{{ $i }}">{{ $i }}</option>
-                                    @endfor
-                                </select>
+                                <label class="form-label"><strong>Angkatan</strong></label>
+                                <input type="text" class="form-control mahasiswa-angkatan" 
+                                       name=""
+                                       placeholder="Angkatan otomatis terisi"
+                                       readonly
+                                       data-index="">
                             </div>
                         </div>
                         <div class="row">
@@ -461,7 +461,7 @@
                                 <td id="preview-mahasiswa-list">
                                     <div class="preview-mahasiswa-item" data-index="0">
                                         <strong>1. <span class="preview-mhs-nama"><span class="preview-placeholder">[Nama Mahasiswa]</span></span></strong><br>
-                                        <small>NIM: <span class="preview-mhs-nim"><span class="preview-placeholder">[NIM]</span></span> | Semester: <span class="preview-mhs-semester"><span class="preview-placeholder">-</span></span></small>
+                                        <small>NIM: <span class="preview-mhs-nim"><span class="preview-placeholder">[NIM]</span></span> | Angkatan: <span class="preview-mhs-angkatan"><span class="preview-placeholder">-</span></span></small>
                                     </div>
                                 </td>
                             </tr>

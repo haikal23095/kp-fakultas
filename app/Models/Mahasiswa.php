@@ -32,6 +32,17 @@ class Mahasiswa extends Model
      */
     public $timestamps = false;
 
+    protected $fillable = [
+        'Id_Mahasiswa',
+        'NIM',
+        'Nama_Mahasiswa',
+        'Jenis_Kelamin_Mahasiswa',
+        'Alamat_Mahasiswa',
+        'Angkatan',
+        'Id_User',
+        'Id_Prodi',
+    ];
+
     /**
      * Definisikan relasi ke tabel User
      * Ini akan menghubungkan 'Id_User' di tabel Mahasiswa
@@ -42,7 +53,7 @@ class Mahasiswa extends Model
         // 'Id_User' (foreign key di Mahasiswa), 'Id_User' (primary key di Users)
         return $this->belongsTo(User::class, 'Id_User', 'Id_User');
     }
-    
+
     /**
      * Definisikan relasi ke tabel Prodi
      */

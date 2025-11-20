@@ -303,34 +303,38 @@ class AuthController extends Controller
     {
         $user = Auth::user();
 
-        // Ambil semua pengajuan surat mahasiswa dari tabel Tugas_Surat
-        $totalPengajuan = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->count();
-
-        // Menunggu Proses (status = 'Diajukan-ke-koordinator' di Surat_Magang)
-        $menungguProses = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+        // Ambil statistik dari tabel Surat_Magang berdasarkan Id_Pemberi_Tugas_Surat mahasiswa
+        $ditolak = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
             ->whereHas('suratMagang', function ($query) {
-                $query->where('Status', 'Diajukan-ke-koordinator');
+                $query->where('Status', 'Ditolak');
             })
             ->count();
 
-        // Selesai & Dapat Diunduh (status = 'Success' di Surat_Magang)
-        $selesai = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+        // Diterima (status = 'Success' di Surat_Magang)
+        $diterima = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
             ->whereHas('suratMagang', function ($query) {
                 $query->where('Status', 'Success');
             })
             ->count();
 
-        // Ambil 5 riwayat pengajuan terkini
-        $riwayatTerkini = TugasSurat::with(['jenisSurat'])
-            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+        // Total Pengajuan
+        $totalPengajuan = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->has('suratMagang')
+            ->count();
+
+        // Ambil 5 riwayat pengajuan terkini dari Surat_Magang
+        $riwayatTerkini = \App\Models\SuratMagang::whereHas('tugasSurat', function ($query) use ($user) {
+            $query->where('Id_Pemberi_Tugas_Surat', $user->Id_User);
+        })
+            ->with(['tugasSurat.jenisSurat'])
+            ->orderBy('id_no', 'desc')
             ->take(5)
             ->get();
 
         return view('dashboard.mahasiswa', [
+            'ditolak' => $ditolak,
+            'diterima' => $diterima,
             'totalPengajuan' => $totalPengajuan,
-            'menungguProses' => $menungguProses,
-            'selesai' => $selesai,
             'riwayatTerkini' => $riwayatTerkini
         ]);
     }
