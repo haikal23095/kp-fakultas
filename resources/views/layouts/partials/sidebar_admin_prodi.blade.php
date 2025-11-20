@@ -1,32 +1,32 @@
 <aside class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 280px; height: 100vh; position: fixed;">
-    <a href="{{ route('dashboard.admin') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
+    <a href="{{ route('dashboard.admin_prodi') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
         <i class="fas fa-university fa-2x me-2"></i>
         <span class="fs-4">Sistem Fakultas</span>
     </a>
     <hr>
     <ul class="nav nav-pills flex-column mb-auto">
         <li class="nav-item">
-            <a href="{{ route('dashboard.admin') }}" class="nav-link text-white {{ request()->routeIs('dashboard.admin') ? 'active' : '' }}">
+            <a href="{{ route('dashboard.admin_prodi') }}" class="nav-link text-white {{ request()->routeIs('dashboard.admin_prodi') ? 'active' : '' }}">
                 <i class="fas fa-home me-2"></i>
                 Dashboard
             </a>
         </li>
         <li class="nav-heading mt-3 mb-1 text-muted small">ADMIN MENU</li>
         <li class="nav-item">
-            <a href="{{ route('admin.surat.manage') }}" 
-            class="nav-link {{ request()->routeIs('admin.surat.manage') || request()->routeIs('admin.surat.detail') ? 'active' : '' }}">
+            <a href="{{ route('admin_prodi.surat.manage') }}" 
+            class="nav-link {{ request()->routeIs('admin_prodi.surat.manage') || request()->routeIs('admin_prodi.surat.detail') ? 'active' : '' }}">
                 <i class="fa fa-envelope me-2"></i>
                 <span>Manajemen Surat</span>
             </a>
         </li>
         <li>
-            <a href="{{ route('admin.surat.archive') }}" class="nav-link text-white {{ request()->routeIs('admin.surat.archive') ? 'active' : '' }}">
+            <a href="{{ route('admin_prodi.surat.archive') }}" class="nav-link text-white {{ request()->routeIs('admin_prodi.surat.archive') ? 'active' : '' }}">
                 <i class="fas fa-archive me-2"></i>
                 Arsip Surat
             </a>
         </li>
         <li>
-            <a href="{{ route('admin.settings.index') }}" class="nav-link text-white {{ request()->routeIs('admin.settings.index') ? 'active' : '' }}">
+            <a href="{{ route('admin_prodi.settings.index') }}" class="nav-link text-white {{ request()->routeIs('admin_prodi.settings.index') ? 'active' : '' }}">
                 <i class="fas fa-cogs me-2"></i>
                 Pengaturan Sistem
             </a>

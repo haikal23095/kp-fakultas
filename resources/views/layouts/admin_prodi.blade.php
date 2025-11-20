@@ -12,7 +12,7 @@
 </head>
 <body>
     <div class="d-flex">
-        @include('layouts.partials.sidebar_admin')
+        @include('layouts.partials.sidebar_admin_prodi')
         <main class="w-100 p-4" style="margin-left: 280px;">
             @yield('content')
         </main>

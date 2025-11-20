@@ -26,7 +26,7 @@ class CheckRole
         // Redirect ke dashboard sesuai role user jika tidak memiliki akses
         switch ($userRole) {
             case 1:
-                return redirect()->route('dashboard.admin');
+                return redirect()->route('dashboard.admin_prodi');
             case 2:
                 return redirect()->route('dashboard.dekan');
             case 3:

@@ -48,7 +48,7 @@ Route::middleware('auth')->group(function () {
 
     // DASHBOARD UTAMA & ROLE
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
-    Route::get('/dashboard/admin', [AuthController::class, 'dashboardAdmin'])->name('dashboard.admin');
+    Route::get('/dashboard/admin', [AuthController::class, 'dashboardAdmin'])->name('dashboard.admin_prodi');
     Route::get('/dashboard/dekan', [AuthController::class, 'dashboardDekan'])->name('dashboard.dekan');
     Route::get('/dashboard/kajur', [AuthController::class, 'dashboardKajur'])->name('dashboard.kajur');
     Route::get('/dashboard/kaprodi', [AuthController::class, 'dashboardKaprodi'])->name('dashboard.kaprodi');
@@ -69,7 +69,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy'])->name('notifikasi.delete');
 
     // FITUR ADMIN
-    Route::prefix('admin')->name('admin.')->group(function () {
+    Route::prefix('admin')->name('admin_prodi.')->group(function () {
 
         Route::get('/manajemen-surat', [ManajemenSuratController::class, 'index'])
             ->name('surat.manage');
@@ -90,7 +90,7 @@ Route::middleware('auth')->group(function () {
             ->name('surat.archive');
 
         Route::get('/pengaturan', function () {
-            return view('admin.pengaturan');
+            return view('admin_prodi.pengaturan');
         })->name('settings.index');
     });
 

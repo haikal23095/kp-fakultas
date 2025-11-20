@@ -52,7 +52,7 @@ class DetailSuratController extends Controller
             }
         }
 
-        return view('admin.detail_surat', [
+        return view('admin_prodi.detail_surat', [
             'surat' => $tugasSurat,
             'detailPengaju' => $detailPengaju,
             'activeMenu' => 'manajemen-surat' // ← Tambahkan ini untuk highlight menu

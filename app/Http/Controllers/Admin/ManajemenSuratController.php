@@ -26,7 +26,7 @@ class ManajemenSuratController extends Controller
         // 4) Ambil daftar role untuk dropdown
         $roles = Role::getAllOrdered();
 
-        return view('admin.manajemen_surat', [
+        return view('admin_prodi.manajemen_surat', [
             'daftarTugas' => $daftarTugas,
             'roles' => $roles,
         ]);
@@ -66,7 +66,7 @@ class ManajemenSuratController extends Controller
         // Ambil arsip tugas yang sudah selesai (delegasi ke model)
         $arsipTugas = TugasSurat::getArsipSelesai();
 
-        return view('admin.arsip_surat', [
+        return view('admin_prodi.arsip_surat', [
             'arsipTugas' => $arsipTugas
         ]);
     }

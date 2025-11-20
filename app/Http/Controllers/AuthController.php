@@ -85,7 +85,7 @@ class AuthController extends Controller
     {
         switch ($roleId) {
             case 1:
-                return redirect()->route('dashboard.admin');
+                return redirect()->route('dashboard.admin_prodi');
             case 2:
                 return redirect()->route('dashboard.dekan');
             case 3:
@@ -141,7 +141,7 @@ class AuthController extends Controller
             ->take(5)
             ->get();
 
-        return view('dashboard.admin', compact(
+        return view('dashboard.admin_prodi', compact(
             'permohonanBaru',
             'menungguTTE',
             'suratSelesaiBulanIni',
