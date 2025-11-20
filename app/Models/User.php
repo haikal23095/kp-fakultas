@@ -86,5 +86,13 @@ class User extends Authenticatable
     {
         return $this->hasOne(Pegawai::class, 'Id_User', 'Id_User');
     }
+
+    /**
+     * Relasi ke tabel Pegawai Fakultas
+     */
+    public function pegawaiFakultas()
+    {
+        return $this->hasOne(PegawaiFakultas::class, 'Id_User', 'Id_User');
+    }
 }
 

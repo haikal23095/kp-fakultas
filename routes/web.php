@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Admin_Prodi\DetailSuratController;
 use App\Http\Controllers\Admin_Prodi\ManajemenSuratController;
+use App\Http\Controllers\Admin_Fakultas\DetailSuratController as FakultasDetailSuratController;
+use App\Http\Controllers\Admin_Fakultas\ManajemenSuratController as FakultasManajemenSuratController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotifikasiController;
 
@@ -48,7 +50,8 @@ Route::middleware('auth')->group(function () {
 
     // DASHBOARD UTAMA & ROLE
     Route::get('/dashboard', [AuthController::class, 'dashboard'])->name('dashboard');
-    Route::get('/dashboard/admin', [AuthController::class, 'dashboardAdmin'])->name('dashboard.admin_prodi');
+    Route::get('/dashboard/admin_prodi', [AuthController::class, 'dashboardAdmin'])->name('dashboard.admin_prodi');
+    Route::get('/dashboard/admin-fakultas', [AuthController::class, 'dashboardAdminFakultas'])->name('dashboard.admin_fakultas');
     Route::get('/dashboard/dekan', [AuthController::class, 'dashboardDekan'])->name('dashboard.dekan');
     Route::get('/dashboard/kajur', [AuthController::class, 'dashboardKajur'])->name('dashboard.kajur');
     Route::get('/dashboard/kaprodi', [AuthController::class, 'dashboardKaprodi'])->name('dashboard.kaprodi');
@@ -91,6 +94,26 @@ Route::middleware('auth')->group(function () {
 
         Route::get('/pengaturan', function () {
             return view('admin_prodi.pengaturan');
+        })->name('settings.index');
+    });
+
+    // FITUR ADMIN FAKULTAS
+    Route::prefix('admin-fakultas')->name('admin_fakultas.')->group(function () {
+
+        Route::get('/manajemen-surat', [FakultasManajemenSuratController::class, 'index'])
+            ->name('surat.manage');
+
+        // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
+        Route::get('/surat/{id}/detail', [FakultasDetailSuratController::class, 'show'])->name('surat.detail');
+        // Download dokumen pendukung (admin fakultas)
+        Route::get('/surat/{id}/download', [FakultasDetailSuratController::class, 'downloadPendukung'])->name('surat.download');
+
+        // Arsip surat
+        Route::get('/arsip-surat', [FakultasManajemenSuratController::class, 'archive'])
+            ->name('surat.archive');
+
+        Route::get('/pengaturan', function () {
+            return view('admin_fakultas.pengaturan');
         })->name('settings.index');
     });
 
