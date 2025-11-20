@@ -15,7 +15,8 @@ class ManajemenSuratController extends Controller
     public function index()
     {
         // 1) Update status tugas yang terlambat (delegasi ke model)
-        TugasSurat::updateStatusTerlambat();
+        // CATATAN: Setelah normalisasi, method ini tidak berfungsi karena Status ada di tabel spesifik
+        // TugasSurat::updateStatusTerlambat();
 
         // 2) Ambil Id_Prodi dari user yang login
         $prodiId = $this->getProdiIdFromUser();

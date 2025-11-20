@@ -190,12 +190,8 @@ class SuratPengantarMagangController extends Controller
 
         try {
             // 6.1 Simpan ke tabel Tugas_Surat (data umum)
-            // Get last ID and increment
-            $lastId = DB::table('Tugas_Surat')->max('Id_Tugas_Surat') ?? 0;
-            $newId = $lastId + 1;
-
+            // ID akan di-generate otomatis karena AUTO_INCREMENT
             $tugasSurat = new TugasSurat();
-            $tugasSurat->Id_Tugas_Surat = $newId;
             $tugasSurat->Id_Pemberi_Tugas_Surat = $pemberi_tugas_id;
             $tugasSurat->Id_Penerima_Tugas_Surat = $penerima_tugas_id;
             $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
@@ -203,26 +199,7 @@ class SuratPengantarMagangController extends Controller
             $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now()->format('Y-m-d');
             $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(5)->format('Y-m-d');
 
-            // Ambil ENUM status yang valid dari database
-            $col = DB::select("SHOW COLUMNS FROM `Tugas_Surat` LIKE 'Status'");
-            $allowedStatuses = [];
-            if (!empty($col) && isset($col[0]->Type)) {
-                if (preg_match("/^enum\\((.*)\\)$/i", $col[0]->Type, $matches)) {
-                    $vals = str_getcsv($matches[1], ',', "'");
-                    $allowedStatuses = array_map(function ($v) {
-                        return $v;
-                    }, $vals);
-                }
-            }
-
-            // Set status (gunakan yang pertama atau 'baru' jika ada)
-            if (in_array('baru', $allowedStatuses, true)) {
-                $tugasSurat->Status = 'baru';
-            } elseif (in_array('Dikerjakan', $allowedStatuses, true)) {
-                $tugasSurat->Status = 'Dikerjakan';
-            } else {
-                $tugasSurat->Status = $allowedStatuses[0] ?? null;
-            }
+            // CATATAN: Status sudah dipindah ke tabel Surat_Magang, tidak perlu di-set di sini
 
             // === 7. SET ID JENIS PEKERJAAN ===
             if ($jenisSurat->Jenis_Pekerjaan) {
@@ -272,6 +249,10 @@ class SuratPengantarMagangController extends Controller
             if ($idDosenKoordinator) {
                 $suratMagang->Nama_Koordinator = $idDosenKoordinator;
             }
+
+            // Set Status awal (default: Diajukan-ke-koordinator)
+            $suratMagang->Status = 'Diajukan-ke-koordinator';
+            $suratMagang->Acc_Koordinator = 0; // Belum di-acc
 
             $suratMagang->save();
 

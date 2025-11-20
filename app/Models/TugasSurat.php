@@ -13,7 +13,7 @@ class TugasSurat extends Model
     protected $table = 'Tugas_Surat';
     protected $primaryKey = 'Id_Tugas_Surat';
     public $timestamps = false;
-    public $incrementing = false; // ID di-set manual, bukan auto-increment
+    public $incrementing = true; // Auto-increment enabled
     protected $keyType = 'int';
 
     protected $fillable = [
@@ -22,7 +22,7 @@ class TugasSurat extends Model
         'Id_Jenis_Surat',
         'Id_Jenis_Pekerjaan',
         'Judul_Tugas_Surat',
-        'Status',
+        // 'Status', // Kolom ini sudah dipindah ke tabel spesifik (Surat_Magang, dll)
         'Tanggal_Diberikan_Tugas_Surat',
         'Tanggal_Tenggat_Tugas_Surat',
         'Tanggal_Diselesaikan',
@@ -65,12 +65,14 @@ class TugasSurat extends Model
 
     /**
      * Update status tugas yang melewati tenggat menjadi 'Terlambat'
+     * CATATAN: Setelah normalisasi, Status ada di tabel spesifik seperti Surat_Magang
+     * Method ini perlu disesuaikan per jenis surat jika masih digunakan
      */
     public static function updateStatusTerlambat()
     {
-        return self::whereNotIn('Status', ['Selesai', 'Terlambat'])
-            ->whereDate('Tanggal_Tenggat_Tugas_Surat', '<', Carbon::now()->toDateString())
-            ->update(['Status' => 'Terlambat']);
+        // TODO: Implementasi per jenis surat (Surat_Magang, dll)
+        // Untuk sementara tidak melakukan update karena Status sudah dipindah
+        return 0;
     }
 
     /**
@@ -106,6 +108,8 @@ class TugasSurat extends Model
 
     /**
      * Update status tugas berdasarkan ID
+     * CATATAN: Setelah normalisasi, Status ada di tabel spesifik (Surat_Magang, dll)
+     * Method ini perlu memanggil update pada tabel spesifik yang sesuai
      */
     public static function updateStatusById($id, $status)
     {
@@ -115,10 +119,15 @@ class TugasSurat extends Model
             return null;
         }
 
-        $tugas->Status = $status;
+        // Update status di tabel spesifik berdasarkan jenis surat
+        // Contoh untuk Surat Magang:
+        if ($tugas->suratMagang) {
+            $tugas->suratMagang->Status = $status;
+            $tugas->suratMagang->save();
+        }
 
         // Jika status selesai, set tanggal diselesaikan
-        if (strtolower($status) === 'selesai') {
+        if (strtolower($status) === 'success' || strtolower($status) === 'selesai') {
             $tugas->Tanggal_Diselesaikan = Carbon::now();
         } else {
             // Jika status bukan selesai, kosongkan tanggal diselesaikan
@@ -146,8 +155,10 @@ class TugasSurat extends Model
 
     public static function getArsipSelesai()
     {
-        return self::with(['pemberiTugas.role', 'jenisSurat'])
-            ->whereRaw("LOWER(TRIM(Status)) = 'selesai'")
+        return self::with(['pemberiTugas.role', 'jenisSurat', 'suratMagang'])
+            ->whereHas('suratMagang', function ($query) {
+                $query->where('Status', 'Success');
+            })
             ->orderBy('Tanggal_Diselesaikan', 'desc')
             ->get();
     }

@@ -36,10 +36,20 @@ class ManajemenSuratController extends Controller
         };
 
         // 3) Ambil statistik surat berdasarkan status dengan filter fakultas
-        $totalSurat = $baseQuery()->count();
-        $suratBaru = $baseQuery()->where('Status', 'baru')->count();
-        $suratDiproses = $baseQuery()->whereIn('Status', ['Diterima Admin', 'Proses'])->count();
-        $suratSelesai = $baseQuery()->where('Status', 'Selesai')->count();
+        // Status sekarang ada di tabel spesifik (Surat_Magang)
+        $totalSurat = $baseQuery()->has('suratMagang')->count();
+        $suratBaru = $baseQuery()
+            ->whereHas('suratMagang', function ($q) {
+                $q->where('Status', 'Diajukan-ke-koordinator');
+            })->count();
+        $suratDiproses = $baseQuery()
+            ->whereHas('suratMagang', function ($q) {
+                $q->whereIn('Status', ['Dikerjakan-admin', 'Diajukan-ke-dekan']);
+            })->count();
+        $suratSelesai = $baseQuery()
+            ->whereHas('suratMagang', function ($q) {
+                $q->where('Status', 'Success');
+            })->count();
 
         // 4) Ambil data surat untuk tabel
         $tugasSurat = $baseQuery()
@@ -48,8 +58,10 @@ class ManajemenSuratController extends Controller
                 'pemberiTugas.mahasiswa.prodi',
                 'pemberiTugas.dosen.prodi',
                 'pemberiTugas.pegawai.prodi',
-                'jenisSurat'
+                'jenisSurat',
+                'suratMagang'
             ])
+            ->has('suratMagang')
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->paginate(15);
 
@@ -68,7 +80,9 @@ class ManajemenSuratController extends Controller
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
         $arsipSurat = TugasSurat::query()
-            ->where('Status', 'Selesai')
+            ->whereHas('suratMagang', function ($q) {
+                $q->where('Status', 'Success');
+            })
             ->where(function ($q) use ($fakultasId) {
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
