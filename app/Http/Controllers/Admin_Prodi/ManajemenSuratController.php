@@ -18,18 +18,41 @@ class ManajemenSuratController extends Controller
         // CATATAN: Setelah normalisasi, method ini tidak berfungsi karena Status ada di tabel spesifik
         // TugasSurat::updateStatusTerlambat();
 
-        // 2) Ambil Id_Prodi dari user yang login
-        $prodiId = $this->getProdiIdFromUser();
+        // 2) Query surat yang perlu diproses Admin
+        // Filter: Status = 'Diterima Admin' (surat baru dari mahasiswa yang belum diproses)
+        $daftarTugas = TugasSurat::with([
+                'pemberiTugas.role',           // Relasi ke User > Role
+                'pemberiTugas.mahasiswa',      // Relasi ke User > Mahasiswa (untuk NIM & Nama)
+                'pemberiTugas.dosen',          // Relasi ke User > Dosen
+                'pemberiTugas.pegawai',        // Relasi ke User > Pegawai
+                'jenisSurat',                  // Relasi ke Jenis_Surat
+                'penerimaTugas',               // Relasi ke User penerima
+                'suratMagang'                  // Relasi ke Surat_Magang (untuk preview dokumen)
+            ])
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
 
-        // 3) Ambil daftar tugas yang terfilter berdasarkan prodi
-        $daftarTugas = TugasSurat::getByProdi($prodiId);
+        // 3) Pisahkan data: Pending (perlu diproses) vs Semua
+        $suratPending = $daftarTugas->filter(function($tugas) {
+            $status = strtolower(trim($tugas->Status ?? ''));
+            return $status === 'diterima admin' || $status === 'baru';
+        });
 
-        // 4) Ambil daftar role untuk dropdown
-        $roles = Role::getAllOrdered();
+        $suratSemua = $daftarTugas->filter(function($tugas) {
+            $status = strtolower(trim($tugas->Status ?? ''));
+            return $status !== 'selesai' && $status !== 'telah ditandatangani dekan';
+        });
+
+        // Log untuk debugging
+        \Log::info('Admin Manajemen Surat', [
+            'total_surat' => $daftarTugas->count(),
+            'pending_count' => $suratPending->count(),
+            'semua_count' => $suratSemua->count(),
+        ]);
 
         return view('admin_prodi.manajemen_surat', [
-            'daftarTugas' => $daftarTugas,
-            'roles' => $roles,
+            'daftarTugas' => $suratSemua,
+            'suratPending' => $suratPending,
         ]);
     }
 
@@ -71,6 +94,39 @@ class ManajemenSuratController extends Controller
             'arsipTugas' => $arsipTugas
         ]);
     }
+
+    /**
+     * Preview dokumen pendukung (PDF) untuk surat magang
+     * Menampilkan file dalam iframe/embed
+     */
+    public function previewDokumen($id)
+    {
+        $tugasSurat = TugasSurat::with(['suratMagang'])->findOrFail($id);
+        
+        $dokumenPath = null;
+
+        // 1. Cek di tabel Surat_Magang (Prioritas Utama)
+        if ($tugasSurat->suratMagang && $tugasSurat->suratMagang->Dokumen_Proposal) {
+            $dokumenPath = $tugasSurat->suratMagang->Dokumen_Proposal;
+        }
+
+        // 2. Jika tidak ada, cek di data_spesifik (Fallback / Surat Aktif)
+        if (!$dokumenPath) {
+            $dataSpesifik = $tugasSurat->data_spesifik;
+            $dokumenPath = $dataSpesifik['dokumen_pendukung'] ?? null;
+        }
+        
+        if (!$dokumenPath || !\Storage::disk('public')->exists($dokumenPath)) {
+            abort(404, 'Dokumen tidak ditemukan');
+        }
+        
+        // Return file untuk preview (dengan header inline)
+        return \Storage::disk('public')->response($dokumenPath, null, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => 'inline; filename="' . basename($dokumenPath) . '"'
+        ]);
+    }
+
 
     /**
      * Helper: Ambil Id_Prodi dari user yang login

@@ -1,7 +1,22 @@
 <aside class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 280px; height: 100vh; position: fixed;">
+    @php
+        $user = auth()->user();
+        $fakultasName = 'Fakultas Teknik'; // Default fallback
+        
+        if ($user && $user->mahasiswa && $user->mahasiswa->prodi && $user->mahasiswa->prodi->fakultas) {
+            $fakultasName = $user->mahasiswa->prodi->fakultas->Nama_Fakultas;
+        }
+    @endphp
     <a href="{{ route('dashboard') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-        <i class="fas fa-university fa-2x me-2"></i>
-        <span class="fs-4">Sistem Fakultas</span>
+        <div class="d-flex align-items-center">
+            <div class="bg-primary rounded p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                <i class="fas fa-university fa-lg text-white"></i>
+            </div>
+            <div class="d-flex flex-column" style="line-height: 1.2;">
+                <span class="fs-6 fw-bold text-uppercase tracking-wide">Sistem Surat</span>
+                <span class="small text-white-50" style="font-size: 0.7rem; letter-spacing: 0.5px;">{{ strtoupper($fakultasName) }}</span>
+            </div>
+        </div>
     </a>
     <hr>
     <ul class="nav nav-pills flex-column mb-auto">
@@ -19,7 +34,7 @@
             </a>
         </li>
         <li>
-            <a href="{{ route('mahasiswa.riwayat.index') }}" class="nav-link text-white {{ request()->routeIs('mahasiswa.riwayat.*') ? 'active' : '' }}">
+            <a href="{{ route('mahasiswa.riwayat') }}" class="nav-link text-white {{ request()->routeIs('mahasiswa.riwayat') ? 'active' : '' }}">
                 <i class="fas fa-history me-2"></i>
                 Riwayat Surat
             </a>

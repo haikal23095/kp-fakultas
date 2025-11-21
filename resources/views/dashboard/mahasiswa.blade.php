@@ -78,7 +78,9 @@
 <div class="card shadow-sm border-0">
     <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 fw-bold text-primary">Riwayat Pengajuan Terkini</h6>
-        <a href="{{ route('mahasiswa.riwayat.index') }}" class="btn btn-outline-primary btn-sm">Lihat Semua Riwayat</a>
+        <a href="{{ route('mahasiswa.riwayat') }}" class="btn btn-outline-primary btn-sm">
+            <i class="fas fa-history"></i> Lihat Semua Riwayat
+        </a>
     </div>
     <div class="card-body">
         <div class="table-responsive">
@@ -94,7 +96,9 @@
                 <tbody>
                     @forelse($riwayatTerkini ?? [] as $surat)
                     @php
-                        $status = strtolower(trim($surat->Status ?? ''));
+                        // Status sekarang ada di tabel Surat_Magang
+                        $statusRaw = optional($surat->suratMagang)->Status ?? '';
+                        $status = strtolower(trim($statusRaw));
                         $badgeClass = match($status) {
                             'success' => 'bg-success',
                             'ditolak' => 'bg-danger',
@@ -122,7 +126,7 @@
                                     <i class="fas fa-download"></i>
                                 </a>
                             @else
-                                -
+                                <span class="text-muted">-</span>
                             @endif
                         </td>
                     </tr>

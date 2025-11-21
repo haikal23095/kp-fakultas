@@ -108,28 +108,20 @@ class AuthController extends Controller
     {
         // Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
         $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai.prodi']);
-        $prodiId = $user->dosen?->Id_Prodi ?? $user->mahasiswa?->Id_Prodi ?? $user->pegawai?->Id_Prodi;
 
-        // Ambil nama prodi
+        // Ambil nama prodi (untuk tampilan dashboard)
         $namaProdi = $user->dosen?->prodi?->Nama_Prodi ??
             $user->mahasiswa?->prodi?->Nama_Prodi ??
             $user->pegawai?->prodi?->Nama_Prodi ??
-            'Prodi';
+            'Fakultas Teknik'; // Default jika Admin Fakultas (tidak terikat prodi)
 
-        // Base query dengan filter prodi (filter berdasarkan PEMBERI tugas = yang mengajukan)
-        $baseQuery = function () use ($prodiId) {
-            return \App\Models\TugasSurat::query()
-                ->where(function ($q) use ($prodiId) {
-                    $q->whereHas('pemberiTugas.mahasiswa', function ($subQ) use ($prodiId) {
-                        $subQ->where('Id_Prodi', $prodiId);
-                    })
-                        ->orWhereHas('pemberiTugas.dosen', function ($subQ) use ($prodiId) {
-                            $subQ->where('Id_Prodi', $prodiId);
-                        })
-                        ->orWhereHas('pemberiTugas.pegawai', function ($subQ) use ($prodiId) {
-                            $subQ->where('Id_Prodi', $prodiId);
-                        });
-                });
+        // NOTE: Untuk Admin Fakultas (Role 1), kita asumsikan mereka bisa melihat SEMUA surat dalam fakultas.
+        // Jadi kita TIDAK memfilter berdasarkan Prodi spesifik admin tersebut.
+        // Jika nanti ada kebutuhan "Admin Prodi", logika ini bisa disesuaikan.
+
+        // Base query TANPA filter prodi (Menampilkan semua surat di Fakultas Teknik)
+        $baseQuery = function () {
+            return \App\Models\TugasSurat::query();
         };
 
         // Ambil statistik surat berdasarkan status dengan filter prodi
@@ -154,7 +146,7 @@ class AuthController extends Controller
                 $q->where('Status', 'Success');
             })->count();
 
-        // Ambil antrian permohonan terbaru (5 terakhir) dengan filter prodi
+        // Ambil antrian permohonan terbaru (5 terakhir)
         $antrianSurat = $baseQuery()
             ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai', 'jenisSurat', 'suratMagang'])
             ->whereHas('suratMagang', function ($q) {

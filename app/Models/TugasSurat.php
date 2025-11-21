@@ -26,6 +26,7 @@ class TugasSurat extends Model
         'Tanggal_Diberikan_Tugas_Surat',
         'Tanggal_Tenggat_Tugas_Surat',
         'Tanggal_Diselesaikan',
+        'data_spesifik', // Tambahkan ini
     ];
 
     /**
@@ -35,6 +36,7 @@ class TugasSurat extends Model
         'Tanggal_Diberikan_Tugas_Surat' => 'date',
         'Tanggal_Tenggat_Tugas_Surat' => 'date',
         'Tanggal_Diselesaikan' => 'date',
+        'data_spesifik' => 'array', // Cast JSON ke array
     ];
 
     /**
@@ -174,5 +176,14 @@ class TugasSurat extends Model
     public function suratMagang()
     {
         return $this->hasOne(SuratMagang::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
+     * Relasi ke SuratVerification (one-to-one)
+     * Untuk mengambil data QR Code dan tanda tangan digital
+     */
+    public function verification()
+    {
+        return $this->hasOne(SuratVerification::class, 'id_tugas_surat', 'Id_Tugas_Surat');
     }
 }

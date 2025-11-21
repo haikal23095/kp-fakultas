@@ -14,10 +14,12 @@ return new class extends Migration {
             $table->bigInteger('Id_Notifikasi')->autoIncrement()->primary();
             $table->enum('Tipe_Notifikasi', ['Rejected', 'Accepted', 'Caution', 'Error']);
             $table->text('Pesan');
-            $table->integer('Dest_user');
+            $table->integer('Dest_User'); // Perbaiki penulisan Dest_user menjadi Dest_User
             $table->integer('Source_User');
+            $table->boolean('Is_Read')->default(false); // Tambahkan kolom Is_Read
+            $table->timestamps(); // Tambahkan timestamps (created_at, updated_at)
 
-            $table->foreign('Dest_user')
+            $table->foreign('Dest_User')
                 ->references('Id_User')
                 ->on('Users')
                 ->onDelete('cascade')

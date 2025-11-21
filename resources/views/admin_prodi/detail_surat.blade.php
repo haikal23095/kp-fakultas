@@ -6,7 +6,7 @@
 @php $status = trim(optional($surat)->Status ?? ''); @endphp
 
 <div class="mb-3">
-    <a href="{{ route('admin.surat.manage') }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ route('admin_prodi.surat.manage') }}" class="btn btn-outline-secondary btn-sm">
         <i class="fa fa-arrow-left me-1"></i> Kembali ke Manajemen Surat
     </a>
 </div>
@@ -23,19 +23,32 @@
 				<span class="badge bg-success fs-6">{{ $surat->Status }}</span>
 			@elseif(strtolower($status) === 'terlambat' || strtolower($status) === 'ditolak')
 				<span class="badge bg-danger fs-6">{{ $surat->Status }}</span>
+                @if(isset($surat->data_spesifik['alasan_penolakan']))
+                    <div class="mt-2 text-danger small text-end" style="max-width: 300px;">
+                        <strong>Alasan:</strong> {{ $surat->data_spesifik['alasan_penolakan'] }}
+                    </div>
+                @endif
 			@elseif(strtolower($status) === 'proses')
 				<span class="badge bg-primary fs-6">{{ $surat->Status }}</span>
 			@else
 				<span class="badge bg-secondary fs-6">{{ $surat->Status ?? '-' }}</span>
 			@endif
 
-			@if(auth()->check() && auth()->user()->Id_Role == 1 && (trim($surat->Status) == 'baru' || trim($surat->Status) == 'Diterima Admin'))
-				<form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" class="mt-2 d-inline" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses dan mengajukan surat ini ke Dekan?');">
-					@csrf
-					<input type="hidden" name="action" value="proses_ajukan_dekan">
-					<button type="submit" class="btn btn-sm btn-warning"><i class="fa fa-paper-plane me-1"></i> Proses & Ajukan</button>
-				</form>
+			@if(auth()->check() && auth()->user()->Id_Role == 1 && (strtolower(trim($surat->Status)) == 'baru' || strtolower(trim($surat->Status)) == 'diterima admin'))
+                <div class="mt-2">
+                    {{-- Tombol Tolak --}}
+                    <button type="button" class="btn btn-sm btn-danger me-1" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                        <i class="fa fa-times-circle me-1"></i> Tolak
+                    </button>
+
+                    <form method="POST" action="{{ route('admin_prodi.surat.process_draft', $surat->Id_Tugas_Surat) }}" class="d-inline" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses dan mengajukan surat ini ke Dekan?');">
+                        @csrf
+                        <input type="hidden" name="action" value="proses_ajukan_dekan">
+                        <button type="submit" class="btn btn-sm btn-warning"><i class="fa fa-paper-plane me-1"></i> Proses & Ajukan</button>
+                    </form>
+                </div>
 			@endif
+
 		</div>
 	</div>
 	</div>
@@ -71,7 +84,7 @@
 			<div class="card-body">
 				<p class="mb-2"><small class="text-muted">Jenis Surat</small><br>{{ optional($surat->jenisSurat)->Nama_Surat ?? '-' }}</p>
 				<p class="mb-2"><small class="text-muted">Judul</small><br>{{ $surat->Judul_Tugas_Surat ?? '-' }}</p>
-				<p class="mb-0"><small class="text-muted">Deskripsi</small><br>{{ $surat->Deskripsi_Tugas_Surat ?? $surat->Deskripsi_Tugas ?? '-' }}</p>
+				<p class="mb-0"><small class="text-muted">Deskripsi / Keperluan</small><br>{{ $surat->data_spesifik['deskripsi'] ?? '-' }}</p>
 			</div>
 		</div>
 	</div>
@@ -87,8 +100,8 @@
 
 				<div class="mb-3">
 					<small class="text-muted d-block mb-1">Dokumen Pendukung (Mahasiswa)</small>
-					@if(!empty($surat->dokumen_pendukung))
-						<a href="{{ route('admin.surat.download', $surat->Id_Tugas_Surat) }}" class="btn btn-outline-primary btn-sm" title="Lihat / Unduh Dokumen Pendukung"><i class="fa fa-download me-1"></i> Lihat / Unduh</a>
+					@if(!empty($surat->data_spesifik['dokumen_pendukung'] ?? null))
+						<a href="{{ route('admin_prodi.surat.download', $surat->Id_Tugas_Surat) }}" class="btn btn-outline-primary btn-sm" title="Lihat / Unduh Dokumen Pendukung"><i class="fa fa-download me-1"></i> Lihat / Unduh</a>
 					@else
 						<span class="text-muted">-</span>
 					@endif
@@ -105,7 +118,7 @@
 
 				@if(auth()->check() && auth()->user()->Id_Role == 1 && (trim($surat->Status) == 'Diterima Admin' || trim($surat->Status) == 'Proses'))
 					<hr />
-					<form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin mengupload draft final dan mengajukan ke Dekan?');">
+					<form method="POST" action="{{ route('admin_prodi.surat.process_draft', $surat->Id_Tugas_Surat) }}" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin mengupload draft final dan mengajukan ke Dekan?');">
 						@csrf
 						<div class="mb-3">
 							<label for="draft_surat" class="form-label"><i class="fa fa-upload me-1"></i> Upload Draft Final (PDF)</label>
@@ -118,6 +131,31 @@
 			</div>
 		</div>
 	</div>
+</div>
+
+{{-- Modal Tolak --}}
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('admin_prodi.surat.reject', $surat->Id_Tugas_Surat) }}" method="POST">
+                @csrf
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="rejectModalLabel">Tolak Pengajuan Surat</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="alasan_penolakan" class="form-label">Alasan Penolakan <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="alasan_penolakan" name="alasan_penolakan" rows="3" required placeholder="Contoh: Data tidak lengkap, format salah, dll."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">Tolak Surat</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @endsection

@@ -35,6 +35,12 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// ============================================================
+// PUBLIC ROUTES (Tanpa Auth - untuk Verifikasi QR Code)
+// ============================================================
+Route::get('/verify-surat/{token}', [SuratVerificationController::class, 'verify'])->name('surat.verify');
+Route::get('/api/verify-surat/{token}', [SuratVerificationController::class, 'verifyApi'])->name('surat.verify.api');
+
 // Routes untuk autentikasi
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
@@ -77,12 +83,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/manajemen-surat', [ManajemenSuratController::class, 'index'])
             ->name('surat.manage');
 
+        // Preview dokumen pendukung (PDF) di browser
+        Route::get('/surat/{id}/preview', [ManajemenSuratController::class, 'previewDokumen'])->name('surat.preview');
+        
         // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
         Route::get('/surat/{id}/detail', [DetailSuratController::class, 'show'])->name('surat.detail');
         // Download dokumen pendukung (admin)
         Route::get('/surat/{id}/download', [DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
         // Proses upload draft final / ajukan ke Dekan
         Route::post('/surat/{id}/process-draft', [DetailSuratController::class, 'processDraft'])->name('surat.process_draft');
+        
+        // Route: Tolak Surat
+        Route::post('/surat/{id}/reject', [DetailSuratController::class, 'reject'])->name('surat.reject');
 
         // Route: update status tugas (hanya admin)
         Route::post('/manajemen-surat/{id}/update-status', [ManajemenSuratController::class, 'updateStatus'])
@@ -119,9 +131,12 @@ Route::middleware('auth')->group(function () {
 
     // FITUR DEKAN
     Route::prefix('dekan')->name('dekan.')->group(function () {
-        Route::get('/persetujuan-surat', function () {
-            return view('dekan.persetujuan_surat');
-        })->name('persetujuan.index');
+        Route::get('/persetujuan-surat', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'index'])->name('persetujuan.index');
+        Route::get('/surat/{id}/detail', [App\Http\Controllers\Dekan\DetailSuratController::class, 'show'])->name('surat.detail');
+        Route::get('/surat/{id}/preview', [App\Http\Controllers\Dekan\DetailSuratController::class, 'previewDraft'])->name('surat.preview');
+        Route::get('/surat/{id}/download', [App\Http\Controllers\Dekan\DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
+        Route::post('/surat/{id}/approve', [App\Http\Controllers\Dekan\DetailSuratController::class, 'approve'])->name('surat.approve');
+        Route::post('/surat/{id}/reject', [App\Http\Controllers\Dekan\DetailSuratController::class, 'reject'])->name('surat.reject');
         Route::get('/arsip-surat', function () {
             return view('dekan.arsip_surat');
         })->name('arsip.index');
@@ -307,10 +322,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/api/mahasiswa/search', [SuratPengantarMagangController::class, 'searchMahasiswa'])
             ->name('api.mahasiswa.search');
 
+        // Riwayat Surat Mahasiswa
+        Route::get('/riwayat', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'index'])
+            ->name('riwayat');
+        
+        // Download Surat dengan QR Code
+        Route::get('/surat/download/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadSurat'])
+            ->name('surat.download');
+
         // Rute lainnya
-        Route::get('/riwayat', function () {
-            return view('mahasiswa.riwayat');
-        })->name('riwayat.index');
         Route::get('/legalisir', function () {
             return view('mahasiswa.legalisir');
         })->name('legalisir.create');

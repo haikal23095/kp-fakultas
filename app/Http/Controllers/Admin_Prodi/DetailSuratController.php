@@ -67,10 +67,18 @@ class DetailSuratController extends Controller
      */
     public function downloadPendukung($id)
     {
-        $tugasSurat = TugasSurat::findOrFail($id);
+        $tugasSurat = TugasSurat::with(['suratMagang'])->findOrFail($id);
 
-        // Path disimpan di kolom 'dokumen_pendukung'
-        $path = $tugasSurat->dokumen_pendukung;
+        // Cek apakah ada data surat magang
+        $suratMagang = $tugasSurat->suratMagang;
+        
+        if ($suratMagang && $suratMagang->Dokumen_Proposal) {
+            $path = $suratMagang->Dokumen_Proposal;
+        } else {
+            // Path disimpan di data_spesifik['dokumen_pendukung']
+            $dataSpesifik = $tugasSurat->data_spesifik;
+            $path = $dataSpesifik['dokumen_pendukung'] ?? null;
+        }
 
         if (!$path) {
             return response('Dokumen Pendukung tidak ditemukan.', 404);
@@ -78,12 +86,13 @@ class DetailSuratController extends Controller
 
         // Gunakan disk 'public' (storage/app/public)
         if (Storage::disk('public')->exists($path)) {
-            // Menggunakan Storage::response() akan memungkinkan browser untuk mencoba preview (inline)
-            return Storage::disk('public')->response($path);
+            // Menggunakan Storage::download() untuk memaksa download
+            return Storage::disk('public')->download($path);
         }
 
-        return response('Dokumen Pendukung tidak ditemukan.', 404);
+        return response('Dokumen Pendukung tidak ditemukan di storage.', 404);
     }
+
 
     /**
      * Proses upload draft final atau langsung mengajukan ke Dekan.
@@ -108,12 +117,19 @@ class DetailSuratController extends Controller
 
             if ($dekan) {
                 $tugas->Id_Penerima_Tugas_Surat = $dekan->Id_User;
+                \Log::info('Admin: Mengajukan surat ke Dekan', [
+                    'id_surat' => $tugas->Id_Tugas_Surat,
+                    'id_dekan' => $dekan->Id_User,
+                    'status' => 'menunggu-ttd'
+                ]);
+            } else {
+                \Log::warning('Admin: Dekan tidak ditemukan saat proses ajukan');
             }
 
-            $tugas->Status = 'Diajukan ke Dekan';
+            $tugas->Status = 'menunggu-ttd';
             $tugas->save();
 
-            return redirect()->route('admin.surat.detail', $tugas->Id_Tugas_Surat)
+            return redirect()->route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat)
                 ->with('success', 'Tugas telah diajukan ke Dekan.');
         }
 
@@ -148,19 +164,55 @@ class DetailSuratController extends Controller
         if ($dekan) {
             $fileArsip->Id_Penerima_Tugas_Surat = $dekan->Id_User;
             $tugas->Id_Penerima_Tugas_Surat = $dekan->Id_User;
+            \Log::info('Admin: Upload draft dan ajukan ke Dekan', [
+                'id_surat' => $tugas->Id_Tugas_Surat,
+                'id_dekan' => $dekan->Id_User,
+                'draft_path' => $path,
+                'status' => 'menunggu-ttd'
+            ]);
         } else {
             // fallback: tetap gunakan penerima yang ada
             $fileArsip->Id_Penerima_Tugas_Surat = $tugas->Id_Penerima_Tugas_Surat ?? $user->Id_User;
+            \Log::warning('Admin: Dekan tidak ditemukan saat upload draft');
         }
 
         $fileArsip->save();
 
-        // Juga perbarui kolom dokumen_pendukung di Tugas_Surat jika Anda ingin menyimpan path di situ
-        $tugas->dokumen_pendukung = $path;
-        $tugas->Status = 'Diajukan ke Dekan';
+        // Update status untuk mengajukan ke Dekan
+        $tugas->Status = 'menunggu-ttd';
         $tugas->save();
 
-        return redirect()->route('admin.surat.detail', $tugas->Id_Tugas_Surat)
+        return redirect()->route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat)
             ->with('success', 'Draft final berhasil diupload dan diajukan ke Dekan.');
+    }
+
+    /**
+     * Menolak pengajuan surat.
+     */
+    public function reject(HttpRequest $request, $id)
+    {
+        $user = Auth::user();
+        if (!$user || $user->Id_Role != 1) {
+            abort(403);
+        }
+
+        $request->validate([
+            'alasan_penolakan' => 'required|string|max:500',
+        ]);
+
+        $tugas = TugasSurat::findOrFail($id);
+        $tugas->Status = 'Ditolak';
+        
+        // Update data_spesifik with rejection reason
+        $dataSpesifik = $tugas->data_spesifik ?? [];
+        $dataSpesifik['alasan_penolakan'] = $request->input('alasan_penolakan');
+        $dataSpesifik['tanggal_penolakan'] = now()->toDateTimeString();
+        $dataSpesifik['ditolak_oleh'] = $user->Name_User;
+        
+        $tugas->data_spesifik = $dataSpesifik;
+        $tugas->save();
+
+        return redirect()->route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat)
+            ->with('success', 'Surat telah ditolak.');
     }
 }
