@@ -96,29 +96,38 @@
                 <tbody>
                     @forelse($riwayatTerkini ?? [] as $surat)
                     @php
-                        $status = strtolower(trim($surat->Status ?? ''));
+                        // Status sekarang ada di tabel Surat_Magang
+                        $statusRaw = optional($surat->suratMagang)->Status ?? '';
+                        $status = strtolower(trim($statusRaw));
                         $badgeClass = match($status) {
-                            'selesai' => 'bg-success',
-                            'baru' => 'bg-warning text-dark',
-                            'proses' => 'bg-info',
-                            'terlambat' => 'bg-danger',
+                            'success' => 'bg-success',
+                            'diajukan-ke-koordinator' => 'bg-warning text-dark',
+                            'dikerjakan-admin' => 'bg-info',
+                            'diajukan-ke-dekan' => 'bg-primary',
                             'ditolak' => 'bg-danger',
-                            'disetujui' => 'bg-primary',
                             default => 'bg-secondary'
                         };
-                        $statusText = ucfirst($surat->Status ?? '-');
+                        // Translate status untuk display
+                        $statusText = match($status) {
+                            'success' => 'Selesai',
+                            'diajukan-ke-koordinator' => 'Menunggu Persetujuan',
+                            'dikerjakan-admin' => 'Diproses Admin',
+                            'diajukan-ke-dekan' => 'Diajukan ke Dekan',
+                            'ditolak' => 'Ditolak',
+                            default => $statusRaw ?: '-'
+                        };
                     @endphp
                     <tr>
                         <td>{{ $surat->jenisSurat->Nama_Surat ?? 'Tidak Diketahui' }}</td>
                         <td>{{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') }}</td>
                         <td><span class="badge {{ $badgeClass }}">{{ $statusText }}</span></td>
                         <td class="text-center">
-                            @if($status === 'selesai' && $surat->File_Surat)
-                                <a href="{{ asset('storage/' . $surat->File_Surat) }}" class="btn btn-primary btn-sm" download>
+                            @if($status === 'success' && optional($surat->fileArsip)->Path_File_Arsip)
+                                <a href="{{ asset('storage/' . $surat->fileArsip->Path_File_Arsip) }}" class="btn btn-primary btn-sm" download>
                                     <i class="fas fa-download"></i>
                                 </a>
                             @else
-                                -
+                                <span class="text-muted">-</span>
                             @endif
                         </td>
                     </tr>

@@ -106,7 +106,7 @@ class AuthController extends Controller
     {
         // Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
         $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai.prodi']);
-        
+
         // Ambil nama prodi (untuk tampilan dashboard)
         $namaProdi = $user->dosen?->prodi?->Nama_Prodi ??
             $user->mahasiswa?->prodi?->Nama_Prodi ??
@@ -213,21 +213,28 @@ class AuthController extends Controller
         $user = Auth::user();
 
         // Ambil semua pengajuan surat mahasiswa dari tabel Tugas_Surat
-        $totalPengajuan = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->count();
-
-        // Menunggu Proses (status = 'baru')
-        $menungguProses = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->whereRaw("LOWER(TRIM(Status)) = 'baru'")
+        $totalPengajuan = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->has('suratMagang')
             ->count();
 
-        // Selesai & Dapat Diunduh (status = 'Selesai')
+        // Menunggu Proses (status = 'Diajukan-ke-koordinator' di Surat_Magang)
+        $menungguProses = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->whereHas('suratMagang', function ($query) {
+                $query->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin']);
+            })
+            ->count();
+
+        // Selesai & Dapat Diunduh (status = 'Success' di Surat_Magang)
         $selesai = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->whereRaw("LOWER(TRIM(Status)) = 'selesai'")
+            ->whereHas('suratMagang', function ($query) {
+                $query->where('Status', 'Success');
+            })
             ->count();
 
         // Ambil 5 riwayat pengajuan terkini
-        $riwayatTerkini = TugasSurat::with(['jenisSurat'])
+        $riwayatTerkini = TugasSurat::with(['jenisSurat', 'suratMagang', 'fileArsip'])
             ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->has('suratMagang')
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->take(5)
             ->get();

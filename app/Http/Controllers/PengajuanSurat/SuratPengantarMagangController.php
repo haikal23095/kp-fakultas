@@ -273,6 +273,10 @@ class SuratPengantarMagangController extends Controller
                 $suratMagang->Nama_Koordinator = $idDosenKoordinator;
             }
 
+            // Set Status default untuk surat baru
+            $suratMagang->Status = 'Diajukan-ke-koordinator';
+            $suratMagang->Acc_Koordinator = 0;
+
             $suratMagang->save();
 
             DB::commit();
