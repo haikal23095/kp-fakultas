@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\TugasSurat;
 use App\Models\Mahasiswa;
+use App\Models\Notifikasi;
+use App\Models\FileArsip;
+use App\Models\User;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
@@ -20,7 +23,13 @@ class DetailSuratController extends Controller
      */
     public function show($id)
     {
-        $with = ['pemberiTugas.role', 'jenisSurat', 'penerimaTugas.role'];
+        $with = [
+            'pemberiTugas.role', 
+            'jenisSurat', 
+            'penerimaTugas.role',
+            'suratMagang',      // Tambahkan ini
+            'suratKetAktif'     // Tambahkan ini
+        ];
 
         if (method_exists(TugasSurat::class, 'fileArsip')) {
             $with[] = 'fileArsip';
@@ -104,46 +113,66 @@ class DetailSuratController extends Controller
                 'signed_at' => Carbon::now(),
             ]);
 
-            // 3. Generate QR Code (jika library sudah terinstall)
-            if (class_exists('\SimpleSoftwareIO\QrCode\Generator')) {
-                // URL verifikasi public
-                $verifyUrl = route('surat.verify', $token);
-                
-                // Generate QR Code image
-                $qrGenerator = new \SimpleSoftwareIO\QrCode\Generator();
-                $qrCode = $qrGenerator->format('png')
-                    ->size(300)
-                    ->margin(1)
-                    ->errorCorrection('H')
-                    ->generate($verifyUrl);
-                
-                // Simpan QR image ke storage
-                $qrFilename = 'qr_codes/' . $token . '.png';
-                \Storage::disk('public')->put($qrFilename, $qrCode);
-                
-                // Update path di database
-                $verification->qr_path = $qrFilename;
-                $verification->save();
-                
-                // Simpan info QR ke kolom signature_qr_data di Tugas_Surat (opsional)
-                $tugasSurat->signature_qr_data = json_encode([
-                    'signed_by' => $user->Name_User,
-                    'signed_by_id' => $user->Id_User,
-                    'signed_at' => Carbon::now()->toIso8601String(),
-                    'qr_token' => $token,
-                    'qr_image_path' => $qrFilename,
-                    'verify_url' => $verifyUrl
-                ]);
-                
-                $tugasSurat->qr_image_path = $qrFilename;
-            } else {
-                \Log::warning('QR Code library not installed. Install: composer require simplesoftwareio/simple-qrcode');
-            }
+            // 3. Generate QR Code URL untuk verifikasi surat
+            $verifyUrl = route('surat.verify', $token);
+            
+            // Generate QR Code menggunakan Google Charts API (tidak perlu library eksternal)
+            $qrCodeUrl = \App\Helpers\QrCodeHelper::generate($verifyUrl, 300);
+            
+            // Simpan URL QR ke database (tidak perlu simpan file fisik)
+            $verification->qr_path = $qrCodeUrl;
+            $verification->save();
             
             // 4. Update status surat - SET STATUS FINAL = 'Selesai'
+            // UPDATE: Status ada di child table yang punya kolom Status
+            if ($tugasSurat->suratMagang) {
+                $tugasSurat->suratMagang->Status = 'Selesai';
+                $tugasSurat->suratMagang->save();
+            }
+            // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
+            
+            // PENTING: Update juga status di tabel parent
             $tugasSurat->Status = 'Selesai';
             $tugasSurat->Tanggal_Diselesaikan = Carbon::now();
+            
+            // Simpan info QR ke Tugas_Surat
+            $tugasSurat->qr_image_path = $qrCodeUrl;
+            $tugasSurat->signature_qr_data = json_encode([
+                'signed_by' => $user->Name_User,
+                'signed_by_id' => $user->Id_User,
+                'signed_at' => Carbon::now()->toIso8601String(),
+                'qr_token' => $token,
+                'qr_image_url' => $qrCodeUrl,
+                'verify_url' => $verifyUrl
+            ]);
+            
             $tugasSurat->save();
+            
+            // 6. Kirim notifikasi ke mahasiswa
+            Notifikasi::create([
+                'Tipe_Notifikasi' => 'Accepted',
+                'Pesan' => '✅ Surat Anda telah disetujui dan ditandatangani oleh Dekan. Silakan download di halaman riwayat.',
+                'Dest_user' => $tugasSurat->Id_Pemberi_Tugas_Surat,
+                'Source_User' => $user->Id_User,
+                'Is_Read' => false,
+                'created_at' => now(),
+            ]);
+            
+            // 7. Kirim notifikasi ke admin fakultas
+            $adminFakultas = User::whereHas('role', function($q) {
+                $q->whereRaw("LOWER(TRIM(Name_Role)) = 'admin fakultas'");
+            })->get();
+            
+            foreach ($adminFakultas as $admin) {
+                Notifikasi::create([
+                    'Tipe_Notifikasi' => 'Accepted',
+                    'Pesan' => '📄 Surat ' . $tugasSurat->Nomor_Surat . ' telah disetujui dan masuk ke arsip.',
+                    'Dest_user' => $admin->Id_User,
+                    'Source_User' => $user->Id_User,
+                    'Is_Read' => false,
+                    'created_at' => now(),
+                ]);
+            }
 
             return redirect()->route('dekan.persetujuan.index')
                 ->with('success', 'Surat berhasil ditandatangani dan siap didownload mahasiswa!');
@@ -178,22 +207,53 @@ class DetailSuratController extends Controller
         }
 
         // Update status menjadi 'Ditolak'
-        $tugasSurat->Status = 'Ditolak';
+        // UPDATE: Status ada di child table yang punya kolom Status
+        if ($tugasSurat->suratMagang) {
+            $tugasSurat->suratMagang->Status = 'ditolak';
+            $tugasSurat->suratMagang->save();
+        }
+        // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
+        
+        // PENTING: Update juga status di tabel parent
+        $tugasSurat->Status = 'ditolak';
         
         // Simpan komentar penolakan ke kolom data_spesifik
-        if (!empty($validated['komentar'])) {
-            $tugasSurat->data_spesifik = json_encode([
-                'komentar_penolakan' => $validated['komentar'],
-                'rejected_by' => $user->Name_User,
-                'rejected_by_id' => $user->Id_User,
-                'rejected_at' => Carbon::now()->toIso8601String(),
+        $dataSpesifik = $tugasSurat->data_spesifik ?? [];
+        $dataSpesifik['alasan_penolakan'] = $validated['komentar'] ?? 'Tidak memenuhi persyaratan';
+        $dataSpesifik['ditolak_oleh'] = $user->Name_User;
+        $dataSpesifik['tanggal_penolakan'] = Carbon::now()->format('d M Y H:i');
+        
+        $tugasSurat->data_spesifik = $dataSpesifik;
+        $tugasSurat->save();
+        
+        // Kirim notifikasi ke mahasiswa
+        Notifikasi::create([
+            'Tipe_Notifikasi' => 'Rejected',
+            'Pesan' => '❌ Surat Anda ditolak oleh Dekan. Alasan: ' . ($validated['komentar'] ?? 'Tidak memenuhi persyaratan'),
+            'Dest_user' => $tugasSurat->Id_Pemberi_Tugas_Surat,
+            'Source_User' => $user->Id_User,
+            'Is_Read' => false,
+            'created_at' => now(),
+        ]);
+        
+        // Kirim notifikasi ke admin fakultas
+        $adminFakultas = User::whereHas('role', function($q) {
+            $q->whereRaw("LOWER(TRIM(Name_Role)) = 'admin fakultas'");
+        })->get();
+        
+        foreach ($adminFakultas as $admin) {
+            Notifikasi::create([
+                'Tipe_Notifikasi' => 'Rejected',
+                'Pesan' => '📋 Surat ' . $tugasSurat->Nomor_Surat . ' ditolak oleh Dekan.',
+                'Dest_user' => $admin->Id_User,
+                'Source_User' => $user->Id_User,
+                'Is_Read' => false,
+                'created_at' => now(),
             ]);
         }
 
-        $tugasSurat->save();
-
         return redirect()->route('dekan.persetujuan.index')
-            ->with('success', 'Surat telah ditolak.');
+            ->with('success', 'Surat telah ditolak dan notifikasi dikirim.');
     }
 
     /**

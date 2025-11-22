@@ -22,11 +22,14 @@ class TugasSurat extends Model
         'Id_Jenis_Surat',
         'Id_Jenis_Pekerjaan',
         'Judul_Tugas_Surat',
+        'Nomor_Surat',
+        'data_spesifik',
+        'signature_qr_data',
+        'qr_image_path',
         // 'Status', // Kolom ini sudah dipindah ke tabel spesifik (Surat_Magang, dll)
         'Tanggal_Diberikan_Tugas_Surat',
         'Tanggal_Tenggat_Tugas_Surat',
         'Tanggal_Diselesaikan',
-        'data_spesifik', // Tambahkan ini
     ];
 
     /**
@@ -36,7 +39,8 @@ class TugasSurat extends Model
         'Tanggal_Diberikan_Tugas_Surat' => 'date',
         'Tanggal_Tenggat_Tugas_Surat' => 'date',
         'Tanggal_Diselesaikan' => 'date',
-        'data_spesifik' => 'array', // Cast JSON ke array
+        'data_spesifik' => 'array',
+        'signature_qr_data' => 'array',
     ];
 
     /**
@@ -142,6 +146,27 @@ class TugasSurat extends Model
     }
 
     /**
+     * Accessor untuk mendapatkan Status dari tabel child (Surat_Magang, dll)
+     * Ini memungkinkan pemanggilan $tugasSurat->Status di view/controller
+     */
+    public function getStatusAttribute()
+    {
+        // Prioritaskan status di tabel utama (Tugas_Surat)
+        if (array_key_exists('Status', $this->attributes) && !is_null($this->attributes['Status'])) {
+            return $this->attributes['Status'];
+        }
+
+        // Cek status dari tabel child jika ada
+        if ($this->relationLoaded('suratMagang') && $this->suratMagang) {
+            return $this->suratMagang->Status;
+        }
+
+        // if ($this->suratKetAktif) { return $this->suratKetAktif->Status; }
+
+        return null;
+    }
+
+    /**
      * Relasi ke JENIS PEKERJAAN.
      */
     public function jenisPekerjaan()
@@ -176,6 +201,14 @@ class TugasSurat extends Model
     public function suratMagang()
     {
         return $this->hasOne(SuratMagang::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
+     * Relasi ke SuratKetAktif (one-to-one)
+     */
+    public function suratKetAktif()
+    {
+        return $this->hasOne(SuratKetAktif::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
     }
 
     /**

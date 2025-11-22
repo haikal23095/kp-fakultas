@@ -11,22 +11,21 @@ class Notifikasi extends Model
 
     protected $table = 'Notifikasi';
     protected $primaryKey = 'Id_Notifikasi';
-    public $timestamps = true;
+    public $timestamps = false; // Tabel hanya punya created_at
     const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
         'Tipe_Notifikasi',
         'Pesan',
-        'Dest_User',
+        'Dest_user', // Nama kolom di database pakai lowercase 'u'
         'Source_User',
         'Is_Read',
+        'created_at',
     ];
 
     protected $casts = [
         'Is_Read' => 'boolean',
         'created_at' => 'datetime',
-        'updated_at' => 'datetime',
     ];
 
     /**
@@ -34,7 +33,7 @@ class Notifikasi extends Model
      */
     public function destinationUser()
     {
-        return $this->belongsTo(User::class, 'Dest_User', 'Id_User');
+        return $this->belongsTo(User::class, 'Dest_user', 'Id_User');
     }
 
     /**
@@ -58,7 +57,7 @@ class Notifikasi extends Model
      */
     public function scopeForUser($query, $userId)
     {
-        return $query->where('Dest_User', $userId);
+        return $query->where('Dest_user', $userId);
     }
 
     /**

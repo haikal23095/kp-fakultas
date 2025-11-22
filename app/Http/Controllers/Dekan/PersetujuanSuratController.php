@@ -53,10 +53,14 @@ class PersetujuanSuratController extends Controller
         // Gabung semua user IDs dan buang duplikat
         $allUserIds = array_unique(array_merge($userIdsDosen, $userIdsMahasiswa, $userIdsPegawai));
 
-        // Langkah 3: Query surat dengan filter fakultas dan status
-        // Query lebih fleksibel: Cek juga jika Id_Penerima adalah Dekan yang login
-        $daftarSurat = TugasSurat::with(['jenisSurat', 'pemberiTugas.role', 'penerimaTugas'])
-            ->where('Status', 'menunggu-ttd')
+        // Langkah 3: Query surat dengan filter fakultas dan status 'menunggu-ttd'
+        $daftarSurat = TugasSurat::with(['jenisSurat', 'pemberiTugas.role', 'penerimaTugas', 'suratMagang'])
+            ->where(function ($q) {
+                $q->where('Status', 'menunggu-ttd')
+                  ->orWhereHas('suratMagang', function ($subQ) {
+                      $subQ->where('Status', 'menunggu-ttd');
+                  });
+            })
             ->where(function ($query) use ($allUserIds, $user) {
                 $query->whereIn('Id_Pemberi_Tugas_Surat', $allUserIds)
                       ->orWhereIn('Id_Penerima_Tugas_Surat', $allUserIds)

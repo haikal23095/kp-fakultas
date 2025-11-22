@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin_Fakultas\DetailSuratController as FakultasDetailS
 use App\Http\Controllers\Admin_Fakultas\ManajemenSuratController as FakultasManajemenSuratController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotifikasiController;
+use App\Http\Controllers\SuratVerificationController;
 
 // Import Controller untuk Pengajuan Surat (Modular)
 use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
@@ -77,8 +78,8 @@ Route::middleware('auth')->group(function () {
     Route::post('/notifikasi/mark-all-read', [NotifikasiController::class, 'markAllAsRead'])->name('notifikasi.markAllRead');
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy'])->name('notifikasi.delete');
 
-    // FITUR ADMIN
-    Route::prefix('admin')->name('admin_prodi.')->group(function () {
+    // FITUR ADMIN PRODI
+    Route::prefix('admin-prodi')->name('admin_prodi.')->group(function () {
 
         Route::get('/manajemen-surat', [ManajemenSuratController::class, 'index'])
             ->name('surat.manage');
@@ -119,6 +120,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat/{id}/detail', [FakultasDetailSuratController::class, 'show'])->name('surat.detail');
         // Download dokumen pendukung (admin fakultas)
         Route::get('/surat/{id}/download', [FakultasDetailSuratController::class, 'downloadPendukung'])->name('surat.download');
+        // Preview dokumen pendukung (admin fakultas)
+        Route::get('/surat/{id}/preview', [FakultasDetailSuratController::class, 'previewPendukung'])->name('surat.preview');
+        
+        // Route: Tolak Surat
+        Route::post('/surat/{id}/reject', [FakultasDetailSuratController::class, 'reject'])->name('surat.reject');
+        // Route: Teruskan ke Dekan (setelah beri nomor)
+        Route::post('/surat/{id}/forward', [FakultasDetailSuratController::class, 'forwardToDean'])->name('surat.forward');
 
         // Arsip surat
         Route::get('/arsip-surat', [FakultasManajemenSuratController::class, 'archive'])

@@ -101,7 +101,7 @@
                     @endif
                 </div>
 
-                @if($status === 'menunggu-ttd')
+                @if(strtolower($status) === 'menunggu-ttd')
                     <hr />
                     <div class="d-grid gap-2">
                         <form method="POST" action="{{ route('dekan.surat.approve', $surat->Id_Tugas_Surat) }}" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan menandatangani surat ini?\n\n(TTE dengan QR Code akan diintegrasikan pada tahap selanjutnya)');">

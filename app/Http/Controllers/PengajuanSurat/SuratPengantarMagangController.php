@@ -8,6 +8,7 @@ use App\Models\TugasSurat;
 use App\Models\SuratMagang;
 use App\Models\JenisSurat;
 use App\Models\JenisPekerjaan;
+use App\Models\Notifikasi;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -199,7 +200,8 @@ class SuratPengantarMagangController extends Controller
             $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now()->format('Y-m-d');
             $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(5)->format('Y-m-d');
 
-            // CATATAN: Status sudah dipindah ke tabel Surat_Magang, tidak perlu di-set di sini
+            // Set status default 'baru' untuk surat yang baru diajukan
+            $tugasSurat->Status = 'baru';
 
             // === 7. SET ID JENIS PEKERJAAN ===
             if ($jenisSurat->Jenis_Pekerjaan) {
@@ -269,9 +271,21 @@ class SuratPengantarMagangController extends Controller
                 'jumlah_mahasiswa' => count($dataMahasiswaArray),
                 'dokumen_proposal' => $pathDokumenPendukung,
             ]);
+            
+            // Kirim notifikasi ke admin fakultas
+            if ($adminUser) {
+                Notifikasi::create([
+                    'Tipe_Notifikasi' => 'Invitation',
+                    'Pesan' => '📬 Pengajuan surat baru: Surat Pengantar Magang/KP ke ' . $instansi . ' dari ' . Auth::user()->Name_User,
+                    'Dest_user' => $adminUser->Id_User,
+                    'Source_User' => Auth::id(),
+                    'Is_Read' => false,
+                    'created_at' => now(),
+                ]);
+            }
 
-            return redirect()->route('mahasiswa.pengajuan.magang.form')
-                ->with('success', 'Pengajuan Surat Pengantar Magang/KP ke ' . $instansi . ' berhasil dikirim! Nomor pengajuan: #' . $tugasSurat->Id_Tugas_Surat);
+            return redirect()->route('mahasiswa.riwayat')
+                ->with('success', '✅ Pengajuan Surat Pengantar Magang/KP ke ' . $instansi . ' berhasil dikirim! Anda dapat memantau status pengajuan di halaman ini. Nomor pengajuan: #' . $tugasSurat->Id_Tugas_Surat);
 
         } catch (\Exception $e) {
             DB::rollBack();

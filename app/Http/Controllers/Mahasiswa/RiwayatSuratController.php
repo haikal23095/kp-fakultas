@@ -46,7 +46,8 @@ class RiwayatSuratController extends Controller
             'pemberiTugas.mahasiswa.prodi',
             'penerimaTugas',
             'suratMagang',
-            'verification.penandatangan.pegawai' // Untuk ambil QR Code + NIP
+            'verification.penandatangan.pegawai', // Untuk ambil QR Code + NIP (Pegawai)
+            'verification.penandatangan.dosen'    // Untuk ambil QR Code + NIP (Dosen)
         ])
         ->where('Id_Tugas_Surat', $id)
         ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
@@ -59,12 +60,11 @@ class RiwayatSuratController extends Controller
                 ->with('error', 'Surat belum dapat diunduh. Status: ' . $tugasSurat->Status);
         }
 
-        // Get QR Code image path (gunakan public_path untuk browser access)
-        $qrImagePath = null;
+        // Get QR Code URL dari database (sudah di-generate saat approve)
         $qrImageUrl = null;
         if ($tugasSurat->verification && $tugasSurat->verification->qr_path) {
-            $qrImagePath = storage_path('app/public/' . $tugasSurat->verification->qr_path);
-            $qrImageUrl = asset('storage/' . $tugasSurat->verification->qr_path);
+            // qr_path berisi URL Google Charts API
+            $qrImageUrl = $tugasSurat->verification->qr_path;
         }
 
         // Render PDF view
@@ -73,7 +73,6 @@ class RiwayatSuratController extends Controller
             'mahasiswa' => $tugasSurat->pemberiTugas->mahasiswa,
             'jenisSurat' => $tugasSurat->jenisSurat,
             'verification' => $tugasSurat->verification,
-            'qrImagePath' => $qrImagePath,
             'qrImageUrl' => $qrImageUrl,
             'mode' => 'preview' // Mode preview untuk browser
         ]);

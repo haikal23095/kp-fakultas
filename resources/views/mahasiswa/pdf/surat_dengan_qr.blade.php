@@ -372,25 +372,27 @@
             </p>
             <p><strong>Dekan Fakultas Teknik</strong></p>
             
-            {{-- QR CODE --}}
-            @if($verification && $qrImageUrl)
+            {{-- QR CODE DIGITAL SIGNATURE --}}
+            @if($verification && !empty($verification->qr_path))
                 <div class="qr-code-box">
-                    <img src="{{ $qrImageUrl }}" alt="QR Code Digital Signature">
+                    <img src="{{ $verification->qr_path }}" 
+                         alt="QR Code Digital Signature" 
+                         style="width: 150px; height: 150px; display: block; margin: 0 auto;">
                     <div class="qr-info">
                         <div class="digital-signature-badge">
                             ✓ DIGITAL SIGNATURE
                         </div>
-                        <p>Scan untuk verifikasi keaslian dokumen</p>
+                        <p style="font-size: 9pt; margin-top: 5px;">Scan untuk verifikasi keaslian dokumen</p>
                     </div>
                 </div>
             @else
-                <div style="height: 100px; text-align: center; color: #999;">
-                    <p><em>(Menunggu QR Code Digital Signature)</em></p>
+                <div style="height: 100px; text-align: center; color: #999; margin: 20px 0;">
+                    <p><em>(Menunggu Tanda Tangan Digital)</em></p>
                 </div>
             @endif
 
             <div class="ttd-name">{{ $verification->signed_by ?? '[Nama Dekan]' }}</div>
-            <div class="ttd-position">NIP. {{ $verification->penandatangan->pegawai->Nip_Pegawai ?? '-' }}</div>
+            <div class="ttd-position">NIP. {{ $verification->penandatangan->pegawai->Nip_Pegawai ?? $verification->penandatangan->dosen->NIP ?? '-' }}</div>
         </div>
     </div>
 

@@ -2,12 +2,19 @@
     @php
         $user = auth()->user();
         $fakultasName = 'Fakultas Teknik'; // Default fallback
+        $prodiName = '';
         
         // Admin might be linked via Dosen or Pegawai
-        if ($user->dosen && $user->dosen->prodi && $user->dosen->prodi->fakultas) {
-            $fakultasName = $user->dosen->prodi->fakultas->Nama_Fakultas;
-        } elseif ($user->pegawai && $user->pegawai->prodi && $user->pegawai->prodi->fakultas) {
-            $fakultasName = $user->pegawai->prodi->fakultas->Nama_Fakultas;
+        if ($user->dosen && $user->dosen->prodi) {
+            $prodiName = $user->dosen->prodi->Nama_Prodi;
+            if ($user->dosen->prodi->fakultas) {
+                $fakultasName = $user->dosen->prodi->fakultas->Nama_Fakultas;
+            }
+        } elseif ($user->pegawai && $user->pegawai->prodi) {
+            $prodiName = $user->pegawai->prodi->Nama_Prodi;
+            if ($user->pegawai->prodi->fakultas) {
+                $fakultasName = $user->pegawai->prodi->fakultas->Nama_Fakultas;
+            }
         }
     @endphp
     <a href="{{ route('dashboard.admin_prodi') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
@@ -18,6 +25,9 @@
             <div class="d-flex flex-column" style="line-height: 1.2;">
                 <span class="fs-6 fw-bold text-uppercase tracking-wide">Sistem Surat</span>
                 <span class="small text-white-50" style="font-size: 0.7rem; letter-spacing: 0.5px;">{{ strtoupper($fakultasName) }}</span>
+                @if($prodiName)
+                    <span class="small text-warning" style="font-size: 0.65rem; letter-spacing: 0.5px;">{{ strtoupper($prodiName) }}</span>
+                @endif
             </div>
         </div>
     </a>

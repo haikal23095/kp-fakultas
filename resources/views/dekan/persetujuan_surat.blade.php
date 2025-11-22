@@ -50,9 +50,12 @@
                                     <a href="{{ route('dekan.surat.detail', $surat->Id_Tugas_Surat) }}" class="btn btn-info btn-sm">
                                         <i class="fas fa-eye me-1"></i> Lihat Detail
                                     </a>
-                                    <a href="#" class="btn btn-success btn-sm">
-                                        <i class="fas fa-signature me-1"></i> Setujui (TTE)
-                                    </a>
+                                    <form action="{{ route('dekan.surat.approve', $surat->Id_Tugas_Surat) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan menandatangani surat ini?');">
+                                        @csrf
+                                        <button type="submit" class="btn btn-success btn-sm">
+                                            <i class="fas fa-signature me-1"></i> Setujui (TTE)
+                                        </button>
+                                    </form>
                                 </td>
                             </tr>
                         @empty
