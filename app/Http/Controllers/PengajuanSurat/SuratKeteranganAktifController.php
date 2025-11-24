@@ -156,7 +156,7 @@ class SuratKeteranganAktifController extends Controller
             }
 
             return redirect()->route('mahasiswa.riwayat')
-                ->with('success', '✅ Pengajuan Surat Keterangan Mahasiswa Aktif berhasil dikirim! Nomor pengajuan: #' . $tugasSurat->Id_Tugas_Surat . '. Silakan pantau status pengajuan Anda di halaman ini.');
+                ->with('success', 'Pengajuan surat berhasil dikirim! Silakan cek status di Riwayat Surat.');
 
         } catch (\Exception $e) {
             Log::error("Gagal menyimpan Surat Keterangan Aktif: " . $e->getMessage());

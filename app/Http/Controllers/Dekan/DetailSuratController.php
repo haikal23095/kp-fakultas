@@ -116,10 +116,10 @@ class DetailSuratController extends Controller
             // 3. Generate QR Code URL untuk verifikasi surat
             $verifyUrl = route('surat.verify', $token);
             
-            // Generate QR Code menggunakan Google Charts API (tidak perlu library eksternal)
-            $qrCodeUrl = \App\Helpers\QrCodeHelper::generate($verifyUrl, 300);
+            // Generate QR Code dengan box_size 10 (ukuran optimal ~150x150px)
+            $qrCodeUrl = \App\Helpers\QrCodeHelper::generate($verifyUrl, 10);
             
-            // Simpan URL QR ke database (tidak perlu simpan file fisik)
+            // Simpan URL QR ke database
             $verification->qr_path = $qrCodeUrl;
             $verification->save();
             
@@ -257,25 +257,61 @@ class DetailSuratController extends Controller
     }
 
     /**
-     * Preview draft final surat (PDF) di browser.
+     * Preview draft surat di browser (generate on-the-fly atau dari arsip).
      *
      * @param mixed $id
      * @return \Illuminate\Http\Response
      */
     public function previewDraft($id)
     {
-        $tugasSurat = TugasSurat::with('fileArsip')->findOrFail($id);
+        $tugasSurat = TugasSurat::with([
+            'fileArsip',
+            'jenisSurat',
+            'pemberiTugas.mahasiswa.prodi.fakultas',
+            'penerimaTugas',
+            'suratMagang',
+            'suratKetAktif',
+            'verification.penandatangan.pegawai',
+            'verification.penandatangan.dosen'
+        ])->findOrFail($id);
         
-        if (!$tugasSurat->fileArsip || !$tugasSurat->fileArsip->Path_File) {
-            return response('Draft surat belum tersedia.', 404);
+        // Jika sudah ada file arsip (surat sudah selesai), tampilkan dari arsip
+        if ($tugasSurat->fileArsip && $tugasSurat->fileArsip->Path_File) {
+            $path = $tugasSurat->fileArsip->Path_File;
+            if (Storage::disk('public')->exists($path)) {
+                return Storage::disk('public')->response($path, 'draft_surat.pdf', ['Content-Disposition' => 'inline']);
+            }
         }
 
-        $path = $tugasSurat->fileArsip->Path_File;
-
-        if (Storage::disk('public')->exists($path)) {
-            return Storage::disk('public')->response($path, 'draft_surat.pdf', ['Content-Disposition' => 'inline']);
+        // Jika belum ada arsip, generate preview dari view
+        // Ambil data mahasiswa dari pemberi tugas
+        $mahasiswa = $tugasSurat->pemberiTugas->mahasiswa ?? null;
+        
+        // Render view preview sesuai jenis surat
+        $jenisSurat = $tugasSurat->jenisSurat;
+        
+        // Untuk surat aktif
+        if ($tugasSurat->suratKetAktif) {
+            return view('dekan.preview.surat_aktif', [
+                'surat' => $tugasSurat,
+                'mahasiswa' => $mahasiswa,
+                'jenisSurat' => $jenisSurat,
+                'verification' => $tugasSurat->verification,
+                'mode' => 'preview'
+            ]);
+        }
+        
+        // Untuk surat magang
+        if ($tugasSurat->suratMagang) {
+            return view('dekan.preview.surat_magang', [
+                'surat' => $tugasSurat,
+                'mahasiswa' => $mahasiswa,
+                'jenisSurat' => $jenisSurat,
+                'verification' => $tugasSurat->verification,
+                'mode' => 'preview'
+            ]);
         }
 
-        return response('File draft tidak ditemukan di storage.', 404);
+        return response('Preview tidak tersedia untuk jenis surat ini.', 404);
     }
 }

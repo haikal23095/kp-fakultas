@@ -1,9 +1,9 @@
 @extends('layouts.dekan')
 
-@section('title', 'Persetujuan Tanda Tangan Elektronik')
+@section('title', 'Persetujuan Surat')
 
 @section('content')
-    <h1 class="h3 fw-bold mb-4">Persetujuan TTE Surat</h1>
+    <h1 class="h3 fw-bold mb-4">Persetujuan Surat</h1>
 
     {{-- Flash Messages --}}
     @if(session('success'))
@@ -22,7 +22,7 @@
 
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <h6 class="m-0 fw-bold text-primary">Antrian Surat Menunggu Tanda Tangan Anda</h6>
+            <h6 class="m-0 fw-bold text-primary">Daftar Surat Menunggu Persetujuan</h6>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -53,7 +53,7 @@
                                     <form action="{{ route('dekan.surat.approve', $surat->Id_Tugas_Surat) }}" method="POST" class="d-inline" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan menandatangani surat ini?');">
                                         @csrf
                                         <button type="submit" class="btn btn-success btn-sm">
-                                            <i class="fas fa-signature me-1"></i> Setujui (TTE)
+                                            <i class="fas fa-check-circle me-1"></i> Setujui & Tandatangani
                                         </button>
                                     </form>
                                 </td>
@@ -62,9 +62,9 @@
                             <tr>
                                 <td colspan="4" class="text-center text-muted py-4">
                                     <i class="fas fa-inbox fa-2x mb-2"></i>
-                                    <p class="mb-0">Tidak ada surat yang menunggu persetujuan TTE saat ini.</p>
+                                    <p class="mb-0">Tidak ada surat yang menunggu persetujuan.</p>
                                     <small class="text-muted d-block mt-2">
-                                        Surat akan muncul di sini setelah Admin Fakultas memproses dan mengajukan ke Dekan.
+                                        Surat akan muncul di sini setelah diproses oleh administrasi fakultas.
                                     </small>
                                 </td>
                             </tr>

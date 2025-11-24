@@ -285,7 +285,7 @@ class SuratPengantarMagangController extends Controller
             }
 
             return redirect()->route('mahasiswa.riwayat')
-                ->with('success', '✅ Pengajuan Surat Pengantar Magang/KP ke ' . $instansi . ' berhasil dikirim! Anda dapat memantau status pengajuan di halaman ini. Nomor pengajuan: #' . $tugasSurat->Id_Tugas_Surat);
+                ->with('success', 'Pengajuan surat magang berhasil dikirim! Cek status di Riwayat Surat.');
 
         } catch (\Exception $e) {
             DB::rollBack();
