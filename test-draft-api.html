@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Test Draft API</title>
+    <meta name="csrf-token" content="">
+</head>
+
+<body>
+    <h1>Test Draft Save API</h1>
+
+    <button onclick="testSaveDraft()">Test Save Draft</button>
+    <button onclick="testLoadDraft()">Test Load Draft</button>
+
+    <h3>Response:</h3>
+    <pre id="response"></pre>
+
+    <h3>Console Log:</h3>
+    <div id="console-log" style="border: 1px solid #ccc; padding: 10px; max-height: 400px; overflow-y: auto;"></div>
+
+    <script>
+        // Override console.log untuk display
+        const originalLog = console.log;
+        console.log = function (...args) {
+            originalLog.apply(console, args);
+            const logDiv = document.getElementById('console-log');
+            logDiv.innerHTML += args.join(' ') + '<br>';
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+
+        function testSaveDraft() {
+            console.log('[TEST] Testing save draft...');
+
+            const formData = new FormData();
+            formData.append('Id_Jenis_Surat', '3'); // Surat Magang
+            formData.append('nama_instansi', 'PT. Test Indonesia');
+            formData.append('judul_penelitian', 'Test Penelitian');
+            formData.append('tanggal_mulai', '2025-01-01');
+            formData.append('tanggal_selesai', '2025-03-01');
+            formData.append('dosen_pembimbing_1', 'Test Dosen');
+
+            fetch('/mahasiswa/api/draft/save', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => {
+                    console.log('[TEST] Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('[TEST] Response data:', JSON.stringify(data, null, 2));
+                    document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    console.error('[TEST] Error:', error);
+                    document.getElementById('response').textContent = 'Error: ' + error.message;
+                });
+        }
+
+        function testLoadDraft() {
+            console.log('[TEST] Testing load draft...');
+
+            fetch('/mahasiswa/api/draft/load', {
+                headers: {
+                    'Accept': 'application/json'
+                }
+            })
+                .then(response => {
+                    console.log('[TEST] Response status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('[TEST] Response data:', JSON.stringify(data, null, 2));
+                    document.getElementById('response').textContent = JSON.stringify(data, null, 2);
+                })
+                .catch(error => {
+                    console.error('[TEST] Error:', error);
+                    document.getElementById('response').textContent = 'Error: ' + error.message;
+                });
+        }
+
+        // Get CSRF token
+        fetch('/mahasiswa/pengajuan-surat/magang')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const token = doc.querySelector('meta[name="csrf-token"]')?.content;
+                if (token) {
+                    document.querySelector('meta[name="csrf-token"]').content = token;
+                    console.log('[INIT] CSRF token loaded:', token.substring(0, 10) + '...');
+                } else {
+                    console.error('[INIT] CSRF token not found!');
+                }
+            });
+    </script>
+</body>
+
+</html>

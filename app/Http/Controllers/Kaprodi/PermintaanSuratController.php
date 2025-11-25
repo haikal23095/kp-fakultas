@@ -61,7 +61,11 @@ class PermintaanSuratController extends Controller
 
         // Update Acc_Koordinator menjadi true
         $suratMagang->Acc_Koordinator = true;
+        $suratMagang->Status = 'Dikerjakan-admin'; // Update status ke tahap berikutnya
         $suratMagang->save();
+
+        // Update Status_KP mahasiswa menjadi Sedang_Melaksanakan
+        $this->updateMahasiswaStatusKP($suratMagang, 'Sedang_Melaksanakan');
 
         return redirect()->route('kaprodi.surat.index')
             ->with('success', 'Surat pengantar magang berhasil disetujui!');
@@ -122,5 +126,32 @@ class PermintaanSuratController extends Controller
         }
 
         return response()->download($filePath);
+    }
+
+    /**
+     * Helper method untuk update Status_KP mahasiswa
+     */
+    private function updateMahasiswaStatusKP($suratMagang, $status)
+    {
+        $dataMahasiswa = $suratMagang->Data_Mahasiswa;
+
+        if (!is_array($dataMahasiswa)) {
+            return;
+        }
+
+        foreach ($dataMahasiswa as $mhs) {
+            $nim = $mhs['nim'] ?? null;
+
+            if (!$nim) {
+                continue;
+            }
+
+            $mahasiswa = \App\Models\Mahasiswa::where('NIM', $nim)->first();
+
+            if ($mahasiswa) {
+                $mahasiswa->Status_KP = $status;
+                $mahasiswa->save();
+            }
+        }
     }
 }

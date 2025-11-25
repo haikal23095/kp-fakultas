@@ -102,11 +102,25 @@
     .autocomplete-item:hover {
         background-color: #f0f8ff;
     }
+    .autocomplete-item.disabled {
+        background-color: #f0f0f0 !important;
+        color: #999 !important;
+        cursor: not-allowed !important;
+    }
+    .autocomplete-item.disabled:hover {
+        background-color: #f0f0f0 !important;
+    }
     .autocomplete-item strong {
         color: #333;
     }
+    .autocomplete-item.disabled strong {
+        color: #999 !important;
+    }
     .autocomplete-item small {
         color: #666;
+    }
+    .autocomplete-item.disabled small {
+        color: #aaa !important;
     }
     
     /* Style untuk card mahasiswa */

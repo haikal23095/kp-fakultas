@@ -8,11 +8,239 @@ document.addEventListener('DOMContentLoaded', function () {
     // === SCRIPT KHUSUS UNTUK SURAT MAGANG === //
     let mahasiswaIndex = 1; // Mulai dari 1 karena 0 sudah ada (mahasiswa yang login)
     let autocompleteTimeout = null;
+    let currentDraftId = null;
+    let autoSaveTimeout = null;
+    const AUTOSAVE_DELAY = 5000; // 5 detik
+    let isSubmitting = false; // Flag untuk track form submission
 
     // Inisialisasi form magang jika ada
     if (document.getElementById('mahasiswa-container')) {
+        loadDraft(); // Load draft yang auto-created dari server
         initMagangPreview();
+
+        // AUTO-SAVE setiap 5 detik
+        setInterval(function () {
+            if (currentDraftId) {
+                console.log('[AUTO-SAVE] Triggering periodic save...');
+                saveDraft();
+            }
+        }, AUTOSAVE_DELAY);
+
+        // DELETE DRAFT saat keluar dari halaman
+        window.addEventListener('beforeunload', function (e) {
+            if (!isSubmitting && currentDraftId) {
+                deleteDraftOnExit();
+            }
+        });
+
+        // Mark as submitting saat form di-submit
+        const form = document.querySelector('form[action*="pengajuan.magang.store"]');
+        if (form) {
+            form.addEventListener('submit', function () {
+                isSubmitting = true;
+                console.log('[DRAFT] Form submitting, will not delete draft');
+            });
+        }
     }
+
+    // === LOAD DRAFT DARI SERVER (Auto-created saat buka form) ===
+    function loadDraft() {
+        console.log('[DRAFT-LOAD] Loading auto-created draft...');
+        fetch('/mahasiswa/api/draft/load')
+            .then(response => {
+                console.log('[DRAFT-LOAD] Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('[DRAFT-LOAD] Draft data:', data);
+                if (data.draft) {
+                    currentDraftId = data.draft.id_draft;
+                    console.log('[DRAFT-LOAD] Draft loaded with ID:', currentDraftId);
+
+                    // Restore form fields
+                    if (data.draft.Nama_Instansi) document.getElementById('input-instansi-magang').value = data.draft.Nama_Instansi;
+                    if (data.draft.Judul_Penelitian) document.getElementById('input-judul-magang').value = data.draft.Judul_Penelitian;
+                    if (data.draft.Tanggal_Mulai) document.getElementById('input-mulai-magang').value = data.draft.Tanggal_Mulai;
+                    if (data.draft.Tanggal_Selesai) document.getElementById('input-selesai-magang').value = data.draft.Tanggal_Selesai;
+                    if (data.draft.Dosen_Pembimbing_1) document.getElementById('input-dospem1-magang').value = data.draft.Dosen_Pembimbing_1;
+                    if (data.draft.Dosen_Pembimbing_2) document.getElementById('input-dospem2-magang').value = data.draft.Dosen_Pembimbing_2;
+
+                    // Restore mahasiswa pending dan confirmed
+                    if (data.mahasiswa_pending && data.mahasiswa_pending.length > 0) {
+                        console.log('[DRAFT-LOAD] Restoring pending mahasiswa:', data.mahasiswa_pending);
+                        data.mahasiswa_pending.forEach(mhs => {
+                            addMahasiswaFromDraft(mhs, 'pending');
+                        });
+                    }
+
+                    if (data.mahasiswa_confirmed && data.mahasiswa_confirmed.length > 1) {
+                        console.log('[DRAFT-LOAD] Restoring confirmed mahasiswa (skipping first)');
+                        // Skip index 0 (pembuat)
+                        for (let i = 1; i < data.mahasiswa_confirmed.length; i++) {
+                            addMahasiswaFromDraft(data.mahasiswa_confirmed[i], 'confirmed');
+                        }
+                    }
+
+                    // Update preview setelah load
+                    setTimeout(updateMahasiswaPreviewList, 500);
+                } else {
+                    console.log('[DRAFT-LOAD] No draft found (this should not happen)');
+                }
+            })
+            .catch(error => console.error('[DRAFT-LOAD ERROR] Loading draft:', error));
+    }
+
+    // Tambah mahasiswa dari draft dengan status badge
+    function addMahasiswaFromDraft(mhs, status) {
+        mahasiswaIndex++;
+        const template = document.getElementById('mahasiswa-template');
+        if (!template) return;
+
+        const clone = template.content.cloneNode(true);
+        const container = clone.querySelector('.mahasiswa-item');
+        container.setAttribute('data-index', mahasiswaIndex);
+        container.setAttribute('data-mahasiswa-id', mhs.id);
+
+        // Update nomor
+        clone.querySelector('.item-number').textContent = mahasiswaIndex;
+
+        // Fill data
+        const namaInput = clone.querySelector('.mahasiswa-nama');
+        const nimInput = clone.querySelector('.mahasiswa-nim');
+        const angkatanInput = clone.querySelector('.mahasiswa-angkatan');
+        const jurusanInput = clone.querySelector('.mahasiswa-jurusan');
+
+        namaInput.value = mhs.nama || '';
+        namaInput.name = `mahasiswa[${mahasiswaIndex}][nama]`;
+        namaInput.setAttribute('data-index', mahasiswaIndex);
+        namaInput.classList.remove('autocomplete-mahasiswa');
+        namaInput.setAttribute('readonly', true);
+
+        nimInput.value = mhs.nim || '';
+        nimInput.name = `mahasiswa[${mahasiswaIndex}][nim]`;
+        nimInput.setAttribute('data-index', mahasiswaIndex);
+
+        angkatanInput.value = mhs.angkatan || '';
+        angkatanInput.name = `mahasiswa[${mahasiswaIndex}][angkatan]`;
+        angkatanInput.setAttribute('data-index', mahasiswaIndex);
+
+        const jurusanMahasiswaLogin = document.querySelector('.mahasiswa-jurusan[data-index="0"]')?.value || '';
+        jurusanInput.value = jurusanMahasiswaLogin;
+        jurusanInput.name = `mahasiswa[${mahasiswaIndex}][jurusan]`;
+        jurusanInput.setAttribute('data-index', mahasiswaIndex);
+
+        // Add status badge
+        const headerDiv = clone.querySelector('.d-flex.justify-content-between');
+        const badge = document.createElement('span');
+        if (status === 'pending') {
+            badge.className = 'badge bg-warning text-dark ms-2';
+            badge.textContent = 'Menunggu Persetujuan';
+            container.style.opacity = '0.7';
+        } else {
+            badge.className = 'badge bg-success ms-2';
+            badge.textContent = 'Terkonfirmasi';
+        }
+        headerDiv.querySelector('h6').appendChild(badge);
+
+        document.getElementById('mahasiswa-container').appendChild(clone);
+    }
+
+    // === SAVE DRAFT (Called every 5 seconds or when data changes) ===
+    function saveDraft(mahasiswaIdTambahan = null) {
+        console.log('[DRAFT-SAVE] Saving draft... mahasiswa_id:', mahasiswaIdTambahan);
+        const formData = new FormData();
+        const jenisSuratInput = document.querySelector('input[name="Id_Jenis_Surat"]');
+        if (!jenisSuratInput) {
+            console.error('[ERROR] Id_Jenis_Surat input not found');
+            return;
+        }
+
+        formData.append('Id_Jenis_Surat', jenisSuratInput.value);
+        formData.append('nama_instansi', document.getElementById('input-instansi-magang')?.value || '');
+        formData.append('judul_penelitian', document.getElementById('input-judul-magang')?.value || '');
+        formData.append('tanggal_mulai', document.getElementById('input-mulai-magang')?.value || '');
+        formData.append('tanggal_selesai', document.getElementById('input-selesai-magang')?.value || '');
+        formData.append('dosen_pembimbing_1', document.getElementById('input-dospem1-magang')?.value || '');
+        formData.append('dosen_pembimbing_2', document.getElementById('input-dospem2-magang')?.value || '');
+
+        if (mahasiswaIdTambahan) {
+            console.log('[DEBUG] Adding mahasiswa_id_tambahan:', mahasiswaIdTambahan);
+            formData.append('mahasiswa_id_tambahan', mahasiswaIdTambahan);
+        }
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!csrfToken) {
+            console.error('[ERROR] CSRF token not found');
+            return;
+        }
+
+        fetch('/mahasiswa/api/draft/save', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRF-TOKEN': csrfToken
+            }
+        })
+            .then(response => {
+                console.log('[DEBUG] Save response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('[DEBUG] Save response data:', data);
+                if (data.success) {
+                    currentDraftId = data.draft_id;
+                    console.log('[DEBUG] Draft saved successfully, ID:', data.draft_id);
+                } else if (data.error) {
+                    console.error('[ERROR] Save failed:', data.error);
+                }
+            })
+            .catch(error => console.error('[ERROR] Saving draft:', error));
+    }
+
+    // === DELETE DRAFT saat keluar dari halaman ===
+    function deleteDraftOnExit() {
+        if (!currentDraftId) return;
+
+        console.log('[DRAFT-DELETE] Deleting draft on exit...');
+
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+        if (!csrfToken) return;
+
+        // Use synchronous XHR for page unload (sendBeacon doesn't support custom headers)
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/mahasiswa/api/draft/delete', false); // false = synchronous
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('X-CSRF-TOKEN', csrfToken);
+
+        try {
+            xhr.send(JSON.stringify({
+                draft_id: currentDraftId
+            }));
+            console.log('[DRAFT-DELETE] Draft deleted successfully');
+        } catch (error) {
+            console.error('[DRAFT-DELETE] Error:', error);
+        }
+    }
+
+    // Trigger auto-save on input change (debounced)
+    const autoSaveFields = [
+        'input-instansi-magang',
+        'input-judul-magang',
+        'input-mulai-magang',
+        'input-selesai-magang',
+        'input-dospem1-magang',
+        'input-dospem2-magang'
+    ];
+
+    autoSaveFields.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+            element.addEventListener('input', function () {
+                clearTimeout(autoSaveTimeout);
+                autoSaveTimeout = setTimeout(() => saveDraft(), AUTOSAVE_DELAY);
+            });
+        }
+    });
 
     // Fungsi untuk inisialisasi form magang
     function initMagangPreview() {
@@ -298,12 +526,26 @@ document.addEventListener('DOMContentLoaded', function () {
                     resultsDiv.innerHTML = '';
                     data.forEach(mhs => {
                         const div = document.createElement('div');
+
+                        // Cek status KP
+                        const isAvailable = mhs.is_available !== false;
+                        const statusText = mhs.status_kp === 'Sedang_Melaksanakan' ? ' <span style="color:#dc3545;">(Sedang KP/Magang)</span>' : '';
+
                         div.className = 'autocomplete-item';
-                        div.innerHTML = `<strong>${mhs.nama}</strong><br><small>NIM: ${mhs.nim} - ${mhs.jurusan}</small>`;
-                        div.addEventListener('click', () => {
-                            selectMahasiswa(input, mhs);
-                            resultsDiv.style.display = 'none';
-                        });
+                        if (!isAvailable) {
+                            div.classList.add('disabled');
+                            div.title = 'Mahasiswa ini sedang melaksanakan KP/Magang dan tidak dapat ditambahkan';
+                        }
+
+                        div.innerHTML = `<strong>${mhs.nama}</strong>${statusText}<br><small>NIM: ${mhs.nim} - ${mhs.jurusan}</small>`;
+
+                        if (isAvailable) {
+                            div.addEventListener('click', () => {
+                                selectMahasiswa(input, mhs);
+                                resultsDiv.style.display = 'none';
+                            });
+                        }
+
                         resultsDiv.appendChild(div);
                     });
                     resultsDiv.style.display = 'block';
@@ -328,8 +570,27 @@ document.addEventListener('DOMContentLoaded', function () {
         if (jurusanInput) jurusanInput.value = mhs.jurusan;
         if (angkatanInput) angkatanInput.value = mhs.angkatan;
 
+        // Simpan ID mahasiswa di container
+        const container = input.closest('.mahasiswa-item');
+        if (container) {
+            container.setAttribute('data-mahasiswa-id', mhs.id);
+
+            // Tambah badge pending
+            const headerDiv = container.querySelector('.d-flex.justify-content-between h6');
+            if (headerDiv && !headerDiv.querySelector('.badge')) {
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-warning text-dark ms-2';
+                badge.textContent = 'Menunggu Persetujuan';
+                headerDiv.appendChild(badge);
+                container.style.opacity = '0.7';
+            }
+        }
+
         // Tutup autocomplete
         input.nextElementSibling.style.display = 'none';
+
+        // LANGSUNG KIRIM INVITATION
+        saveDraft(mhs.id);
 
         // Update preview setelah select
         updateMahasiswaPreviewList();

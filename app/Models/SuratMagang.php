@@ -25,6 +25,7 @@ class SuratMagang extends Model
         'Dokumen_Proposal',
         'Surat_Pengantar_Magang',
         'Acc_Koordinator',
+        'Acc_Dekan',
         'Nama_Koordinator',
         'Status',
         'Komentar',

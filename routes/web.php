@@ -38,8 +38,9 @@ Route::get('/', function () {
 // ============================================================
 // PUBLIC ROUTES (Tanpa Auth - untuk Verifikasi QR Code)
 // ============================================================
-Route::get('/verify-surat/{token}', [SuratVerificationController::class, 'verify'])->name('surat.verify');
-Route::get('/api/verify-surat/{token}', [SuratVerificationController::class, 'verifyApi'])->name('surat.verify.api');
+// TODO: Implement SuratVerificationController
+// Route::get('/verify-surat/{token}', [SuratVerificationController::class, 'verify'])->name('surat.verify');
+// Route::get('/api/verify-surat/{token}', [SuratVerificationController::class, 'verifyApi'])->name('surat.verify.api');
 
 // Routes untuk autentikasi
 Route::middleware('guest')->group(function () {
@@ -85,14 +86,14 @@ Route::middleware('auth')->group(function () {
 
         // Preview dokumen pendukung (PDF) di browser
         Route::get('/surat/{id}/preview', [ManajemenSuratController::class, 'previewDokumen'])->name('surat.preview');
-        
+
         // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
         Route::get('/surat/{id}/detail', [DetailSuratController::class, 'show'])->name('surat.detail');
         // Download dokumen pendukung (admin)
         Route::get('/surat/{id}/download', [DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
         // Proses upload draft final / ajukan ke Dekan
         Route::post('/surat/{id}/process-draft', [DetailSuratController::class, 'processDraft'])->name('surat.process_draft');
-        
+
         // Route: Tolak Surat
         Route::post('/surat/{id}/reject', [DetailSuratController::class, 'reject'])->name('surat.reject');
 
@@ -234,66 +235,24 @@ Route::middleware('auth')->group(function () {
         })->name('pengajuan.aktif.form');
 
         // --- ROUTE GET: FORM SURAT PENGANTAR MAGANG ---
-        Route::get('/pengajuan-surat/magang', function () {
-            $user = Auth::user();
-            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
+        Route::get('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'create'])->name('pengajuan.magang.form');
 
-            $prodi = null;
-            if ($mahasiswa && $mahasiswa->Id_Prodi) {
-                $prodi = Prodi::find($mahasiswa->Id_Prodi);
-            }
+        // --- ROUTE POST: SUBMIT FORM SURAT MAGANG/KP ---
+        Route::post('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'store'])->name('pengajuan.magang.store');
 
-            // Filter dosen berdasarkan prodi mahasiswa
-            $dosens = Dosen::query()
-                ->when($mahasiswa && $mahasiswa->Id_Prodi, function ($query) use ($mahasiswa) {
-                    return $query->where('Id_Prodi', $mahasiswa->Id_Prodi);
-                })
-                ->orderBy('Nama_Dosen', 'asc')
-                ->get();
+        // --- ROUTE API: SEARCH MAHASISWA (AUTOCOMPLETE) ---
+        Route::get('/api/mahasiswa/search', [SuratPengantarMagangController::class, 'searchMahasiswa'])->name('api.mahasiswa.search');
 
-            // Ambil Kaprodi (user dengan role 4) sesuai prodi mahasiswa
-            $kaprodi = null;
-            $kaprodiName = null;
-            $kaprodiNIP = null;
+        // --- ROUTE API: DRAFT MANAGEMENT ---
+        Route::post('/api/draft/save', [SuratPengantarMagangController::class, 'saveDraft'])->name('api.draft.save');
+        Route::get('/api/draft/load', [SuratPengantarMagangController::class, 'loadDraft'])->name('api.draft.load');
+        Route::post('/api/draft/delete', [SuratPengantarMagangController::class, 'deleteDraft'])->name('api.draft.delete');
 
-            if ($mahasiswa && $mahasiswa->Id_Prodi) {
-                $kaprodiUser = \App\Models\User::where('Id_Role', 4)
-                    ->where(function ($query) use ($mahasiswa) {
-                        $query->whereHas('dosen', function ($q) use ($mahasiswa) {
-                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
-                        })
-                            ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
-                                $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
-                            });
-                    })
-                    ->with(['dosen', 'pegawai'])
-                    ->first();
+        // --- ROUTE: INVITATION ACTIONS ---
+        Route::post('/invitation/{id}/accept', [SuratPengantarMagangController::class, 'acceptInvitation'])->name('invitation.accept');
+        Route::post('/invitation/{id}/reject', [SuratPengantarMagangController::class, 'rejectInvitation'])->name('invitation.reject');
 
-                if ($kaprodiUser) {
-                    $kaprodi = $kaprodiUser;
-                    if ($kaprodiUser->dosen) {
-                        $kaprodiName = $kaprodiUser->dosen->Nama_Dosen;
-                        $kaprodiNIP = $kaprodiUser->dosen->NIP;
-                    } elseif ($kaprodiUser->pegawai) {
-                        $kaprodiName = $kaprodiUser->pegawai->Nama_Pegawai;
-                        $kaprodiNIP = $kaprodiUser->pegawai->NIP;
-                    }
-                }
-            }
-
-            // Ambil ID jenis surat
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Pengantar KP/Magang')->first();
-
-            return view('mahasiswa.form_surat_magang', [
-                'mahasiswa' => $mahasiswa,
-                'prodi' => $prodi,
-                'dosens' => $dosens,
-                'kaprodi' => $kaprodi,
-                'kaprodiName' => $kaprodiName,
-                'kaprodiNIP' => $kaprodiNIP,
-                'jenisSurat' => $jenisSurat
-            ]);
-        })->name('pengajuan.magang.form');        // --- ROUTE GET: FORM SURAT REKOMENDASI ---
+        // --- ROUTE GET: FORM SURAT REKOMENDASI ---
         Route::get('/pengajuan-surat/rekomendasi', function () {
             $user = Auth::user();
             $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
@@ -325,7 +284,7 @@ Route::middleware('auth')->group(function () {
         // Riwayat Surat Mahasiswa
         Route::get('/riwayat', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'index'])
             ->name('riwayat');
-        
+
         // Download Surat dengan QR Code
         Route::get('/surat/download/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadSurat'])
             ->name('surat.download');

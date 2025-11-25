@@ -11,9 +11,7 @@ class Notifikasi extends Model
 
     protected $table = 'Notifikasi';
     protected $primaryKey = 'Id_Notifikasi';
-    public $timestamps = true;
-    const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
+    public $timestamps = false; // Tabel tidak memiliki kolom updated_at
 
     protected $fillable = [
         'Tipe_Notifikasi',
@@ -21,12 +19,13 @@ class Notifikasi extends Model
         'Dest_User',
         'Source_User',
         'Is_Read',
+        'Data_Tambahan',
     ];
 
     protected $casts = [
         'Is_Read' => 'boolean',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
+        'created_at' => 'datetime', // Cast ke Carbon untuk diffForHumans()
+        'Data_Tambahan' => 'array', // Cast JSON ke array
     ];
 
     /**

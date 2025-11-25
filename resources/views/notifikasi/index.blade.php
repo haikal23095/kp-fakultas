@@ -48,7 +48,7 @@
                 </div>
                 <div class="flex-grow-1">
                     <div class="d-flex justify-content-between align-items-start">
-                        <div>
+                        <div class="w-100">
                             <p class="mb-1 {{ !$notif->Is_Read ? 'fw-bold' : '' }}">{{ $notif->Pesan }}</p>
                             <small class="text-muted">
                                 <i class="fas fa-user me-1"></i>
@@ -59,6 +59,58 @@
                                 <i class="fas fa-clock me-1"></i>
                                 {{ $notif->created_at->diffForHumans() }}
                             </small>
+                            
+                            {{-- Action buttons untuk invitation --}}
+                            @if(strtolower($notif->Tipe_Notifikasi) == 'invitation')
+                                @php
+                                    $dataTambahan = is_array($notif->Data_Tambahan) ? (object)$notif->Data_Tambahan : json_decode($notif->Data_Tambahan ?? '{}');
+                                    $invitation = isset($dataTambahan->invitation_id) ? \App\Models\SuratMagangInvitation::find($dataTambahan->invitation_id) : null;
+                                @endphp
+                                
+                                @if($invitation && $invitation->status === 'pending')
+                                    <div class="mt-2">
+                                        <form action="{{ route('mahasiswa.invitation.accept', $invitation->id_invitation) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success">
+                                                <i class="fas fa-check me-1"></i>Terima
+                                            </button>
+                                        </form>
+                                        
+                                        <button type="button" class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $invitation->id_invitation }}">
+                                            <i class="fas fa-times me-1"></i>Tolak
+                                        </button>
+                                    </div>
+                                    
+                                    {{-- Modal untuk reject --}}
+                                    <div class="modal fade" id="rejectModal{{ $invitation->id_invitation }}" tabindex="-1">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <form action="{{ route('mahasiswa.invitation.reject', $invitation->id_invitation) }}" method="POST">
+                                                    @csrf
+                                                    <div class="modal-header">
+                                                        <h5 class="modal-title">Tolak Undangan</h5>
+                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                                    </div>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label">Alasan menolak <span class="text-danger">*</span></label>
+                                                            <textarea name="keterangan" class="form-control" rows="3" required placeholder="Minimal 5 karakter"></textarea>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                        <button type="submit" class="btn btn-danger">Tolak Undangan</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @elseif($invitation)
+                                    <span class="badge bg-{{ $invitation->status === 'accepted' ? 'success' : 'danger' }} mt-2">
+                                        {{ $invitation->status === 'accepted' ? 'Diterima' : 'Ditolak' }}
+                                    </span>
+                                @endif
+                            @endif
                         </div>
                         <div class="btn-group">
                             @if(!$notif->Is_Read)
