@@ -341,6 +341,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat/download/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadSurat'])
             ->name('surat.download');
 
+        // --- AJAKAN MAGANG ROUTES ---
+        Route::get('/ajakan-magang', [\App\Http\Controllers\AjakanMagangController::class, 'index'])
+            ->name('ajakan-magang');
+        Route::post('/ajakan-magang/{id}/accept', [\App\Http\Controllers\AjakanMagangController::class, 'accept'])
+            ->name('ajakan-magang.accept');
+        Route::post('/ajakan-magang/{id}/reject', [\App\Http\Controllers\AjakanMagangController::class, 'reject'])
+            ->name('ajakan-magang.reject');
+
         // Rute lainnya
         Route::get('/legalisir', function () {
             return view('mahasiswa.legalisir');

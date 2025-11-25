@@ -189,20 +189,20 @@ class SuratPengantarMagangController extends Controller
                         'invited_at' => now()
                     ]);
 
-                    // Kirim notifikasi
-                    Notifikasi::create([
-                        'Tipe_Notifikasi' => 'Invitation',
-                        'Pesan' => $mahasiswaPembuat->Nama_Mahasiswa . ' mengundang Anda untuk bergabung dalam pengajuan magang ke ' . $suratMagang->Nama_Instansi,
-                        'Dest_User' => $mahasiswaDiundang->Id_User,
-                        'Source_User' => Auth::user()->Id_User,
-                        'Is_Read' => false,
-                        'Data_Tambahan' => [
-                            'invitation_id' => $invitation->id,
-                            'surat_magang_id' => $suratMagang->id_no
-                        ]
-                    ]);
+                    // Tidak perlu kirim notifikasi - mahasiswa cek di menu Ajakan Magang
+                    // Notifikasi::create([
+                    //     'Tipe_Notifikasi' => 'Invitation',
+                    //     'Pesan' => $mahasiswaPembuat->Nama_Mahasiswa . ' mengundang Anda untuk bergabung dalam pengajuan magang ke ' . $suratMagang->Nama_Instansi,
+                    //     'Dest_User' => $mahasiswaDiundang->Id_User,
+                    //     'Source_User' => Auth::user()->Id_User,
+                    //     'Is_Read' => false,
+                    //     'Data_Tambahan' => [
+                    //         'invitation_id' => $invitation->id,
+                    //         'surat_magang_id' => $suratMagang->id_no
+                    //     ]
+                    // ]);
 
-                    \Log::info('[MAGANG] Invitation sent', [
+                    \Log::info('[MAGANG] Invitation created', [
                         'invitation_id' => $invitation->id,
                         'to_mahasiswa' => $mahasiswaDiundang->Nama_Mahasiswa
                     ]);
@@ -216,8 +216,8 @@ class SuratPengantarMagangController extends Controller
             DB::commit();
 
             $message = $adaTemanDiajak
-                ? 'Pengajuan berhasil dibuat! Menunggu konfirmasi dari teman-teman yang diundang.'
-                : 'Pengajuan Surat Pengantar Magang/KP berhasil dikirim dan sedang menunggu persetujuan koordinator.';
+                ? 'Pengajuan berhasil dibuat! Menunggu teman-teman menerima undangan.'
+                : 'Pengajuan Surat Pengantar Magang/KP berhasil dikirim dan diajukan ke koordinator.';
 
             return redirect('/mahasiswa/pengajuan-surat/magang')
                 ->with('success', $message);

@@ -7,11 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 class SuratMagangInvitation extends Model
 {
     protected $table = 'Surat_Magang_Invitations';
-    protected $primaryKey = 'id_invitation';
+    protected $primaryKey = 'id_no';
     public $timestamps = false;
-
-    const CREATED_AT = 'invited_at';
-    const UPDATED_AT = null;
 
     protected $fillable = [
         'id_surat_magang',

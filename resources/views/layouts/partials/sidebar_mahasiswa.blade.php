@@ -40,6 +40,19 @@
             </a>
         </li>
         <li>
+            <a href="{{ route('mahasiswa.ajakan-magang') }}" class="nav-link text-white d-flex align-items-center justify-content-between {{ request()->routeIs('mahasiswa.ajakan-magang*') ? 'active' : '' }}">
+                <span><i class="fas fa-handshake me-2"></i>Ajakan Magang</span>
+                @php
+                    $pendingInvitations = \App\Models\SuratMagangInvitation::where('id_mahasiswa_diundang', auth()->user()->mahasiswa->Id_Mahasiswa ?? 0)
+                        ->where('status', 'pending')
+                        ->count();
+                @endphp
+                @if($pendingInvitations > 0)
+                    <span class="badge bg-danger rounded-pill">{{ $pendingInvitations }}</span>
+                @endif
+            </a>
+        </li>
+        <li>
             <a href="{{ route('mahasiswa.legalisir.create') }}" class="nav-link text-white {{ request()->routeIs('mahasiswa.legalisir.*') ? 'active' : '' }}">
                 <i class="fas fa-stamp me-2"></i>
                 Legalisir Dokumen
