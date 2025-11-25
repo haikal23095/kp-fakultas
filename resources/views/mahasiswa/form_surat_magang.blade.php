@@ -235,10 +235,10 @@
                     </div>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label class="form-label"><strong>Jurusan</strong></label>
+                            <label class="form-label"><strong>Program Studi</strong></label>
                             <input type="text" class="form-control mahasiswa-jurusan" 
                                    name="mahasiswa[0][jurusan]"
-                                   value="{{ $prodi->Nama_Prodi ?? 'Jurusan Tidak Ditemukan' }}" 
+                                   value="{{ $prodi->Nama_Prodi ?? 'Program Studi Tidak Ditemukan' }}" 
                                    readonly
                                    data-index="0">
                         </div>
@@ -284,10 +284,10 @@
                     </div>
                     <div class="row">
                         <div class="col-md-12 mb-3">
-                            <label class="form-label"><strong>Jurusan</strong></label>
+                            <label class="form-label"><strong>Program Studi</strong></label>
                             <input type="text" class="form-control mahasiswa-jurusan" 
                                    name=""
-                                   placeholder="Jurusan otomatis terisi"
+                                   placeholder="Program Studi otomatis terisi"
                                    readonly
                                    data-index="">
                         </div>
@@ -402,9 +402,9 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>Jurusan</td>
+                            <td>Program Studi</td>
                             <td>:</td>
-                            <td id="preview-jurusan-magang"><span class="preview-placeholder">[Jurusan]</span></td>
+                            <td id="preview-jurusan-magang"><span class="preview-placeholder">[Program Studi]</span></td>
                         </tr>
                         <tr>
                             <td>Dosen Pembimbing</td>

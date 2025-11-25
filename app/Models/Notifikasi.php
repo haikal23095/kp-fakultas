@@ -11,7 +11,10 @@ class Notifikasi extends Model
 
     protected $table = 'Notifikasi';
     protected $primaryKey = 'Id_Notifikasi';
-    public $timestamps = false; // Tabel tidak memiliki kolom updated_at
+    public $timestamps = true; // Aktifkan timestamps untuk created_at dan updated_at
+
+    const CREATED_AT = 'created_at';
+    const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
         'Tipe_Notifikasi',

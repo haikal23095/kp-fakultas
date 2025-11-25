@@ -17,6 +17,7 @@ class SuratMagang extends Model
         'Id_Tugas_Surat',
         'Nama_Instansi',
         'Alamat_Instansi',
+        'Judul_Penelitian',
         'Tanggal_Mulai',
         'Tanggal_Selesai',
         'Foto_ttd',

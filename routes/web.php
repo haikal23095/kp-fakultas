@@ -234,19 +234,71 @@ Route::middleware('auth')->group(function () {
             ]);
         })->name('pengajuan.aktif.form');
 
-        // --- ROUTE GET: FORM SURAT PENGANTAR MAGANG ---
-        Route::get('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'create'])->name('pengajuan.magang.form');
+        // --- ROUTE GET & POST: SURAT PENGANTAR MAGANG ---
+        Route::get('/pengajuan-surat/magang', function () {
+            $user = Auth::user();
+            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
 
-        // --- ROUTE POST: SUBMIT FORM SURAT MAGANG/KP ---
+            $prodi = null;
+            if ($mahasiswa && $mahasiswa->Id_Prodi) {
+                $prodi = Prodi::find($mahasiswa->Id_Prodi);
+            }
+
+            // Filter dosen berdasarkan prodi mahasiswa
+            $dosens = Dosen::query()
+                ->when($mahasiswa && $mahasiswa->Id_Prodi, function ($query) use ($mahasiswa) {
+                    return $query->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                })
+                ->orderBy('Nama_Dosen', 'asc')
+                ->get();
+
+            // Ambil Kaprodi
+            $kaprodi = null;
+            $kaprodiName = null;
+            $kaprodiNIP = null;
+
+            if ($mahasiswa && $mahasiswa->Id_Prodi) {
+                $kaprodiUser = \App\Models\User::where('Id_Role', 4)
+                    ->where(function ($query) use ($mahasiswa) {
+                        $query->whereHas('dosen', function ($q) use ($mahasiswa) {
+                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                        })
+                            ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
+                                $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                            });
+                    })
+                    ->with(['dosen', 'pegawai'])
+                    ->first();
+
+                if ($kaprodiUser) {
+                    $kaprodi = $kaprodiUser;
+                    if ($kaprodiUser->dosen) {
+                        $kaprodiName = $kaprodiUser->dosen->Nama_Dosen;
+                        $kaprodiNIP = $kaprodiUser->dosen->NIP;
+                    } elseif ($kaprodiUser->pegawai) {
+                        $kaprodiName = $kaprodiUser->pegawai->Nama_Pegawai;
+                        $kaprodiNIP = $kaprodiUser->pegawai->NIP;
+                    }
+                }
+            }
+
+            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Pengantar KP/Magang')->first();
+
+            return view('mahasiswa.form_surat_magang', [
+                'mahasiswa' => $mahasiswa,
+                'prodi' => $prodi,
+                'dosens' => $dosens,
+                'kaprodi' => $kaprodi,
+                'kaprodiName' => $kaprodiName,
+                'kaprodiNIP' => $kaprodiNIP,
+                'jenisSurat' => $jenisSurat
+            ]);
+        })->name('pengajuan.magang.form');
+
         Route::post('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'store'])->name('pengajuan.magang.store');
 
         // --- ROUTE API: SEARCH MAHASISWA (AUTOCOMPLETE) ---
         Route::get('/api/mahasiswa/search', [SuratPengantarMagangController::class, 'searchMahasiswa'])->name('api.mahasiswa.search');
-
-        // --- ROUTE API: DRAFT MANAGEMENT ---
-        Route::post('/api/draft/save', [SuratPengantarMagangController::class, 'saveDraft'])->name('api.draft.save');
-        Route::get('/api/draft/load', [SuratPengantarMagangController::class, 'loadDraft'])->name('api.draft.load');
-        Route::post('/api/draft/delete', [SuratPengantarMagangController::class, 'deleteDraft'])->name('api.draft.delete');
 
         // --- ROUTE: INVITATION ACTIONS ---
         Route::post('/invitation/{id}/accept', [SuratPengantarMagangController::class, 'acceptInvitation'])->name('invitation.accept');

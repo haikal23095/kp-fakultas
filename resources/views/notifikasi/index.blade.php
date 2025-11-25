@@ -57,7 +57,7 @@
                             <br>
                             <small class="text-muted">
                                 <i class="fas fa-clock me-1"></i>
-                                {{ $notif->created_at->diffForHumans() }}
+                                {{ $notif->created_at ? $notif->created_at->diffForHumans() : 'Baru saja' }}
                             </small>
                             
                             {{-- Action buttons untuk invitation --}}

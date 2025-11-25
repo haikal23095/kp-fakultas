@@ -14,12 +14,13 @@ class SuratMagangInvitation extends Model
     const UPDATED_AT = null;
 
     protected $fillable = [
-        'id_draft',
-        'Id_Mahasiswa_Diundang',
-        'Id_Mahasiswa_Pengundang',
+        'id_surat_magang',
+        'id_mahasiswa_diundang',
+        'id_mahasiswa_pengundang',
         'status',
         'keterangan',
         'responded_at',
+        'invited_at',
     ];
 
     protected $casts = [
@@ -28,11 +29,11 @@ class SuratMagangInvitation extends Model
     ];
 
     /**
-     * Relasi ke Draft
+     * Relasi ke Surat Magang
      */
-    public function draft()
+    public function suratMagang()
     {
-        return $this->belongsTo(SuratMagangDraft::class, 'id_draft', 'id_draft');
+        return $this->belongsTo(SuratMagang::class, 'id_surat_magang', 'id_no');
     }
 
     /**
@@ -40,7 +41,7 @@ class SuratMagangInvitation extends Model
      */
     public function mahasiswaDiundang()
     {
-        return $this->belongsTo(Mahasiswa::class, 'Id_Mahasiswa_Diundang', 'Id_Mahasiswa');
+        return $this->belongsTo(Mahasiswa::class, 'id_mahasiswa_diundang', 'Id_Mahasiswa');
     }
 
     /**
@@ -48,7 +49,7 @@ class SuratMagangInvitation extends Model
      */
     public function mahasiswaPengundang()
     {
-        return $this->belongsTo(Mahasiswa::class, 'Id_Mahasiswa_Pengundang', 'Id_Mahasiswa');
+        return $this->belongsTo(Mahasiswa::class, 'id_mahasiswa_pengundang', 'Id_Mahasiswa');
     }
 
     /**
