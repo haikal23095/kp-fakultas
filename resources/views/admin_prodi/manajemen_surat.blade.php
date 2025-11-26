@@ -87,10 +87,10 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <div class="fw-bold text-dark">{{ $pengaju->Name_User ?? 'User Dihapus' }}</div>
+                                            <div class="fw-bold text-dark">{{ $pengaju?->Name_User ?? 'User Dihapus' }}</div>
                                             <div class="small text-muted">
                                                 @if($mahasiswa) NIM: {{ $mahasiswa->NIM }} @endif
-                                                ({{ optional($pengaju->role)->Name_Role ?? 'N/A' }})
+                                                ({{ $pengaju?->role?->Name_Role ?? 'N/A' }})
                                             </div>
                                         </td>
                                         <td>
@@ -181,8 +181,8 @@
                                         <td class="px-4 text-center text-muted">{{ $index + 1 }}</td>
                                         <td>{{ $tugas->Tanggal_Diberikan_Tugas_Surat ? $tugas->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}</td>
                                         <td>
-                                            <div class="fw-bold text-dark">{{ $pengaju->Name_User ?? 'User Dihapus' }}</div>
-                                            <div class="small text-muted">({{ optional($pengaju->role)->Name_Role ?? 'N/A' }})</div>
+                                            <div class="fw-bold text-dark">{{ $pengaju?->Name_User ?? 'User Dihapus' }}</div>
+                                            <div class="small text-muted">({{ $pengaju?->role?->Name_Role ?? 'N/A' }})</div>
                                         </td>
                                         <td>{{ optional($tugas->jenisSurat)->Nama_Surat ?? 'N/A' }}</td>
                                         <td class="text-center">

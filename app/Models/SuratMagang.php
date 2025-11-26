@@ -21,6 +21,7 @@ class SuratMagang extends Model
         'Tanggal_Mulai',
         'Tanggal_Selesai',
         'Foto_ttd',
+        'Qr_code',
         'Data_Mahasiswa',
         'Data_Dosen_pembiming',
         'Dokumen_Proposal',

@@ -52,13 +52,13 @@
                         {{-- 3. Pengaju (DIPERBAIKI) --}}
                         <td>
                             {{-- Menggunakan 'Name_User' dari ERD --}}
-                            <div class="fw-bold">{{ $tugas->pemberiTugas->Name_User ?? 'User Dihapus' }}</div>
+                            <div class="fw-bold">{{ $tugas->pemberiTugas?->Name_User ?? 'User Dihapus' }}</div>
                             
                             {{-- MENGGANTI 'Nama_Pekerjaan' menjadi 'Jenis_Pekerjaan' --}}
                             {{-- Asumsi tabel Jenis_Pekerjaan punya kolom 'Jenis_Pekerjaan' untuk nama role --}}
                             <small class="text-muted">
-                                {{ optional($tugas->pemberiTugas->role)->Name_Role ?? 'Role N/A' }}
-                                @if(optional($tugas->pemberiTugas->mahasiswa)->prodi)
+                                {{ $tugas->pemberiTugas?->role?->Name_Role ?? 'Role N/A' }}
+                                @if($tugas->pemberiTugas?->mahasiswa?->prodi)
                                     - {{ $tugas->pemberiTugas->mahasiswa->prodi->Nama_Prodi }}
                                 @endif
                             </small>

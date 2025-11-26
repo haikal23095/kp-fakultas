@@ -134,7 +134,7 @@ class SuratPengantarMagangController extends Controller
                 $dataMahasiswaArray[] = [
                     'nama' => $mhs['nama'],
                     'nim' => $mhs['nim'],
-                    'jurusan' => $mhs['jurusan'],
+                    'program-studi' => $mhs['jurusan'],
                     'angkatan' => $mhs['angkatan'],
                 ];
             }

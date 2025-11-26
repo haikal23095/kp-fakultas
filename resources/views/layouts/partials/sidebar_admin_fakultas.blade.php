@@ -32,18 +32,25 @@
         <li class="nav-heading mt-3 mb-1 small">ADMIN FAKULTAS MENU</li>
         <li class="nav-item">
             <a href="{{ route('admin_fakultas.surat.manage') }}" 
-            class="nav-link {{ request()->routeIs('admin_fakultas.surat.manage') || request()->routeIs('admin_fakultas.surat.detail') ? 'active' : '' }}">
+            class="nav-link text-white {{ request()->routeIs('admin_fakultas.surat.manage') || request()->routeIs('admin_fakultas.surat.detail') ? 'active' : '' }}">
                 <i class="fa fa-envelope me-2"></i>
                 <span>Manajemen Surat</span>
             </a>
         </li>
-        <li>
+        <li class="nav-item">
+            <a href="{{ route('admin_fakultas.surat_magang.index') }}" 
+            class="nav-link text-white {{ request()->routeIs('admin_fakultas.surat_magang.*') ? 'active' : '' }}">
+                <i class="fas fa-briefcase me-2"></i>
+                <span>Surat Magang</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a href="{{ route('admin_fakultas.surat.archive') }}" class="nav-link text-white {{ request()->routeIs('admin_fakultas.surat.archive') ? 'active' : '' }}">
                 <i class="fas fa-archive me-2"></i>
                 Arsip Surat
             </a>
         </li>
-        <li>
+        <li class="nav-item">
             <a href="{{ route('admin_fakultas.settings.index') }}" class="nav-link text-white {{ request()->routeIs('admin_fakultas.settings.index') ? 'active' : '' }}">
                 <i class="fas fa-cogs me-2"></i>
                 Pengaturan Sistem

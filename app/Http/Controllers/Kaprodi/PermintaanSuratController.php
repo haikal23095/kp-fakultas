@@ -7,6 +7,13 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SuratMagang;
 use App\Models\TugasSurat;
+use Endroid\QrCode\Color\Color;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
+use Endroid\QrCode\Encoding\Encoding;
+use Endroid\QrCode\ErrorCorrectionLevel;
+use Endroid\QrCode\RoundBlockSizeMode;
+use Illuminate\Support\Facades\Storage;
 
 class PermintaanSuratController extends Controller
 {
@@ -60,18 +67,47 @@ class PermintaanSuratController extends Controller
      */
     public function approve($id)
     {
-        $suratMagang = SuratMagang::findOrFail($id);
+        $user = Auth::user();
+        $suratMagang = SuratMagang::with('koordinator')->findOrFail($id);
 
-        // Update Acc_Koordinator menjadi true
+        // Get nama koordinator yang menyetujui
+        $kaprodiDosen = $user->dosen;
+        $kaprodiPegawai = $user->pegawai;
+        $namaKoordinator = $kaprodiDosen?->Nama_Dosen ?? $kaprodiPegawai?->Nama_Pegawai ?? 'Koordinator';
+
+        // Generate QR Code
+        $verificationUrl = route('surat.verify', $suratMagang->id_no);
+
+        $qrCode = new QrCode(
+            data: $verificationUrl,
+            encoding: new Encoding('UTF-8'),
+            errorCorrectionLevel: ErrorCorrectionLevel::High,
+            size: 300,
+            margin: 10,
+            roundBlockSizeMode: RoundBlockSizeMode::Margin,
+            foregroundColor: new Color(0, 0, 0),
+            backgroundColor: new Color(255, 255, 255)
+        );
+
+        $writer = new PngWriter();
+        $result = $writer->write($qrCode);
+
+        // Save QR Code image
+        $qrCodeFileName = 'qr_code_' . $suratMagang->id_no . '_' . time() . '.png';
+        $qrCodePath = 'qr_codes/' . $qrCodeFileName;
+        Storage::disk('public')->put($qrCodePath, $result->getString());
+
+        // Update Acc_Koordinator menjadi true dan simpan QR Code path
         $suratMagang->Acc_Koordinator = true;
         $suratMagang->Status = 'Dikerjakan-admin'; // Update status ke tahap berikutnya
+        $suratMagang->Qr_code = $qrCodePath;
         $suratMagang->save();
 
         // Update Status_KP mahasiswa menjadi Sedang_Melaksanakan
         $this->updateMahasiswaStatusKP($suratMagang, 'Sedang_Melaksanakan');
 
         return redirect()->route('kaprodi.surat.index')
-            ->with('success', 'Surat pengantar magang berhasil disetujui!');
+            ->with('success', 'Surat pengantar magang berhasil disetujui dan QR Code telah dibuat!');
     }
 
     /**

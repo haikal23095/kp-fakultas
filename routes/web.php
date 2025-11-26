@@ -8,9 +8,11 @@ use App\Http\Controllers\Admin_Prodi\DetailSuratController;
 use App\Http\Controllers\Admin_Prodi\ManajemenSuratController;
 use App\Http\Controllers\Admin_Fakultas\DetailSuratController as FakultasDetailSuratController;
 use App\Http\Controllers\Admin_Fakultas\ManajemenSuratController as FakultasManajemenSuratController;
+use App\Http\Controllers\Admin_Fakultas\SuratMagangController as FakultasSuratMagangController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\SuratVerificationController;
+use App\Http\Controllers\QrCodeVerificationController;
 
 // Import Controller untuk Pengajuan Surat (Modular)
 use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
@@ -39,9 +41,7 @@ Route::get('/', function () {
 // ============================================================
 // PUBLIC ROUTES (Tanpa Auth - untuk Verifikasi QR Code)
 // ============================================================
-// TODO: Implement SuratVerificationController
-// Route::get('/verify-surat/{token}', [SuratVerificationController::class, 'verify'])->name('surat.verify');
-// Route::get('/api/verify-surat/{token}', [SuratVerificationController::class, 'verifyApi'])->name('surat.verify.api');
+Route::get('/verify-surat/{id}', [QrCodeVerificationController::class, 'verify'])->name('surat.verify');
 
 // Routes untuk autentikasi
 Route::middleware('guest')->group(function () {
@@ -117,13 +117,23 @@ Route::middleware('auth')->group(function () {
         Route::get('/manajemen-surat', [FakultasManajemenSuratController::class, 'index'])
             ->name('surat.manage');
 
+        // Surat Magang Routes
+        Route::get('/surat-magang', [FakultasSuratMagangController::class, 'index'])
+            ->name('surat_magang.index');
+        Route::get('/surat-magang/{id}', [FakultasSuratMagangController::class, 'show'])
+            ->name('surat_magang.show');
+        Route::get('/surat-magang/{id}/download', [FakultasSuratMagangController::class, 'downloadProposal'])
+            ->name('surat_magang.download');
+        Route::post('/surat-magang/{id}/assign', [FakultasSuratMagangController::class, 'assignNomorSurat'])
+            ->name('surat_magang.assign');
+
         // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
         Route::get('/surat/{id}/detail', [FakultasDetailSuratController::class, 'show'])->name('surat.detail');
         // Download dokumen pendukung (admin fakultas)
         Route::get('/surat/{id}/download', [FakultasDetailSuratController::class, 'downloadPendukung'])->name('surat.download');
         // Preview dokumen pendukung (admin fakultas)
         Route::get('/surat/{id}/preview', [FakultasDetailSuratController::class, 'previewPendukung'])->name('surat.preview');
-        
+
         // Route: Tolak Surat
         Route::post('/surat/{id}/reject', [FakultasDetailSuratController::class, 'reject'])->name('surat.reject');
         // Route: Teruskan ke Dekan (setelah beri nomor)
