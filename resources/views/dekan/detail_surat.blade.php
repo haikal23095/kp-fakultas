@@ -101,13 +101,13 @@
                     @endif
                 </div>
 
-                @if($status === 'menunggu-ttd')
+                @if(strtolower($status) === 'menunggu-ttd')
                     <hr />
                     <div class="d-grid gap-2">
-                        <form method="POST" action="{{ route('dekan.surat.approve', $surat->Id_Tugas_Surat) }}" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan menandatangani surat ini?\n\n(TTE dengan QR Code akan diintegrasikan pada tahap selanjutnya)');">
+                        <form method="POST" action="{{ route('dekan.surat.approve', $surat->Id_Tugas_Surat) }}" onsubmit="return confirm('Apakah Anda yakin ingin menyetujui dan menandatangani surat ini?');">
                             @csrf
                             <button type="submit" class="btn btn-success w-100">
-                                <i class="fas fa-signature me-1"></i> Setujui & Tanda Tangan
+                                <i class="fas fa-check-circle me-1"></i> Setujui & Tandatangani
                             </button>
                         </form>
                         

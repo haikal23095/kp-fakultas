@@ -11,6 +11,9 @@
             <h2 class="h3 fw-bold text-dark mb-1">Dashboard Overview</h2>
             <p class="text-muted mb-0">
                 Selamat datang kembali, <span class="fw-semibold text-primary">{{ auth()->user()->Name_User ?? 'Administrator' }}</span>.
+                @if(isset($namaProdi))
+                    <br><small class="text-secondary">Administrator Program Studi: <strong>{{ $namaProdi }}</strong></small>
+                @endif
             </p>
         </div>
         <div class="d-none d-md-block">

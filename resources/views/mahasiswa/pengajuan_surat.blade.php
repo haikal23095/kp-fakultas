@@ -24,7 +24,7 @@
         text-align: center;
         margin-bottom: 10px;
         border-bottom: 3px double #000;
-        padding-bottom: 5px;
+        padding-bottom: 5px; 
     }
     .preview-header img {
         width: 120px; /* diperbesar sedikit dari 70px */

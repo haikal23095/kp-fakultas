@@ -3,10 +3,16 @@
 @section('title', 'Detail Surat')
 
 @section('content')
-@php $status = trim(optional($surat)->Status ?? ''); @endphp
+@php 
+    $status = trim(optional($surat)->Status ?? ''); 
+    // Cek apakah surat magang ada
+    $isMagang = $surat->suratMagang ? true : false;
+    // Cek apakah surat aktif ada
+    $isAktif = $surat->suratKetAktif ? true : false;
+@endphp
 
 <div class="mb-3">
-    <a href="{{ route('admin.surat.manage') }}" class="btn btn-outline-secondary btn-sm">
+    <a href="{{ route('admin_fakultas.surat.manage') }}" class="btn btn-outline-secondary btn-sm">
         <i class="fa fa-arrow-left me-1"></i> Kembali ke Manajemen Surat
     </a>
 </div>
@@ -16,25 +22,44 @@
 		<div>
 			<h4 class="mb-1"><i class="fa fa-file-alt text-primary me-2"></i> Detail Surat</h4>
 			<div class="text-muted small">Nomor: <strong>{{ optional($surat)->Nomor_Surat ?? 'N/A' }}</strong> &middot; ID: <strong>{{ optional($surat)->Id_Tugas_Surat ?? '-' }}</strong></div>
+            @if($isAktif && $surat->suratKetAktif->is_urgent)
+                <div class="mt-2">
+                    <span class="badge bg-danger blink-badge"><i class="fas fa-exclamation-circle me-1"></i> URGENT</span>
+                    @if($surat->suratKetAktif->urgent_reason)
+                        <small class="text-danger ms-2">Alasan: {{ $surat->suratKetAktif->urgent_reason }}</small>
+                    @endif
+                </div>
+            @endif
 		</div>
 
 		<div class="text-end">
-			@if(strtolower($status) === 'selesai' || strtolower($status) === 'disetujui')
-				<span class="badge bg-success fs-6">{{ $surat->Status }}</span>
+			@if(strtolower($status) === 'selesai' || strtolower($status) === 'disetujui' || strtolower($status) === 'success')
+				<span class="badge rounded-pill bg-success px-3 py-2"><i class="fas fa-check me-1"></i> {{ $status }}</span>
 			@elseif(strtolower($status) === 'terlambat' || strtolower($status) === 'ditolak')
-				<span class="badge bg-danger fs-6">{{ $surat->Status }}</span>
-			@elseif(strtolower($status) === 'proses')
-				<span class="badge bg-primary fs-6">{{ $surat->Status }}</span>
+				<span class="badge rounded-pill bg-danger px-3 py-2"><i class="fas fa-times me-1"></i> {{ $status }}</span>
+			@elseif(strtolower($status) === 'proses' || strtolower($status) === 'dikerjakan-admin')
+				<span class="badge rounded-pill bg-primary px-3 py-2"><i class="fas fa-spinner fa-spin me-1"></i> {{ $status }}</span>
+            @elseif(strtolower($status) === 'diajukan-ke-koordinator')
+                <span class="badge rounded-pill bg-info text-dark px-3 py-2"><i class="fas fa-user-tie me-1"></i> Ke Koordinator</span>
+            @elseif(strtolower($status) === 'diajukan-ke-dekan')
+                <span class="badge rounded-pill bg-warning text-dark px-3 py-2"><i class="fas fa-signature me-1"></i> Ke Dekan</span>
 			@else
-				<span class="badge bg-secondary fs-6">{{ $surat->Status ?? '-' }}</span>
+				<span class="badge rounded-pill bg-secondary px-3 py-2">{{ $status ?? '-' }}</span>
 			@endif
 
-			@if(auth()->check() && auth()->user()->Id_Role == 1 && (trim($surat->Status) == 'baru' || trim($surat->Status) == 'Diterima Admin'))
-				<form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" class="mt-2 d-inline" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses dan mengajukan surat ini ke Dekan?');">
+            {{-- Tombol Proses Draft (Hanya jika route ada dan role sesuai) --}}
+			@if(auth()->check() && auth()->user()->Id_Role == 7 && (trim($surat->Status) == 'baru' || trim($surat->Status) == 'Diterima Admin' || trim($surat->Status) == 'Proses'))
+                {{-- 
+                    TODO: Pastikan route 'admin_fakultas.surat.process_draft' dibuat jika fitur ini diinginkan.
+                    Saat ini disembunyikan atau dikomentari jika route belum ada.
+                --}}
+				{{-- 
+                <form method="POST" action="{{ route('admin_fakultas.surat.process_draft', $surat->Id_Tugas_Surat) }}" class="mt-2 d-inline" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin memproses dan mengajukan surat ini ke Dekan?');">
 					@csrf
 					<input type="hidden" name="action" value="proses_ajukan_dekan">
 					<button type="submit" class="btn btn-sm btn-warning"><i class="fa fa-paper-plane me-1"></i> Proses & Ajukan</button>
 				</form>
+                --}}
 			@endif
 		</div>
 	</div>
@@ -87,9 +112,17 @@
 
 				<div class="mb-3">
 					<small class="text-muted d-block mb-1">Dokumen Pendukung (Mahasiswa)</small>
-					@if(!empty($surat->dokumen_pendukung))
-						<a href="{{ route('admin.surat.download', $surat->Id_Tugas_Surat) }}" class="btn btn-outline-primary btn-sm" title="Lihat / Unduh Dokumen Pendukung"><i class="fa fa-download me-1"></i> Lihat / Unduh</a>
-					@else
+					@if($isMagang && !empty($surat->suratMagang->Dokumen_Proposal))
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ route('admin_fakultas.surat.preview', ['id' => $surat->Id_Tugas_Surat, 'type' => 'proposal']) }}" target="_blank" class="btn btn-outline-info" title="Preview Dokumen"><i class="fa fa-eye me-1"></i> Preview</a>
+						    <a href="{{ route('admin_fakultas.surat.download', ['id' => $surat->Id_Tugas_Surat, 'type' => 'proposal']) }}" class="btn btn-outline-primary" title="Unduh Dokumen"><i class="fa fa-download me-1"></i> Unduh</a>
+                        </div>
+					@elseif($isAktif && !empty($surat->suratKetAktif->KRS))
+                        <div class="btn-group btn-group-sm">
+                            <a href="{{ route('admin_fakultas.surat.preview', ['id' => $surat->Id_Tugas_Surat]) }}" target="_blank" class="btn btn-outline-info" title="Preview KRS"><i class="fa fa-eye me-1"></i> Preview KRS</a>
+						    <a href="{{ route('admin_fakultas.surat.download', ['id' => $surat->Id_Tugas_Surat]) }}" class="btn btn-outline-primary" title="Unduh KRS"><i class="fa fa-download me-1"></i> Unduh KRS</a>
+                        </div>
+                    @else
 						<span class="text-muted">-</span>
 					@endif
 				</div>
@@ -103,21 +136,60 @@
 					@endif
 				</div>
 
-				@if(auth()->check() && auth()->user()->Id_Role == 1 && (trim($surat->Status) == 'Diterima Admin' || trim($surat->Status) == 'Proses'))
+                {{-- Form Proses Surat (Beri Nomor & Teruskan ke Dekan) --}}
+				@if(auth()->check() && auth()->user()->Id_Role == 7 && (empty(trim($surat->Status)) || in_array(strtolower(trim($surat->Status)), ['baru', 'proses', 'diterima admin'])))
 					<hr />
-					<form method="POST" action="{{ route('admin.surat.process_draft', $surat->Id_Tugas_Surat) }}" enctype="multipart/form-data" onsubmit="return confirm('Apakah Anda yakin ingin mengupload draft final dan mengajukan ke Dekan?');">
-						@csrf
-						<div class="mb-3">
-							<label for="draft_surat" class="form-label"><i class="fa fa-upload me-1"></i> Upload Draft Final (PDF)</label>
-							<input type="file" name="draft_surat" id="draft_surat" class="form-control form-control-sm" accept="application/pdf" required>
-							<div class="form-text">Maks: 5MB. File PDF saja.</div>
-						</div>
-						<button type="submit" class="btn btn-success btn-sm"><i class="fa fa-paper-plane me-1"></i> Submit & Ajukan ke Dekan</button>
-					</form>
+                    <h6 class="fw-bold text-primary"><i class="fas fa-cog me-1"></i> Tindakan Admin</h6>
+                    
+                    <div class="card bg-light border-0 mb-3">
+                        <div class="card-body">
+                            <form method="POST" action="{{ route('admin_fakultas.surat.forward', $surat->Id_Tugas_Surat) }}" onsubmit="return confirm('Apakah nomor surat sudah benar? Surat akan diteruskan ke Dekan.');">
+                                @csrf
+                                <div class="mb-3">
+                                    <label for="nomor_surat" class="form-label fw-bold">Nomor Surat</label>
+                                    <input type="text" name="nomor_surat" id="nomor_surat" class="form-control" placeholder="Masukkan Nomor Surat (Wajib)" value="{{ $surat->Nomor_Surat }}" required>
+                                    <div class="form-text">Nomor surat wajib diisi sebelum diteruskan ke Dekan.</div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-paper-plane me-1"></i> Simpan & Teruskan ke Dekan
+                                    </button>
+                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal">
+                                        <i class="fas fa-times-circle me-1"></i> Tolak Surat
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
 				@endif
 			</div>
 		</div>
 	</div>
+</div>
+
+<!-- Modal Tolak Surat -->
+<div class="modal fade" id="rejectModal" tabindex="-1" aria-labelledby="rejectModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('admin_fakultas.surat.reject', $surat->Id_Tugas_Surat) }}" method="POST">
+                @csrf
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title" id="rejectModalLabel">Tolak Pengajuan Surat</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="alasan_penolakan" class="form-label">Alasan Penolakan <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="alasan_penolakan" name="alasan_penolakan" rows="4" required placeholder="Jelaskan mengapa surat ini ditolak..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-danger">Tolak Surat</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 @endsection

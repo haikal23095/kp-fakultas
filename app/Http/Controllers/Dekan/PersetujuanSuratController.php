@@ -23,56 +23,29 @@ class PersetujuanSuratController extends Controller
     {
         $user = Auth::user();
 
-        // Langkah 1: Cari Fakultas Dekan yang login
-        // Asumsi: Dekan juga tercatat di tabel Dosen (atau bisa Pegawai, sesuaikan jika perlu)
-        $dosen = Dosen::where('Id_User', $user->Id_User)->first();
-
-        if (!$dosen || !$dosen->Id_Prodi) {
-            // Jika dekan tidak punya prodi, return kosong atau error
-            return view('dekan.persetujuan_surat', ['daftarSurat' => collect()]);
-        }
-
-        // Ambil Id_Fakultas dari Prodi dekan
-        $prodi = Prodi::find($dosen->Id_Prodi);
-        if (!$prodi || !$prodi->Id_Fakultas) {
-            return view('dekan.persetujuan_surat', ['daftarSurat' => collect()]);
-        }
-
-        $idFakultas = $prodi->Id_Fakultas;
-
-        // Langkah 2: Kumpulkan semua Prodi di fakultas yang sama
-        $prodiIds = Prodi::where('Id_Fakultas', $idFakultas)
-            ->pluck('Id_Prodi')
-            ->toArray();
-
-        // Kumpulkan semua Id_User dari Dosen, Mahasiswa, dan Pegawai di prodi-prodi tersebut
-        $userIdsDosen = Dosen::whereIn('Id_Prodi', $prodiIds)->pluck('Id_User')->toArray();
-        $userIdsMahasiswa = Mahasiswa::whereIn('Id_Prodi', $prodiIds)->pluck('Id_User')->toArray();
-        $userIdsPegawai = Pegawai::whereIn('Id_Prodi', $prodiIds)->pluck('Id_User')->toArray();
-
-        // Gabung semua user IDs dan buang duplikat
-        $allUserIds = array_unique(array_merge($userIdsDosen, $userIdsMahasiswa, $userIdsPegawai));
-
-        // Langkah 3: Query surat dengan filter fakultas dan status
-        // Query lebih fleksibel: Cek juga jika Id_Penerima adalah Dekan yang login
-        $daftarSurat = TugasSurat::with(['jenisSurat', 'pemberiTugas.role', 'penerimaTugas'])
-            ->where('Status', 'menunggu-ttd')
-            ->where(function ($query) use ($allUserIds, $user) {
-                $query->whereIn('Id_Pemberi_Tugas_Surat', $allUserIds)
-                      ->orWhereIn('Id_Penerima_Tugas_Surat', $allUserIds)
-                      ->orWhere('Id_Penerima_Tugas_Surat', $user->Id_User); // Tambahan: langsung ke Dekan ini
+        // Query surat yang menunggu tanda tangan dekan
+        // Simplifikasi: ambil semua surat yang ditujukan ke dekan ini dengan status menunggu-ttd
+        $daftarSurat = TugasSurat::with([
+                'jenisSurat', 
+                'pemberiTugas.role', 
+                'penerimaTugas', 
+                'suratMagang', 
+                'suratKetAktif',
+                'pemberiTugas.mahasiswa.prodi' // Untuk validasi fakultas
+            ])
+            ->where(function ($q) {
+                // Cek status di Tugas_Surat atau di tabel child (suratMagang, suratKetAktif)
+                $q->where('Status', 'menunggu-ttd')
+                  ->orWhereHas('suratMagang', function ($subQ) {
+                      $subQ->where('Status', 'menunggu-ttd');
+                  })
+                  ->orWhereHas('suratKetAktif', function ($subQ) {
+                      $subQ->where('Status', 'menunggu-ttd');
+                  });
             })
+            ->where('Id_Penerima_Tugas_Surat', $user->Id_User) // Hanya surat yang ditujukan ke dekan ini
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->get();
-
-        // Debug info (hapus setelah testing)
-        \Log::info('Dekan Query Debug', [
-            'dekan_id' => $user->Id_User,
-            'id_fakultas' => $idFakultas,
-            'prodi_ids' => $prodiIds,
-            'all_user_ids_count' => count($allUserIds),
-            'daftar_surat_count' => $daftarSurat->count(),
-        ]);
 
         return view('dekan.persetujuan_surat', compact('daftarSurat'));
     }

@@ -14,12 +14,11 @@ class Notifikasi extends Model
     public $timestamps = true; // Aktifkan timestamps untuk created_at dan updated_at
 
     const CREATED_AT = 'created_at';
-    const UPDATED_AT = 'updated_at';
 
     protected $fillable = [
         'Tipe_Notifikasi',
         'Pesan',
-        'Dest_User',
+        'Dest_user', // Nama kolom di database pakai lowercase 'u'
         'Source_User',
         'Is_Read',
         'Data_Tambahan',
@@ -36,7 +35,7 @@ class Notifikasi extends Model
      */
     public function destinationUser()
     {
-        return $this->belongsTo(User::class, 'Dest_User', 'Id_User');
+        return $this->belongsTo(User::class, 'Dest_user', 'Id_User');
     }
 
     /**
@@ -60,7 +59,7 @@ class Notifikasi extends Model
      */
     public function scopeForUser($query, $userId)
     {
-        return $query->where('Dest_User', $userId);
+        return $query->where('Dest_user', $userId);
     }
 
     /**

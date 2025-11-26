@@ -52,6 +52,7 @@ class ManajemenSuratController extends Controller
             })->count();
 
         // 4) Ambil data surat untuk tabel
+        // Mengambil semua jenis surat (Surat Magang & Surat Keterangan Aktif)
         $tugasSurat = $baseQuery()
             ->with([
                 'pemberiTugas.role',
@@ -59,19 +60,20 @@ class ManajemenSuratController extends Controller
                 'pemberiTugas.dosen.prodi',
                 'pemberiTugas.pegawai.prodi',
                 'jenisSurat',
-                'suratMagang'
+                'suratMagang',
+                'suratKetAktif' // Tambahkan relasi ini
             ])
-            ->has('suratMagang')
+            // Hapus filter has('suratMagang') agar Surat Ket Aktif juga muncul
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->paginate(15);
 
-        return view('admin_fakultas.manajemen_surat', compact(
-            'tugasSurat',
-            'totalSurat',
-            'suratBaru',
-            'suratDiproses',
-            'suratSelesai'
-        ));
+        return view('admin_fakultas.manajemen_surat', [
+            'daftarTugas' => $tugasSurat, // Ubah nama variabel agar sesuai view
+            'totalSurat' => $totalSurat,
+            'suratBaru' => $suratBaru,
+            'suratDiproses' => $suratDiproses,
+            'suratSelesai' => $suratSelesai
+        ]);
     }
 
     public function archive()

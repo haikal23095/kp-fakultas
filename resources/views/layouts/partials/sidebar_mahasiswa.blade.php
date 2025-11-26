@@ -7,14 +7,14 @@
             $fakultasName = $user->mahasiswa->prodi->fakultas->Nama_Fakultas;
         }
     @endphp
-    <a href="{{ route('dashboard') }}" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto text-white text-decoration-none">
-        <div class="d-flex align-items-center">
-            <div class="bg-primary rounded p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                <i class="fas fa-university fa-lg text-white"></i>
+    <a href="{{ route('dashboard') }}" class="sidebar-brand d-flex align-items-center mb-3 text-white text-decoration-none">
+        <div class="d-flex align-items-center w-100">
+            <div class="brand-icon rounded p-2 me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; flex-shrink: 0;">
+                <i class="fas fa-user-graduate fa-lg text-white"></i>
             </div>
-            <div class="d-flex flex-column" style="line-height: 1.2;">
-                <span class="fs-6 fw-bold text-uppercase tracking-wide">Sistem Surat</span>
-                <span class="small text-white-50" style="font-size: 0.7rem; letter-spacing: 0.5px;">{{ strtoupper($fakultasName) }}</span>
+            <div class="d-flex flex-column" style="line-height: 1.2; flex: 1; min-width: 0;">
+                <span class="fw-bold text-uppercase text-truncate-custom" style="font-size: 0.95rem;">Sistem Surat</span>
+                <span class="small text-truncate-custom" style="font-size: 0.7rem; letter-spacing: 0.5px; color: #94a3b8;">{{ $fakultasName }}</span>
             </div>
         </div>
     </a>
@@ -26,7 +26,7 @@
                 Dashboard
             </a>
         </li>
-        <li class="nav-heading mt-3 mb-1 text-muted small">MAHASISWA MENU</li>
+        <li class="nav-heading mt-3 mb-1 small">MAHASISWA MENU</li>
         <li>
             <a href="{{ route('mahasiswa.pengajuan.create') }}" class="nav-link text-white {{ request()->routeIs('mahasiswa.pengajuan.*') ? 'active' : '' }}">
                 <i class="fas fa-pen-to-square me-2"></i>
@@ -69,9 +69,9 @@
     </div>
     <hr>
     <div class="dropdown">
-        <a href="#" class="d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
-            <i class="fas fa-user-circle fa-2x me-2"></i>
-            <strong>{{ auth()->user()?->Name_User ?? 'Mahasiswa' }}</strong>
+        <a href="#" class="user-dropdown d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-user-circle fa-2x me-2" style="flex-shrink: 0;"></i>
+            <strong class="text-truncate-custom" style="flex: 1; min-width: 0;">{{ auth()->user()?->Name_User ?? 'Mahasiswa' }}</strong>
         </a>
         <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
             <li><a class="dropdown-item" href="{{ route('profile.index') }}">Profil</a></li>

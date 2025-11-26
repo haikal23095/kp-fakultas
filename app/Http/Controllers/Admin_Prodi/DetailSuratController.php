@@ -126,6 +126,13 @@ class DetailSuratController extends Controller
                 \Log::warning('Admin: Dekan tidak ditemukan saat proses ajukan');
             }
 
+            // UPDATE: Status ada di tabel child
+            if ($tugas->suratMagang) {
+                $tugas->suratMagang->Status = 'menunggu-ttd';
+                $tugas->suratMagang->save();
+            }
+            
+            // PENTING: Update juga status di tabel parent
             $tugas->Status = 'menunggu-ttd';
             $tugas->save();
 
@@ -179,6 +186,13 @@ class DetailSuratController extends Controller
         $fileArsip->save();
 
         // Update status untuk mengajukan ke Dekan
+        // UPDATE: Status ada di tabel child
+        if ($tugas->suratMagang) {
+            $tugas->suratMagang->Status = 'menunggu-ttd';
+            $tugas->suratMagang->save();
+        }
+        
+        // PENTING: Update juga status di tabel parent
         $tugas->Status = 'menunggu-ttd';
         $tugas->save();
 
@@ -201,7 +215,12 @@ class DetailSuratController extends Controller
         ]);
 
         $tugas = TugasSurat::findOrFail($id);
-        $tugas->Status = 'Ditolak';
+        
+        // UPDATE: Status ada di tabel child
+        if ($tugas->suratMagang) {
+            $tugas->suratMagang->Status = 'Ditolak';
+            $tugas->suratMagang->save();
+        }
         
         // Update data_spesifik with rejection reason
         $dataSpesifik = $tugas->data_spesifik ?? [];
