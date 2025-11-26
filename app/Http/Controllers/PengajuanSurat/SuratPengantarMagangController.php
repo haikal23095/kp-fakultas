@@ -101,9 +101,28 @@ class SuratPengantarMagangController extends Controller
         $mahasiswaList = $request->mahasiswa;
         $adaTemanDiajak = count($mahasiswaList) > 1; // Lebih dari 1 = ada teman
 
-        // Ambil koordinator dari prodi mahasiswa (dosen pertama dari prodi)
-        $koordinator = \App\Models\Dosen::where('Id_Prodi', $mahasiswaPembuat->Id_Prodi)->first();
-        $kaprodiId = $koordinator ? $koordinator->Id_Dosen : null;
+        // Ambil Kaprodi yang sesuai dengan prodi mahasiswa
+        $kaprodiUser = \App\Models\User::where('Id_Role', 4)
+            ->where(function ($query) use ($mahasiswaPembuat) {
+                $query->whereHas('dosen', function ($q) use ($mahasiswaPembuat) {
+                    $q->where('Id_Prodi', $mahasiswaPembuat->Id_Prodi);
+                })
+                    ->orWhereHas('pegawai', function ($q) use ($mahasiswaPembuat) {
+                        $q->where('Id_Prodi', $mahasiswaPembuat->Id_Prodi);
+                    });
+            })
+            ->with(['dosen', 'pegawai'])
+            ->first();
+
+        $kaprodiId = null;
+        if ($kaprodiUser) {
+            if ($kaprodiUser->dosen) {
+                $kaprodiId = $kaprodiUser->dosen->Id_Dosen;
+            } elseif ($kaprodiUser->pegawai) {
+                // Jika Kaprodi adalah Pegawai, simpan Id_Pegawai ke Nama_Koordinator
+                $kaprodiId = $kaprodiUser->pegawai->Id_Pegawai;
+            }
+        }
 
         // === 5. BUAT TUGAS SURAT DAN SURAT MAGANG ===
         try {

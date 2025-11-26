@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\SuratMagangInvitation;
 use App\Models\SuratMagang;
 use App\Models\Mahasiswa;
+use App\Models\Notifikasi;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -64,6 +65,22 @@ class AjakanMagangController extends Controller
             'status' => 'accepted',
             'responded_at' => Carbon::now(),
         ]);
+
+        // Send notification to the inviter (mahasiswa pengundang)
+        $mahasiswaPengundang = Mahasiswa::find($invitation->id_mahasiswa_pengundang);
+        if ($mahasiswaPengundang && $mahasiswaPengundang->Id_User) {
+            Notifikasi::create([
+                'Tipe_Notifikasi' => 'Accepted',
+                'Pesan' => $mahasiswa->Nama_Mahasiswa . ' telah menerima undangan magang Anda.',
+                'Dest_user' => $mahasiswaPengundang->Id_User,
+                'Source_User' => $user->Id_User,
+                'Is_Read' => false,
+                'Data_Tambahan' => json_encode([
+                    'invitation_id' => $invitation->id_no,
+                    'surat_magang_id' => $invitation->id_surat_magang
+                ])
+            ]);
+        }
 
         // Check if all invitations for this surat magang are accepted
         $allInvitations = SuratMagangInvitation::where('id_surat_magang', $invitation->id_surat_magang)->get();

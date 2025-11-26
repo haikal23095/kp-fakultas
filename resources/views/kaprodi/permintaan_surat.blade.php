@@ -48,7 +48,7 @@
                     @forelse($daftarSurat as $index => $surat)
                     @php
                         $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
-                        $dataMahasiswa = $surat->Data_Mahasiswa;
+                        $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
                         $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
                         $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');
                     @endphp
@@ -123,7 +123,7 @@
 @foreach($daftarSurat as $index => $surat)
 @php
     $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
-    $dataMahasiswa = $surat->Data_Mahasiswa;
+    $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
     $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
     $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');
 @endphp
@@ -190,9 +190,7 @@
                                         <div class="col-md-8">
                                             @if($surat->Foto_ttd && !empty(trim($surat->Foto_ttd)))
                                                 @php
-                                                    $ttdUrl = str_starts_with($surat->Foto_ttd, 'uploads/') 
-                                                        ? asset('storage/' . $surat->Foto_ttd)
-                                                        : asset($surat->Foto_ttd);
+                                                    $ttdUrl = asset('storage/' . $surat->Foto_ttd);
                                                     $ttdFilePath = storage_path('app/public/' . $surat->Foto_ttd);
                                                     $fileExists = file_exists($ttdFilePath);
                                                 @endphp
@@ -358,9 +356,7 @@
                                                             <p style="margin: 0 0 5px 0;">Pemohon</p>
                                                             @if($surat->Foto_ttd && !empty(trim($surat->Foto_ttd)))
                                                                 @php
-                                                                    $ttdUrl = str_starts_with($surat->Foto_ttd, 'uploads/') 
-                                                                        ? asset('storage/' . $surat->Foto_ttd)
-                                                                        : asset($surat->Foto_ttd);
+                                                                    $ttdUrl = asset('storage/' . $surat->Foto_ttd);
                                                                     $ttdFilePath = storage_path('app/public/' . $surat->Foto_ttd);
                                                                     $fileExists = file_exists($ttdFilePath);
                                                                 @endphp

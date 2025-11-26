@@ -30,18 +30,21 @@ class PermintaanSuratController extends Controller
             ]);
         }
 
+        // Ambil ID Kaprodi (dari Dosen atau Pegawai)
+        $kaprodiId = $kaprodiDosen?->Id_Dosen ?? $kaprodiPegawai?->Id_Pegawai;
+
         // Ambil Surat Magang yang:
-        // 1. Diajukan oleh mahasiswa dari prodi yang sama
-        // 2. Acc_Koordinator = false (belum disetujui)
+        // 1. Nama_Koordinator = ID Kaprodi yang sedang login
+        // 2. Status = 'Diajukan-ke-koordinator'
+        // 3. Acc_Koordinator = false (belum disetujui)
         $daftarSurat = SuratMagang::query()
             ->with([
                 'tugasSurat.pemberiTugas.mahasiswa.prodi',
                 'tugasSurat.jenisSurat',
                 'koordinator' // Load relasi ke Dosen (Koordinator)
             ])
-            ->whereHas('tugasSurat.pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
-                $q->where('Id_Prodi', $prodiId);
-            })
+            ->where('Nama_Koordinator', $kaprodiId)
+            ->where('Status', 'Diajukan-ke-koordinator')
             ->where('Acc_Koordinator', false)
             ->orderBy('id_no', 'desc')
             ->get();
