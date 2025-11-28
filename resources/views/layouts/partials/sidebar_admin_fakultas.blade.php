@@ -1,4 +1,4 @@
-<aside class="d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 280px; height: 100vh; position: fixed;">
+<aside class="sidebar-mobile d-flex flex-column flex-shrink-0 p-3 text-white bg-dark" style="width: 280px; height: 100vh; position: fixed; z-index: 1045;">
     @php
         $user = auth()->user();
         $fakultasName = 'Fakultas';

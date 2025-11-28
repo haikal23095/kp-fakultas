@@ -41,7 +41,8 @@ Route::get('/', function () {
 // ============================================================
 // PUBLIC ROUTES (Tanpa Auth - untuk Verifikasi QR Code)
 // ============================================================
-Route::get('/verify-surat/{id}', [QrCodeVerificationController::class, 'verify'])->name('surat.verify');
+Route::get('/verify-surat/{id}', [QrCodeVerificationController::class, 'verify'])->name('surat.verify.id');
+Route::get('/verify/{token}', [QrCodeVerificationController::class, 'verifyByToken'])->name('surat.verify');
 
 // Routes untuk autentikasi
 Route::middleware('guest')->group(function () {

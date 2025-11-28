@@ -145,10 +145,18 @@ class SuratPengantarMagangController extends Controller
             // Buat Tugas_Surat (semua data spesifik ada di Surat_Magang)
             $tugasSurat = new TugasSurat();
             $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
-            $tugasSurat->Id_Penerima_Tugas_Surat = $mahasiswaId;
+            
+            // FIX: Mahasiswa adalah PEMBERI tugas (requestor), Kaprodi/Admin adalah PENERIMA
+            $tugasSurat->Id_Pemberi_Tugas_Surat = $mahasiswaId;
+            $tugasSurat->Id_Penerima_Tugas_Surat = $kaprodiUser ? $kaprodiUser->Id_User : null; 
+            
             $tugasSurat->Status = 'baru'; // Status Tugas_Surat selalu baru untuk pengajuan baru
             $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now()->format('Y-m-d');
             $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(5)->format('Y-m-d');
+            
+            // Tambahkan Judul Tugas Surat agar muncul di tabel
+            $tugasSurat->Judul_Tugas_Surat = "Pengajuan Surat Pengantar Magang ke " . $request->input('data_spesifik.nama_instansi');
+            
             $tugasSurat->save();
 
             \Log::info('[MAGANG] TugasSurat created', [

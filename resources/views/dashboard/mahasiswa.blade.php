@@ -2,6 +2,39 @@
 
 @section('title', 'Dashboard Mahasiswa')
 
+@push('styles')
+<style>
+    @media (max-width: 768px) {
+        .mb-4 h1 {
+            font-size: 1.5rem;
+        }
+        .mb-4 p {
+            font-size: 0.9rem;
+        }
+        .card-body {
+            padding: 1rem !important;
+        }
+        .card-body h4 {
+            font-size: 1.1rem;
+        }
+        .card-body p {
+            font-size: 0.85rem;
+        }
+        .btn-lg {
+            font-size: 0.95rem;
+            padding: 0.6rem 1.2rem;
+        }
+        .col-lg-4, .col-md-6 {
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        .card {
+            margin-bottom: 0.75rem !important;
+        }
+    }
+</style>
+@endpush
+
 @section('content')
 
 <div class="mb-4">

@@ -134,7 +134,8 @@ class SuratKeteranganAktifController extends Controller
             $suratKetAktif->KRS = $pathDokumenPendukung;
             $suratKetAktif->is_urgent = $isUrgent;
             $suratKetAktif->urgent_reason = $isUrgent ? $urgentReason : null;
-            // Semester dan Deskripsi tidak disimpan karena tidak ada kolomnya di DB
+            $suratKetAktif->Deskripsi = $deskripsi; // Simpan deskripsi lengkap
+            // Semester tidak disimpan karena tidak ada kolomnya di DB
             $suratKetAktif->save();
 
             Log::info("Surat Keterangan Aktif berhasil disimpan", [
