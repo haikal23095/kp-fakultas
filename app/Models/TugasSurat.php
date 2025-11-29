@@ -152,7 +152,7 @@ class TugasSurat extends Model
     public function getStatusAttribute()
     {
         // Prioritaskan status di tabel utama (Tugas_Surat)
-        if (array_key_exists('Status', $this->attributes) && !is_null($this->attributes['Status'])) {
+        if (array_key_exists('Status', $this->attributes) && !is_null($this->attributes['Status']) && $this->attributes['Status'] !== '') {
             return $this->attributes['Status'];
         }
 

@@ -77,4 +77,43 @@ class RiwayatSuratController extends Controller
             'mode' => 'preview' // Mode preview untuk browser
         ]);
     }
+
+    /**
+     * Preview PDF Surat Pengantar (Signed by Kaprodi)
+     */
+    public function downloadPengantar($id)
+    {
+        $user = Auth::user();
+
+        // Ambil surat
+        $tugasSurat = TugasSurat::with([
+            'jenisSurat',
+            'pemberiTugas.mahasiswa.prodi',
+            'suratMagang.koordinator' // Load Kaprodi info
+        ])
+        ->where('Id_Tugas_Surat', $id)
+        ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+        ->firstOrFail();
+
+        // Cek apakah surat magang ada
+        if (!$tugasSurat->suratMagang) {
+            return redirect()->route('mahasiswa.riwayat')
+                ->with('error', 'Bukan surat magang.');
+        }
+
+        // Cek apakah sudah disetujui koordinator
+        if (!$tugasSurat->suratMagang->Acc_Koordinator) {
+            return redirect()->route('mahasiswa.riwayat')
+                ->with('error', 'Surat Pengantar belum disetujui Koordinator.');
+        }
+
+        // Render PDF view
+        return view('mahasiswa.pdf.surat_pengantar', [
+            'surat' => $tugasSurat,
+            'magang' => $tugasSurat->suratMagang,
+            'mahasiswa' => $tugasSurat->pemberiTugas->mahasiswa,
+            'koordinator' => $tugasSurat->suratMagang->koordinator,
+            'mode' => 'preview'
+        ]);
+    }
 }

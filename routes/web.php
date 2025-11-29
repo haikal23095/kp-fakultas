@@ -1,6 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+// Admin Prodi - Preview Surat Magang standalone
+Route::get('/admin-prodi/surat/preview-magang/{id_no}', [\App\Http\Controllers\Admin_Prodi\ManajemenSuratController::class, 'previewMagang'])
+    ->name('admin_prodi.surat.preview_magang');
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use App\Http\Controllers\AuthController;
@@ -102,6 +105,10 @@ Route::middleware('auth')->group(function () {
         // Route: update status tugas (hanya admin)
         Route::post('/manajemen-surat/{id}/update-status', [ManajemenSuratController::class, 'updateStatus'])
             ->name('surat.updateStatus');
+
+        // Route: Tambah nomor surat dan teruskan ke Dekan
+        Route::post('/surat/{id}/add-nomor', [ManajemenSuratController::class, 'addNomorSurat'])
+            ->name('surat.add_nomor');
 
         // ... (route /arsip-surat) ...
         Route::get('/arsip-surat', [ManajemenSuratController::class, 'archive'])
@@ -359,6 +366,10 @@ Route::middleware('auth')->group(function () {
         // Download Surat dengan QR Code
         Route::get('/surat/download/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadSurat'])
             ->name('surat.download');
+
+        // Download Surat Pengantar (Signed by Kaprodi)
+        Route::get('/surat/download-pengantar/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadPengantar'])
+            ->name('surat.download_pengantar');
 
         // --- AJAKAN MAGANG ROUTES ---
         Route::get('/ajakan-magang', [\App\Http\Controllers\AjakanMagangController::class, 'index'])

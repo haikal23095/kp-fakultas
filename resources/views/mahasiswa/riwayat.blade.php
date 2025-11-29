@@ -265,21 +265,21 @@
                                 <td>{{ \Illuminate\Support\Str::limit($surat->Judul_Tugas_Surat, 50) }}</td>
                                 <td class="text-center">
                                     @php
-                                        // Prioritaskan status dari tabel spesifik (Surat_Magang) jika ada
-                                        if ($surat->suratMagang) {
-                                            $statusRaw = $surat->suratMagang->Status;
-                                        } else {
-                                            $statusRaw = $surat->Status;
+                                        // Gunakan status dari parent Tugas_Surat sebagai sumber kebenaran.
+                                        // Jika nomor surat sudah ada, anggap minimal 'menunggu-ttd'.
+                                        $statusRaw = $surat->Status;
+                                        if (!empty($surat->Nomor_Surat) && strtolower(trim($statusRaw ?? '')) === 'dikerjakan-admin') {
+                                            $statusRaw = 'menunggu-ttd';
                                         }
-                                        
-                                        $status = strtolower(trim($statusRaw));
+
+                                        $status = strtolower(trim($statusRaw ?? ''));
                                         $badgeClass = 'secondary';
                                         $icon = 'circle';
-                                        
+
                                         if ($status === 'baru') {
                                             $badgeClass = 'info';
                                             $icon = 'clock';
-                                        } elseif ($status === 'diterima admin' || $status === 'proses') {
+                                        } elseif ($status === 'diterima admin' || $status === 'proses' || $status === 'dikerjakan-admin') {
                                             $badgeClass = 'primary';
                                             $icon = 'spinner';
                                         } elseif ($status === 'menunggu-ttd' || $status === 'diajukan-ke-koordinator' || $status === 'diajukan-ke-dekan') {
@@ -305,40 +305,60 @@
                                         $isDitolak = ($statusLower === 'ditolak');
                                     @endphp
                                     
-                                    <div class="action-buttons">
-                                        @if($isSelesai)
-                                            <a href="{{ route('mahasiswa.surat.download', $surat->Id_Tugas_Surat) }}" 
-                                               class="btn btn-action btn-download" 
-                                               title="Download Surat"
-                                               target="_blank">
-                                                <i class="fas fa-download"></i> Download
-                                            </a>
-                                            @if($surat->verification)
-                                                <a href="{{ route('surat.verify', $surat->verification->token) }}" 
-                                                   class="btn btn-action btn-verify" 
-                                                   title="Verifikasi"
-                                                   target="_blank">
-                                                    <i class="fas fa-qrcode"></i> Verifikasi
+                                    {{-- Tombol Trigger Modal Aksi --}}
+                                    <button type="button" class="btn btn-sm btn-primary btn-action-menu" 
+                                            data-bs-toggle="modal" data-bs-target="#actionModal"
+                                            data-title="{{ $surat->jenisSurat->Nama_Surat ?? 'Detail Surat' }}"
+                                            data-nomor="{{ $surat->Nomor_Surat ?? 'Belum Terbit' }}"
+                                            data-target-content="#action-content-{{ $index }}">
+                                        <i class="fas fa-bars me-1"></i> Menu Aksi
+                                    </button>
+
+                                    {{-- Hidden Content untuk Modal --}}
+                                    <div id="action-content-{{ $index }}" class="d-none">
+                                        <div class="d-grid gap-2">
+                                            {{-- 1. Surat Pengantar (Jika Ada) --}}
+                                            @if($surat->suratMagang && $surat->suratMagang->Acc_Koordinator)
+                                                <a href="{{ route('mahasiswa.surat.download_pengantar', $surat->Id_Tugas_Surat) }}" 
+                                                   class="btn btn-info text-white" target="_blank">
+                                                    <i class="fas fa-file-alt me-2"></i> Download Surat Pengantar
                                                 </a>
                                             @endif
-                                        @elseif($isDitolak)
-                                            @php
-                                                $dataSpesifik = $surat->data_spesifik ?? [];
-                                            @endphp
-                                            <button type="button" 
-                                                    class="btn btn-action btn-reason btn-lihat-alasan"
-                                                    data-bs-toggle="modal" 
-                                                    data-bs-target="#modalAlasan"
-                                                    data-alasan="{{ $dataSpesifik['alasan_penolakan'] ?? 'Tidak ada alasan yang diberikan.' }}"
-                                                    data-penolak="{{ $dataSpesifik['ditolak_oleh'] ?? 'Admin' }}"
-                                                    data-tanggal="{{ $dataSpesifik['tanggal_penolakan'] ?? '-' }}">
-                                                <i class="fas fa-eye"></i> Alasan
-                                            </button>
-                                        @else
-                                            <button class="btn btn-action btn-waiting" disabled>
-                                                <i class="fas fa-clock"></i> Proses
-                                            </button>
-                                        @endif
+
+                                            {{-- 2. Aksi Utama Berdasarkan Status --}}
+                                            @if($isSelesai)
+                                                <a href="{{ route('mahasiswa.surat.download', $surat->Id_Tugas_Surat) }}" 
+                                                   class="btn btn-success" target="_blank">
+                                                    <i class="fas fa-download me-2"></i> Download Surat Resmi
+                                                </a>
+                                                @if($surat->verification)
+                                                    <a href="{{ route('surat.verify', $surat->verification->token) }}" 
+                                                       class="btn btn-primary" target="_blank">
+                                                        <i class="fas fa-qrcode me-2"></i> Verifikasi Dokumen
+                                                    </a>
+                                                @endif
+                                            @elseif($isDitolak)
+                                                @php
+                                                    $dataSpesifik = $surat->data_spesifik ?? [];
+                                                @endphp
+                                                <div class="alert alert-danger text-start mb-0">
+                                                    <h6 class="alert-heading fw-bold"><i class="fas fa-times-circle me-2"></i>Pengajuan Ditolak</h6>
+                                                    <hr class="my-2">
+                                                    <p class="mb-1 small"><strong>Ditolak Oleh:</strong> {{ $dataSpesifik['ditolak_oleh'] ?? 'Admin' }}</p>
+                                                    <p class="mb-1 small"><strong>Tanggal:</strong> {{ $dataSpesifik['tanggal_penolakan'] ?? '-' }}</p>
+                                                    <div class="mt-2 p-2 bg-white rounded border border-danger text-danger">
+                                                        <strong>Alasan:</strong><br>
+                                                        {{ $dataSpesifik['alasan_penolakan'] ?? 'Tidak ada alasan yang diberikan.' }}
+                                                    </div>
+                                                </div>
+                                            @else
+                                                <div class="text-center py-4 bg-light rounded border border-dashed">
+                                                    <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                                                    <h6 class="text-muted fw-bold">Sedang Diproses</h6>
+                                                    <p class="text-muted small mb-0">Surat sedang dalam tahap verifikasi dan tanda tangan.</p>
+                                                </div>
+                                            @endif
+                                        </div>
                                     </div>
                                 </td>
                             </tr>
@@ -409,6 +429,27 @@
     </div>
 </div>
 
+{{-- Modal Action Menu --}}
+<div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <div>
+                    <h5 class="modal-title fw-bold mb-0">Detail Surat</h5>
+                    <small class="text-white-50">Nomor: <span id="modalNomorSurat">-</span></small>
+                </div>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body modal-body-content p-4">
+                {{-- Content will be loaded here via JS --}}
+            </div>
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -451,6 +492,32 @@
             $('#modalPenolak').text(penolak);
             $('#modalTanggal').text(tanggal);
         });
+
+        // Handle Action Modal
+        var actionModal = document.getElementById('actionModal');
+        if (actionModal) {
+            actionModal.addEventListener('show.bs.modal', function (event) {
+                // Button that triggered the modal
+                var button = event.relatedTarget;
+                
+                // Extract info from data-* attributes
+                var title = button.getAttribute('data-title');
+                var nomor = button.getAttribute('data-nomor');
+                var targetId = button.getAttribute('data-target-content');
+                
+                // Get content from the hidden div
+                var content = document.querySelector(targetId).innerHTML;
+                
+                // Update the modal's content.
+                var modalTitle = actionModal.querySelector('.modal-title');
+                var modalNomor = actionModal.querySelector('#modalNomorSurat');
+                var modalBody = actionModal.querySelector('.modal-body-content');
+                
+                modalTitle.textContent = title;
+                modalNomor.textContent = nomor;
+                modalBody.innerHTML = content;
+            });
+        }
     });
 </script>
 @endpush

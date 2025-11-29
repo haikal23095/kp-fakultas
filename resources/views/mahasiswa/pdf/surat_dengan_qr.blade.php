@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{-- Viewport diset fixed width agar tampilan di HP tetap seperti kertas A4 (zoom out) --}}
+    <meta name="viewport" content="width=850, user-scalable=yes">
     <title>{{ $jenisSurat->Nama_Surat ?? 'Surat Resmi' }}</title>
     <style>
         @page {
@@ -83,7 +84,7 @@
         
         .content-wrapper {
             margin-top: 80px;
-            max-width: 21cm;
+            width: 21cm; /* Fixed width A4 */
             margin-left: auto;
             margin-right: auto;
             background: white;
@@ -267,8 +268,12 @@
 
     {{-- NOMOR DAN JUDUL SURAT --}}
     <div class="nomor-surat">
-        <h3>{{ $jenisSurat->Nama_Surat ?? 'SURAT KETERANGAN' }}</h3>
-        <p>Nomor: {{ $surat->Id_Tugas_Surat }}/FT/{{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('m/Y') }}</p>
+        @if($surat->suratMagang)
+            <h3>SURAT KETERANGAN</h3>
+        @else
+            <h3>{{ $jenisSurat->Nama_Surat ?? 'SURAT KETERANGAN' }}</h3>
+        @endif
+        <p>Nomor: {{ $surat->Nomor_Surat ?? '.......' }}/FT/{{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('m/Y') }}</p>
     </div>
 
     {{-- ISI SURAT --}}
@@ -292,30 +297,69 @@
 
         <p>Dengan ini menerangkan bahwa:</p>
 
-        <div class="data-mahasiswa">
-            <table>
-                <tr>
-                    <td>Nama</td>
-                    <td>:</td>
-                    <td><strong>{{ $mahasiswa->Nama_Mahasiswa ?? '-' }}</strong></td>
-                </tr>
-                <tr>
-                    <td>NIM</td>
-                    <td>:</td>
-                    <td><strong>{{ $mahasiswa->Nim_Mahasiswa ?? '-' }}</strong></td>
-                </tr>
-                <tr>
-                    <td>Program Studi</td>
-                    <td>:</td>
-                    <td>{{ $mahasiswa->prodi->Nama_Prodi ?? '-' }}</td>
-                </tr>
-                <tr>
-                    <td>Fakultas</td>
-                    <td>:</td>
-                    <td>Fakultas Teknik</td>
-                </tr>
-            </table>
-        </div>
+        @if($surat->suratMagang)
+            @php
+                $dataMahasiswa = $surat->suratMagang->Data_Mahasiswa;
+                if (is_string($dataMahasiswa)) {
+                    $dataMahasiswa = json_decode($dataMahasiswa, true);
+                }
+                if (!is_array($dataMahasiswa)) {
+                    $dataMahasiswa = [];
+                }
+            @endphp
+            
+            @foreach($dataMahasiswa as $mhs)
+            <div class="data-mahasiswa">
+                <table>
+                    <tr>
+                        <td>Nama</td>
+                        <td>:</td>
+                        <td><strong>{{ $mhs['nama'] ?? '-' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>NIM</td>
+                        <td>:</td>
+                        <td><strong>{{ $mhs['nim'] ?? '-' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Program Studi</td>
+                        <td>:</td>
+                        <td>{{ $mhs['program-studi'] ?? 'Teknik Informatika' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Fakultas</td>
+                        <td>:</td>
+                        <td>Fakultas Teknik</td>
+                    </tr>
+                </table>
+            </div>
+            @endforeach
+        @else
+            <div class="data-mahasiswa">
+                <table>
+                    <tr>
+                        <td>Nama</td>
+                        <td>:</td>
+                        <td><strong>{{ $mahasiswa->Nama_Mahasiswa ?? '-' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>NIM</td>
+                        <td>:</td>
+                        <td><strong>{{ $mahasiswa->NIM ?? '-' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Program Studi</td>
+                        <td>:</td>
+                        <td>{{ $mahasiswa->prodi->Nama_Prodi ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Fakultas</td>
+                        <td>:</td>
+                        <td>Fakultas Teknik</td>
+                    </tr>
+                </table>
+            </div>
+        @endif
 
         @if($surat->jenisSurat && str_contains(strtolower($surat->jenisSurat->Nama_Surat), 'aktif'))
             <p>
@@ -332,15 +376,15 @@
                     <tr>
                         <td>Nama Instansi</td>
                         <td>:</td>
-                        <td><strong>{{ $surat->suratMagang->nama_instansi ?? '-' }}</strong></td>
+                        <td><strong>{{ $surat->suratMagang->Nama_Instansi ?? '-' }}</strong></td>
                     </tr>
                     <tr>
                         <td>Periode</td>
                         <td>:</td>
                         <td>
-                            {{ $surat->suratMagang->tanggal_mulai ? \Carbon\Carbon::parse($surat->suratMagang->tanggal_mulai)->format('d M Y') : '-' }}
+                            {{ $surat->suratMagang->Tanggal_Mulai ? \Carbon\Carbon::parse($surat->suratMagang->Tanggal_Mulai)->format('d M Y') : '-' }}
                             s.d.
-                            {{ $surat->suratMagang->tanggal_selesai ? \Carbon\Carbon::parse($surat->suratMagang->tanggal_selesai)->format('d M Y') : '-' }}
+                            {{ $surat->suratMagang->Tanggal_Selesai ? \Carbon\Carbon::parse($surat->suratMagang->Tanggal_Selesai)->format('d M Y') : '-' }}
                         </td>
                     </tr>
                 </table>

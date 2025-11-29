@@ -123,11 +123,16 @@ class DetailSuratController extends Controller
             $verification->qr_path = $qrCodeUrl;
             $verification->save();
             
-            // 4. Update status surat - SET STATUS FINAL = 'Selesai'
-            // UPDATE: Status ada di child table yang punya kolom Status
+            // 4. Update status surat - mapping ke enum valid di child
+            // Child enum: 'Draft','Diajukan-ke-koordinator','Dikerjakan-admin','Diajukan-ke-dekan','Success','Ditolak'
             if ($tugasSurat->suratMagang) {
-                $tugasSurat->suratMagang->Status = 'Selesai';
-                $tugasSurat->suratMagang->save();
+                try {
+                    $tugasSurat->suratMagang->Status = 'Success'; // gunakan nilai enum yang tersedia
+                    $tugasSurat->suratMagang->save();
+                } catch (\Throwable $e) {
+                    // Jika gagal (misal enum belum dimigrasi), log dan lanjutkan tanpa blokir
+                    \Log::warning('Gagal update status child Surat_Magang ke Success: '.$e->getMessage());
+                }
             }
             // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
             
@@ -135,16 +140,20 @@ class DetailSuratController extends Controller
             $tugasSurat->Status = 'Selesai';
             $tugasSurat->Tanggal_Diselesaikan = Carbon::now();
             
-            // Simpan info QR ke Tugas_Surat
-            $tugasSurat->qr_image_path = $qrCodeUrl;
-            $tugasSurat->signature_qr_data = json_encode([
-                'signed_by' => $user->Name_User,
-                'signed_by_id' => $user->Id_User,
-                'signed_at' => Carbon::now()->toIso8601String(),
-                'qr_token' => $token,
-                'qr_image_url' => $qrCodeUrl,
-                'verify_url' => $verifyUrl
-            ]);
+            // Simpan info QR ke Tugas_Surat (hanya jika kolom tersedia agar tidak error sebelum migrate)
+            if (\Schema::hasColumn('Tugas_Surat', 'qr_image_path')) {
+                $tugasSurat->qr_image_path = $qrCodeUrl;
+            }
+            if (\Schema::hasColumn('Tugas_Surat', 'signature_qr_data')) {
+                $tugasSurat->signature_qr_data = json_encode([
+                    'signed_by' => $user->Name_User,
+                    'signed_by_id' => $user->Id_User,
+                    'signed_at' => Carbon::now()->toIso8601String(),
+                    'qr_token' => $token,
+                    'qr_image_url' => $qrCodeUrl,
+                    'verify_url' => $verifyUrl
+                ]);
+            }
             
             $tugasSurat->save();
             
@@ -207,10 +216,14 @@ class DetailSuratController extends Controller
         }
 
         // Update status menjadi 'Ditolak'
-        // UPDATE: Status ada di child table yang punya kolom Status
+        // Update child dengan enum valid ('Ditolak')
         if ($tugasSurat->suratMagang) {
-            $tugasSurat->suratMagang->Status = 'ditolak';
-            $tugasSurat->suratMagang->save();
+            try {
+                $tugasSurat->suratMagang->Status = 'Ditolak';
+                $tugasSurat->suratMagang->save();
+            } catch (\Throwable $e) {
+                \Log::warning('Gagal update status child Surat_Magang ke Ditolak: '.$e->getMessage());
+            }
         }
         // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
         
