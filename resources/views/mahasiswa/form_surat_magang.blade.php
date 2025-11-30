@@ -370,7 +370,7 @@
 
             {{-- PREVIEW DITARUH DI BAWAH FORM --}}
             <div class="preview-document-wrapper">
-                <h6 class="mb-3 text-center"><i class="fas fa-eye me-1"></i> Pratinjau Surat Pengantar</h6>
+                <h6 class="mb-3 text-center"><i class="fas fa-eye me-1"></i>Pratinjau Form Pengantar</h6>
                 
                 <div class="preview-document">
                     {{-- Header Pratinjau --}}
@@ -402,9 +402,15 @@
                             </td>
                         </tr>
                         <tr>
-                            <td>Program Studi</td>
+                            <td>Jurusan</td>
                             <td>:</td>
-                            <td id="preview-jurusan-magang"><span class="preview-placeholder">[Program Studi]</span></td>
+                            <td id="preview-jurusan-magang">
+                                @if($jurusan)
+                                    {{ $jurusan->Nama_Jurusan }}
+                                @else
+                                    <span class="preview-placeholder">[Jurusan]</span>
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <td>Dosen Pembimbing</td>

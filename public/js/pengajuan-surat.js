@@ -55,7 +55,16 @@ function setupAutocomplete(inputElement) {
                             <strong>${mhs.nama}</strong> (${mhs.nim})<br>
                             <small>Sudah ditambahkan</small>
                         `;
-                    } else {
+                    }
+                    // Check if currently doing internship
+                    else if (mhs.status_kp === 'Sedang_Melaksanakan') {
+                        item.classList.add('disabled');
+                        item.innerHTML = `
+                            <strong>${mhs.nama}</strong> (${mhs.nim})<br>
+                            <small>Mahasiswa sedang melakukan KP/Magang</small>
+                        `;
+                    }
+                    else {
                         item.innerHTML = `
                             <strong>${mhs.nama}</strong> (${mhs.nim})<br>
                             <small>Angkatan ${mhs.angkatan} - ${mhs.jurusan}</small>

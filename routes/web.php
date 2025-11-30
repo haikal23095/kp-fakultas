@@ -201,13 +201,13 @@ Route::middleware('auth')->group(function () {
 
     // FITUR KAPRODI
     Route::prefix('kaprodi')->name('kaprodi.')->group(function () {
-        Route::get('/permintaan-surat', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'index'])
+        Route::get('/permintaan-kp', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'index'])
             ->name('surat.index');
-        Route::post('/permintaan-surat/{id}/approve', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'approve'])
+        Route::post('/permintaan-kp/{id}/approve', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'approve'])
             ->name('surat.approve');
-        Route::post('/permintaan-surat/{id}/reject', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'reject'])
+        Route::post('/permintaan-kp/{id}/reject', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'reject'])
             ->name('surat.reject');
-        Route::get('/permintaan-surat/{id}/download-proposal', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'downloadProposal'])
+        Route::get('/permintaan-kp/{id}/download-proposal', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'downloadProposal'])
             ->name('surat.download');
 
         Route::get('/kurikulum', function () {
@@ -266,8 +266,12 @@ Route::middleware('auth')->group(function () {
             $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
 
             $prodi = null;
+            $jurusan = null;
             if ($mahasiswa && $mahasiswa->Id_Prodi) {
-                $prodi = Prodi::find($mahasiswa->Id_Prodi);
+                $prodi = Prodi::with('jurusan')->find($mahasiswa->Id_Prodi);
+                if ($prodi && $prodi->jurusan) {
+                    $jurusan = $prodi->jurusan;
+                }
             }
 
             // Filter dosen berdasarkan prodi mahasiswa
@@ -313,6 +317,7 @@ Route::middleware('auth')->group(function () {
             return view('mahasiswa.form_surat_magang', [
                 'mahasiswa' => $mahasiswa,
                 'prodi' => $prodi,
+                'jurusan' => $jurusan,
                 'dosens' => $dosens,
                 'kaprodi' => $kaprodi,
                 'kaprodiName' => $kaprodiName,

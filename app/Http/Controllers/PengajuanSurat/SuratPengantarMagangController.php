@@ -131,10 +131,19 @@ class SuratPengantarMagangController extends Controller
             // Siapkan data mahasiswa JSON
             $dataMahasiswaArray = [];
             foreach ($request->mahasiswa as $index => $mhs) {
+                // Get jurusan from mahasiswa's prodi
+                $mahasiswaData = Mahasiswa::where('NIM', $mhs['nim'])->with('prodi.jurusan')->first();
+                $namaJurusan = null;
+
+                if ($mahasiswaData && $mahasiswaData->prodi && $mahasiswaData->prodi->jurusan) {
+                    $namaJurusan = $mahasiswaData->prodi->jurusan->Nama_Jurusan;
+                }
+
                 $dataMahasiswaArray[] = [
                     'nama' => $mhs['nama'],
                     'nim' => $mhs['nim'],
                     'program-studi' => $mhs['jurusan'],
+                    'jurusan' => $namaJurusan,
                     'angkatan' => $mhs['angkatan'],
                 ];
             }
@@ -145,18 +154,18 @@ class SuratPengantarMagangController extends Controller
             // Buat Tugas_Surat (semua data spesifik ada di Surat_Magang)
             $tugasSurat = new TugasSurat();
             $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
-            
+
             // FIX: Mahasiswa adalah PEMBERI tugas (requestor), Kaprodi/Admin adalah PENERIMA
             $tugasSurat->Id_Pemberi_Tugas_Surat = $mahasiswaId;
-            $tugasSurat->Id_Penerima_Tugas_Surat = $kaprodiUser ? $kaprodiUser->Id_User : null; 
-            
+            $tugasSurat->Id_Penerima_Tugas_Surat = $kaprodiUser ? $kaprodiUser->Id_User : null;
+
             $tugasSurat->Status = 'baru'; // Status Tugas_Surat selalu baru untuk pengajuan baru
             $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now()->format('Y-m-d');
             $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(5)->format('Y-m-d');
-            
+
             // Tambahkan Judul Tugas Surat agar muncul di tabel
             $tugasSurat->Judul_Tugas_Surat = "Pengajuan Surat Pengantar Magang ke " . $request->input('data_spesifik.nama_instansi');
-            
+
             $tugasSurat->save();
 
             \Log::info('[MAGANG] TugasSurat created', [
@@ -269,30 +278,40 @@ class SuratPengantarMagangController extends Controller
             return response()->json([]);
         }
 
-        $results = Mahasiswa::where('Id_Prodi', $mahasiswaLogin->Id_Prodi)
+        // Get Id_Jurusan dari prodi mahasiswa yang login
+        $prodiLogin = $mahasiswaLogin->prodi;
+        if (!$prodiLogin || !$prodiLogin->Id_Jurusan) {
+            return response()->json([]);
+        }
+
+        // Cari mahasiswa dari prodi yang memiliki Id_Jurusan yang sama
+        $results = Mahasiswa::whereHas('prodi', function ($query) use ($prodiLogin) {
+            $query->where('Id_Jurusan', $prodiLogin->Id_Jurusan);
+        })
             ->where('Id_Mahasiswa', '!=', $mahasiswaLogin->Id_Mahasiswa)
             ->where(function ($query) use ($search) {
                 $query->where('Nama_Mahasiswa', 'like', '%' . $search . '%')
                     ->orWhere('NIM', 'like', '%' . $search . '%');
             })
+            ->with('prodi')
             ->limit(10)
             ->get([
                 'Id_Mahasiswa',
                 'Nama_Mahasiswa',
                 'NIM',
                 'Angkatan',
-                'Id_Prodi'
+                'Id_Prodi',
+                'Status_KP'
             ]);
 
-        $prodi = $mahasiswaLogin->prodi;
-
-        return response()->json($results->map(function ($mhs) use ($prodi) {
+        return response()->json($results->map(function ($mhs) {
             return [
                 'id' => $mhs->Id_Mahasiswa,
                 'nama' => $mhs->Nama_Mahasiswa,
                 'nim' => $mhs->NIM,
                 'angkatan' => $mhs->Angkatan,
-                'jurusan' => $prodi ? $prodi->Nama_Prodi : '-'
+                'jurusan' => $mhs->prodi ? $mhs->prodi->Nama_Prodi : '-',
+                'status_kp' => $mhs->Status_KP
             ];
         }));
     }

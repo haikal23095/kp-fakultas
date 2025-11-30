@@ -20,6 +20,7 @@ class Prodi extends Model
     protected $fillable = [
         'Id_Prodi',
         'Nama_Prodi',
+        'Id_Jurusan',
         'Id_Fakultas',
     ];
 
@@ -29,6 +30,14 @@ class Prodi extends Model
     public function fakultas()
     {
         return $this->belongsTo(Fakultas::class, 'Id_Fakultas', 'Id_Fakultas');
+    }
+
+    /**
+     * Relasi ke Jurusan
+     */
+    public function jurusan()
+    {
+        return $this->belongsTo(Jurusan::class, 'Id_Jurusan', 'Id_Jurusan');
     }
 
     /**

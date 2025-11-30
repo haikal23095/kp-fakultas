@@ -263,7 +263,7 @@
                                 <ul class="nav nav-tabs card-header-tabs" id="previewTab{{ $surat->id_no }}" role="tablist">
                                     <li class="nav-item" role="presentation">
                                         <button class="nav-link active fw-bold" id="surat-tab{{ $surat->id_no }}" data-bs-toggle="tab" data-bs-target="#surat-preview{{ $surat->id_no }}" type="button" role="tab">
-                                            <i class="fas fa-file-alt me-2"></i>Draft Surat Pengantar
+                                            <i class="fas fa-file-alt me-2"></i>Draft Form Pengantar
                                         </button>
                                     </li>
                                     <li class="nav-item" role="presentation">

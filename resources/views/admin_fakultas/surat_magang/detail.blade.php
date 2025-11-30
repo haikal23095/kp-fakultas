@@ -5,7 +5,7 @@
 @section('content')
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-0">Detail Surat Pengantar KP/Magang</h1>
+        <h1 class="h3 fw-bold mb-0">Detail Form Pengantar KP/Magang</h1>
         <p class="mb-0 text-muted">
             <a href="{{ route('admin_fakultas.surat_magang.index') }}" class="text-decoration-none">
                 <i class="fas fa-arrow-left me-1"></i> Kembali ke Daftar
@@ -134,10 +134,10 @@
                 </div>
 
                 <div class="row mb-3">
-                    <div class="col-md-4 fw-bold">Preview Surat:</div>
+                    <div class="col-md-4 fw-bold">Preview Form:</div>
                     <div class="col-md-8">
                         <button type="button" class="btn btn-sm btn-outline-primary" onclick="togglePreview()">
-                            <i class="fas fa-file-alt"></i> Lihat Preview Surat Pengantar
+                            <i class="fas fa-file-alt"></i> Lihat Preview Form Pengantar
                         </button>
                     </div>
                 </div>

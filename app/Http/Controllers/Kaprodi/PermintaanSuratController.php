@@ -7,8 +7,11 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SuratMagang;
 use App\Models\TugasSurat;
-use App\Helpers\QrCodeHelper;
 use Illuminate\Support\Facades\Storage;
+use BaconQrCode\Renderer\ImageRenderer;
+use BaconQrCode\Renderer\Image\SvgImageBackEnd;
+use BaconQrCode\Renderer\RendererStyle\RendererStyle;
+use BaconQrCode\Writer;
 
 class PermintaanSuratController extends Controller
 {
@@ -27,7 +30,7 @@ class PermintaanSuratController extends Controller
         $prodiId = $kaprodiDosen?->Id_Prodi ?? $kaprodiPegawai?->Id_Prodi;
 
         if (!$prodiId) {
-            return view('kaprodi.permintaan_surat', [
+            return view('kaprodi.permintaan_kp', [
                 'daftarSurat' => collect([])
             ]);
         }
@@ -54,7 +57,7 @@ class PermintaanSuratController extends Controller
         // Ambil NIP Kaprodi untuk preview surat
         $kaprodiNIP = $kaprodiDosen?->NIP ?? $kaprodiPegawai?->NIP ?? null;
 
-        return view('kaprodi.permintaan_surat', compact('daftarSurat', 'kaprodiNIP'));
+        return view('kaprodi.permintaan_kp', compact('daftarSurat', 'kaprodiNIP'));
     }
 
     /**
@@ -70,33 +73,43 @@ class PermintaanSuratController extends Controller
         $kaprodiPegawai = $user->pegawai;
         $namaKoordinator = $kaprodiDosen?->Nama_Dosen ?? $kaprodiPegawai?->Nama_Pegawai ?? 'Koordinator';
 
-        // Generate QR Code menggunakan Python Helper (sama seperti Dekan)
-        // Gunakan route surat.verify.id karena kita pakai id_no langsung
-        $verificationUrl = route('surat.verify.id', $suratMagang->id_no);
+        try {
+            // Generate QR Code menggunakan BaconQrCode with SVG
+            $verificationUrl = url('/verify-surat/' . $suratMagang->id_no);
+            $qrCodePath = 'qrcodes/surat_magang_' . $suratMagang->id_no . '.svg';
 
-        // Generate QR Code dengan box_size 10 (ukuran optimal ~150x150px)
-        $qrCodePath = QrCodeHelper::generateAndGetPath($verificationUrl, 10);
+            // Create renderer with SVG backend (no ImageMagick/GD required)
+            $renderer = new ImageRenderer(
+                new RendererStyle(300, 1),
+                new SvgImageBackEnd()
+            );
 
-        if (!$qrCodePath) {
-            return redirect()->back()->with('error', 'Gagal membuat QR Code. Silakan coba lagi.');
+            // Create writer
+            $writer = new Writer($renderer);
+
+            // Generate QR code as SVG
+            $qrCodeImage = $writer->writeString($verificationUrl);
+
+            // Save to storage
+            Storage::disk('public')->put($qrCodePath, $qrCodeImage);            // Update Acc_Koordinator menjadi true dan simpan QR Code path
+            $suratMagang->Acc_Koordinator = true;
+            $suratMagang->Status = 'Dikerjakan-admin'; // Update status ke tahap berikutnya
+            $suratMagang->Qr_code = $qrCodePath;
+            $suratMagang->save();
+
+            // Update Status_KP mahasiswa menjadi Sedang_Melaksanakan
+            $this->updateMahasiswaStatusKP($suratMagang, 'Sedang_Melaksanakan');
+
+            return redirect()->route('kaprodi.surat.index')
+                ->with('success', 'Surat pengantar magang berhasil disetujui dan QR Code telah dibuat!');
+
+        } catch (\Exception $e) {
+            \Log::error('Failed to approve surat: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal membuat QR Code: ' . $e->getMessage());
         }
-
-        // Update Acc_Koordinator menjadi true dan simpan QR Code path
-        $suratMagang->Acc_Koordinator = true;
-        $suratMagang->Status = 'Dikerjakan-admin'; // Update status ke tahap berikutnya
-        $suratMagang->Qr_code = $qrCodePath;
-        $suratMagang->save();
-
-        // Update Status_KP mahasiswa menjadi Sedang_Melaksanakan
-        $this->updateMahasiswaStatusKP($suratMagang, 'Sedang_Melaksanakan');
-
-        return redirect()->route('kaprodi.surat.index')
-            ->with('success', 'Surat pengantar magang berhasil disetujui dan QR Code telah dibuat!');
-    }
-
-    /**
-     * Menolak surat magang
-     */
+    }    /**
+         * Menolak surat magang
+         */
     public function reject(Request $request, $id)
     {
         // Validasi komentar wajib diisi
