@@ -13,23 +13,53 @@ class RiwayatSuratController extends Controller
     /**
      * Tampilkan riwayat surat mahasiswa
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $type = $request->query('type');
 
-        // Query semua surat mahasiswa dengan relasi
-        $riwayatSurat = TugasSurat::with([
+        // Jika tidak ada parameter type, tampilkan menu pilihan
+        if (!$type) {
+            return view('mahasiswa.riwayat_menu');
+        }
+
+        // Query dasar
+        $query = TugasSurat::with([
             'jenisSurat',
             'penerimaTugas',
             'suratMagang',
+            'suratKetAktif', // Load relasi SuratKetAktif
             'verification' // Relasi ke SuratVerification untuk ambil QR Code
         ])
         ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-        ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
-        ->get();
+        ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc');
+
+        $title = 'Riwayat Pengajuan Surat';
+
+        // Filter berdasarkan tipe
+        if ($type === 'magang') {
+            $query->whereHas('jenisSurat', function($q) {
+                $q->where('Nama_Surat', 'Surat Pengantar KP/Magang');
+            });
+            $title = 'Riwayat Surat Magang / KP';
+        } elseif ($type === 'aktif') {
+            $query->whereHas('jenisSurat', function($q) {
+                $q->where('Nama_Surat', 'Surat Keterangan Aktif Kuliah');
+            });
+            $title = 'Riwayat Surat Keterangan Aktif';
+        } else {
+            // Surat lainnya (Rekomendasi, dll)
+            $query->whereHas('jenisSurat', function($q) {
+                $q->whereNotIn('Nama_Surat', ['Surat Pengantar KP/Magang', 'Surat Keterangan Aktif Kuliah']);
+            });
+            $title = 'Riwayat Surat Lainnya';
+        }
+
+        $riwayatSurat = $query->get();
 
         return view('mahasiswa.riwayat', [
-            'riwayatSurat' => $riwayatSurat
+            'riwayatSurat' => $riwayatSurat,
+            'title' => $title
         ]);
     }
 

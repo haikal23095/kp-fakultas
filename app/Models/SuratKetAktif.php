@@ -20,6 +20,7 @@ class SuratKetAktif extends Model
         'KRS',
         'is_urgent',
         'urgent_reason',
+        'Deskripsi',
     ];
 
     /**

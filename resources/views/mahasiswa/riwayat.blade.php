@@ -1,6 +1,6 @@
 @extends('layouts.mahasiswa')
 
-@section('title', 'Riwayat Pengajuan Surat')
+@section('title', $title ?? 'Riwayat Pengajuan Surat')
 
 @push('styles')
 <link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
@@ -200,10 +200,13 @@
 <div class="page-header">
     <div class="d-flex align-items-center justify-content-between">
         <div>
-            <h3 class="mb-1 fw-bold text-dark">Riwayat Pengajuan Surat</h3>
+            <h3 class="mb-1 fw-bold text-dark">{{ $title ?? 'Riwayat Pengajuan Surat' }}</h3>
             <p class="mb-0 text-muted small">Pantau status dan unduh surat Anda</p>
         </div>
         <div>
+            <a href="{{ route('mahasiswa.riwayat') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
             <a href="{{ route('mahasiswa.pengajuan.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Ajukan Surat
             </a>
@@ -251,7 +254,9 @@
                             <th width="5%" class="text-center">#</th>
                             <th width="12%">Tanggal</th>
                             <th width="20%">Jenis Surat</th>
-                            <th width="28%">Detail / Keperluan</th>
+                            @if(request('type') !== 'magang')
+                                <th width="28%">Detail / Keperluan</th>
+                            @endif
                             <th width="12%" class="text-center">Status</th>
                             <th width="23%" class="text-center">Aksi</th>
                         </tr>
@@ -262,7 +267,27 @@
                                 <td class="text-center text-muted">{{ $index + 1 }}</td>
                                 <td>{{ $surat->Tanggal_Diberikan_Tugas_Surat ? \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') : '-' }}</td>
                                 <td><strong>{{ $surat->jenisSurat->Nama_Surat ?? 'N/A' }}</strong></td>
-                                <td>{{ \Illuminate\Support\Str::limit($surat->Judul_Tugas_Surat, 50) }}</td>
+                                @if(request('type') !== 'magang')
+                                    <td>
+                                        @if(request('type') === 'aktif')
+                                            <div>
+                                                {{ \Illuminate\Support\Str::limit($surat->suratKetAktif->Deskripsi ?? '-', 50) }}
+                                            </div>
+                                            @if($surat->suratKetAktif && $surat->suratKetAktif->is_urgent)
+                                                <div class="mt-2">
+                                                    <span class="badge bg-danger mb-1">
+                                                        <i class="fas fa-bolt me-1"></i>URGENT
+                                                    </span>
+                                                    <div class="small text-danger border border-danger rounded p-2 bg-danger bg-opacity-10" style="font-size: 0.8rem;">
+                                                        <strong>Alasan:</strong> {{ $surat->suratKetAktif->urgent_reason }}
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        @else
+                                            {{ \Illuminate\Support\Str::limit($surat->Judul_Tugas_Surat, 50) }}
+                                        @endif
+                                    </td>
+                                @endif
                                 <td class="text-center">
                                     @php
                                         // Gunakan status dari parent Tugas_Surat sebagai sumber kebenaran.
@@ -475,9 +500,14 @@
                     { "width": "5%", "targets": 0 },
                     { "width": "12%", "targets": 1 },
                     { "width": "20%", "targets": 2 },
-                    { "width": "25%", "targets": 3 },
-                    { "width": "12%", "targets": 4 },
-                    { "width": "26%", "targets": 5 }
+                    @if(request('type') !== 'magang')
+                        { "width": "25%", "targets": 3 },
+                        { "width": "12%", "targets": 4 },
+                        { "width": "26%", "targets": 5 }
+                    @else
+                        { "width": "15%", "targets": 3 },
+                        { "width": "48%", "targets": 4 }
+                    @endif
                 ]
             });
         }
