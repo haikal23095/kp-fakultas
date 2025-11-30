@@ -168,10 +168,22 @@
                 <div class="row mb-3">
                     <div class="col-md-4 fw-bold">QR Code Verifikasi:</div>
                     <div class="col-md-8">
-                        <img src="{{ asset('storage/' . $surat->Qr_code) }}" 
-                             alt="QR Code" 
-                             style="max-width: 150px; border: 1px solid #ddd; padding: 5px;">
-                        <br><small class="text-muted">Scan untuk verifikasi surat</small>
+                        @php
+                            $qrPath = storage_path('app/public/' . $surat->Qr_code);
+                            $qrExists = file_exists($qrPath);
+                        @endphp
+                        
+                        @if($qrExists)
+                            <img src="{{ asset('storage/' . $surat->Qr_code) }}" 
+                                 alt="QR Code" 
+                                 style="max-width: 150px; border: 1px solid #ddd; padding: 5px;">
+                            <br><small class="text-muted">Scan untuk verifikasi surat</small>
+                        @else
+                            <div class="alert alert-warning mb-0">
+                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                <small>File QR code tidak ditemukan. Silakan regenerate QR code.</small>
+                            </div>
+                        @endif
                     </div>
                 </div>
                 @endif
