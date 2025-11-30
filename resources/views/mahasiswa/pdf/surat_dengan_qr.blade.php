@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {{-- Viewport diset fixed width agar tampilan di HP tetap seperti kertas A4 (zoom out) --}}
+    <meta name="viewport" content="width=850, user-scalable=yes">
     <title>{{ $jenisSurat->Nama_Surat ?? 'Surat Resmi' }}</title>
     <style>
         @page {
@@ -29,20 +30,22 @@
             top: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 15px 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            background: #2c3e50;
+            padding: 12px 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             z-index: 1000;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            border-bottom: 3px solid #34495e;
         }
         
         .print-toolbar h5 {
             margin: 0;
             color: white;
-            font-size: 16pt;
-            font-weight: bold;
+            font-size: 14pt;
+            font-weight: 600;
+            font-family: Arial, sans-serif;
         }
         
         .print-toolbar .btn-group {
@@ -51,37 +54,37 @@
         }
         
         .print-toolbar button {
-            padding: 10px 20px;
+            padding: 8px 16px;
             border: none;
-            border-radius: 5px;
-            font-size: 11pt;
-            font-weight: bold;
+            border-radius: 4px;
+            font-size: 10pt;
+            font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             font-family: Arial, sans-serif;
         }
         
         .btn-print {
-            background: #28a745;
+            background: #27ae60;
             color: white;
         }
         
         .btn-print:hover {
-            background: #218838;
+            background: #229954;
         }
         
         .btn-close {
-            background: #dc3545;
+            background: #e74c3c;
             color: white;
         }
         
         .btn-close:hover {
-            background: #c82333;
+            background: #c0392b;
         }
         
         .content-wrapper {
             margin-top: 80px;
-            max-width: 21cm;
+            width: 21cm; /* Fixed width A4 */
             margin-left: auto;
             margin-right: auto;
             background: white;
@@ -100,16 +103,24 @@
         }
         
         .kop-surat {
-            text-align: center;
             border-bottom: 3px solid #000;
-            padding-bottom: 10px;
-            margin-bottom: 20px;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
         }
         
         .kop-surat img {
-            width: 80px;
-            height: auto;
-            margin-bottom: 10px;
+            width: 100px;
+            height: 100px;
+            object-fit: contain;
+            flex-shrink: 0;
+        }
+        
+        .kop-surat-text {
+            flex: 1;
+            text-align: center;
         }
         
         .kop-surat h2 {
@@ -223,17 +234,6 @@
             padding-top: 10px;
         }
         
-        .digital-signature-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 9pt;
-            font-weight: bold;
-            margin-top: 10px;
-        }
-        
         @media print {
             body {
                 print-color-adjust: exact;
@@ -246,36 +246,34 @@
 
     {{-- TOOLBAR PRINT (HANYA TAMPIL DI BROWSER) --}}
     <div class="print-toolbar no-print">
-        <h5>
-            <i style="margin-right: 10px;">📄</i>
-            {{ $jenisSurat->Nama_Surat ?? 'Surat Resmi' }}
-        </h5>
+        <h5>{{ $jenisSurat->Nama_Surat ?? 'Surat Resmi' }}</h5>
         <div class="btn-group">
-            <button onclick="window.print()" class="btn-print">
-                🖨️ Download PDF
-            </button>
-            <button onclick="window.close()" class="btn-close">
-                ✖️ Tutup
-            </button>
+            <button onclick="window.print()" class="btn-print">Download PDF</button>
+            <button onclick="window.close()" class="btn-close">Tutup</button>
         </div>
     </div>
 
     <div class="content-wrapper">
     {{-- KOP SURAT --}}
     <div class="kop-surat">
-        {{-- Jika ada logo universitas, uncomment baris berikut --}}
-        {{-- <img src="{{ public_path('images/logo-univ.png') }}" alt="Logo"> --}}
+        <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas">
         
-        <h2>UNIVERSITAS [NAMA UNIVERSITAS]</h2>
-        <h2>FAKULTAS TEKNIK</h2>
-        <p>Jl. Alamat Universitas No. 123, Kota, Provinsi 12345</p>
-        <p>Telp: (021) 1234-5678 | Email: fakultas@univ.ac.id | Website: www.ft.univ.ac.id</p>
+        <div class="kop-surat-text">
+            <h2>UNIVERSITAS TRUNOJOYO MADURA</h2>
+            <h2>FAKULTAS TEKNIK</h2>
+            <p>Jl. Raya Telang, PO Box 2 Kamal, Bangkalan - Madura</p>
+            <p>Telp: (031) 3011146, Fax. (031) 3011506</p>
+        </div>
     </div>
 
     {{-- NOMOR DAN JUDUL SURAT --}}
     <div class="nomor-surat">
-        <h3>{{ $jenisSurat->Nama_Surat ?? 'SURAT KETERANGAN' }}</h3>
-        <p>Nomor: {{ $surat->Id_Tugas_Surat }}/FT/{{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('m/Y') }}</p>
+        @if($surat->suratMagang)
+            <h3>SURAT KETERANGAN</h3>
+        @else
+            <h3>{{ $jenisSurat->Nama_Surat ?? 'SURAT KETERANGAN' }}</h3>
+        @endif
+        <p>Nomor: {{ $surat->Nomor_Surat ?? '.......' }}/FT/{{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('m/Y') }}</p>
     </div>
 
     {{-- ISI SURAT --}}
@@ -299,30 +297,69 @@
 
         <p>Dengan ini menerangkan bahwa:</p>
 
-        <div class="data-mahasiswa">
-            <table>
-                <tr>
-                    <td>Nama</td>
-                    <td>:</td>
-                    <td><strong>{{ $mahasiswa->Nama_Mahasiswa ?? '-' }}</strong></td>
-                </tr>
-                <tr>
-                    <td>NIM</td>
-                    <td>:</td>
-                    <td><strong>{{ $mahasiswa->Nim_Mahasiswa ?? '-' }}</strong></td>
-                </tr>
-                <tr>
-                    <td>Program Studi</td>
-                    <td>:</td>
-                    <td>{{ $mahasiswa->prodi->Nama_Prodi ?? '-' }}</td>
-                </tr>
-                <tr>
-                    <td>Fakultas</td>
-                    <td>:</td>
-                    <td>Fakultas Teknik</td>
-                </tr>
-            </table>
-        </div>
+        @if($surat->suratMagang)
+            @php
+                $dataMahasiswa = $surat->suratMagang->Data_Mahasiswa;
+                if (is_string($dataMahasiswa)) {
+                    $dataMahasiswa = json_decode($dataMahasiswa, true);
+                }
+                if (!is_array($dataMahasiswa)) {
+                    $dataMahasiswa = [];
+                }
+            @endphp
+            
+            @foreach($dataMahasiswa as $mhs)
+            <div class="data-mahasiswa">
+                <table>
+                    <tr>
+                        <td>Nama</td>
+                        <td>:</td>
+                        <td><strong>{{ $mhs['nama'] ?? '-' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>NIM</td>
+                        <td>:</td>
+                        <td><strong>{{ $mhs['nim'] ?? '-' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Program Studi</td>
+                        <td>:</td>
+                        <td>{{ $mhs['program-studi'] ?? 'Teknik Informatika' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Fakultas</td>
+                        <td>:</td>
+                        <td>Fakultas Teknik</td>
+                    </tr>
+                </table>
+            </div>
+            @endforeach
+        @else
+            <div class="data-mahasiswa">
+                <table>
+                    <tr>
+                        <td>Nama</td>
+                        <td>:</td>
+                        <td><strong>{{ $mahasiswa->Nama_Mahasiswa ?? '-' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>NIM</td>
+                        <td>:</td>
+                        <td><strong>{{ $mahasiswa->NIM ?? '-' }}</strong></td>
+                    </tr>
+                    <tr>
+                        <td>Program Studi</td>
+                        <td>:</td>
+                        <td>{{ $mahasiswa->prodi->Nama_Prodi ?? '-' }}</td>
+                    </tr>
+                    <tr>
+                        <td>Fakultas</td>
+                        <td>:</td>
+                        <td>Fakultas Teknik</td>
+                    </tr>
+                </table>
+            </div>
+        @endif
 
         @if($surat->jenisSurat && str_contains(strtolower($surat->jenisSurat->Nama_Surat), 'aktif'))
             <p>
@@ -339,15 +376,15 @@
                     <tr>
                         <td>Nama Instansi</td>
                         <td>:</td>
-                        <td><strong>{{ $surat->suratMagang->nama_instansi ?? '-' }}</strong></td>
+                        <td><strong>{{ $surat->suratMagang->Nama_Instansi ?? '-' }}</strong></td>
                     </tr>
                     <tr>
                         <td>Periode</td>
                         <td>:</td>
                         <td>
-                            {{ $surat->suratMagang->tanggal_mulai ? \Carbon\Carbon::parse($surat->suratMagang->tanggal_mulai)->format('d M Y') : '-' }}
+                            {{ $surat->suratMagang->Tanggal_Mulai ? \Carbon\Carbon::parse($surat->suratMagang->Tanggal_Mulai)->format('d M Y') : '-' }}
                             s.d.
-                            {{ $surat->suratMagang->tanggal_selesai ? \Carbon\Carbon::parse($surat->suratMagang->tanggal_selesai)->format('d M Y') : '-' }}
+                            {{ $surat->suratMagang->Tanggal_Selesai ? \Carbon\Carbon::parse($surat->suratMagang->Tanggal_Selesai)->format('d M Y') : '-' }}
                         </td>
                     </tr>
                 </table>
@@ -394,9 +431,6 @@
                          alt="QR Code Digital Signature" 
                          style="width: 150px; height: 150px; display: block; margin: 0 auto;">
                     <div class="qr-info">
-                        <div class="digital-signature-badge">
-                            ✓ DIGITAL SIGNATURE
-                        </div>
                         <p style="font-size: 9pt; margin-top: 5px;">Scan untuk verifikasi keaslian dokumen</p>
                     </div>
                 </div>

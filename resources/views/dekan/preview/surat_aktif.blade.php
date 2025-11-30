@@ -215,25 +215,6 @@
             padding-top: 10px;
         }
         
-        .digital-signature-badge {
-            display: inline-block;
-            background: #f0f9f4;
-            color: #065f46;
-            padding: 5px 14px;
-            border-radius: 4px;
-            font-size: 8pt;
-            font-weight: 600;
-            margin-top: 10px;
-            border: 1px solid #10b981;
-            font-family: 'Times New Roman', serif;
-        }
-        
-        .signature-verified {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
         @media print {
             body {
                 print-color-adjust: exact;
@@ -412,13 +393,6 @@
                              alt="QR Code Digital Signature" 
                              style="width: 100px; height: 100px; display: block; margin: 0 auto; border-radius: 6px;">
                         <div class="qr-info">
-                            <div class="digital-signature-badge signature-verified">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-                                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
-                                </svg>
-                                Terverifikasi
-                            </div>
                             <p style="font-size: 8pt; margin-top: 8px; color: #6b7280; font-family: 'Times New Roman', serif;">Kode Verifikasi Digital</p>
                         </div>
                     </div>

@@ -3,496 +3,439 @@
 @section('title', 'Permintaan Pengantar KP/Magang')
 
 @section('content')
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-        <h1 class="h3 fw-bold mb-0">Permintaan Pengantar KP/Magang</h1>
-        <p class="mb-0 text-muted">Daftar surat pengantar magang yang menunggu persetujuan Anda</p>
+<div class="container-fluid px-4">
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <div>
+            <h1 class="h3 fw-bold text-gray-800">Permintaan Pengantar KP/Magang</h1>
+            <p class="text-muted mb-0">Kelola persetujuan surat pengantar magang mahasiswa.</p>
+        </div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-0">
+                <li class="breadcrumb-item"><a href="{{ route('dashboard.kaprodi') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Permintaan Surat</li>
+            </ol>
+        </nav>
     </div>
-</div>
 
-@if(session('success'))
-<div class="alert alert-success alert-dismissible fade show" role="alert">
-    <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
-@if(session('error'))
-<div class="alert alert-danger alert-dismissible fade show" role="alert">
-    <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-</div>
-@endif
-
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
-        <h6 class="m-0 font-weight-bold text-primary">Daftar Permintaan Pengantar KP/Magang - Menunggu Persetujuan</h6>
+    @if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show shadow-sm border-start-success" role="alert">
+        <div class="d-flex align-items-center">
+            <div class="icon-circle bg-success text-white me-3">
+                <i class="fas fa-check"></i>
+            </div>
+            <div>
+                <strong>Berhasil!</strong> {{ session('success') }}
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
     </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-bordered table-hover" width="100%" cellspacing="0">
-                <thead class="table-light">
-                    <tr>
-                        <th>No</th>
-                        <th>Tgl. Masuk</th>
-                        <th>Pengaju</th>
-                        <th>NIM</th>
-                        <th>Jenis Surat</th>
-                        <th>Nama Instansi</th>
-                        <th>Periode Magang</th>
-                        <th>Status</th>
-                        <th class="text-center">Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse($daftarSurat as $index => $surat)
-                    @php
-                        $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
-                        $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
-                        $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
-                        $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');
-                    @endphp
-                    <tr>
-                        {{-- 1. No --}}
-                        <td>{{ $index + 1 }}</td>
+    @endif
 
-                        {{-- 2. Tgl. Masuk --}}
-                        <td>
-                            @if($surat->tugasSurat && $surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)
-                                {{ \Carbon\Carbon::parse($surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') }}
-                            @else
-                                -
-                            @endif
-                        </td>
+    @if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show shadow-sm border-start-danger" role="alert">
+        <div class="d-flex align-items-center">
+            <div class="icon-circle bg-danger text-white me-3">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <strong>Gagal!</strong> {{ session('error') }}
+            </div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    @endif
 
-                        {{-- 3. Pengaju --}}
-                        <td>{{ $namaMahasiswa }}</td>
-
-                        {{-- 4. NIM --}}
-                        <td>{{ $nimMahasiswa }}</td>
-
-                        {{-- 5. Jenis Surat --}}
-                        <td>
-                            {{ $surat->tugasSurat->jenisSurat->Nama_Surat ?? 'Surat Pengantar Magang' }}
-                        </td>
-
-                        {{-- 6. Nama Instansi --}}
-                        <td>{{ $surat->Nama_Instansi ?? '-' }}</td>
-
-                        {{-- 7. Periode Magang --}}
-                        <td>
-                            @if($surat->Tanggal_Mulai && $surat->Tanggal_Selesai)
-                                {{ \Carbon\Carbon::parse($surat->Tanggal_Mulai)->format('d M Y') }} - 
-                                {{ \Carbon\Carbon::parse($surat->Tanggal_Selesai)->format('d M Y') }}
-                            @else
-                                -
-                            @endif
-                        </td>
-
-                        {{-- 8. Status --}}
-                        <td class="text-center">
-                            @if($surat->Acc_Koordinator)
-                                <span class="badge bg-success">Disetujui</span>
-                            @else
-                                <span class="badge bg-warning text-dark">Menunggu Persetujuan</span>
-                            @endif
-                        </td>
-
-                        {{-- 9. Aksi --}}
-                        <td class="text-center">
-                            <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#detailModal{{ $surat->id_no }}">
-                                <i class="fas fa-eye"></i> Detail
-                            </button>
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="9" class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Tidak ada surat yang menunggu persetujuan.</p>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+    <div class="card shadow mb-4 border-0">
+        <div class="card-header py-3 bg-white d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary"><i class="fas fa-envelope-open-text me-2"></i>Daftar Menunggu Persetujuan</h6>
+            <span class="badge bg-warning text-dark">{{ count($daftarSurat) }} Permintaan</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0" width="100%" cellspacing="0">
+                    <thead class="bg-light text-uppercase text-secondary text-xs font-weight-bolder opacity-7">
+                        <tr>
+                            <th class="ps-4">Mahasiswa</th>
+                            <th>Jenis Surat</th>
+                            <th>Instansi Tujuan</th>
+                            <th>Tanggal Masuk</th>
+                            <th class="text-center">Status</th>
+                            <th class="text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($daftarSurat as $index => $surat)
+                        @php
+                            $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
+                            $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
+                            $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
+                            $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');
+                            $prodiMahasiswa = $mahasiswa?->prodi->Nama_Prodi ?? 'N/A';
+                        @endphp
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar avatar-sm bg-gradient-primary rounded-circle me-3 d-flex align-items-center justify-content-center text-white fw-bold" style="width: 40px; height: 40px;">
+                                        {{ substr($namaMahasiswa, 0, 1) }}
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 text-sm fw-bold text-dark">{{ $namaMahasiswa }}</h6>
+                                        <p class="text-xs text-secondary mb-0">{{ $nimMahasiswa }}</p>
+                                        <span class="badge bg-light text-secondary border rounded-pill" style="font-size: 0.65rem;">{{ $prodiMahasiswa }}</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-sm font-weight-bold text-dark">
+                                    {{ $surat->tugasSurat->jenisSurat->Nama_Surat ?? 'Surat Pengantar Magang' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="d-flex flex-column">
+                                    <span class="text-sm fw-bold text-dark">{{ $surat->Nama_Instansi ?? '-' }}</span>
+                                    <span class="text-xs text-muted"><i class="far fa-calendar-alt me-1"></i>
+                                        @if($surat->Tanggal_Mulai && $surat->Tanggal_Selesai)
+                                            {{ \Carbon\Carbon::parse($surat->Tanggal_Mulai)->format('d M Y') }} - 
+                                            {{ \Carbon\Carbon::parse($surat->Tanggal_Selesai)->format('d M Y') }}
+                                        @else
+                                            -
+                                        @endif
+                                    </span>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="text-secondary text-xs font-weight-bold">
+                                    @if($surat->tugasSurat && $surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)
+                                        {{ \Carbon\Carbon::parse($surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') }}
+                                    @else
+                                        -
+                                    @endif
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-warning text-dark border border-warning">
+                                    <i class="fas fa-clock me-1"></i> Menunggu
+                                </span>
+                            </td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-primary btn-sm shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#detailModal{{ $surat->id_no }}">
+                                    <i class="fas fa-search me-1"></i> Review
+                                </button>
+                            </td>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="6" class="text-center py-5">
+                                <div class="d-flex flex-column align-items-center justify-content-center">
+                                    <div class="bg-light rounded-circle p-4 mb-3">
+                                        <i class="fas fa-inbox fa-3x text-muted"></i>
+                                    </div>
+                                    <h5 class="text-muted fw-bold">Tidak ada permintaan baru</h5>
+                                    <p class="text-muted mb-0">Semua surat pengantar telah diproses.</p>
+                                </div>
+                            </td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 
-{{-- Modals - Outside the table --}}
+{{-- Modals --}}
 @foreach($daftarSurat as $index => $surat)
 @php
     $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
     $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
     $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
     $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');
+    
+    $dosenPembimbing = is_array($surat->Data_Dosen_pembiming) 
+        ? $surat->Data_Dosen_pembiming 
+        : json_decode($surat->Data_Dosen_pembiming, true);
 @endphp
 
-                    {{-- Modal Detail --}}
-                    <div class="modal fade" id="detailModal{{ $surat->id_no }}" tabindex="-1" aria-labelledby="detailModalLabel{{ $surat->id_no }}" aria-hidden="true">
-                        <div class="modal-dialog modal-lg">
-                            <div class="modal-content">
-                                <div class="modal-header">
-                                    <h5 class="modal-title" id="detailModalLabel{{ $surat->id_no }}">Detail Surat Pengantar Magang</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Modal Review Professional -->
+<div class="modal fade" id="detailModal{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title fw-bold">
+                    <i class="fas fa-file-signature me-2"></i>Review Pengajuan Surat
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body bg-light">
+                <div class="row h-100">
+                    <!-- Kolom Kiri: Detail & Aksi -->
+                    <div class="col-lg-4 mb-4 mb-lg-0">
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-white fw-bold text-primary border-bottom">
+                                <i class="fas fa-user-graduate me-2"></i>Data Mahasiswa
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="small text-muted text-uppercase fw-bold">Nama Lengkap</label>
+                                    <div class="fw-bold text-dark">{{ $namaMahasiswa }}</div>
                                 </div>
-                                <div class="modal-body">
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Tanggal Pengajuan:</div>
-                                        <div class="col-md-8">
-                                            @if($surat->tugasSurat && $surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)
-                                                {{ \Carbon\Carbon::parse($surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y H:i') }}
-                                            @else
-                                                -
-                                            @endif
-                                        </div>
+                                <div class="mb-3">
+                                    <label class="small text-muted text-uppercase fw-bold">NIM</label>
+                                    <div class="text-dark">{{ $nimMahasiswa }}</div>
+                                </div>
+                                <div class="mb-0">
+                                    <label class="small text-muted text-uppercase fw-bold">Program Studi</label>
+                                    <div class="text-dark">{{ $mahasiswa?->prodi->Nama_Prodi ?? 'N/A' }}</div>
+                                </div>
+                                
+                                @if(count($dataMahasiswa) > 1)
+                                <hr class="my-3">
+                                <label class="small text-muted text-uppercase fw-bold mb-2">Anggota Kelompok ({{ count($dataMahasiswa) }})</label>
+                                <ul class="list-group list-group-flush small">
+                                    @foreach($dataMahasiswa as $mhs)
+                                        @if(($mhs['nim'] ?? '') !== $nimMahasiswa)
+                                        <li class="list-group-item px-0 bg-transparent">
+                                            <i class="fas fa-user me-2 text-secondary"></i>{{ $mhs['nama'] ?? '' }}
+                                        </li>
+                                        @endif
+                                    @endforeach
+                                </ul>
+                                @endif
+                            </div>
+                        </div>
+
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-header bg-white fw-bold text-primary border-bottom">
+                                <i class="fas fa-briefcase me-2"></i>Detail Magang
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="small text-muted text-uppercase fw-bold">Instansi Tujuan</label>
+                                    <div class="fw-bold text-dark">{{ $surat->Nama_Instansi ?? '-' }}</div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="small text-muted text-uppercase fw-bold">Periode</label>
+                                    <div class="text-dark">
+                                        @if($surat->Tanggal_Mulai && $surat->Tanggal_Selesai)
+                                            {{ \Carbon\Carbon::parse($surat->Tanggal_Mulai)->format('d M Y') }} s/d 
+                                            {{ \Carbon\Carbon::parse($surat->Tanggal_Selesai)->format('d M Y') }}
+                                        @else
+                                            -
+                                        @endif
                                     </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Nama Mahasiswa:</div>
-                                        <div class="col-md-8">{{ $namaMahasiswa }}</div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">NIM:</div>
-                                        <div class="col-md-8">{{ $nimMahasiswa }}</div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Prodi:</div>
-                                        <div class="col-md-8">{{ $mahasiswa?->prodi->Nama_Prodi ?? 'N/A' }}</div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Nama Instansi:</div>
-                                        <div class="col-md-8">{{ $surat->Nama_Instansi ?? '-' }}</div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Periode Magang:</div>
-                                        <div class="col-md-8">
-                                            @if($surat->Tanggal_Mulai && $surat->Tanggal_Selesai)
-                                                {{ \Carbon\Carbon::parse($surat->Tanggal_Mulai)->format('d M Y') }} - 
-                                                {{ \Carbon\Carbon::parse($surat->Tanggal_Selesai)->format('d M Y') }}
-                                            @else
-                                                -
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Koordinator KP:</div>
-                                        <div class="col-md-8">{{ $surat->Nama_Koordinator_KP ?? '-' }}</div>
-                                    </div>
-
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Foto Tanda Tangan:</div>
-                                        <div class="col-md-8">
-                                            @if($surat->Foto_ttd && !empty(trim($surat->Foto_ttd)))
-                                                @php
-                                                    $ttdUrl = asset('storage/' . $surat->Foto_ttd);
-                                                    $ttdFilePath = storage_path('app/public/' . $surat->Foto_ttd);
-                                                    $fileExists = file_exists($ttdFilePath);
-                                                @endphp
-                                                @if($fileExists)
-                                                <div class="mb-2">
-                                                    <img src="{{ $ttdUrl }}" 
-                                                         alt="Tanda Tangan" 
-                                                         style="max-height: 80px; border: 1px solid #ddd; padding: 5px; background: white;"
-                                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-                                                    <div style="display: none; color: red;">
-                                                        <i class="fas fa-exclamation-triangle"></i> Gambar gagal dimuat
-                                                    </div>
-                                                </div>
-                                                <small class="text-muted d-block">✓ File tersedia</small>
-                                                @else
-                                                <div class="alert alert-warning mb-2" style="font-size: 0.875rem;">
-                                                    <i class="fas fa-exclamation-triangle"></i> File tanda tangan tidak ditemukan di server.<br>
-                                                    <small>Path: {{ $surat->Foto_ttd }}</small>
-                                                </div>
-                                                @endif
-                                            @else
-                                                <span class="text-muted">Tidak ada foto tanda tangan</span>
-                                            @endif
-                                        </div>
-                                    </div>
-
-                                    @if($surat->Data_Dosen_pembiming)
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Dosen Pembimbing:</div>
-                                        <div class="col-md-8">
-                                            @php
-                                                $dosenPembimbing = is_array($surat->Data_Dosen_pembiming) 
-                                                    ? $surat->Data_Dosen_pembiming 
-                                                    : json_decode($surat->Data_Dosen_pembiming, true);
-                                            @endphp
-                                            @if($dosenPembimbing)
-                                                @if(isset($dosenPembimbing['dosen_pembimbing_1']))
-                                                    <div>1. {{ $dosenPembimbing['dosen_pembimbing_1'] }}</div>
-                                                @endif
-                                                @if(isset($dosenPembimbing['dosen_pembimbing_2']) && $dosenPembimbing['dosen_pembimbing_2'])
-                                                    <div>2. {{ $dosenPembimbing['dosen_pembimbing_2'] }}</div>
-                                                @endif
-                                            @endif
-                                            <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="togglePreview{{ $surat->id_no }}()">
-                                                <i class="fas fa-file-alt"></i> Form Surat Pengantar
-                                            </button>
-                                        </div>
-                                    </div>
-                                    @endif
-
-                                    {{-- Preview Surat Pengantar (Hidden by default) --}}
-                                    <div id="previewSurat{{ $surat->id_no }}" style="display: none;" class="mt-4">
-                                        <hr>
-                                        <h6 class="text-center mb-3"><i class="fas fa-eye me-1"></i> Preview Surat Pengantar</h6>
-                                        
-                                        <div class="preview-document" style="border: 1px solid #ddd; padding: 20px; background: white; font-family: 'Times New Roman', serif; font-size: 11pt; line-height: 1.6; max-width: 700px; margin: 0 auto;">
-                                            {{-- Header --}}
-                                            <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #000; padding-bottom: 10px;">
-                                                <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM" style="height: 60px; float: left;">
-                                                <div style="margin-left: 70px;">
-                                                    <strong style="display: block; font-size: 11pt;">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</strong>
-                                                    <strong style="display: block; font-size: 12pt;">UNIVERSITAS TRUNOJOYO MADURA</strong>
-                                                    <strong style="display: block; font-size: 13pt;">FAKULTAS TEKNIK</strong>
-                                                    <div style="font-size: 9pt; margin-top: 5px;">
-                                                        Sekretariat: Kampus Unijoyo PO Box 2 Telang Kamal Telp 031 7011147 Fax. 031 7011506
-                                                    </div>
-                                                </div>
-                                                <div style="clear: both;"></div>
-                                            </div>
-
-                                            {{-- Judul --}}
-                                            <p style="text-align: center; font-weight: bold; margin: 20px 0; text-decoration: underline;">FORM PENGAJUAN SURAT PENGANTAR</p>
-
-                                            {{-- Tabel Data --}}
-                                            <table style="width: 100%; margin-bottom: 15px; border-collapse: collapse;">
-                                                <tr>
-                                                    <td style="width: 30%; vertical-align: top; padding: 3px 0;">Nama</td>
-                                                    <td style="width: 5%; vertical-align: top; padding: 3px 0;">:</td>
-                                                    <td style="padding: 3px 0;">
-                                                        @foreach($dataMahasiswa as $idx => $mhs)
-                                                        <div style="margin-bottom: 5px;">
-                                                            <strong>{{ $idx + 1 }}. {{ $mhs['nama'] ?? '' }}</strong><br>
-                                                            <small>NIM: {{ $mhs['nim'] ?? '' }} | Semester: {{ $mhs['semester'] ?? '-' }}</small>
-                                                        </div>
-                                                        @endforeach
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding: 3px 0;">Jurusan</td>
-                                                    <td style="padding: 3px 0;">:</td>
-                                                    <td style="padding: 3px 0;">{{ $mahasiswa?->prodi->Nama_Prodi ?? 'N/A' }}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding: 3px 0;">Dosen Pembimbing</td>
-                                                    <td style="padding: 3px 0;">:</td>
-                                                    <td style="padding: 3px 0;">{{ $dosenPembimbing['dosen_pembimbing_1'] ?? '-' }}</td>
-                                                </tr>
-                                                @if(isset($dosenPembimbing['dosen_pembimbing_2']) && $dosenPembimbing['dosen_pembimbing_2'])
-                                                <tr>
-                                                    <td style="padding: 3px 0;">Dosen Pembimbing 2</td>
-                                                    <td style="padding: 3px 0;">:</td>
-                                                    <td style="padding: 3px 0;">{{ $dosenPembimbing['dosen_pembimbing_2'] }}</td>
-                                                </tr>
-                                                @endif
-                                                <tr>
-                                                    <td style="vertical-align: top; padding: 3px 0;">Surat Pengantar*</td>
-                                                    <td style="vertical-align: top; padding: 3px 0;">:</td>
-                                                    <td style="padding: 3px 0;">
-                                                        1. Pengantar Kerja Praktek<br>
-                                                        2. Pengantar TA<br>
-                                                        3. Pengantar Dosen Pembimbing I TA<br>
-                                                        4. Magang
-                                                    </td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding: 3px 0;">Instansi/Perusahaan</td>
-                                                    <td style="padding: 3px 0;">:</td>
-                                                    <td style="padding: 3px 0;">{{ $surat->Nama_Instansi ?? '-' }}</td>
-                                                </tr>
-                                            </table>
-
-                                            {{-- Bagian Khusus Magang --}}
-                                            <div style="margin-top: 15px;">
-                                                <strong><u>Isian berikut utk pengantar Magang</u></strong>
-                                                <table style="width: 100%; margin-top: 5px; border-collapse: collapse;">
-                                                    <tr>
-                                                        <td style="width: 30%; padding: 3px 0;">Judul Penelitian</td>
-                                                        <td style="width: 5%; padding: 3px 0;">:</td>
-                                                        <td style="padding: 3px 0;">-</td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style="padding: 3px 0;">Jangka waktu penelitian</td>
-                                                        <td style="padding: 3px 0;">:</td>
-                                                        <td style="padding: 3px 0;">
-                                                            @if($surat->Tanggal_Mulai && $surat->Tanggal_Selesai)
-                                                                {{ \Carbon\Carbon::parse($surat->Tanggal_Mulai)->format('d M Y') }} s/d 
-                                                                {{ \Carbon\Carbon::parse($surat->Tanggal_Selesai)->format('d M Y') }}
-                                                            @else
-                                                                -
-                                                            @endif
-                                                        </td>
-                                                    </tr>
-                                                    <tr>
-                                                        <td style="padding: 3px 0;">Identitas Surat Balasan**</td>
-                                                        <td style="padding: 3px 0;">:</td>
-                                                        <td style="padding: 3px 0;"></td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-
-                                            {{-- Tanda Tangan --}}
-                                            <div style="margin-top: 30px;">
-                                                <table style="width: 100%;">
-                                                    <tr>
-                                                        <td style="width: 50%; vertical-align: top;">
-                                                            <p style="margin: 0 0 5px 0;">Menyetujui<br>Koordinator KP/TA</p>
-                                                            <div style="height: 60px;"></div>
-                                                            <p style="margin: 0;">( {{ $surat->koordinator->Nama_Dosen ?? '[Nama Kaprodi]' }} )</p>
-                                                            <p style="margin: 0;">NIP. {{ $surat->koordinator->NIP ?? $kaprodiNIP ?? '...' }}</p>
-                                                        </td>
-                                                        <td style="width: 50%; text-align: center; vertical-align: top;">
-                                                            <p style="margin: 0 0 5px 0;">Bangkalan, {{ \Carbon\Carbon::now()->format('d M Y') }}</p>
-                                                            <p style="margin: 0 0 5px 0;">Pemohon</p>
-                                                            @if($surat->Foto_ttd && !empty(trim($surat->Foto_ttd)))
-                                                                @php
-                                                                    $ttdUrl = asset('storage/' . $surat->Foto_ttd);
-                                                                    $ttdFilePath = storage_path('app/public/' . $surat->Foto_ttd);
-                                                                    $fileExists = file_exists($ttdFilePath);
-                                                                @endphp
-                                                                @if($fileExists)
-                                                                <img src="{{ $ttdUrl }}" 
-                                                                     alt="TTD" 
-                                                                     style="max-height: 60px; max-width: 150px; display: block; margin: 0 auto; background: white;"
-                                                                     onerror="console.error('Failed to load:', this.src);">
-                                                                @else
-                                                                <div style="height: 60px; display: flex; align-items: center; justify-content: center;">
-                                                                    <small style="color: #999; font-size: 8pt;">[File TTD tidak tersedia]</small>
-                                                                </div>
-                                                                @endif
-                                                            @else
-                                                            <div style="height: 60px;"></div>
-                                                            @endif
-                                                            <p style="margin: 0;">( {{ $namaMahasiswa }} )</p>
-                                                            <p style="margin: 5px 0 0 0;">NIM. {{ $nimMahasiswa }}</p>
-                                                        </td>
-                                                    </tr>
-                                                </table>
-                                            </div>
-
-                                            <hr style="border-top: 1px dashed #000; margin-top: 15px;">
-                                            <small style="font-size: 9pt;">
-                                                Cat: *Tulis alamat Instansi/perusahaan yg dituju<br>
-                                                **Diisi untuk permohonan kedua dan seterusnya
-                                            </small>
-                                        </div>
-                                    </div>
-
-                                    @if($surat->Dokumen_Proposal)
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Dokumen Proposal:</div>
-                                        <div class="col-md-8">
-                                            <a href="{{ route('kaprodi.surat.download', $surat->id_no) }}" class="btn btn-sm btn-primary">
-                                                <i class="fas fa-download"></i> Unduh Proposal
-                                            </a>
-                                        </div>
-                                    </div>
-                                    @endif
-
-                                    {{-- Mahasiswa yang ikut (jika lebih dari 1) --}}
-                                    @if(count($dataMahasiswa) > 1)
-                                    <div class="row mb-3">
-                                        <div class="col-md-4 fw-bold">Mahasiswa yang Ikut:</div>
-                                        <div class="col-md-8">
-                                            <ol class="mb-0">
-                                                @foreach($dataMahasiswa as $mhs)
-                                                <li>{{ $mhs['nama'] ?? '' }} ({{ $mhs['nim'] ?? '' }}) - Semester {{ $mhs['semester'] ?? '' }}</li>
-                                                @endforeach
-                                            </ol>
-                                        </div>
-                                    </div>
+                                </div>
+                                <div class="mb-0">
+                                    <label class="small text-muted text-uppercase fw-bold">Dosen Pembimbing</label>
+                                    <div class="text-dark">{{ $dosenPembimbing['dosen_pembimbing_1'] ?? '-' }}</div>
+                                    @if(isset($dosenPembimbing['dosen_pembimbing_2']) && $dosenPembimbing['dosen_pembimbing_2'])
+                                        <div class="text-dark mt-1">{{ $dosenPembimbing['dosen_pembimbing_2'] }}</div>
                                     @endif
                                 </div>
-                                <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                                    @if(!$surat->Acc_Koordinator)
-                                    <button type="button" class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $surat->id_no }}" data-bs-dismiss="modal">
-                                        <i class="fas fa-times"></i> Tolak
-                                    </button>
-                                    <form action="{{ route('kaprodi.surat.approve', $surat->id_no) }}" method="POST" class="d-inline">
+                            </div>
+                        </div>
+                        
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="fw-bold mb-3">Keputusan Anda</h6>
+                                <div class="d-grid gap-2">
+                                    <form action="{{ route('kaprodi.surat.approve', $surat->id_no) }}" method="POST">
                                         @csrf
-                                        <button type="submit" class="btn btn-success" onclick="return confirm('Apakah Anda yakin ingin menyetujui surat ini?')">
-                                            <i class="fas fa-check"></i> Setujui
+                                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold" onclick="return confirm('Setujui surat ini? QR Code akan digenerate otomatis.')">
+                                            <i class="fas fa-check-circle me-2"></i>SETUJUI & TTD
                                         </button>
                                     </form>
-                                    @else
-                                    <span class="badge bg-success">Surat ini sudah disetujui</span>
-                                    @endif
+                                    <button type="button" class="btn btn-outline-danger w-100 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $surat->id_no }}" data-bs-dismiss="modal">
+                                        <i class="fas fa-times-circle me-2"></i>TOLAK
+                                    </button>
+                                </div>
+                                <div class="alert alert-info mt-3 mb-0 small">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Menyetujui akan membubuhkan Tanda Tangan Digital (QR Code) pada surat.
                                 </div>
                             </div>
                         </div>
                     </div>
 
-{{-- Modal Tolak dengan Komentar --}}
-<div class="modal fade" id="rejectModal{{ $surat->id_no }}" tabindex="-1" aria-labelledby="rejectModalLabel{{ $surat->id_no }}" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
+                    <!-- Kolom Kanan: Preview Dokumen -->
+                    <div class="col-lg-8">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-header bg-white border-bottom">
+                                <ul class="nav nav-tabs card-header-tabs" id="previewTab{{ $surat->id_no }}" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active fw-bold" id="surat-tab{{ $surat->id_no }}" data-bs-toggle="tab" data-bs-target="#surat-preview{{ $surat->id_no }}" type="button" role="tab">
+                                            <i class="fas fa-file-alt me-2"></i>Draft Surat Pengantar
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link fw-bold" id="proposal-tab{{ $surat->id_no }}" data-bs-toggle="tab" data-bs-target="#proposal-preview{{ $surat->id_no }}" type="button" role="tab">
+                                            <i class="fas fa-file-pdf me-2"></i>Proposal Magang
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                            <div class="card-body p-0 bg-secondary bg-opacity-10">
+                                <div class="tab-content h-100" id="previewTabContent{{ $surat->id_no }}">
+                                    <!-- Tab 1: Preview Surat Pengantar -->
+                                    <div class="tab-pane fade show active h-100 p-4 overflow-auto" id="surat-preview{{ $surat->id_no }}" role="tabpanel">
+                                        <div class="paper-preview mx-auto shadow-sm">
+                                            {{-- Header Surat --}}
+                                            <div class="text-center mb-4 border-bottom border-dark pb-3">
+                                                <div class="d-flex align-items-center justify-content-center mb-2">
+                                                    <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo" style="height: 80px;" class="me-3">
+                                                    <div class="text-center">
+                                                        <h6 class="mb-0 fw-bold">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h6>
+                                                        <h5 class="mb-0 fw-bold">UNIVERSITAS TRUNOJOYO MADURA</h5>
+                                                        <h4 class="mb-0 fw-bold">FAKULTAS TEKNIK</h4>
+                                                        <small class="d-block">Sekretariat: Kampus Unijoyo PO Box 2 Telang Kamal Telp 031 7011147 Fax. 031 7011506</small>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <h5 class="text-center fw-bold text-decoration-underline mb-4">FORM PENGAJUAN SURAT PENGANTAR</h5>
+
+                                            <table class="table table-borderless table-sm mb-4">
+                                                <tr>
+                                                    <td width="30%">Nama</td>
+                                                    <td width="2%">:</td>
+                                                    <td>
+                                                        @foreach($dataMahasiswa as $idx => $mhs)
+                                                            <div class="mb-1">
+                                                                <strong>{{ $idx + 1 }}. {{ $mhs['nama'] ?? '' }}</strong> 
+                                                                (NIM: {{ $mhs['nim'] ?? '' }})
+                                                            </div>
+                                                        @endforeach
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Jurusan</td>
+                                                    <td>:</td>
+                                                    <td>{{ $mahasiswa?->prodi->Nama_Prodi ?? 'N/A' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Dosen Pembimbing</td>
+                                                    <td>:</td>
+                                                    <td>{{ $dosenPembimbing['dosen_pembimbing_1'] ?? '-' }}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Instansi Tujuan</td>
+                                                    <td>:</td>
+                                                    <td><strong>{{ $surat->Nama_Instansi ?? '-' }}</strong></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>Periode Magang</td>
+                                                    <td>:</td>
+                                                    <td>
+                                                        @if($surat->Tanggal_Mulai && $surat->Tanggal_Selesai)
+                                                            {{ \Carbon\Carbon::parse($surat->Tanggal_Mulai)->format('d M Y') }} s/d 
+                                                            {{ \Carbon\Carbon::parse($surat->Tanggal_Selesai)->format('d M Y') }}
+                                                        @else
+                                                            -
+                                                        @endif
+                                                    </td>
+                                                </tr>
+                                            </table>
+
+                                            <div class="row mt-5">
+                                                <div class="col-6 text-center">
+                                                    <p class="mb-5">Menyetujui,<br>Koordinator KP/TA</p>
+                                                    <div class="border rounded p-2 d-inline-block bg-light text-muted mb-2" style="border-style: dashed !important;">
+                                                        <small>QR Code akan muncul disini<br>setelah disetujui</small>
+                                                    </div>
+                                                    <p class="fw-bold mb-0">{{ $surat->koordinator->Nama_Dosen ?? '[Nama Kaprodi]' }}</p>
+                                                    <p class="small">NIP. {{ $surat->koordinator->NIP ?? $kaprodiNIP ?? '...' }}</p>
+                                                </div>
+                                                <div class="col-6 text-center">
+                                                    <p class="mb-5">Bangkalan, {{ \Carbon\Carbon::now()->format('d M Y') }}<br>Pemohon</p>
+                                                    @if($surat->Foto_ttd)
+                                                        <img src="{{ asset('storage/' . $surat->Foto_ttd) }}" height="60" class="mb-2">
+                                                    @else
+                                                        <div class="mb-5"></div>
+                                                    @endif
+                                                    <p class="fw-bold mb-0">{{ $namaMahasiswa }}</p>
+                                                    <p class="small">NIM. {{ $nimMahasiswa }}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Tab 2: Preview Proposal -->
+                                    <div class="tab-pane fade h-100" id="proposal-preview{{ $surat->id_no }}" role="tabpanel">
+                                        @if($surat->Dokumen_Proposal)
+                                            <iframe src="{{ asset('storage/' . $surat->Dokumen_Proposal) }}" width="100%" height="600px" class="border-0">
+                                                <div class="alert alert-warning m-3">
+                                                    Browser Anda tidak mendukung preview PDF. 
+                                                    <a href="{{ asset('storage/' . $surat->Dokumen_Proposal) }}" class="btn btn-primary btn-sm" target="_blank">Download Proposal</a>
+                                                </div>
+                                            </iframe>
+                                        @else
+                                            <div class="d-flex flex-column align-items-center justify-content-center h-100 text-muted">
+                                                <i class="fas fa-file-excel fa-4x mb-3"></i>
+                                                <h5>Proposal Tidak Ditemukan</h5>
+                                            </div>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tolak -->
+<div class="modal fade" id="rejectModal{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
             <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="rejectModalLabel{{ $surat->id_no }}">
-                    <i class="fas fa-times-circle me-2"></i>Tolak Surat Pengantar Magang
-                </h5>
+                <h5 class="modal-title fw-bold"><i class="fas fa-times-circle me-2"></i>Tolak Pengajuan</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ route('kaprodi.surat.reject', $surat->id_no) }}" method="POST">
                 @csrf
                 <div class="modal-body">
-                    <div class="alert alert-warning">
-                        <i class="fas fa-exclamation-triangle me-2"></i>
-                        <strong>Perhatian!</strong> Anda akan menolak surat dari <strong>{{ $namaMahasiswa }}</strong> untuk magang di <strong>{{ $surat->Nama_Instansi }}</strong>.
-                    </div>
-                    
+                    <p>Anda akan menolak pengajuan surat dari <strong>{{ $namaMahasiswa }}</strong>.</p>
                     <div class="mb-3">
-                        <label for="komentar{{ $surat->id_no }}" class="form-label fw-bold">
-                            Alasan Penolakan <span class="text-danger">*</span>
-                        </label>
-                        <textarea 
-                            class="form-control @error('komentar') is-invalid @enderror" 
-                            id="komentar{{ $surat->id_no }}" 
-                            name="komentar" 
-                            rows="5" 
-                            placeholder="Jelaskan alasan penolakan surat ini (minimal 10 karakter)..."
-                            required
-                            minlength="10"
-                            maxlength="1000"></textarea>
-                        @error('komentar')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        <small class="form-text text-muted">
-                            Komentar ini akan dilihat oleh mahasiswa untuk perbaikan surat.
-                        </small>
+                        <label class="form-label fw-bold">Alasan Penolakan <span class="text-danger">*</span></label>
+                        <textarea class="form-control" name="komentar" rows="4" placeholder="Contoh: Proposal kurang lengkap, format salah, dll..." required minlength="10"></textarea>
+                        <div class="form-text">Alasan ini akan dikirimkan kepada mahasiswa.</div>
                     </div>
                 </div>
-                <div class="modal-footer">
+                <div class="modal-footer bg-light">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-times me-2"></i>Tolak Surat
-                    </button>
+                    <button type="submit" class="btn btn-danger fw-bold">Tolak Pengajuan</button>
                 </div>
             </form>
         </div>
     </div>
 </div>
-
-                    <script>
-                    function togglePreview{{ $surat->id_no }}() {
-                        var preview = document.getElementById('previewSurat{{ $surat->id_no }}');
-                        if (preview.style.display === 'none') {
-                            preview.style.display = 'block';
-                        } else {
-                            preview.style.display = 'none';
-                        }
-                    }
-                    </script>
 @endforeach
 
+<style>
+    .paper-preview {
+        background: white;
+        width: 100%;
+        max-width: 210mm;
+        min-height: 297mm;
+        padding: 20mm;
+        margin: 0 auto;
+        border: 1px solid #d3d3d3;
+        font-family: 'Times New Roman', Times, serif;
+    }
+    .nav-tabs .nav-link {
+        color: #6c757d;
+        border: none;
+        border-bottom: 3px solid transparent;
+    }
+    .nav-tabs .nav-link.active {
+        color: #0d6efd;
+        border-bottom: 3px solid #0d6efd;
+        background: transparent;
+    }
+    .nav-tabs .nav-link:hover {
+        border-color: transparent;
+        color: #0d6efd;
+    }
+</style>
 @endsection

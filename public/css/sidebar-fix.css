@@ -171,7 +171,8 @@ aside hr {
     margin: 1rem 0;
 }
 
-/* Responsive Design */
+/* Responsive Design - REMOVED to allow layout-specific handling */
+/* 
 @media (max-width: 768px) {
     aside.bg-dark {
         width: 70px !important;
@@ -211,7 +212,8 @@ aside hr {
         padding: 0.15rem 0.3rem;
         font-size: 0.6rem;
     }
-}
+} 
+*/
 
 /* Smooth Transitions */
 * {

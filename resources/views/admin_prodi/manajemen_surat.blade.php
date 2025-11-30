@@ -4,8 +4,11 @@
 
 @section('content')
 <div class="container-fluid px-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 text-gray-800">Manajemen Surat Fakultas</h1>
+    <div class="d-flex justify-content-between align-items-center my-4">
+        <div>
+            <h1 class="h3 fw-bold text-gray-800">Manajemen Surat</h1>
+            <p class="text-muted mb-0">Proses surat yang telah disetujui Kaprodi dan tambahkan nomor surat.</p>
+        </div>
         <nav aria-label="breadcrumb">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="{{ route('dashboard.admin_prodi') }}">Dashboard</a></li>
@@ -16,335 +19,202 @@
 
     {{-- Flash Messages --}}
     @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show shadow-sm border-start border-success border-4" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fa fa-check-circle text-success me-2 fa-lg"></i>
-                <div>{{ session('success') }}</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
 
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show shadow-sm border-start border-danger border-4" role="alert">
-            <div class="d-flex align-items-center">
-                <i class="fa fa-exclamation-circle text-danger me-2 fa-lg"></i>
-                <div>{{ session('error') }}</div>
-            </div>
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
+    {{-- KP/Magang Tabs --}}
+    <ul class="nav nav-tabs" id="magangTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="magang-pending-tab" data-bs-toggle="tab" data-bs-target="#magang-pending" type="button" role="tab" aria-controls="magang-pending" aria-selected="true">
+                Perlu Nomor (KP/Magang)
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="magang-semua-tab" data-bs-toggle="tab" data-bs-target="#magang-semua" type="button" role="tab" aria-controls="magang-semua" aria-selected="false">
+                Semua (Belum Selesai)
+            </button>
+        </li>
+    </ul>
 
-    <div class="card shadow-sm border-0 mb-4">
-        <div class="card-header bg-white py-3 border-bottom">
-            <ul class="nav nav-pills card-header-pills" id="suratTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active fw-bold" id="pending-tab" data-bs-toggle="tab" data-bs-target="#pending" type="button" role="tab">
-                        <i class="fa fa-clock me-2"></i>Perlu Diproses 
-                        @if($suratPending->count() > 0)
-                            <span class="badge bg-danger rounded-pill ms-2">{{ $suratPending->count() }}</span>
-                        @endif
-                    </button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link fw-bold" id="semua-tab" data-bs-toggle="tab" data-bs-target="#semua" type="button" role="tab">
-                        <i class="fa fa-folder-open me-2"></i>Semua Surat Aktif
-                    </button>
-                </li>
-            </ul>
-        </div>
-        
-        <div class="card-body p-0">
-            <div class="tab-content" id="suratTabsContent">
-                
-                {{-- TAB 1: SURAT PENDING --}}
-                <div class="tab-pane fade show active" id="pending" role="tabpanel">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" width="100%" cellspacing="0">
-                            <thead class="bg-light text-secondary text-uppercase small fw-bold">
-                                <tr>
-                                    <th class="px-4 py-3" width="5%">No</th>
-                                    <th class="py-3" width="15%">Tgl. Masuk</th>
-                                    <th class="py-3" width="25%">Pengaju</th>
-                                    <th class="py-3" width="25%">Jenis Surat</th>
-                                    <th class="py-3 text-center" width="15%">Status</th>
-                                    <th class="py-3 text-center" width="15%">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($suratPending as $index => $tugas)
-                                    @php
-                                        $pengaju = $tugas->pemberiTugas;
-                                        $mahasiswa = optional($pengaju)->mahasiswa;
-                                        $status = trim($tugas->Status ?? '');
-                                    @endphp
-                                    <tr>
-                                        <td class="px-4 text-center text-muted">{{ $index + 1 }}</td>
-                                        <td>
-                                            <div class="d-flex align-items-center">
-                                                <i class="far fa-calendar-alt text-muted me-2"></i>
-                                                {{ $tugas->Tanggal_Diberikan_Tugas_Surat ? $tugas->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <div class="fw-bold text-dark">{{ $pengaju?->Name_User ?? 'User Dihapus' }}</div>
-                                            <div class="small text-muted">
-                                                @if($mahasiswa) NIM: {{ $mahasiswa->NIM }} @endif
-                                                ({{ $pengaju?->role?->Name_Role ?? 'N/A' }})
-                                            </div>
-                                        </td>
-                                        <td>
-                                            <span class="text-primary fw-medium">{{ optional($tugas->jenisSurat)->Nama_Surat ?? 'N/A' }}</span>
-                                        </td>
-                                        <td class="text-center">
-                                            <span class="badge rounded-pill bg-warning text-dark border border-warning">
-                                                <i class="fa fa-hourglass-half me-1"></i> {{ $tugas->Status }}
-                                            </span>
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="btn-group" role="group">
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-outline-info" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#previewModal{{ $tugas->Id_Tugas_Surat }}"
-                                                        title="Preview Dokumen">
-                                                    <i class="fa fa-eye"></i>
-                                                </button>
-                                                <a href="{{ route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat) }}" 
-                                                   class="btn btn-sm btn-primary" 
-                                                   title="Proses & Verifikasi">
-                                                    Proses <i class="fa fa-arrow-right ms-1"></i>
-                                                </a>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center py-5">
-                                            <div class="text-muted">
-                                                <i class="fa fa-check-circle fa-3x mb-3 text-success opacity-50"></i>
-                                                <p class="mb-0 fw-medium">Tidak ada surat yang menunggu verifikasi.</p>
-                                                <small>Semua pengajuan baru telah diproses.</small>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                {{-- TAB 2: SEMUA SURAT AKTIF --}}
-                <div class="tab-pane fade" id="semua" role="tabpanel">
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" width="100%" cellspacing="0">
-                            <thead class="bg-light text-secondary text-uppercase small fw-bold">
-                                <tr>
-                                    <th class="px-4 py-3" width="5%">No</th>
-                                    <th class="py-3" width="12%">Tgl. Masuk</th>
-                                    <th class="py-3" width="20%">Pengaju</th>
-                                    <th class="py-3" width="20%">Jenis Surat</th>
-                                    <th class="py-3 text-center" width="15%">Status</th>
-                                    <th class="py-3" width="18%">Penerima Saat Ini</th>
-                                    <th class="py-3 text-center" width="10%">Aksi</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($daftarTugas as $index => $tugas)
-                                    @php
-                                        $status = trim($tugas->Status ?? '');
-                                        $pengaju = $tugas->pemberiTugas;
-                                        $penerima = $tugas->penerimaTugas;
-                                        
-                                        // Status Badge Logic
-                                        $badgeClass = 'bg-secondary';
-                                        $icon = 'fa-circle';
-                                        
-                                        if(in_array(strtolower($status), ['selesai', 'telah ditandatangani dekan'])) {
-                                            $badgeClass = 'bg-success';
-                                            $icon = 'fa-check-circle';
-                                        } elseif(in_array(strtolower($status), ['ditolak', 'terlambat'])) {
-                                            $badgeClass = 'bg-danger';
-                                            $icon = 'fa-times-circle';
-                                        } elseif(strtolower($status) === 'menunggu-ttd') {
-                                            $badgeClass = 'bg-info text-dark';
-                                            $icon = 'fa-pen-nib';
-                                        } elseif(in_array(strtolower($status), ['diterima admin', 'baru'])) {
-                                            $badgeClass = 'bg-warning text-dark';
-                                            $icon = 'fa-clock';
-                                        } elseif(strtolower($status) === 'proses') {
-                                            $badgeClass = 'bg-primary';
-                                            $icon = 'fa-spinner fa-spin';
-                                        }
-                                    @endphp
-                                    <tr>
-                                        <td class="px-4 text-center text-muted">{{ $index + 1 }}</td>
-                                        <td>{{ $tugas->Tanggal_Diberikan_Tugas_Surat ? $tugas->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}</td>
-                                        <td>
-                                            <div class="fw-bold text-dark">{{ $pengaju?->Name_User ?? 'User Dihapus' }}</div>
-                                            <div class="small text-muted">({{ $pengaju?->role?->Name_Role ?? 'N/A' }})</div>
-                                        </td>
-                                        <td>{{ optional($tugas->jenisSurat)->Nama_Surat ?? 'N/A' }}</td>
-                                        <td class="text-center">
-                                            <span class="badge rounded-pill {{ $badgeClass }}">
-                                                <i class="fa {{ $icon }} me-1"></i> 
-                                                @if(strtolower($status) === 'menunggu-ttd')
-                                                    Menunggu TTE
-                                                @else
-                                                    {{ $tugas->Status }}
-                                                @endif
-                                            </span>
-                                        </td>
-                                        <td>
-                                            @if($penerima)
-                                                <div class="d-flex align-items-center">
-                                                    <div class="avatar-sm bg-light rounded-circle me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
-                                                        <i class="fa fa-user text-secondary small"></i>
-                                                    </div>
-                                                    <div>
-                                                        <div class="small fw-bold">{{ $penerima->Name_User }}</div>
-                                                        <div class="small text-muted" style="font-size: 0.75rem;">{{ optional($penerima->role)->Name_Role }}</div>
-                                                    </div>
+    <div class="tab-content border border-top-0 p-3 bg-white shadow-sm rounded-bottom" id="magangTabsContent">
+        {{-- Tab: Perlu Nomor --}}
+        <div class="tab-pane fade show active" id="magang-pending" role="tabpanel" aria-labelledby="magang-pending-tab">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-secondary text-uppercase small fw-bold">
+                        <tr>
+                            <th class="px-4 py-3">Mahasiswa</th>
+                            <th class="py-3">Instansi</th>
+                            <th class="py-3">Tanggal Pengajuan</th>
+                            <th class="py-3 text-center">Status</th>
+                            <th class="py-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($suratMagangPending as $surat)
+                            @php
+                                $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
+                                $tugas = $surat->tugasSurat;
+                                $statusTugas = strtolower(trim($tugas->Status ?? ''));
+                                $nomor = $tugas->Nomor_Surat ?? null;
+                                $statusUi = $statusTugas;
+                                if($nomor && $statusTugas === 'dikerjakan-admin') { $statusUi = 'menunggu-ttd'; }
+                            @endphp
+                            <tr>
+                                <td class="px-4">
+                                    <div class="fw-bold text-dark">{{ $mahasiswa?->Nama_Mahasiswa ?? 'N/A' }}</div>
+                                    <div class="small text-muted">NIM: {{ $mahasiswa?->NIM ?? 'N/A' }}</div>
+                                </td>
+                                <td>{{ $surat->Nama_Instansi ?? '-' }}</td>
+                                <td>{{ $tugas->Tanggal_Diberikan_Tugas_Surat?->format('d M Y') ?? '-' }}</td>
+                                <td class="text-center">
+                                    @if($statusUi === 'dikerjakan-admin')
+                                        <span class="badge bg-warning text-dark">Perlu Nomor</span>
+                                    @elseif($statusUi === 'menunggu-ttd')
+                                        <span class="badge bg-info text-white">Menunggu TTD Dekan</span>
+                                    @else
+                                        <span class="badge bg-secondary text-white">{{ $tugas->Status ?? '-' }}</span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('admin_prodi.surat.preview_magang', $surat->id_no) }}" target="_blank" rel="noopener" class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-eye me-1"></i> Preview
+                                        </a>
+                                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#nomorMagangModal{{ $tugas->Id_Tugas_Surat }}">
+                                            <i class="fas fa-plus-circle me-1"></i> Tambah Nomor
+                                        </button>
+                                    </div>
+                                    {{-- Modal Tambah Nomor Surat --}}
+                                    <div class="modal fade" id="nomorMagangModal{{ $tugas->Id_Tugas_Surat }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header bg-success text-white">
+                                                    <h5 class="modal-title fw-bold">Tambah Nomor Surat KP/Magang</h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                                 </div>
-                                            @else
-                                                <span class="text-muted">-</span>
-                                            @endif
-                                        </td>
-                                        <td class="text-center">
-                                            <div class="btn-group">
-                                                <button type="button" 
-                                                        class="btn btn-sm btn-outline-secondary" 
-                                                        data-bs-toggle="modal" 
-                                                        data-bs-target="#previewModalAll{{ $tugas->Id_Tugas_Surat }}"
-                                                        title="Preview">
-                                                    <i class="fa fa-file-pdf"></i>
-                                                </button>
-                                                <a href="{{ route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat) }}" 
-                                                   class="btn btn-sm btn-outline-primary" 
-                                                   title="Detail">
-                                                    <i class="fa fa-info-circle"></i>
-                                                </a>
+                                                <form action="{{ route('admin_prodi.surat.add_nomor', $tugas->Id_Tugas_Surat) }}" method="POST">
+                                                    @csrf
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">Mahasiswa</label>
+                                                            <input type="text" class="form-control" value="{{ $mahasiswa?->Nama_Mahasiswa }}" readonly>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label fw-bold">Nomor Surat <span class="text-danger">*</span></label>
+                                                            <input type="text" class="form-control" name="nomor_surat" placeholder="Contoh: 456/UN46.FT/KM/2025" required>
+                                                            <div class="form-text">Format: [No]/UN46.FT/KM/[Tahun]</div>
+                                                        </div>
+                                                        <div class="alert alert-info mb-0">
+                                                            <i class="fas fa-info-circle me-2"></i>
+                                                            Setelah nomor disimpan: Mahasiswa akan mendapat notifikasi dan surat diteruskan ke Dekan untuk tanda tangan.
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer bg-light">
+                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                                                        <button type="submit" class="btn btn-success fw-bold">
+                                                            <i class="fas fa-check me-2"></i>Simpan & Teruskan ke Mahasiswa
+                                                        </button>
+                                                    </div>
+                                                </form>
                                             </div>
-                                        </td>
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="7" class="text-center py-5 text-muted">
-                                            <i class="fa fa-inbox fa-3x mb-3 opacity-50"></i>
-                                            <p>Tidak ada data surat aktif.</p>
-                                        </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                    <p>Tidak ada surat KP/Magang yang perlu diberi nomor.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {{-- Tab: Semua (Belum Selesai) --}}
+        <div class="tab-pane fade" id="magang-semua" role="tabpanel" aria-labelledby="magang-semua-tab">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="bg-light text-secondary text-uppercase small fw-bold">
+                        <tr>
+                            <th class="px-4 py-3">Mahasiswa</th>
+                            <th class="py-3">Instansi</th>
+                            <th class="py-3">Nomor Surat</th>
+                            <th class="py-3" style="width: 160px;">Status</th>
+                            <th class="py-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($suratMagangSemua as $surat)
+                            @php
+                                $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
+                                $tugas = $surat->tugasSurat;
+                                $statusTugas = strtolower(trim($tugas->Status ?? ''));
+                                $nomor = $tugas->Nomor_Surat ?? null;
+                                $statusUi = $statusTugas;
+                                if($nomor && $statusTugas === 'dikerjakan-admin') { $statusUi = 'menunggu-ttd'; }
+                            @endphp
+                            <tr>
+                                <td class="px-4">
+                                    <div class="fw-bold text-dark">{{ $mahasiswa?->Nama_Mahasiswa ?? 'N/A' }}</div>
+                                    <div class="small text-muted">NIM: {{ $mahasiswa?->NIM ?? 'N/A' }}</div>
+                                </td>
+                                <td>{{ $surat->Nama_Instansi ?? '-' }}</td>
+                                <td>
+                                    <span class="badge bg-light text-dark border">{{ $nomor ?? 'Belum ada nomor' }}</span>
+                                </td>
+                                <td>
+                                    @if($statusUi === 'dikerjakan-admin')
+                                        <span class="badge bg-warning text-dark">Perlu Nomor</span>
+                                    @elseif($statusUi === 'menunggu-ttd')
+                                        <span class="badge bg-info text-white">Menunggu TTD Dekan</span>
+                                    @else
+                                        <span class="badge bg-secondary text-white">{{ $tugas->Status ?? '-' }}</span>
+                                    @endif
+                                </td>
+                                <td class="text-center">
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ route('admin_prodi.surat.preview_magang', $surat->id_no) }}" target="_blank" rel="noopener" class="btn btn-outline-info btn-sm">
+                                            <i class="fas fa-eye me-1"></i> Preview
+                                        </a>
+                                        @if(!$nomor)
+                                        <button type="button" class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#nomorMagangModal{{ $tugas->Id_Tugas_Surat }}">
+                                            <i class="fas fa-plus-circle me-1"></i> Tambah Nomor
+                                        </button>
+                                        @endif
+                                    </div>
+                                </td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="5" class="text-center py-5 text-muted">
+                                    <p>Tidak ada surat KP/Magang.</p>
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
 
-    {{-- MODALS (Keep logic but improve design) --}}
-    @foreach($daftarTugas as $tugas)
-        <div class="modal fade" id="previewModal{{ $tugas->Id_Tugas_Surat }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg">
-                    <div class="modal-header bg-primary text-white">
-                        <h5 class="modal-title">
-                            <i class="fa fa-file-pdf me-2"></i>Preview Dokumen
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body p-0 bg-light" style="height: 80vh;">
-                        <div class="p-3 bg-white border-bottom shadow-sm">
-                            <div class="row g-3">
-                                <div class="col-md-4">
-                                    <label class="small text-muted text-uppercase fw-bold">Pengaju</label>
-                                    <div class="fw-bold">{{ optional($tugas->pemberiTugas)->Name_User ?? '-' }}</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="small text-muted text-uppercase fw-bold">Jenis Surat</label>
-                                    <div>{{ optional($tugas->jenisSurat)->Nama_Surat ?? '-' }}</div>
-                                </div>
-                                <div class="col-md-4">
-                                    <label class="small text-muted text-uppercase fw-bold">Tanggal</label>
-                                    <div>{{ $tugas->Tanggal_Diberikan_Tugas_Surat ? $tugas->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}</div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <iframe 
-                            src="{{ route('admin_prodi.surat.preview', $tugas->Id_Tugas_Surat) }}" 
-                            width="100%" 
-                            height="100%" 
-                            style="border: none;"
-                            class="bg-secondary">
-                        </iframe>
-                    </div>
-                    <div class="modal-footer bg-white">
-                        <a href="{{ route('admin_prodi.surat.download', $tugas->Id_Tugas_Surat) }}" 
-                           class="btn btn-outline-secondary" target="_blank">
-                            <i class="fa fa-download me-1"></i> Download PDF
-                        </a>
-                        <a href="{{ route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat) }}" class="btn btn-primary px-4">
-                            Proses Surat <i class="fa fa-arrow-right ms-2"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        {{-- Duplicate modal ID for "All" tab to avoid ID conflicts if needed, or just use same ID --}}
-        {{-- Actually, in the loop above I used previewModal{{id}} for pending and previewModalAll{{id}} for all. --}}
-        {{-- Let's create the second one --}}
-        <div class="modal fade" id="previewModalAll{{ $tugas->Id_Tugas_Surat }}" tabindex="-1" aria-hidden="true">
-            <div class="modal-dialog modal-xl modal-dialog-centered">
-                <div class="modal-content border-0 shadow-lg">
-                    <div class="modal-header bg-dark text-white">
-                        <h5 class="modal-title">
-                            <i class="fa fa-file-pdf me-2"></i>Preview Dokumen
-                        </h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body p-0 bg-light" style="height: 80vh;">
-                        <iframe 
-                            src="{{ route('admin_prodi.surat.preview', $tugas->Id_Tugas_Surat) }}" 
-                            width="100%" 
-                            height="100%" 
-                            style="border: none;"
-                            class="bg-secondary">
-                        </iframe>
-                    </div>
-                    <div class="modal-footer bg-white">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-                        <a href="{{ route('admin_prodi.surat.detail', $tugas->Id_Tugas_Surat) }}" class="btn btn-info text-white">
-                            <i class="fa fa-info-circle me-1"></i> Lihat Detail
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    @endforeach
-
-</div>
-
 <style>
-    .nav-pills .nav-link {
-        color: #6c757d;
-        border-radius: 0.5rem;
-        padding: 0.75rem 1.25rem;
-        transition: all 0.2s;
-    }
-    .nav-pills .nav-link:hover {
-        background-color: #f8f9fa;
-        color: #212529;
-    }
-    .nav-pills .nav-link.active {
-        background-color: #0d6efd;
-        color: white;
-        box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
-    }
-    .table-hover tbody tr:hover {
-        background-color: rgba(0,0,0,.02);
+    .paper-preview {
+        background: white;
+        width: 100%;
+        max-width: 210mm;
+        min-height: 297mm;
+        padding: 20mm;
+        margin: 0 auto;
+        border: 1px solid #d3d3d3;
+        font-family: 'Times New Roman', Times, serif;
     }
 </style>
 @endsection

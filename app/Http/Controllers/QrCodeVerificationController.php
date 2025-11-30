@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\SuratMagang;
+use App\Models\SuratVerification;
 use Illuminate\Http\Request;
 
 class QrCodeVerificationController extends Controller
@@ -43,6 +44,27 @@ class QrCodeVerificationController extends Controller
             'dataDosenPembimbing' => $dataDosenPembimbing,
             'koordinatorName' => $surat->koordinator->Nama_Dosen ?? 'N/A',
             'koordinatorNIP' => $surat->koordinator->NIP ?? 'N/A'
+        ]);
+    }
+
+    /**
+     * Verifikasi surat berdasarkan token
+     */
+    public function verifyByToken($token)
+    {
+        $verification = SuratVerification::with([
+            'tugasSurat.jenisSurat',
+            'tugasSurat.pemberiTugas.mahasiswa.prodi',
+            'penandatangan'
+        ])->where('token', $token)->first();
+
+        if (!$verification) {
+            abort(404, 'Verifikasi surat tidak ditemukan. Pastikan QR Code valid.');
+        }
+
+        return view('public.surat_verification', [
+            'verification' => $verification,
+            'surat' => $verification->tugasSurat
         ]);
     }
 }

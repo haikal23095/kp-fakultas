@@ -7,12 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SuratMagang;
 use App\Models\TugasSurat;
-use Endroid\QrCode\Color\Color;
-use Endroid\QrCode\QrCode;
-use Endroid\QrCode\Writer\PngWriter;
-use Endroid\QrCode\Encoding\Encoding;
-use Endroid\QrCode\ErrorCorrectionLevel;
-use Endroid\QrCode\RoundBlockSizeMode;
+use App\Helpers\QrCodeHelper;
 use Illuminate\Support\Facades\Storage;
 
 class PermintaanSuratController extends Controller
@@ -75,27 +70,16 @@ class PermintaanSuratController extends Controller
         $kaprodiPegawai = $user->pegawai;
         $namaKoordinator = $kaprodiDosen?->Nama_Dosen ?? $kaprodiPegawai?->Nama_Pegawai ?? 'Koordinator';
 
-        // Generate QR Code
-        $verificationUrl = route('surat.verify', $suratMagang->id_no);
+        // Generate QR Code menggunakan Python Helper (sama seperti Dekan)
+        // Gunakan route surat.verify.id karena kita pakai id_no langsung
+        $verificationUrl = route('surat.verify.id', $suratMagang->id_no);
 
-        $qrCode = new QrCode(
-            data: $verificationUrl,
-            encoding: new Encoding('UTF-8'),
-            errorCorrectionLevel: ErrorCorrectionLevel::High,
-            size: 300,
-            margin: 10,
-            roundBlockSizeMode: RoundBlockSizeMode::Margin,
-            foregroundColor: new Color(0, 0, 0),
-            backgroundColor: new Color(255, 255, 255)
-        );
+        // Generate QR Code dengan box_size 10 (ukuran optimal ~150x150px)
+        $qrCodePath = QrCodeHelper::generateAndGetPath($verificationUrl, 10);
 
-        $writer = new PngWriter();
-        $result = $writer->write($qrCode);
-
-        // Save QR Code image
-        $qrCodeFileName = 'qr_code_' . $suratMagang->id_no . '_' . time() . '.png';
-        $qrCodePath = 'qr_codes/' . $qrCodeFileName;
-        Storage::disk('public')->put($qrCodePath, $result->getString());
+        if (!$qrCodePath) {
+            return redirect()->back()->with('error', 'Gagal membuat QR Code. Silakan coba lagi.');
+        }
 
         // Update Acc_Koordinator menjadi true dan simpan QR Code path
         $suratMagang->Acc_Koordinator = true;
