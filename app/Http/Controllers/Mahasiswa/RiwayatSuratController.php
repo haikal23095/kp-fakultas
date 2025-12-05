@@ -7,28 +7,77 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\TugasSurat;
 use App\Models\SuratVerification;
+use App\Models\SuratKetAktif;
+use App\Models\SuratMagang;
 
 class RiwayatSuratController extends Controller
 {
     /**
-     * Tampilkan riwayat surat mahasiswa
+     * Tampilkan pilihan jenis surat
      */
     public function index()
     {
         $user = Auth::user();
 
-        // Query semua surat mahasiswa dengan relasi
+        // Hitung jumlah surat per jenis
+        $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 3) // ID untuk Surat Keterangan Aktif
+            ->count();
+
+        $countMagang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 13) // ID untuk Surat Pengantar Magang
+            ->count();
+
+        return view('mahasiswa.riwayat', [
+            'countAktif' => $countAktif,
+            'countMagang' => $countMagang
+        ]);
+    }
+
+    /**
+     * Tampilkan riwayat surat keterangan aktif
+     */
+    public function riwayatAktif()
+    {
+        $user = Auth::user();
+
+        // Query surat keterangan aktif dengan relasi ke Surat_Ket_Aktif
         $riwayatSurat = TugasSurat::with([
             'jenisSurat',
             'penerimaTugas',
-            'suratMagang',
-            'verification' // Relasi ke SuratVerification untuk ambil QR Code
+            'suratKetAktif', // Relasi ke tabel Surat_Ket_Aktif
+            'verification'
         ])
-        ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-        ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
-        ->get();
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 3) // ID untuk Surat Keterangan Aktif
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
 
-        return view('mahasiswa.riwayat', [
+        return view('mahasiswa.riwayat_aktif', [
+            'riwayatSurat' => $riwayatSurat
+        ]);
+    }
+
+    /**
+     * Tampilkan riwayat surat pengantar magang
+     */
+    public function riwayatMagang()
+    {
+        $user = Auth::user();
+
+        // Query surat magang dengan relasi ke Surat_Magang
+        $riwayatSurat = TugasSurat::with([
+            'jenisSurat',
+            'penerimaTugas',
+            'suratMagang', // Relasi ke tabel Surat_Magang
+            'verification'
+        ])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 13) // ID untuk Surat Pengantar Magang
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('mahasiswa.riwayat_magang', [
             'riwayatSurat' => $riwayatSurat
         ]);
     }
@@ -49,9 +98,9 @@ class RiwayatSuratController extends Controller
             'verification.penandatangan.pegawai', // Untuk ambil QR Code + NIP (Pegawai)
             'verification.penandatangan.dosen'    // Untuk ambil QR Code + NIP (Dosen)
         ])
-        ->where('Id_Tugas_Surat', $id)
-        ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-        ->firstOrFail();
+            ->where('Id_Tugas_Surat', $id)
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->firstOrFail();
 
         // Cek apakah surat sudah selesai
         $statusLower = strtolower(trim($tugasSurat->Status));
@@ -89,11 +138,12 @@ class RiwayatSuratController extends Controller
         $tugasSurat = TugasSurat::with([
             'jenisSurat',
             'pemberiTugas.mahasiswa.prodi',
-            'suratMagang.koordinator' // Load Kaprodi info
+            'suratMagang.koordinator', // Load Kaprodi info
+            'suratMagang.dekan' // Load Dekan info
         ])
-        ->where('Id_Tugas_Surat', $id)
-        ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-        ->firstOrFail();
+            ->where('Id_Tugas_Surat', $id)
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->firstOrFail();
 
         // Cek apakah surat magang ada
         if (!$tugasSurat->suratMagang) {

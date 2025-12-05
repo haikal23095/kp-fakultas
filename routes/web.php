@@ -164,6 +164,14 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat/{id}/download', [App\Http\Controllers\Dekan\DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
         Route::post('/surat/{id}/approve', [App\Http\Controllers\Dekan\DetailSuratController::class, 'approve'])->name('surat.approve');
         Route::post('/surat/{id}/reject', [App\Http\Controllers\Dekan\DetailSuratController::class, 'reject'])->name('surat.reject');
+
+        // Routes untuk Surat Magang
+        Route::get('/surat-magang', [App\Http\Controllers\Dekan\SuratMagangController::class, 'index'])->name('surat_magang.index');
+        Route::get('/surat-magang/{id}', [App\Http\Controllers\Dekan\SuratMagangController::class, 'show'])->name('surat_magang.show');
+        Route::post('/surat-magang/{id}/approve', [App\Http\Controllers\Dekan\SuratMagangController::class, 'approve'])->name('surat_magang.approve');
+        Route::post('/surat-magang/{id}/reject', [App\Http\Controllers\Dekan\SuratMagangController::class, 'reject'])->name('surat_magang.reject');
+        Route::get('/surat-magang/{id}/download', [App\Http\Controllers\Dekan\SuratMagangController::class, 'download'])->name('surat_magang.download');
+
         Route::get('/arsip-surat', function () {
             return view('dekan.arsip_surat');
         })->name('arsip.index');
@@ -367,6 +375,12 @@ Route::middleware('auth')->group(function () {
         // Riwayat Surat Mahasiswa
         Route::get('/riwayat', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'index'])
             ->name('riwayat');
+
+        // Riwayat per Jenis Surat
+        Route::get('/riwayat/aktif', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatAktif'])
+            ->name('riwayat.aktif');
+        Route::get('/riwayat/magang', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatMagang'])
+            ->name('riwayat.magang');
 
         // Download Surat dengan QR Code
         Route::get('/surat/download/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadSurat'])

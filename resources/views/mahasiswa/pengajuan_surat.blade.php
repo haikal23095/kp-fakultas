@@ -287,12 +287,22 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-8 mb-3">
                                 <label class="form-label"><strong>Jurusan</strong></label>
                                 <input type="text" class="form-control mahasiswa-jurusan" 
                                        name="mahasiswa[0][jurusan]"
                                        value="{{ $prodi->Nama_Prodi ?? 'Jurusan Tidak Ditemukan' }}" 
                                        readonly
+                                       data-index="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><strong>No WhatsApp</strong></label>
+                                <input type="text" class="form-control mahasiswa-no-wa" 
+                                       name="mahasiswa[0][no_wa]"
+                                       placeholder="08xxxxxxxxxx"
+                                       required
+                                       pattern="[0-9]{10,15}"
+                                       title="Masukkan nomor WhatsApp yang valid (10-15 digit)"
                                        data-index="0">
                             </div>
                         </div>
@@ -336,12 +346,22 @@
                             </div>
                         </div>
                         <div class="row">
-                            <div class="col-md-12 mb-3">
+                            <div class="col-md-8 mb-3">
                                 <label class="form-label"><strong>Jurusan</strong></label>
                                 <input type="text" class="form-control mahasiswa-jurusan" 
                                        name=""
                                        placeholder="Jurusan otomatis terisi"
                                        readonly
+                                       data-index="">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label"><strong>No WhatsApp</strong></label>
+                                <input type="text" class="form-control mahasiswa-no-wa" 
+                                       name=""
+                                       placeholder="08xxxxxxxxxx"
+                                       required
+                                       pattern="[0-9]{10,15}"
+                                       title="Masukkan nomor WhatsApp yang valid (10-15 digit)"
                                        data-index="">
                             </div>
                         </div>

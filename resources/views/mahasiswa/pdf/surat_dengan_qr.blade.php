@@ -410,24 +410,46 @@
             <p><strong>Dekan Fakultas Teknik</strong></p>
             
             {{-- QR CODE DIGITAL SIGNATURE --}}
-            @if($verification && !empty($verification->qr_path))
-                @php
-                    // Convert QR image to base64 for PDF rendering
+            @php
+                // Prioritas: QR Code Dekan untuk Surat Magang, atau QR dari verification
+                $qrCodeToDisplay = null;
+                
+                // Jika ini Surat Magang dan ada Qr_code_dekan, gunakan itu
+                if($surat->suratMagang && !empty($surat->suratMagang->Qr_code_dekan)) {
+                    $qrPath = $surat->suratMagang->Qr_code_dekan;
+                    
+                    // Handle path storage
+                    if (!file_exists(public_path($qrPath)) && file_exists(public_path('storage/' . $qrPath))) {
+                        $qrPath = 'storage/' . $qrPath;
+                    }
+                    
+                    $absoluteQrPath = public_path($qrPath);
+                    
+                    if (file_exists($absoluteQrPath)) {
+                        $imageData = base64_encode(file_get_contents($absoluteQrPath));
+                        $qrCodeToDisplay = 'data:image/png;base64,' . $imageData;
+                    } else {
+                        $qrCodeToDisplay = asset($qrPath);
+                    }
+                }
+                // Fallback ke verification->qr_path jika tidak ada QR Dekan
+                elseif($verification && !empty($verification->qr_path)) {
                     $parsed = parse_url($verification->qr_path);
                     $relativePath = ltrim($parsed['path'] ?? '', '/');
                     $absolutePath = public_path($relativePath);
                     
-                    $qrImageSrc = '';
                     if (file_exists($absolutePath)) {
                         $imageData = base64_encode(file_get_contents($absolutePath));
-                        $qrImageSrc = 'data:image/png;base64,' . $imageData;
+                        $qrCodeToDisplay = 'data:image/png;base64,' . $imageData;
                     } else {
-                        // Fallback: try direct URL
-                        $qrImageSrc = $verification->qr_path;
+                        $qrCodeToDisplay = $verification->qr_path;
                     }
-                @endphp
+                }
+            @endphp
+            
+            @if($qrCodeToDisplay)
                 <div class="qr-code-box">
-                    <img src="{{ $qrImageSrc }}" 
+                    <img src="{{ $qrCodeToDisplay }}" 
                          alt="QR Code Digital Signature" 
                          style="width: 150px; height: 150px; display: block; margin: 0 auto;">
                     <div class="qr-info">
