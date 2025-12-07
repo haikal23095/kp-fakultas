@@ -153,9 +153,6 @@ document.getElementById('btn-tambah-mahasiswa')?.addEventListener('click', funct
     clone.querySelector('.mahasiswa-jurusan').name = `mahasiswa[${mahasiswaIndex}][jurusan]`;
     clone.querySelector('.mahasiswa-jurusan').dataset.index = mahasiswaIndex;
 
-    clone.querySelector('.mahasiswa-no-wa').name = `mahasiswa[${mahasiswaIndex}][no_wa]`;
-    clone.querySelector('.mahasiswa-no-wa').dataset.index = mahasiswaIndex;
-
     // Append to container
     container.appendChild(clone);
 

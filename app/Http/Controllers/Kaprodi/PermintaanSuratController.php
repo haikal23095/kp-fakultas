@@ -123,8 +123,8 @@ class PermintaanSuratController extends Controller
 
         $suratMagang = SuratMagang::findOrFail($id);
 
-        // Update Status menjadi "Ditolak" dan simpan Komentar di tabel Surat_Magang
-        $suratMagang->Status = 'Ditolak';
+        // Update Status menjadi "Ditolak-Kaprodi" dan simpan Komentar di tabel Surat_Magang
+        $suratMagang->Status = 'Ditolak-Kaprodi';
         $suratMagang->Komentar = $request->komentar;
         $suratMagang->save();
 
@@ -162,6 +162,44 @@ class PermintaanSuratController extends Controller
         }
 
         return response()->download($filePath);
+    }
+
+    /**
+     * Menampilkan history pengajuan surat (yang sudah diproses)
+     */
+    public function history()
+    {
+        $user = Auth::user();
+
+        // Ambil data Kaprodi (bisa dari Dosen atau Pegawai)
+        $kaprodiDosen = $user->dosen;
+        $kaprodiPegawai = $user->pegawai;
+
+        // Ambil Id_Prodi dari Kaprodi
+        $prodiId = $kaprodiDosen?->Id_Prodi ?? $kaprodiPegawai?->Id_Prodi;
+
+        if (!$prodiId) {
+            return view('kaprodi.history_pengajuan', [
+                'daftarSurat' => collect([])
+            ]);
+        }
+
+        // Ambil ID Kaprodi (dari Dosen atau Pegawai)
+        $kaprodiId = $kaprodiDosen?->Id_Dosen ?? $kaprodiPegawai?->Id_Pegawai;
+
+        // Ambil Surat Magang yang sudah diproses (disetujui atau ditolak)
+        $daftarSurat = SuratMagang::query()
+            ->with([
+                'tugasSurat.pemberiTugas.mahasiswa.prodi',
+                'tugasSurat.jenisSurat',
+                'koordinator'
+            ])
+            ->where('Nama_Koordinator', $kaprodiId)
+            ->whereIn('Status', ['Dikerjakan-admin', 'Diajukan-ke-dekan', 'Success', 'Ditolak-Kaprodi', 'Ditolak-Dekan'])
+            ->orderBy('id_no', 'desc')
+            ->get();
+
+        return view('kaprodi.history_pengajuan', compact('daftarSurat'));
     }
 
     /**

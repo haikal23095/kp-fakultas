@@ -58,15 +58,15 @@ class SuratMagangController extends Controller
         $surat->Acc_Dekan = 1;
         $surat->Status = 'Success';
 
-        // Simpan Nama dan NIP Dekan
+        // Simpan ID Dekan (bukan nama, karena kolom Nama_Dekan adalah integer untuk Id_Dosen)
         if ($dekan->dosen) {
-            $surat->Nama_Dekan = $dekan->dosen->Nama_Dosen;
+            $surat->Nama_Dekan = $dekan->dosen->Id_Dosen; // Simpan ID, bukan nama
             $surat->Nip_Dekan = $dekan->dosen->NIP;
         } elseif ($dekan->pegawaiFakultas) {
-            $surat->Nama_Dekan = $dekan->pegawaiFakultas->Nama_Pegawai;
+            $surat->Nama_Dekan = $dekan->pegawaiFakultas->Id_Pegawai; // Simpan ID
             $surat->Nip_Dekan = $dekan->pegawaiFakultas->Nip_Pegawai;
         } else {
-            $surat->Nama_Dekan = $dekan->Name_User;
+            $surat->Nama_Dekan = null; // Tidak ada ID yang valid
             $surat->Nip_Dekan = '-';
         }
 

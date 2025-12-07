@@ -53,7 +53,6 @@ class SuratPengantarMagangController extends Controller
             'mahasiswa.*.nim' => 'required|numeric',
             'mahasiswa.*.jurusan' => 'required|string|max:255',
             'mahasiswa.*.angkatan' => 'required|integer|min:2000|max:' . (date('Y') + 1),
-            'mahasiswa.*.no_wa' => 'required|string|max:20',
         ], [
             'data_spesifik.dosen_pembimbing_1.required' => 'Dosen pembimbing wajib dipilih',
             'data_spesifik.nama_instansi.required' => 'Nama instansi/perusahaan wajib diisi',
@@ -61,7 +60,7 @@ class SuratPengantarMagangController extends Controller
             'data_spesifik.tanggal_mulai.required' => 'Tanggal mulai magang wajib diisi.',
             'data_spesifik.tanggal_selesai.required' => 'Tanggal selesai magang wajib diisi.',
             'data_spesifik.tanggal_selesai.after_or_equal' => 'Tanggal selesai harus setelah atau sama dengan tanggal mulai.',
-            'file_pendukung_magang.required' => 'Proposal wajib diunggah.'
+            'file_pendukung_magang.required' => 'Proposal wajib diunggah.',
             'file_pendukung_magang.mimes' => 'Proposal harus berformat PDF.',
             'file_pendukung_magang.max' => 'Ukuran proposal maksimal 2MB.',
             'file_tanda_tangan.required' => 'Foto tanda tangan wajib diunggah.',
@@ -73,8 +72,6 @@ class SuratPengantarMagangController extends Controller
             'mahasiswa.*.nim.required' => 'NIM mahasiswa wajib diisi.',
             'mahasiswa.*.jurusan.required' => 'Jurusan mahasiswa wajib diisi.',
             'mahasiswa.*.angkatan.required' => 'Angkatan mahasiswa wajib diisi.',
-            'mahasiswa.*.no_wa.required' => 'Nomor WhatsApp mahasiswa wajib diisi.',
-            'mahasiswa.*.no_wa.max' => 'Nomor WhatsApp maksimal 20 karakter.',
         ]);
 
         if ($validator->fails()) {
@@ -148,11 +145,17 @@ class SuratPengantarMagangController extends Controller
             $dataMahasiswaArray = [];
             foreach ($request->mahasiswa as $index => $mhs) {
                 // Get jurusan from mahasiswa's prodi
-                $mahasiswaData = Mahasiswa::where('NIM', $mhs['nim'])->with('prodi.jurusan')->first();
+                $mahasiswaData = Mahasiswa::where('NIM', $mhs['nim'])->with('prodi.jurusan', 'user')->first();
                 $namaJurusan = null;
+                $noWa = null;
 
                 if ($mahasiswaData && $mahasiswaData->prodi && $mahasiswaData->prodi->jurusan) {
                     $namaJurusan = $mahasiswaData->prodi->jurusan->Nama_Jurusan;
+                }
+
+                // Get No WhatsApp from Users table
+                if ($mahasiswaData && $mahasiswaData->user) {
+                    $noWa = $mahasiswaData->user->No_WA;
                 }
 
                 $dataMahasiswaArray[] = [
@@ -161,7 +164,7 @@ class SuratPengantarMagangController extends Controller
                     'program-studi' => $mhs['jurusan'],
                     'jurusan' => $namaJurusan,
                     'angkatan' => $mhs['angkatan'],
-                    'no_wa' => $mhs['no_wa'],
+                    'no_wa' => $noWa,
                 ];
             }
 

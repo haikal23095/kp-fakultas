@@ -209,9 +209,7 @@
 
         <div class="nomor-surat">
             <h3>SURAT PENGANTAR PERMOHONAN KERJA PRAKTIK</h3>
-            {{-- Nomor Surat Pengantar biasanya belum ada nomor resmi dari admin --}}
-            {{-- Gunakan format sementara atau kosongkan jika belum ada nomor --}}
-            <p>Nomor: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/KP/{{ \Carbon\Carbon::now()->format('Y') }}</p>
+            <p>Nomor: {{ $surat->Nomor_Surat ?? '[Nomor Surat Belum Diterbitkan]' }}</p>
         </div>
 
         <div class="isi-surat">
