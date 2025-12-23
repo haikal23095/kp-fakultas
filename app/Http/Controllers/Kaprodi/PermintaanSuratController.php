@@ -61,6 +61,68 @@ class PermintaanSuratController extends Controller
     }
 
     /**
+     * Menampilkan detail surat magang
+     */
+    public function show($id)
+    {
+        $user = Auth::user();
+        $suratMagang = SuratMagang::with([
+            'tugasSurat.pemberiTugas.mahasiswa.prodi',
+            'tugasSurat.jenisSurat',
+            'koordinator'
+        ])->findOrFail($id);
+
+        // Validasi: pastikan Kaprodi hanya bisa lihat surat dari mahasiswa di prodinya
+        $kaprodiDosen = $user->dosen;
+        $kaprodiPegawai = $user->pegawai;
+        $prodiId = $kaprodiDosen?->Id_Prodi ?? $kaprodiPegawai?->Id_Prodi;
+
+        $mahasiswa = $suratMagang->tugasSurat->pemberiTugas->mahasiswa ?? null;
+        if (!$mahasiswa || $mahasiswa->Id_Prodi != $prodiId) {
+            abort(403, 'Anda tidak memiliki akses untuk melihat surat ini.');
+        }
+
+        // Format data untuk response
+        $dataMahasiswa = is_array($suratMagang->Data_Mahasiswa)
+            ? $suratMagang->Data_Mahasiswa
+            : json_decode($suratMagang->Data_Mahasiswa, true);
+
+        $dataDosen = is_array($suratMagang->Data_Dosen_pembiming)
+            ? $suratMagang->Data_Dosen_pembiming
+            : json_decode($suratMagang->Data_Dosen_pembiming, true);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id_no' => $suratMagang->id_no,
+                'nama_instansi' => $suratMagang->Nama_Instansi,
+                'alamat_instansi' => $suratMagang->Alamat_Instansi,
+                'judul_penelitian' => $suratMagang->Judul_Penelitian,
+                'tanggal_mulai' => $suratMagang->Tanggal_Mulai,
+                'tanggal_selesai' => $suratMagang->Tanggal_Selesai,
+                'status' => $suratMagang->Status,
+                'mahasiswa' => $dataMahasiswa,
+                'dosen_pembimbing' => $dataDosen,
+                'dokumen_proposal' => $suratMagang->Dokumen_Proposal,
+                'foto_ttd' => $suratMagang->Foto_ttd,
+                'tanggal_pengajuan' => $suratMagang->tugasSurat?->Tanggal_Diberikan_Tugas_Surat,
+                'prodi' => $mahasiswa->prodi->Nama_Prodi ?? 'N/A',
+            ]
+        ]);
+    }
+
+    /**
+     * Set session untuk redirect destination
+     */
+    public function setRedirect(Request $request)
+    {
+        $redirectTo = $request->input('redirect_to', 'list');
+        session(['redirect_to' => $redirectTo]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Menyetujui surat magang
      */
     public function approve($id)
@@ -100,6 +162,14 @@ class PermintaanSuratController extends Controller
             // Update Status_KP mahasiswa menjadi Sedang_Melaksanakan
             $this->updateMahasiswaStatusKP($suratMagang, 'Sedang_Melaksanakan');
 
+            // Check redirect destination
+            $redirectTo = session('redirect_to', 'list');
+
+            if ($redirectTo === 'dashboard') {
+                return redirect()->route('dashboard.kaprodi')
+                    ->with('success', 'Surat pengantar magang berhasil disetujui dan QR Code telah dibuat!');
+            }
+
             return redirect()->route('kaprodi.surat.index')
                 ->with('success', 'Surat pengantar magang berhasil disetujui dan QR Code telah dibuat!');
 
@@ -127,6 +197,14 @@ class PermintaanSuratController extends Controller
         $suratMagang->Status = 'Ditolak-Kaprodi';
         $suratMagang->Komentar = $request->komentar;
         $suratMagang->save();
+
+        // Check redirect destination
+        $redirectTo = $request->input('redirect_to', 'list');
+
+        if ($redirectTo === 'dashboard') {
+            return redirect()->route('dashboard.kaprodi')
+                ->with('success', 'Surat pengantar magang ditolak dengan komentar.');
+        }
 
         return redirect()->route('kaprodi.surat.index')
             ->with('success', 'Surat pengantar magang ditolak dengan komentar.');

@@ -60,7 +60,7 @@
                 <table class="table table-hover align-middle mb-0" width="100%" cellspacing="0">
                     <thead class="bg-light text-uppercase text-secondary text-xs font-weight-bolder opacity-7">
                         <tr>
-                            <th class="ps-4">Mahasiswa</th>
+                            <th class="ps-4">Pemohon</th>
                             <th>Jenis Surat</th>
                             <th>Instansi Tujuan</th>
                             <th>Tanggal Masuk</th>

@@ -211,6 +211,10 @@ Route::middleware('auth')->group(function () {
     Route::prefix('kaprodi')->name('kaprodi.')->group(function () {
         Route::get('/permintaan-kp', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'index'])
             ->name('surat.index');
+        Route::get('/permintaan-kp/{id}', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'show'])
+            ->name('surat.show');
+        Route::post('/set-redirect', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'setRedirect'])
+            ->name('set-redirect');
         Route::get('/history-pengajuan', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'history'])
             ->name('history-pengajuan');
         Route::post('/permintaan-kp/{id}/approve', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'approve'])
