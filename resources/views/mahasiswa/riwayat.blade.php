@@ -3,7 +3,6 @@
 @section('title', $title ?? 'Riwayat Pengajuan Surat')
 
 @push('styles')
-<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 <style>
     .page-header {
         background: #ffffff;
@@ -12,29 +11,65 @@
         margin-bottom: 2rem;
     }
     
-    .card-clean {
-        border: 1px solid #e9ecef;
-        border-radius: 8px;
-        box-shadow: none;
+    .card-jenis-surat {
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        height: 100%;
+        background: #ffffff;
     }
     
-    .table-clean {
+    .card-jenis-surat:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        border-color: #4e73df;
+    }
+    
+    .card-jenis-surat .card-body {
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .card-icon {
+        width: 80px;
+        height: 80px;
+        margin: 0 auto 1.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2.5rem;
+    }
+    
+    .card-icon.blue {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+    
+    .card-icon.green {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+    
+    .card-jenis-surat h5 {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 0.5rem;
+    }
+    
+    .card-jenis-surat p {
+        color: #6c757d;
         font-size: 0.9rem;
+        margin-bottom: 0;
     }
     
-    .table-clean thead th {
-        background: #f8f9fa;
-        border-bottom: 2px solid #dee2e6;
-        color: #495057;
-        font-weight: 600;
+    .badge-count {
+        position: absolute;
+        top: 15px;
+        right: 15px;
         font-size: 0.85rem;
-        padding: 0.75rem;
-    }
-    
-    .table-clean tbody td {
-        vertical-align: middle;
-        padding: 0.75rem;
-        border-bottom: 1px solid #e9ecef;
+        padding: 0.5rem 0.75rem;
     }
     
     @media (max-width: 768px) {
@@ -51,145 +86,22 @@
             font-size: 0.85rem;
             padding: 0.4rem 0.8rem;
         }
-        .card-clean {
-            margin: 0 -0.5rem;
-            border-radius: 0;
-            border-left: 0;
-            border-right: 0;
+        .card-jenis-surat .card-body {
+            padding: 1.5rem 1rem;
         }
-        .card-clean .card-header {
-            padding: 0.75rem 1rem;
+        .card-icon {
+            width: 60px;
+            height: 60px;
+            font-size: 2rem;
+            margin-bottom: 1rem;
         }
-        .card-clean .card-header h6 {
-            font-size: 0.9rem;
+        .card-jenis-surat h5 {
+            font-size: 1rem;
         }
-        .table-responsive {
+        .badge-count {
             font-size: 0.75rem;
-            overflow-x: auto;
+            padding: 0.35rem 0.6rem;
         }
-        .table-clean thead th {
-            font-size: 0.7rem;
-            padding: 0.5rem 0.4rem;
-            white-space: nowrap;
-        }
-        .table-clean tbody td {
-            padding: 0.5rem 0.4rem;
-            font-size: 0.75rem;
-        }
-        .btn-action {
-            padding: 0.25rem 0.4rem;
-            font-size: 0.65rem;
-            min-width: 65px;
-            gap: 0.2rem;
-        }
-        .btn-action i {
-            font-size: 0.7rem;
-        }
-        .badge-clean {
-            font-size: 0.65rem;
-            padding: 0.25rem 0.5rem;
-        }
-        .action-buttons {
-            gap: 0.2rem;
-            flex-wrap: wrap;
-        }
-        .info-box {
-            padding: 0.75rem;
-            font-size: 0.8rem;
-        }
-        .info-box h6 {
-            font-size: 0.9rem;
-        }
-        .info-box .row {
-            font-size: 0.75rem;
-        }
-    }
-    
-    .table-clean tbody tr:hover {
-        background-color: #f8f9fa;
-    }
-    
-    .badge-clean {
-        padding: 0.35rem 0.65rem;
-        border-radius: 4px;
-        font-weight: 500;
-        font-size: 0.75rem;
-    }
-    
-    .action-buttons {
-        display: flex;
-        gap: 0.4rem;
-        justify-content: center;
-        flex-wrap: nowrap;
-    }
-    
-    .btn-action {
-        padding: 0.4rem 0.75rem;
-        border-radius: 4px;
-        font-size: 0.75rem;
-        font-weight: 500;
-        border: 1px solid;
-        display: inline-flex;
-        align-items: center;
-        gap: 0.3rem;
-        white-space: nowrap;
-        min-width: 90px;
-        justify-content: center;
-    }
-    
-    .btn-download {
-        background: #10b981;
-        border-color: #10b981;
-        color: white;
-    }
-    
-    .btn-download:hover {
-        background: #059669;
-        border-color: #059669;
-        color: white;
-    }
-    
-    .btn-verify {
-        background: #3b82f6;
-        border-color: #3b82f6;
-        color: white;
-    }
-    
-    .btn-verify:hover {
-        background: #2563eb;
-        border-color: #2563eb;
-        color: white;
-    }
-    
-    .btn-reason {
-        background: #ef4444;
-        border-color: #ef4444;
-        color: white;
-    }
-    
-    .btn-reason:hover {
-        background: #dc2626;
-        border-color: #dc2626;
-        color: white;
-    }
-    
-    .btn-waiting {
-        background: #f1f3f5;
-        border-color: #dee2e6;
-        color: #868e96;
-        cursor: not-allowed;
-    }
-    
-    .info-box {
-        background: #f8f9fa;
-        border: 1px solid #e9ecef;
-        border-radius: 6px;
-        padding: 1rem;
-    }
-    
-    .empty-state {
-        padding: 3rem 2rem;
-        text-align: center;
     }
 </style>
 @endpush
@@ -200,15 +112,15 @@
 <div class="page-header">
     <div class="d-flex align-items-center justify-content-between">
         <div>
-            <h3 class="mb-1 fw-bold text-dark">{{ $title ?? 'Riwayat Pengajuan Surat' }}</h3>
-            <p class="mb-0 text-muted small">Pantau status dan unduh surat Anda</p>
+            <h3 class="mb-1 fw-bold text-dark">Riwayat Pengajuan Surat</h3>
+            <p class="mb-0 text-muted small">Pilih jenis surat untuk melihat riwayat pengajuan</p>
         </div>
         <div>
             <a href="{{ route('mahasiswa.riwayat') }}" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-arrow-left me-2"></i>Kembali
             </a>
             <a href="{{ route('mahasiswa.pengajuan.create') }}" class="btn btn-primary">
-                <i class="fas fa-plus me-2"></i>Ajukan Surat
+                <i class="fas fa-plus me-2"></i>Ajukan Surat Baru
             </a>
         </div>
     </div>
@@ -225,251 +137,59 @@
 @if(session('error'))
     <div class="alert alert-danger alert-dismissible fade show" role="alert">
         <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-        <button type="button"="btn-close" data-bs-dismiss="alert"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
 @endif
 
-<div class="card card-clean mb-4">
-    <div class="card-header bg-white py-3">
-        <div class="d-flex justify-content-between align-items-center">
-            <h6 class="mb-0 fw-bold text-dark">Daftar Pengajuan</h6>
-            <span class="badge bg-secondary">{{ $riwayatSurat->count() }} Surat</span>
-        </div>
+{{-- Card Pilihan Jenis Surat --}}
+<div class="row">
+    {{-- Card Surat Keterangan Aktif --}}
+    <div class="col-md-6 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.aktif') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-primary badge-count">
+                    {{ $countAktif ?? 0 }} Surat
+                </span>
+                <div class="card-body">
+                    <div class="card-icon blue">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <h5>Surat Keterangan Aktif Kuliah</h5>
+                    <p>Lihat riwayat pengajuan surat keterangan mahasiswa aktif</p>
+                </div>
+            </div>
+        </a>
     </div>
-    <div class="card-body p-0">
-        @if($riwayatSurat->isEmpty())
-            <div class="empty-state">
-                <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                <h5 class="text-muted">Belum Ada Pengajuan</h5>
-                <p class="text-muted">Silakan ajukan surat baru</p>
-                <a href="{{ route('mahasiswa.pengajuan.create') }}" class="btn btn-primary mt-2">
-                    <i class="fas fa-plus me-2"></i>Ajukan Surat
-                </a>
+
+    {{-- Card Surat Pengantar Magang --}}
+    <div class="col-md-6 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.magang') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-danger badge-count">
+                    {{ $countMagang ?? 0 }} Surat
+                </span>
+                <div class="card-body">
+                    <div class="card-icon green">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h5>Surat Pengantar KP/Magang</h5>
+                    <p>Lihat riwayat pengajuan surat pengantar kerja praktek dan magang</p>
+                </div>
             </div>
-        @else
-            <div class="table-responsive">
-                <table class="table table-clean" id="tableSurat" width="100%" cellspacing="0">
-                    <thead>
-                        <tr>
-                            <th width="5%" class="text-center">#</th>
-                            <th width="12%">Tanggal</th>
-                            <th width="20%">Jenis Surat</th>
-                            @if(request('type') !== 'magang')
-                                <th width="28%">Detail / Keperluan</th>
-                            @endif
-                            <th width="12%" class="text-center">Status</th>
-                            <th width="23%" class="text-center">Aksi</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($riwayatSurat as $index => $surat)
-                            <tr>
-                                <td class="text-center text-muted">{{ $index + 1 }}</td>
-                                <td>{{ $surat->Tanggal_Diberikan_Tugas_Surat ? \Carbon\Carbon::parse($surat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') : '-' }}</td>
-                                <td><strong>{{ $surat->jenisSurat->Nama_Surat ?? 'N/A' }}</strong></td>
-                                @if(request('type') !== 'magang')
-                                    <td>
-                                        @if(request('type') === 'aktif')
-                                            <div>
-                                                {{ \Illuminate\Support\Str::limit($surat->suratKetAktif->Deskripsi ?? '-', 50) }}
-                                            </div>
-                                            @if($surat->suratKetAktif && $surat->suratKetAktif->is_urgent)
-                                                <div class="mt-2">
-                                                    <span class="badge bg-danger mb-1">
-                                                        <i class="fas fa-bolt me-1"></i>URGENT
-                                                    </span>
-                                                    <div class="small text-danger border border-danger rounded p-2 bg-danger bg-opacity-10" style="font-size: 0.8rem;">
-                                                        <strong>Alasan:</strong> {{ $surat->suratKetAktif->urgent_reason }}
-                                                    </div>
-                                                </div>
-                                            @endif
-                                        @else
-                                            {{ \Illuminate\Support\Str::limit($surat->Judul_Tugas_Surat, 50) }}
-                                        @endif
-                                    </td>
-                                @endif
-                                <td class="text-center">
-                                    @php
-                                        // Gunakan status dari parent Tugas_Surat sebagai sumber kebenaran.
-                                        // Jika nomor surat sudah ada, anggap minimal 'menunggu-ttd'.
-                                        $statusRaw = $surat->Status;
-                                        if (!empty($surat->Nomor_Surat) && strtolower(trim($statusRaw ?? '')) === 'dikerjakan-admin') {
-                                            $statusRaw = 'menunggu-ttd';
-                                        }
-
-                                        $status = strtolower(trim($statusRaw ?? ''));
-                                        $badgeClass = 'secondary';
-                                        $icon = 'circle';
-
-                                        if ($status === 'baru') {
-                                            $badgeClass = 'info';
-                                            $icon = 'clock';
-                                        } elseif ($status === 'diterima admin' || $status === 'proses' || $status === 'dikerjakan-admin') {
-                                            $badgeClass = 'primary';
-                                            $icon = 'spinner';
-                                        } elseif ($status === 'menunggu-ttd' || $status === 'diajukan-ke-koordinator' || $status === 'diajukan-ke-dekan') {
-                                            $badgeClass = 'warning';
-                                            $icon = 'hourglass-half';
-                                        } elseif ($status === 'selesai' || $status === 'telah ditandatangani dekan' || $status === 'success') {
-                                            $badgeClass = 'success';
-                                            $icon = 'check-circle';
-                                        } elseif ($status === 'ditolak') {
-                                            $badgeClass = 'danger';
-                                            $icon = 'times-circle';
-                                        }
-                                    @endphp
-                                    <span class="badge badge-clean bg-{{ $badgeClass }}">
-                                        <i class="fas fa-{{ $icon }} me-1"></i>{{ ucfirst($statusRaw) }}
-                                    </span>
-                                </td>
-                                <td class="text-center">
-                                    @php
-                                        // Gunakan status yang sudah dinormalisasi
-                                        $statusLower = $status;
-                                        $isSelesai = ($statusLower === 'selesai' || $statusLower === 'telah ditandatangani dekan' || $statusLower === 'success');
-                                        $isDitolak = ($statusLower === 'ditolak');
-                                    @endphp
-                                    
-                                    {{-- Tombol Trigger Modal Aksi --}}
-                                    <button type="button" class="btn btn-sm btn-primary btn-action-menu" 
-                                            data-bs-toggle="modal" data-bs-target="#actionModal"
-                                            data-title="{{ $surat->jenisSurat->Nama_Surat ?? 'Detail Surat' }}"
-                                            data-nomor="{{ $surat->Nomor_Surat ?? 'Belum Terbit' }}"
-                                            data-target-content="#action-content-{{ $index }}">
-                                        <i class="fas fa-bars me-1"></i> Menu Aksi
-                                    </button>
-
-                                    {{-- Hidden Content untuk Modal --}}
-                                    <div id="action-content-{{ $index }}" class="d-none">
-                                        <div class="d-grid gap-2">
-                                            {{-- 1. Surat Pengantar (Jika Ada) --}}
-                                            @if($surat->suratMagang && $surat->suratMagang->Acc_Koordinator)
-                                                <a href="{{ route('mahasiswa.surat.download_pengantar', $surat->Id_Tugas_Surat) }}" 
-                                                   class="btn btn-info text-white" target="_blank">
-                                                    <i class="fas fa-file-alt me-2"></i> Download Surat Pengantar
-                                                </a>
-                                            @endif
-
-                                            {{-- 2. Aksi Utama Berdasarkan Status --}}
-                                            @if($isSelesai)
-                                                <a href="{{ route('mahasiswa.surat.download', $surat->Id_Tugas_Surat) }}" 
-                                                   class="btn btn-success" target="_blank">
-                                                    <i class="fas fa-download me-2"></i> Download Surat Resmi
-                                                </a>
-                                                @if($surat->verification)
-                                                    <a href="{{ route('surat.verify', $surat->verification->token) }}" 
-                                                       class="btn btn-primary" target="_blank">
-                                                        <i class="fas fa-qrcode me-2"></i> Verifikasi Dokumen
-                                                    </a>
-                                                @endif
-                                            @elseif($isDitolak)
-                                                @php
-                                                    $dataSpesifik = $surat->data_spesifik ?? [];
-                                                @endphp
-                                                <div class="alert alert-danger text-start mb-0">
-                                                    <h6 class="alert-heading fw-bold"><i class="fas fa-times-circle me-2"></i>Pengajuan Ditolak</h6>
-                                                    <hr class="my-2">
-                                                    <p class="mb-1 small"><strong>Ditolak Oleh:</strong> {{ $dataSpesifik['ditolak_oleh'] ?? 'Admin' }}</p>
-                                                    <p class="mb-1 small"><strong>Tanggal:</strong> {{ $dataSpesifik['tanggal_penolakan'] ?? '-' }}</p>
-                                                    <div class="mt-2 p-2 bg-white rounded border border-danger text-danger">
-                                                        <strong>Alasan:</strong><br>
-                                                        {{ $dataSpesifik['alasan_penolakan'] ?? 'Tidak ada alasan yang diberikan.' }}
-                                                    </div>
-                                                </div>
-                                            @else
-                                                <div class="text-center py-4 bg-light rounded border border-dashed">
-                                                    <i class="fas fa-clock fa-3x text-muted mb-3"></i>
-                                                    <h6 class="text-muted fw-bold">Sedang Diproses</h6>
-                                                    <p class="text-muted small mb-0">Surat sedang dalam tahap verifikasi dan tanda tangan.</p>
-                                                </div>
-                                            @endif
-                                        </div>
-                                    </div>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
+        </a>
     </div>
 </div>
 
 {{-- Info Card --}}
 <div class="row">
     <div class="col-md-12">
-        <div class="info-box">
-            <h6 class="fw-bold mb-3"><i class="fas fa-info-circle me-2"></i>Keterangan Status</h6>
-            <div class="row small">
-                <div class="col-md-4 mb-2">
-                    <span class="badge bg-info me-2">Baru</span> Menunggu diproses admin
-                </div>
-                <div class="col-md-4 mb-2">
-                    <span class="badge bg-primary me-2">Proses</span> Sedang diverifikasi
-                </div>
-                <div class="col-md-4 mb-2">
-                    <span class="badge bg-warning me-2">Menunggu-TTD</span> Menunggu tanda tangan
-                </div>
-                <div class="col-md-4 mb-2">
-                    <span class="badge bg-success me-2">Selesai</span> Siap diunduh
-                </div>
-                <div class="col-md-4 mb-2">
-                    <span class="badge bg-danger me-2">Ditolak</span> Pengajuan ditolak
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Modal Lihat Alasan Penolakan --}}
-<div class="modal fade" id="modalAlasan" tabindex="-1" aria-labelledby="modalAlasanLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header bg-danger text-white">
-                <h5 class="modal-title" id="modalAlasanLabel">
-                    <i class="fas fa-exclamation-triangle me-2"></i>Alasan Penolakan
-                </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body">
-                <div class="mb-3">
-                    <label class="fw-bold small">Ditolak Oleh:</label>
-                    <p id="modalPenolak" class="mb-0"></p>
-                </div>
-                <div class="mb-3">
-                    <label class="fw-bold small">Tanggal:</label>
-                    <p id="modalTanggal" class="text-muted mb-0"></p>
-                </div>
-                <div class="mb-0">
-                    <label class="fw-bold small">Alasan:</label>
-                    <div class="alert alert-danger">
-                        <p id="modalAlasanText" class="mb-0"></p>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-{{-- Modal Action Menu --}}
-<div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+        <div class="alert alert-info border-0" role="alert">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-info-circle fa-2x me-3 mt-1"></i>
                 <div>
-                    <h5 class="modal-title fw-bold mb-0">Detail Surat</h5>
-                    <small class="text-white-50">Nomor: <span id="modalNomorSurat">-</span></small>
+                    <h6 class="alert-heading fw-bold mb-2">Informasi</h6>
+                    <p class="mb-0">Klik salah satu card di atas untuk melihat riwayat pengajuan surat sesuai jenisnya. Setiap jenis surat memiliki status dan alur persetujuan yang berbeda.</p>
                 </div>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body modal-body-content p-4">
-                {{-- Content will be loaded here via JS --}}
-            </div>
-            <div class="modal-footer bg-light">
-                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Tutup</button>
             </div>
         </div>
     </div>
@@ -478,76 +198,15 @@
 @endsection
 
 @push('scripts')
-{{-- Pastikan jQuery dimuat untuk DataTables dan Script Modal --}}
-<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
-
 <script>
-    $(document).ready(function() {
-        // Initialize DataTable if exists
-        if ($.fn.DataTable) {
-            $('#tableSurat').DataTable({
-                "order": [[1, "desc"]], // Sort by tanggal descending
-                "pageLength": 10,
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.13.6/i18n/id.json"
-                },
-                "responsive": true,
-                "scrollX": true,
-                "autoWidth": false,
-                "columnDefs": [
-                    { "width": "5%", "targets": 0 },
-                    { "width": "12%", "targets": 1 },
-                    { "width": "20%", "targets": 2 },
-                    @if(request('type') !== 'magang')
-                        { "width": "25%", "targets": 3 },
-                        { "width": "12%", "targets": 4 },
-                        { "width": "26%", "targets": 5 }
-                    @else
-                        { "width": "15%", "targets": 3 },
-                        { "width": "48%", "targets": 4 }
-                    @endif
-                ]
-            });
-        }
-
-        // Handle Modal Alasan Penolakan
-        $(document).on('click', '.btn-lihat-alasan', function() {
-            var alasan = $(this).attr('data-alasan');
-            var penolak = $(this).attr('data-penolak');
-            var tanggal = $(this).attr('data-tanggal');
-            
-            $('#modalAlasanText').text(alasan);
-            $('#modalPenolak').text(penolak);
-            $('#modalTanggal').text(tanggal);
+    // Add hover effect
+    document.querySelectorAll('.card-jenis-surat').forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.borderColor = '#4e73df';
         });
-
-        // Handle Action Modal
-        var actionModal = document.getElementById('actionModal');
-        if (actionModal) {
-            actionModal.addEventListener('show.bs.modal', function (event) {
-                // Button that triggered the modal
-                var button = event.relatedTarget;
-                
-                // Extract info from data-* attributes
-                var title = button.getAttribute('data-title');
-                var nomor = button.getAttribute('data-nomor');
-                var targetId = button.getAttribute('data-target-content');
-                
-                // Get content from the hidden div
-                var content = document.querySelector(targetId).innerHTML;
-                
-                // Update the modal's content.
-                var modalTitle = actionModal.querySelector('.modal-title');
-                var modalNomor = actionModal.querySelector('#modalNomorSurat');
-                var modalBody = actionModal.querySelector('.modal-body-content');
-                
-                modalTitle.textContent = title;
-                modalNomor.textContent = nomor;
-                modalBody.innerHTML = content;
-            });
-        }
+        card.addEventListener('mouseleave', function() {
+            this.style.borderColor = '#e9ecef';
+        });
     });
 </script>
 @endpush

@@ -93,7 +93,10 @@ class SuratPengantarMagangController extends Controller
         }
 
         // === 4. CEK APAKAH ADA TEMAN YANG DIAJAK ===
-        $mahasiswaPembuat = Mahasiswa::where('Id_User', Auth::id())->first();
+        $mahasiswaPembuat = Mahasiswa::where('Id_User', Auth::id())
+            ->with('prodi.fakultas') // Eager load prodi dan fakultas
+            ->first();
+
         if (!$mahasiswaPembuat) {
             return redirect()->back()->with('error', 'Data mahasiswa tidak ditemukan.');
         }
@@ -124,7 +127,17 @@ class SuratPengantarMagangController extends Controller
             }
         }
 
-        // === 5. BUAT TUGAS SURAT DAN SURAT MAGANG ===
+        // Ambil Id_Dekan dari Fakultas (Mahasiswa → Prodi → Fakultas → Id_Dekan)
+        $idDekan = null;
+        if ($mahasiswaPembuat->prodi && $mahasiswaPembuat->prodi->fakultas) {
+            $idDekan = $mahasiswaPembuat->prodi->fakultas->Id_Dekan;
+        }
+
+        \Log::info('[MAGANG] Dekan info', [
+            'mahasiswa_prodi' => $mahasiswaPembuat->Id_Prodi,
+            'fakultas_id' => $mahasiswaPembuat->prodi->Id_Fakultas ?? null,
+            'id_dekan' => $idDekan
+        ]);        // === 5. BUAT TUGAS SURAT DAN SURAT MAGANG ===
         try {
             DB::beginTransaction();
 
@@ -132,11 +145,17 @@ class SuratPengantarMagangController extends Controller
             $dataMahasiswaArray = [];
             foreach ($request->mahasiswa as $index => $mhs) {
                 // Get jurusan from mahasiswa's prodi
-                $mahasiswaData = Mahasiswa::where('NIM', $mhs['nim'])->with('prodi.jurusan')->first();
+                $mahasiswaData = Mahasiswa::where('NIM', $mhs['nim'])->with('prodi.jurusan', 'user')->first();
                 $namaJurusan = null;
+                $noWa = null;
 
                 if ($mahasiswaData && $mahasiswaData->prodi && $mahasiswaData->prodi->jurusan) {
                     $namaJurusan = $mahasiswaData->prodi->jurusan->Nama_Jurusan;
+                }
+
+                // Get No WhatsApp from Users table
+                if ($mahasiswaData && $mahasiswaData->user) {
+                    $noWa = $mahasiswaData->user->No_WA;
                 }
 
                 $dataMahasiswaArray[] = [
@@ -145,6 +164,7 @@ class SuratPengantarMagangController extends Controller
                     'program-studi' => $mhs['jurusan'],
                     'jurusan' => $namaJurusan,
                     'angkatan' => $mhs['angkatan'],
+                    'no_wa' => $noWa,
                 ];
             }
 
@@ -195,6 +215,7 @@ class SuratPengantarMagangController extends Controller
             $suratMagang->Foto_ttd = $fileTTDPath;
             $suratMagang->Status = $statusMagang;
             $suratMagang->Nama_Koordinator = $kaprodiId;
+            $suratMagang->Nama_Dekan = $idDekan; // Simpan Id_Dosen yang menjabat sebagai Dekan
             $suratMagang->save();
 
             \Log::info('[MAGANG] Surat_Magang created', [

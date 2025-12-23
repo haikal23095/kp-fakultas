@@ -37,7 +37,13 @@
             {{-- Menggunakan href langsung ke URL persetujuan --}}
             <a href="/dekan/persetujuan-surat" class="nav-link text-white {{ request()->is('dekan/persetujuan-surat*') ? 'active' : '' }}">
                 <i class="fas fa-signature me-2"></i>
-                Persetujuan Surat
+                Surat Keterangan Aktif
+            </a>
+        </li>
+        <li>
+            <a href="/dekan/surat-magang" class="nav-link text-white {{ request()->is('dekan/surat-magang*') ? 'active' : '' }}">
+                <i class="fas fa-file-contract me-2"></i>
+                Persetujuan Surat Magang
             </a>
         </li>
         <li>

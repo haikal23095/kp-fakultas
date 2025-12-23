@@ -136,8 +136,11 @@
                 <div class="row mb-3">
                     <div class="col-md-4 fw-bold">Preview Form:</div>
                     <div class="col-md-8">
-                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="togglePreview()">
-                            <i class="fas fa-file-alt"></i> Lihat Preview Form Pengantar
+                        <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="togglePreview()">
+                            <i class="fas fa-file-alt"></i> Lihat Form Pengajuan
+                        </button>
+                        <button type="button" class="btn btn-sm btn-outline-success" onclick="togglePreviewSuratResmi()">
+                            <i class="fas fa-file-contract"></i> Lihat Surat Pengantar Magang
                         </button>
                     </div>
                 </div>
@@ -368,6 +371,153 @@
                 </div>
             </div>
         </div>
+
+        {{-- Preview Surat Pengantar Magang Resmi --}}
+        <div id="previewSuratResmi" style="display: none;" class="card shadow mb-4">
+            <div class="card-header py-3 bg-success text-white">
+                <h6 class="m-0 font-weight-bold">
+                    <i class="fas fa-file-contract me-2"></i>Preview Surat Pengantar Magang (Resmi)
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="preview-document" style="border: 1px solid #ddd; padding: 30px; background: white; font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6; max-width: 800px; margin: 0 auto;">
+                    {{-- Header --}}
+                    <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px solid #000; padding-bottom: 10px;">
+                        <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM" style="height: 60px; float: left;">
+                        <div style="margin-left: 70px;">
+                            <strong style="display: block; font-size: 11pt;">KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</strong>
+                            <strong style="display: block; font-size: 12pt;">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                            <strong style="display: block; font-size: 13pt;">FAKULTAS TEKNIK</strong>
+                            <div style="font-size: 9pt; margin-top: 5px;">
+                                Jl. Raya Telang, PO.Box. 2 Kamal, Bangkalan – Madura<br>
+                                Telp : (031) 3011146, Fax. (031) 3011506<br>
+                                Laman : www.trunojoyo.ac.id
+                            </div>
+                        </div>
+                        <div style="clear: both;"></div>
+                    </div>
+
+                    {{-- Nomor Surat --}}
+                    <div style="margin: 20px 0;">
+                        <table style="width: 100%; font-size: 11pt;">
+                            <tr>
+                                <td style="width: 25%;">Nomor</td>
+                                <td style="width: 2%;">:</td>
+                                <td><strong>{{ $surat->Nomor_Surat ?? '[Nomor Surat Belum Diberikan]' }}</strong></td>
+                            </tr>
+                            <tr>
+                                <td>Perihal</td>
+                                <td>:</td>
+                                <td><strong>Permohonan Izin Magang Mandiri</strong></td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    {{-- Tanggal Surat --}}
+                    <div style="text-align: right; margin: 20px 0 30px 0;">
+                        {{ \Carbon\Carbon::now()->format('d F Y') }}
+                    </div>
+
+                    {{-- Kepada --}}
+                    <div style="margin: 20px 0;">
+                        <p style="margin: 0;">Yth. Pimpinan {{ $surat->Nama_Instansi ?? '[Nama Instansi]' }}</p>
+                        <p style="margin: 0;">{{ $surat->Alamat_Instansi ?? '[Alamat Instansi]' }}</p>
+                    </div>
+
+                    {{-- Isi Surat --}}
+                    <p style="text-align: justify; text-indent: 50px; margin: 20px 0; line-height: 1.8;">
+                        Sehubungan dalam memperkenalkan mahasiswa pada dunia kerja sesuai bidang masing-masing, maka 
+                        sesuai ketentuan Program Merdeka Belajar - Kampus Merdeka (MBKM) mahasiswa diperkenankan 
+                        melaksanakan magang. Guna memperlancar kegiatan tersebut, kami mohon Bapak/Ibu untuk memberikan 
+                        izin kepada mahasiswa kami untuk dapat melaksanakan kegiatan magang di perusahaan tersebut pada 
+                        tanggal {{ $surat->Tanggal_Mulai ? \Carbon\Carbon::parse($surat->Tanggal_Mulai)->format('d F') : '[Tanggal Mulai]' }} s.d. 
+                        {{ $surat->Tanggal_Selesai ? \Carbon\Carbon::parse($surat->Tanggal_Selesai)->format('d F Y') : '[Tanggal Selesai]' }}.
+                    </p>
+
+                    <p style="margin: 15px 0;">Adapun mahasiswa tersebut adalah:</p>
+
+                    {{-- Tabel Mahasiswa --}}
+                    <table style="width: 100%; border-collapse: collapse; margin: 15px 0;">
+                        <thead>
+                            <tr style="background-color: #f0f0f0;">
+                                <th style="border: 1px solid #000; padding: 8px; text-align: center; width: 5%;">No</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left; width: 40%;">Nama</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left; width: 35%;">Program Studi</th>
+                                <th style="border: 1px solid #000; padding: 8px; text-align: left; width: 20%;">No. WA</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($dataMahasiswa as $idx => $mhs)
+                            <tr>
+                                <td style="border: 1px solid #000; padding: 8px; text-align: center;">{{ $idx + 1 }}.</td>
+                                <td style="border: 1px solid #000; padding: 8px;">
+                                    <strong>{{ $mhs['nama'] ?? '' }}</strong><br>
+                                    <small>NIM {{ $mhs['nim'] ?? '' }}</small>
+                                </td>
+                                <td style="border: 1px solid #000; padding: 8px;">
+                                    @php
+                                        $prodiName = $surat->tugasSurat?->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi 
+                                            ?? ($mhs['program-studi'] ?? $mhs['jurusan'] ?? 'Teknik Industri');
+                                    @endphp
+                                    {{ $prodiName }}
+                                </td>
+                                <td style="border: 1px solid #000; padding: 8px;">{{ $mhs['no_wa'] ?? '-' }}</td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+
+                    <p style="text-align: justify; margin: 20px 0; line-height: 1.8;">
+                        Besar harapan kami dapat menerima konfirmasi kesediaan menerima atau menolak pengajuan Magang 
+                        Mandiri ini maksimal 14 (empat belas) hari dari tanggal surat ini dikeluarkan.
+                    </p>
+
+                    <p style="text-align: justify; margin: 20px 0; line-height: 1.8;">
+                        Demikian, atas perhatian dan bantuannya kami ucapkan terima kasih.
+                    </p>
+
+                    {{-- Tanda Tangan Dekan (tanpa QR Code) --}}
+                    <div style="margin-top: 50px;">
+                        <table style="width: 100%;">
+                            <tr>
+                                <td style="width: 50%; vertical-align: top;">
+                                    {{-- QR Code akan muncul setelah Dekan menyetujui --}}
+                                </td>
+                                <td style="width: 50%; text-align: center; vertical-align: top;">
+                                    <p style="margin: 0 0 5px 0;">Dekan Fakultas Teknik,</p>
+                                    <div style="height: 100px;"></div>
+                                    @php
+                                        // Ambil Dekan dari fakultas mahasiswa yang mengajukan
+                                        $mahasiswaPengaju = $surat->tugasSurat?->pemberiTugas?->mahasiswa;
+                                        $fakultas = $mahasiswaPengaju?->prodi?->fakultas;
+                                        
+                                        // Ambil data Dekan langsung dari Id_Dekan di tabel Fakultas
+                                        $dekan = null;
+                                        if ($fakultas && $fakultas->Id_Dekan) {
+                                            $dekan = \App\Models\Dosen::find($fakultas->Id_Dekan);
+                                        }
+                                        
+                                        $namaDekan = $dekan?->Nama_Dosen ?? 'Dr. Budi Hartono, S.Kom., M.Kom.';
+                                        $nipDekan = $dekan?->NIP ?? '198503152010121001';
+                                    @endphp
+                                    <p style="margin: 0;"><strong><u>{{ $namaDekan }}</u></strong></p>
+                                    <p style="margin: 0;">NIP {{ $nipDekan }}</p>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="text-center mt-3">
+                    <button type="button" class="btn btn-secondary" onclick="togglePreviewSuratResmi()">
+                        <i class="fas fa-times"></i> Tutup Preview
+                    </button>
+                    <button type="button" class="btn btn-primary" onclick="printSuratResmi()">
+                        <i class="fas fa-print"></i> Cetak Surat
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     {{-- Form Penomoran --}}
@@ -454,13 +604,35 @@
 <script>
 function togglePreview() {
     var preview = document.getElementById('previewSurat');
+    var previewResmi = document.getElementById('previewSuratResmi');
     if (preview.style.display === 'none') {
         preview.style.display = 'block';
-        // Scroll to preview
+        previewResmi.style.display = 'none';
         preview.scrollIntoView({ behavior: 'smooth', block: 'start' });
     } else {
         preview.style.display = 'none';
     }
+}
+
+function togglePreviewSuratResmi() {
+    var preview = document.getElementById('previewSurat');
+    var previewResmi = document.getElementById('previewSuratResmi');
+    if (previewResmi.style.display === 'none') {
+        previewResmi.style.display = 'block';
+        preview.style.display = 'none';
+        previewResmi.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        previewResmi.style.display = 'none';
+    }
+}
+
+function printSuratResmi() {
+    var printContent = document.getElementById('previewSuratResmi').innerHTML;
+    var originalContent = document.body.innerHTML;
+    document.body.innerHTML = printContent;
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload();
 }
 </script>
 

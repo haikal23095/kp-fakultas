@@ -209,9 +209,7 @@
 
         <div class="nomor-surat">
             <h3>SURAT PENGANTAR PERMOHONAN KERJA PRAKTIK</h3>
-            {{-- Nomor Surat Pengantar biasanya belum ada nomor resmi dari admin --}}
-            {{-- Gunakan format sementara atau kosongkan jika belum ada nomor --}}
-            <p>Nomor: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;/KP/{{ \Carbon\Carbon::now()->format('Y') }}</p>
+            <p>Nomor: {{ $surat->Nomor_Surat ?? '[Nomor Surat Belum Diterbitkan]' }}</p>
         </div>
 
         <div class="isi-surat">
@@ -303,43 +301,41 @@
                 <div class="ttd-position">NIM. {{ $nimPemohon }}</div>
             </div>
 
-            {{-- Tanda Tangan Koordinator --}}
+            {{-- Tanda Tangan Dekan (dengan QR Code Dekan) --}}
             <div class="ttd-content" style="text-align: center; min-width: 200px;">
                 <p>Bangkalan, {{ \Carbon\Carbon::now()->locale('id')->isoFormat('D MMMM YYYY') }}</p>
-                <p><strong>Koordinator Kerja Praktik</strong></p>
+                <p><strong>Dekan Fakultas Teknik</strong></p>
                 
-                @if($magang->Qr_code)
+                @if($magang->Acc_Dekan && $magang->Qr_code_dekan)
                     @php
-                        // Handle QR Code path
-                        // Cek apakah path mengandung 'storage/' atau tidak
-                        $qrPath = $magang->Qr_code;
+                        // Handle QR Code Dekan path
+                        $qrDekanPath = $magang->Qr_code_dekan;
                         
-                        // Jika path tidak dimulai dengan 'storage/' dan tidak ada di public root,
-                        // coba tambahkan 'storage/' (asumsi symlink)
-                        if (!file_exists(public_path($qrPath)) && file_exists(public_path('storage/' . $qrPath))) {
-                            $qrPath = 'storage/' . $qrPath;
+                        if (!file_exists(public_path($qrDekanPath)) && file_exists(public_path('storage/' . $qrDekanPath))) {
+                            $qrDekanPath = 'storage/' . $qrDekanPath;
                         }
                         
-                        $absolutePath = public_path($qrPath);
+                        $absoluteDekanPath = public_path($qrDekanPath);
                         
-                        $qrImageSrc = '';
-                        if (file_exists($absolutePath)) {
-                            $imageData = base64_encode(file_get_contents($absolutePath));
-                            $qrImageSrc = 'data:image/png;base64,' . $imageData;
+                        $qrDekanSrc = '';
+                        if (file_exists($absoluteDekanPath)) {
+                            $dekanData = base64_encode(file_get_contents($absoluteDekanPath));
+                            $qrDekanSrc = 'data:image/png;base64,' . $dekanData;
                         } else {
-                            // Fallback: try asset URL
-                            $qrImageSrc = asset($qrPath);
+                            $qrDekanSrc = asset($qrDekanPath);
                         }
                     @endphp
                     <div class="qr-code-box" style="margin: 10px auto;">
-                        <img src="{{ $qrImageSrc }}" alt="QR Code" style="width: 100px; height: 100px;">
+                        <img src="{{ $qrDekanSrc }}" alt="QR Code Dekan" style="width: 120px; height: 120px;">
                     </div>
                 @else
-                    <div style="height: 100px;"></div>
+                    <div style="height: 120px; text-align: center; padding: 20px 0;">
+                        <p style="font-size: 10pt; color: #999; font-style: italic;">Menunggu Persetujuan Dekan</p>
+                    </div>
                 @endif
 
-                <div class="ttd-name">{{ $koordinator->Nama_Dosen ?? 'Koordinator' }}</div>
-                <div class="ttd-position">NIP. {{ $koordinator->NIP ?? '-' }}</div>
+                <div class="ttd-name">{{ $magang->dekan->Nama_Dosen ?? '[Nama Dekan]' }}</div>
+                <div class="ttd-position">NIP. {{ $magang->Nip_Dekan ?? ($magang->dekan->NIP ?? '-') }}</div>
             </div>
         </div>
     </div>

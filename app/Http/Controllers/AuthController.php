@@ -269,7 +269,20 @@ class AuthController extends Controller
                 $q->where('Id_Prodi', $prodiId);
             })
             ->where('Acc_Koordinator', false)
+            ->where('Status', 'Diajukan-ke-koordinator')
             ->count();
+
+        // Ambil data antrian surat magang untuk ditampilkan di tabel
+        $antrianSurat = \App\Models\SuratMagang::query()
+            ->with(['tugasSurat.pemberiTugas.mahasiswa'])
+            ->whereHas('tugasSurat.pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
+                $q->where('Id_Prodi', $prodiId);
+            })
+            ->where('Acc_Koordinator', false)
+            ->where('Status', 'Diajukan-ke-koordinator')
+            ->orderBy('id_no', 'desc')
+            ->limit(3)
+            ->get();
 
         // Hitung Jumlah Dosen di prodi ini
         $jumlahDosen = \App\Models\Dosen::where('Id_Prodi', $prodiId)->count();
@@ -282,7 +295,8 @@ class AuthController extends Controller
             'suratMasuk',
             'suratKeluar',
             'jumlahDosen',
-            'totalArsip'
+            'totalArsip',
+            'antrianSurat'
         ));
     }
 

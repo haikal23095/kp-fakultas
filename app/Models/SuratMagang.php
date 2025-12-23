@@ -22,6 +22,8 @@ class SuratMagang extends Model
         'Tanggal_Selesai',
         'Foto_ttd',
         'Qr_code',
+        'Qr_code_dekan',
+        'Nomor_Surat',
         'Data_Mahasiswa',
         'Data_Dosen_pembiming',
         'Dokumen_Proposal',
@@ -29,6 +31,8 @@ class SuratMagang extends Model
         'Acc_Koordinator',
         'Acc_Dekan',
         'Nama_Koordinator',
+        'Nama_Dekan',
+        'Nip_Dekan',
         'Status',
         'Komentar',
     ];
@@ -55,5 +59,13 @@ class SuratMagang extends Model
     public function koordinator()
     {
         return $this->belongsTo(Dosen::class, 'Nama_Koordinator', 'Id_Dosen');
+    }
+
+    /**
+     * Relasi ke Dosen (Dekan)
+     */
+    public function dekan()
+    {
+        return $this->belongsTo(Dosen::class, 'Nama_Dekan', 'Id_Dosen');
     }
 }

@@ -24,8 +24,8 @@ class DetailSuratController extends Controller
     public function show($id)
     {
         $with = [
-            'pemberiTugas.role', 
-            'jenisSurat', 
+            'pemberiTugas.role',
+            'jenisSurat',
             'penerimaTugas.role',
             'suratMagang',      // Tambahkan ini
             'suratKetAktif'     // Tambahkan ini
@@ -37,7 +37,7 @@ class DetailSuratController extends Controller
 
         $tugasSurat = TugasSurat::with($with)->find($id);
 
-        if (! $tugasSurat) {
+        if (!$tugasSurat) {
             abort(404, 'Surat tidak ditemukan');
         }
 
@@ -72,7 +72,7 @@ class DetailSuratController extends Controller
         $dataSpesifik = $tugasSurat->data_spesifik;
         $path = $dataSpesifik['dokumen_pendukung'] ?? null;
 
-        if (! $path) {
+        if (!$path) {
             return response('Dokumen Pendukung tidak ditemukan.', 404);
         }
 
@@ -103,7 +103,7 @@ class DetailSuratController extends Controller
         try {
             // 1. Generate token unik untuk verifikasi
             $token = \Str::random(64);
-            
+
             // 2. Simpan data verifikasi ke database
             $verification = \App\Models\SuratVerification::create([
                 'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
@@ -115,31 +115,70 @@ class DetailSuratController extends Controller
 
             // 3. Generate QR Code URL untuk verifikasi surat
             $verifyUrl = route('surat.verify', $token);
-            
+
             // Generate QR Code dengan box_size 10 (ukuran optimal ~150x150px)
             $qrCodeUrl = \App\Helpers\QrCodeHelper::generate($verifyUrl, 10);
-            
+
             // Simpan URL QR ke database
             $verification->qr_path = $qrCodeUrl;
             $verification->save();
-            
+
             // 4. Update status surat - mapping ke enum valid di child
             // Child enum: 'Draft','Diajukan-ke-koordinator','Dikerjakan-admin','Diajukan-ke-dekan','Success','Ditolak'
             if ($tugasSurat->suratMagang) {
                 try {
-                    $tugasSurat->suratMagang->Status = 'Success'; // gunakan nilai enum yang tersedia
+                    // Get data Dekan yang login
+                    $dekan = Auth::user();
+
+                    // Generate QR Code untuk Dekan dan simpan ke Qr_code_dekan
+                    $qrContentDekan = url("/verify-surat-magang/{$tugasSurat->suratMagang->id_no}");
+                    $qrFileNameDekan = 'qr_codes/dekan_' . $tugasSurat->suratMagang->id_no . '_' . time() . '.png';
+                    $qrPathDekan = storage_path('app/public/' . $qrFileNameDekan);
+
+                    // Pastikan direktori ada
+                    if (!file_exists(dirname($qrPathDekan))) {
+                        mkdir(dirname($qrPathDekan), 0777, true);
+                    }
+
+                    // Generate QR Code khusus untuk Dekan dengan Endroid v6.0 (readonly constructor)
+                    $qrCodeDekan = new \Endroid\QrCode\QrCode(
+                        data: $qrContentDekan,
+                        size: 200,
+                        margin: 10
+                    );
+                    $writerDekan = new \Endroid\QrCode\Writer\PngWriter();
+                    $resultDekan = $writerDekan->write($qrCodeDekan);
+                    $resultDekan->saveToFile($qrPathDekan);
+
+                    // Update Surat Magang
+                    $tugasSurat->suratMagang->Qr_code_dekan = $qrFileNameDekan;
+                    $tugasSurat->suratMagang->Status = 'Success';
+                    $tugasSurat->suratMagang->Acc_Dekan = 1;
+
+                    // Simpan Nama dan NIP Dekan
+                    if ($dekan->dosen) {
+                        $tugasSurat->suratMagang->Nama_Dekan = $dekan->dosen->Nama_Dosen;
+                        $tugasSurat->suratMagang->Nip_Dekan = $dekan->dosen->NIP;
+                    } elseif ($dekan->pegawaiFakultas) {
+                        $tugasSurat->suratMagang->Nama_Dekan = $dekan->pegawaiFakultas->Nama_Pegawai;
+                        $tugasSurat->suratMagang->Nip_Dekan = $dekan->pegawaiFakultas->Nip_Pegawai;
+                    } else {
+                        $tugasSurat->suratMagang->Nama_Dekan = $dekan->Name_User;
+                        $tugasSurat->suratMagang->Nip_Dekan = '-';
+                    }
+
                     $tugasSurat->suratMagang->save();
                 } catch (\Throwable $e) {
                     // Jika gagal (misal enum belum dimigrasi), log dan lanjutkan tanpa blokir
-                    \Log::warning('Gagal update status child Surat_Magang ke Success: '.$e->getMessage());
+                    \Log::warning('Gagal update status child Surat_Magang ke Success: ' . $e->getMessage());
                 }
             }
             // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
-            
+
             // PENTING: Update juga status di tabel parent
             $tugasSurat->Status = 'Selesai';
             $tugasSurat->Tanggal_Diselesaikan = Carbon::now();
-            
+
             // Simpan info QR ke Tugas_Surat (hanya jika kolom tersedia agar tidak error sebelum migrate)
             if (\Schema::hasColumn('Tugas_Surat', 'qr_image_path')) {
                 $tugasSurat->qr_image_path = $qrCodeUrl;
@@ -154,9 +193,9 @@ class DetailSuratController extends Controller
                     'verify_url' => $verifyUrl
                 ]);
             }
-            
+
             $tugasSurat->save();
-            
+
             // 6. Kirim notifikasi ke mahasiswa
             Notifikasi::create([
                 'Tipe_Notifikasi' => 'Accepted',
@@ -166,12 +205,12 @@ class DetailSuratController extends Controller
                 'Is_Read' => false,
                 'created_at' => now(),
             ]);
-            
+
             // 7. Kirim notifikasi ke admin fakultas
-            $adminFakultas = User::whereHas('role', function($q) {
+            $adminFakultas = User::whereHas('role', function ($q) {
                 $q->whereRaw("LOWER(TRIM(Name_Role)) = 'admin fakultas'");
             })->get();
-            
+
             foreach ($adminFakultas as $admin) {
                 Notifikasi::create([
                     'Tipe_Notifikasi' => 'Accepted',
@@ -185,10 +224,10 @@ class DetailSuratController extends Controller
 
             return redirect()->route('dekan.persetujuan.index')
                 ->with('success', 'Surat berhasil ditandatangani dan siap didownload mahasiswa!');
-                
+
         } catch (\Exception $e) {
             \Log::error('Error saat approve surat dengan QR: ' . $e->getMessage());
-            
+
             return redirect()->back()
                 ->with('error', 'Terjadi kesalahan saat memproses persetujuan: ' . $e->getMessage());
         }
@@ -222,23 +261,23 @@ class DetailSuratController extends Controller
                 $tugasSurat->suratMagang->Status = 'Ditolak';
                 $tugasSurat->suratMagang->save();
             } catch (\Throwable $e) {
-                \Log::warning('Gagal update status child Surat_Magang ke Ditolak: '.$e->getMessage());
+                \Log::warning('Gagal update status child Surat_Magang ke Ditolak: ' . $e->getMessage());
             }
         }
         // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
-        
+
         // PENTING: Update juga status di tabel parent
         $tugasSurat->Status = 'ditolak';
-        
+
         // Simpan komentar penolakan ke kolom data_spesifik
         $dataSpesifik = $tugasSurat->data_spesifik ?? [];
         $dataSpesifik['alasan_penolakan'] = $validated['komentar'] ?? 'Tidak memenuhi persyaratan';
         $dataSpesifik['ditolak_oleh'] = $user->Name_User;
         $dataSpesifik['tanggal_penolakan'] = Carbon::now()->format('d M Y H:i');
-        
+
         $tugasSurat->data_spesifik = $dataSpesifik;
         $tugasSurat->save();
-        
+
         // Kirim notifikasi ke mahasiswa
         Notifikasi::create([
             'Tipe_Notifikasi' => 'Rejected',
@@ -248,12 +287,12 @@ class DetailSuratController extends Controller
             'Is_Read' => false,
             'created_at' => now(),
         ]);
-        
+
         // Kirim notifikasi ke admin fakultas
-        $adminFakultas = User::whereHas('role', function($q) {
+        $adminFakultas = User::whereHas('role', function ($q) {
             $q->whereRaw("LOWER(TRIM(Name_Role)) = 'admin fakultas'");
         })->get();
-        
+
         foreach ($adminFakultas as $admin) {
             Notifikasi::create([
                 'Tipe_Notifikasi' => 'Rejected',
@@ -287,7 +326,7 @@ class DetailSuratController extends Controller
             'verification.penandatangan.pegawai',
             'verification.penandatangan.dosen'
         ])->findOrFail($id);
-        
+
         // Jika sudah ada file arsip (surat sudah selesai), tampilkan dari arsip
         if ($tugasSurat->fileArsip && $tugasSurat->fileArsip->Path_File) {
             $path = $tugasSurat->fileArsip->Path_File;
@@ -299,10 +338,10 @@ class DetailSuratController extends Controller
         // Jika belum ada arsip, generate preview dari view
         // Ambil data mahasiswa dari pemberi tugas
         $mahasiswa = $tugasSurat->pemberiTugas->mahasiswa ?? null;
-        
+
         // Render view preview sesuai jenis surat
         $jenisSurat = $tugasSurat->jenisSurat;
-        
+
         // Untuk surat aktif
         if ($tugasSurat->suratKetAktif) {
             return view('dekan.preview.surat_aktif', [
@@ -313,7 +352,7 @@ class DetailSuratController extends Controller
                 'mode' => 'preview'
             ]);
         }
-        
+
         // Untuk surat magang
         if ($tugasSurat->suratMagang) {
             return view('dekan.preview.surat_magang', [
