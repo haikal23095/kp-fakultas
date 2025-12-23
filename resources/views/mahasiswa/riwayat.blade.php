@@ -116,7 +116,7 @@
             <p class="mb-0 text-muted small">Pilih jenis surat untuk melihat riwayat pengajuan</p>
         </div>
         <div>
-            <a href="{{ route('mahasiswa.riwayat') }}" class="btn btn-outline-secondary me-2">
+            <a href="{{ route('dashboard.mahasiswa') }}" class="btn btn-outline-secondary me-2">
                 <i class="fas fa-arrow-left me-2"></i>Kembali
             </a>
             <a href="{{ route('mahasiswa.pengajuan.create') }}" class="btn btn-primary">

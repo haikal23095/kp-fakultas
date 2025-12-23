@@ -162,6 +162,22 @@
     <h1 class="h3 mb-0 text-gray-800">Pengajuan Surat Baru</h1>
 </div>
 
+{{-- Card Link ke Legalisir --}}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow-sm border-start border-primary border-4">
+            <div class="card-body d-flex align-items-center justify-content-between">
+                <div>
+                    <h5 class="card-title text-primary fw-bold mb-1">Legalisir Dokumen</h5>
+                    <p class="card-text text-muted mb-0">Ajukan legalisir ijazah atau transkrip nilai secara online.</p>
+                </div>
+                <a href="{{ route('mahasiswa.legalisir.create') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-right me-2"></i>Buka Halaman Legalisir
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="card shadow mb-4">
     <div class="card-header py-3">
