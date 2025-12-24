@@ -9,6 +9,7 @@ use App\Models\TugasSurat;
 use App\Models\SuratVerification;
 use App\Models\SuratKetAktif;
 use App\Models\SuratMagang;
+use App\Models\SuratLegalisir;
 
 class RiwayatSuratController extends Controller
 {
@@ -29,9 +30,19 @@ class RiwayatSuratController extends Controller
             ->where('Id_Jenis_Surat', 13) // ID untuk Surat Pengantar Magang
             ->count();
 
+        // Cari ID Jenis Surat untuk Legalisir
+        $jenisSuratLegalisir = \App\Models\JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
+        $countLegalisir = 0;
+        if ($jenisSuratLegalisir) {
+            $countLegalisir = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+                ->where('Id_Jenis_Surat', $jenisSuratLegalisir->Id_Jenis_Surat)
+                ->count();
+        }
+
         return view('mahasiswa.riwayat', [
             'countAktif' => $countAktif,
-            'countMagang' => $countMagang
+            'countMagang' => $countMagang,
+            'countLegalisir' => $countLegalisir
         ]);
     }
 
@@ -79,6 +90,38 @@ class RiwayatSuratController extends Controller
             ->get();
 
         return view('mahasiswa.riwayat_magang', [
+            'riwayatSurat' => $riwayatSurat
+        ]);
+    }
+
+    /**
+     * Tampilkan riwayat pengajuan legalisir
+     */
+    public function riwayatLegalisir()
+    {
+        $user = Auth::user();
+
+        // Cari ID Jenis Surat untuk Legalisir
+        $jenisSuratLegalisir = \App\Models\JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
+        
+        if (!$jenisSuratLegalisir) {
+            return view('mahasiswa.riwayat_legalisir', [
+                'riwayatSurat' => collect([])
+            ]);
+        }
+
+        // Query surat legalisir dengan relasi ke Surat_Legalisir
+        $riwayatSurat = TugasSurat::with([
+            'jenisSurat',
+            'penerimaTugas',
+            'suratLegalisir', // Relasi ke tabel Surat_Legalisir
+        ])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', $jenisSuratLegalisir->Id_Jenis_Surat)
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('mahasiswa.riwayat_legalisir', [
             'riwayatSurat' => $riwayatSurat
         ]);
     }

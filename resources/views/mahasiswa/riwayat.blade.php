@@ -178,6 +178,24 @@
             </div>
         </a>
     </div>
+
+    {{-- Card Legalisir Online --}}
+    <div class="col-md-6 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.legalisir') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-success badge-count">
+                    {{ $countLegalisir ?? 0 }} Surat
+                </span>
+                <div class="card-body">
+                    <div class="card-icon blue">
+                        <i class="fas fa-stamp"></i>
+                    </div>
+                    <h5>Legalisir Online</h5>
+                    <p>Lihat riwayat pengajuan legalisir ijazah dan transkrip nilai</p>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>
 
 {{-- Info Card --}}

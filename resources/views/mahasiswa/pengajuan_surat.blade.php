@@ -171,7 +171,7 @@
                     <h5 class="card-title text-primary fw-bold mb-1">Legalisir Dokumen</h5>
                     <p class="card-text text-muted mb-0">Ajukan legalisir ijazah atau transkrip nilai secara online.</p>
                 </div>
-                <a href="{{ route('mahasiswa.legalisir.create') }}" class="btn btn-primary">
+                <a href="{{ route('mahasiswa.pengajuan.legalisir.create') }}" class="btn btn-primary">
                     <i class="fas fa-arrow-right me-2"></i>Buka Halaman Legalisir
                 </a>
             </div>

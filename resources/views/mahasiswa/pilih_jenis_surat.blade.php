@@ -139,7 +139,7 @@
 
     {{-- Card Legalisir Dokumen (Manual) --}}
     <div class="col-lg-4 col-md-6 mb-4">
-        <a href="{{ route('mahasiswa.legalisir.create') }}" class="text-decoration-none">
+        <a href="{{ route('mahasiswa.pengajuan.legalisir.create') }}" class="text-decoration-none">
             <div class="card surat-card shadow-sm card-legalisir">
                 <div class="card-body">
                     <div class="surat-icon">
