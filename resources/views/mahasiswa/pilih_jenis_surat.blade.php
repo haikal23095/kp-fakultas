@@ -67,6 +67,56 @@
         background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
         color: white;
     }
+
+    .card-mobil-dinas .surat-icon {
+        background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        color: white;
+    }
+
+    .card-tidak-beasiswa .surat-icon {
+        background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        color: white;
+    }
+
+    .card-cek-plagiasi .surat-icon {
+        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        color: white;
+    }
+
+    .card-dispensasi .surat-icon {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+        color: white;
+    }
+
+    .card-berkelakuan-baik .surat-icon {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        color: white;
+    }
+
+    .card-surat-tugas .surat-icon {
+        background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
+        color: white;
+    }
+
+    .card-mbkm .surat-icon {
+        background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
+        color: white;
+    }
+
+    .card-peminjaman-gedung .surat-icon {
+        background: linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%);
+        color: white;
+    }
+
+    .card-lembur .surat-icon {
+        background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+        color: white;
+    }
+
+    .card-peminjaman-ruang .surat-icon {
+        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        color: white;
+    }
 </style>
 @endpush
 
@@ -136,6 +186,156 @@
             </a>
         </div>
     @endforeach
+
+    {{-- Card Peminjaman Mobil Dinas --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-mobil-dinas">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h5>Peminjaman Mobil Dinas</h5>
+                    <p>Ajukan permohonan peminjaman mobil dinas fakultas</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Tidak Menerima Beasiswa --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-tidak-beasiswa">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h5>Tidak Menerima Beasiswa</h5>
+                    <p>Surat keterangan tidak menerima beasiswa</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Cek Plagiasi --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-cek-plagiasi">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h5>Cek Plagiasi (Turnitin)</h5>
+                    <p>Permohonan cek plagiasi dokumen/skripsi</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Dispensasi --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-dispensasi">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                    <h5>Surat Dispensasi</h5>
+                    <p>Dispensasi kehadiran kuliah</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Berkelakuan Baik --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-berkelakuan-baik">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h5>Berkelakuan Baik</h5>
+                    <p>Surat keterangan berkelakuan baik</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Surat Tugas --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-surat-tugas">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h5>Surat Tugas Kegiatan</h5>
+                    <p>Permohonan surat tugas untuk kegiatan</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card MBKM --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-mbkm">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h5>Rekomendasi MBKM</h5>
+                    <p>Surat rekomendasi untuk program MBKM</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Peminjaman Gedung --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-peminjaman-gedung">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h5>Peminjaman Gedung</h5>
+                    <p>Ajukan peminjaman gedung dan ruangan</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Lembur --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-lembur">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h5>Surat Perintah Lembur</h5>
+                    <p>Permohonan surat perintah lembur</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Peminjaman Ruang --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+            <div class="card surat-card shadow-sm card-peminjaman-ruang">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-door-open"></i>
+                    </div>
+                    <h5>Peminjaman Ruang</h5>
+                    <p>Ajukan peminjaman ruang rapat/lab</p>
+                </div>
+            </div>
+        </a>
+    </div>
 
     {{-- Card Legalisir Dokumen (Manual) --}}
     <div class="col-lg-4 col-md-6 mb-4">

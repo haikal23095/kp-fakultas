@@ -41,6 +41,14 @@ class SuratLegalisir extends Model
     }
 
     /**
+     * Alias untuk relasi user (agar lebih jelas)
+     */
+    public function pemohon()
+    {
+        return $this->belongsTo(User::class, 'Id_User', 'Id_User');
+    }
+
+    /**
      * Relasi ke Pejabat
      */
     public function pejabat()

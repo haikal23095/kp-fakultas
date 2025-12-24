@@ -284,6 +284,150 @@
             </div>
         </a>
     </div>
+
+    {{-- Card Mobil Dinas --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.surat.mobil_dinas') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-info badge-count">
+                    {{ $countMobilDinas ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon blue">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h5>Surat Mobil Dinas</h5>
+                    <p>Kelola pengajuan peminjaman mobil dinas fakultas</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Cuti --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.surat.cuti') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-secondary badge-count">
+                    {{ $countCuti ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon green">
+                        <i class="fas fa-calendar-times"></i>
+                    </div>
+                    <h5>Surat Cuti</h5>
+                    <p>Kelola pengajuan cuti dosen dan pegawai fakultas</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Tidak Menerima Beasiswa --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.surat.tidak_beasiswa') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-danger badge-count">
+                    {{ $countTidakBeasiswa ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon orange">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h5>Tidak Menerima Beasiswa</h5>
+                    <p>Kelola pengajuan surat keterangan tidak menerima beasiswa</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Dispensasi --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.surat.dispensasi') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-primary badge-count">
+                    {{ $countDispensasi ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon blue">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                    <h5>Surat Dispensasi</h5>
+                    <p>Kelola pengajuan dispensasi kehadiran mahasiswa</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Berkelakuan Baik --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.surat.berkelakuan_baik') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-success badge-count">
+                    {{ $countBerkelakuanBaik ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon green">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h5>Berkelakuan Baik</h5>
+                    <p>Kelola pengajuan surat keterangan berkelakuan baik</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card SK Fakultas --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.surat.sk_fakultas') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-warning badge-count">
+                    {{ $countSKFakultas ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon orange">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <h5>SK Fakultas</h5>
+                    <p>Kelola pengajuan Surat Keputusan Fakultas</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Peminjaman Gedung --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.surat.peminjaman_gedung') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-info badge-count">
+                    {{ $countPeminjamanGedung ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon blue">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h5>Peminjaman Gedung</h5>
+                    <p>Kelola pengajuan peminjaman gedung dan ruangan</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Lembur --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.surat.lembur') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-secondary badge-count">
+                    {{ $countLembur ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon green">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h5>Surat Lembur</h5>
+                    <p>Kelola pengajuan surat perintah lembur pegawai</p>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>
 
 {{-- Info Card --}}

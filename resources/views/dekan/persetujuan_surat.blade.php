@@ -40,9 +40,22 @@
                             <tr>
                                 <td>{{ optional($surat->jenisSurat)->Nama_Surat ?? '-' }}</td>
                                 <td>
-                                    {{ optional($surat->pemberiTugas)->Name_User ?? '-' }}
-                                    @if(optional(optional($surat->pemberiTugas)->role)->Name_Role)
-                                        <br><small class="text-muted">({{ optional($surat->pemberiTugas->role)->Name_Role }})</small>
+                                    @php
+                                        // Untuk legalisir, ambil pemohon dari Surat_Legalisir.Id_User
+                                        if ($surat->suratLegalisir && $surat->suratLegalisir->pemohon) {
+                                            $pemohon = $surat->suratLegalisir->pemohon;
+                                            $namaPemohon = $pemohon->Name_User;
+                                            $rolePemohon = optional($pemohon->role)->Name_Role;
+                                        } else {
+                                            // Untuk surat lain, ambil dari pemberiTugas
+                                            $pemohon = $surat->pemberiTugas;
+                                            $namaPemohon = optional($pemohon)->Name_User;
+                                            $rolePemohon = optional(optional($pemohon)->role)->Name_Role;
+                                        }
+                                    @endphp
+                                    {{ $namaPemohon ?? '-' }}
+                                    @if($rolePemohon)
+                                        <br><small class="text-muted">({{ $rolePemohon }})</small>
                                     @endif
                                 </td>
                                 <td>{{ optional($surat->Tanggal_Diberikan_Tugas_Surat) ? $surat->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}</td>
