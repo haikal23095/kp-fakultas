@@ -1,0 +1,142 @@
+@extends('layouts.kaprodi')
+
+@section('title', 'Ajukan SK')
+
+@section('content')
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-0">Ajukan Surat Keputusan (SK)</h1>
+        <p class="mb-0 text-muted">Pilih jenis SK yang ingin Anda ajukan</p>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- SK Beban Mengajar -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 hover-card">
+            <div class="card-body text-center p-4">
+                <div class="icon-wrapper mb-3">
+                    <div class="icon-circle bg-primary bg-opacity-10 mx-auto" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                        <i class="fas fa-chalkboard-teacher fa-2x text-primary"></i>
+                    </div>
+                </div>
+                <h5 class="card-title fw-bold mb-2">SK Beban Mengajar</h5>
+                <p class="card-text text-muted small mb-4">
+                    Ajukan surat keputusan untuk beban mengajar dosen di semester aktif
+                </p>
+                <a href="{{ route('kaprodi.sk.beban-mengajar.create') }}" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-plus-circle me-2"></i>Ajukan SK
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SK Dosen Wali -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 hover-card">
+            <div class="card-body text-center p-4">
+                <div class="icon-wrapper mb-3">
+                    <div class="icon-circle bg-success bg-opacity-10 mx-auto" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                        <i class="fas fa-user-graduate fa-2x text-success"></i>
+                    </div>
+                </div>
+                <h5 class="card-title fw-bold mb-2">SK Dosen Wali</h5>
+                <p class="card-text text-muted small mb-4">
+                    Ajukan surat keputusan untuk penetapan dosen wali mahasiswa
+                </p>
+                <a href="{{ route('kaprodi.sk.dosen-wali.create') }}" class="btn btn-success btn-sm w-100">
+                    <i class="fas fa-plus-circle me-2"></i>Ajukan SK
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SK Pembimbing Skripsi -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 hover-card">
+            <div class="card-body text-center p-4">
+                <div class="icon-wrapper mb-3">
+                    <div class="icon-circle bg-warning bg-opacity-10 mx-auto" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                        <i class="fas fa-book-reader fa-2x text-warning"></i>
+                    </div>
+                </div>
+                <h5 class="card-title fw-bold mb-2">SK Pembimbing Skripsi</h5>
+                <p class="card-text text-muted small mb-4">
+                    Ajukan surat keputusan untuk dosen pembimbing skripsi mahasiswa
+                </p>
+                <a href="{{ route('kaprodi.sk.pembimbing-skripsi.create') }}" class="btn btn-warning btn-sm w-100">
+                    <i class="fas fa-plus-circle me-2"></i>Ajukan SK
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SK Penguji Skripsi -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card border-0 shadow-sm h-100 hover-card">
+            <div class="card-body text-center p-4">
+                <div class="icon-wrapper mb-3">
+                    <div class="icon-circle bg-danger bg-opacity-10 mx-auto" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                        <i class="fas fa-user-check fa-2x text-danger"></i>
+                    </div>
+                </div>
+                <h5 class="card-title fw-bold mb-2">SK Penguji Skripsi</h5>
+                <p class="card-text text-muted small mb-4">
+                    Ajukan surat keputusan untuk dosen penguji ujian skripsi
+                </p>
+                <a href="{{ route('kaprodi.sk.penguji-skripsi.create') }}" class="btn btn-danger btn-sm w-100">
+                    <i class="fas fa-plus-circle me-2"></i>Ajukan SK
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Section -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm bg-light">
+            <div class="card-body">
+                <div class="d-flex align-items-start">
+                    <div class="me-3">
+                        <i class="fas fa-info-circle fa-2x text-primary"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-bold mb-2">Informasi</h6>
+                        <ul class="mb-0 small text-muted">
+                            <li>Pastikan data yang diinput sudah benar sebelum mengajukan SK</li>
+                            <li>SK yang telah diajukan akan diproses oleh admin fakultas</li>
+                            <li>Anda dapat memantau status pengajuan SK di menu masing-masing</li>
+                            <li>SK yang disetujui akan tersedia untuk diunduh dalam format PDF</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('styles')
+<style>
+    .hover-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    .icon-circle {
+        transition: transform 0.2s ease;
+    }
+    
+    .hover-card:hover .icon-circle {
+        transform: scale(1.1);
+    }
+</style>
+@endpush
+
+@endsection

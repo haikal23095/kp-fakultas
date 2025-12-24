@@ -224,6 +224,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/permintaan-kp/{id}/download-proposal', [\App\Http\Controllers\Kaprodi\PermintaanSuratController::class, 'downloadProposal'])
             ->name('surat.download');
 
+        // SK Routes
+        Route::get('/sk', [\App\Http\Controllers\Kaprodi\SKController::class, 'index'])
+            ->name('sk.index');
+        Route::get('/sk/beban-mengajar/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createBebanMengajar'])
+            ->name('sk.beban-mengajar.create');
+        Route::get('/sk/dosen-wali/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createDosenWali'])
+            ->name('sk.dosen-wali.create');
+        Route::get('/sk/pembimbing-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.create');
+        Route::get('/sk/penguji-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPengujiSkripsi'])
+            ->name('sk.penguji-skripsi.create');
+
         Route::get('/kurikulum', function () {
             return view('kaprodi.kurikulum');
         })->name('kurikulum.index');

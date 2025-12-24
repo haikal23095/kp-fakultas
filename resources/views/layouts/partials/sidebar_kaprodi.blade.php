@@ -42,6 +42,12 @@
                 Permintaan Pengantar KP/Magang
             </a>
         </li>
+        <li>
+            <a href="{{ route('kaprodi.sk.index') }}" class="nav-link text-white {{ request()->routeIs('kaprodi.sk.*') ? 'active' : '' }}">
+                <i class="fas fa-file-signature me-2"></i>
+                Ajukan SK
+            </a>
+        </li>
     </ul>
     <hr>
     {{-- Notifikasi Link --}}
