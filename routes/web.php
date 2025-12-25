@@ -191,6 +191,8 @@ Route::middleware('auth')->group(function () {
 
         // Route: Legalisir - Tandai Sudah Bayar
         Route::get('/surat-legalisir', [FakultasSuratLegalisirController::class, 'index'])->name('surat_legalisir.index');
+        Route::get('/input', [FakultasSuratLegalisirController::class, 'create'])->name('surat_legalisir.create');
+        Route::post('/store', [FakultasSuratLegalisirController::class, 'store'])->name('surat_legalisir.store');
         Route::post('/surat-legalisir/{id}/verifikasi', [FakultasSuratLegalisirController::class, 'verifikasi'])->name('surat_legalisir.verifikasi');
         Route::post('/surat-legalisir/{id}/bayar', [FakultasSuratLegalisirController::class, 'konfirmasiPembayaran'])->name('surat_legalisir.bayar');
         Route::post('/surat-legalisir/{id}/progress', [FakultasSuratLegalisirController::class, 'updateProgress'])->name('surat_legalisir.progress');

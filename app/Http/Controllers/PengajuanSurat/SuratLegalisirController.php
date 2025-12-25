@@ -1,134 +1,191 @@
 <?php
 
-namespace App\Http\Controllers\PengajuanSurat;
+namespace App\Http\Controllers\Admin_Fakultas;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\TugasSurat;
 use App\Models\SuratLegalisir;
+use App\Models\TugasSurat;
 use App\Models\JenisSurat;
 use App\Models\Mahasiswa;
 use App\Models\Notifikasi;
-use App\Models\User;
+use App\Models\Pejabat;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
 
 class SuratLegalisirController extends Controller
 {
     /**
-     * Menampilkan form pengajuan legalisir
+     * Pastikan hanya Role 5 dan 7 yang bisa akses
      */
-    public function create()
+    private function checkAccess()
     {
-        $user = Auth::user();
-        $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
-        
-        // Ambil ID jenis surat untuk Legalisir
-        // Pastikan nama ini sesuai dengan data di tabel Jenis_Surat
-        $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
-
-        return view('mahasiswa.legalisir', [
-            'mahasiswa' => $mahasiswa,
-            'jenisSurat' => $jenisSurat
-        ]);
+        if (!in_array(Auth::user()->Id_Role, [5, 7])) {
+            abort(403, 'ANDA TIDAK MEMILIKI HAK AKSES KE FITUR INI.');
+        }
     }
 
     /**
-     * Menyimpan pengajuan legalisir
+     * Menampilkan daftar pengajuan dengan Eager Loading agar tidak error "property on null"
+     */
+    public function index()
+    {
+        $this->checkAccess();
+
+        // Mengambil data dengan relasi user dan mahasiswa sekaligus
+        $daftarSurat = SuratLegalisir::with(['user.mahasiswa', 'tugasSurat'])
+            ->orderBy('id_no', 'desc')
+            ->get();
+
+        return view('admin_fakultas.list_legalisir', compact('daftarSurat'));
+    }
+
+    /**
+     * Form Input Baru
+     */
+    public function create()
+    {
+        $this->checkAccess();
+        $daftarMahasiswa = Mahasiswa::with(['user', 'prodi'])->get();
+        return view('admin_fakultas.surat_legalisir.create', compact('daftarMahasiswa'));
+    }
+
+    /**
+     * Simpan Data (Memastikan Biaya Tersimpan ke Kolom 'Biaya')
      */
     public function store(Request $request)
     {
-        // 1. Validasi Input
-        $validator = Validator::make($request->all(), [
-            'jenis_dokumen' => 'required|in:1,2', // 1: Ijazah, 2: Transkrip (sesuai value di blade)
-            'file_dokumen' => 'required|file|mimes:pdf|max:5120', // Max 5MB sesuai warning di blade
-            'jumlah_salinan' => 'required|integer|min:1|max:10',
-        ], [
-            'jenis_dokumen.required' => 'Silakan pilih jenis dokumen.',
-            'file_dokumen.required' => 'Dokumen asli wajib diunggah.',
-            'file_dokumen.mimes' => 'Dokumen harus berformat PDF.',
-            'file_dokumen.max' => 'Ukuran dokumen maksimal 5MB.',
-            'jumlah_salinan.required' => 'Jumlah salinan wajib diisi.',
-        ]);
+        $this->checkAccess();
 
-        if ($validator->fails()) {
-            return redirect()->back()
-                ->withErrors($validator)
-                ->withInput();
-        }
+        $request->validate([
+            'id_user_mahasiswa' => 'required|exists:Users,Id_User',
+            'jenis_dokumen'     => 'required|in:Ijazah,Transkrip',
+            'jumlah_salinan'    => 'required|integer|min:1',
+            'biaya'             => 'required|integer|min:0',
+        ]);
 
         DB::beginTransaction();
         try {
-            // 2. Upload File
-            // Simpan di folder 'dokumen_legalisir' di disk 'public'
-            $path = $request->file('file_dokumen')->store('dokumen_legalisir', 'public');
-
-            // 3. Cari atau Buat Jenis Surat
-            $jenisSurat = JenisSurat::firstOrCreate(
-                ['Nama_Surat' => 'Surat Legalisir'],
-                [
-                    'Id_Jenis_Surat' => JenisSurat::max('Id_Jenis_Surat') + 1,
-                    'Tipe_Surat' => 'Surat-Keluar'
-                ]
-            );
-            $idJenisSurat = $jenisSurat->Id_Jenis_Surat; 
-
-            // Mapping value jenis dokumen dari form (1/2) ke Enum database (Ijazah/Transkrip)
-            $jenisDokumenMap = [
-                '1' => 'Ijazah',
-                '2' => 'Transkrip'
-            ];
-            $jenisDokumenLabel = $jenisDokumenMap[$request->jenis_dokumen] ?? 'Dokumen';
-
-            // 4. Buat Parent (TugasSurat)
+            // 1. Buat Parent TugasSurat
             $tugasSurat = TugasSurat::create([
-                'Id_Pemberi_Tugas_Surat' => Auth::id(),
-                'Id_Jenis_Surat' => $idJenisSurat,
+                'Id_Pemberi_Tugas_Surat'        => Auth::id(),
+                'Id_Jenis_Surat'                => 3, 
                 'Tanggal_Diberikan_Tugas_Surat' => Carbon::now(),
-                'Judul_Tugas_Surat' => 'Permohonan Legalisir ' . $jenisDokumenLabel,
+                'Judul_Tugas_Surat'             => 'Legalisir ' . $request->jenis_dokumen,
+                'Status_Tugas_Surat'            => 'diproses',
             ]);
 
-            // 5. Buat Child (SuratLegalisir)
-            $suratLegalisir = SuratLegalisir::create([
+            // 2. Simpan ke Tabel Surat_Legalisir sesuai kolom DB Anda
+            SuratLegalisir::create([
                 'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
-                'Id_User' => Auth::id(),
-                'Jenis_Dokumen' => $jenisDokumenLabel,
-                'Path_File' => $path,
+                'Id_User'        => $request->id_user_mahasiswa,
+                'Jenis_Dokumen'  => $request->jenis_dokumen,
                 'Jumlah_Salinan' => $request->jumlah_salinan,
-                'Status' => 'pending', // Status lokal awal
+                'Biaya'          => $request->biaya, // Input Biaya disimpan di sini
+                'Status'         => 'menunggu_pembayaran', // Sesuai Enum DB Anda
             ]);
-
-            // 6. Kirim Notifikasi ke Admin Fakultas (Role ID = 7)
-            $adminFakultasUsers = User::where('Id_Role', 7)->get();
-            
-            foreach ($adminFakultasUsers as $admin) {
-                Notifikasi::create([
-                    'Tipe_Notifikasi' => 'Invitation', // Tipe info/notification
-                    'Pesan' => 'Pengajuan Legalisir Baru dari ' . Auth::user()->Name_User,
-                    'Dest_user' => $admin->Id_User,
-                    'Source_User' => Auth::id(),
-                    'Is_Read' => false,
-                    'Data_Tambahan' => [
-                        'id_surat' => $suratLegalisir->id_no,
-                        'type' => 'legalisir'
-                    ]
-                ]);
-            }
 
             DB::commit();
-
-            return redirect()->route('mahasiswa.riwayat.legalisir')
-                ->with('success', 'Pengajuan legalisir berhasil dikirim. Mohon tunggu verifikasi admin.');
+            return redirect()->route('admin_fakultas.surat_legalisir.index')
+                ->with('success', 'Data legalisir mahasiswa berhasil diinput.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            // Hapus file jika gagal
-            if (isset($path)) {
-                \Illuminate\Support\Facades\Storage::disk('public')->delete($path);
-            }
             return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Konfirmasi Pembayaran (Update Status & Tanggal Bayar)
+     */
+    public function konfirmasiPembayaran(Request $request, $id)
+    {
+        $this->checkAccess();
+
+        $surat = SuratLegalisir::findOrFail($id);
+
+        if ($surat->Status !== 'menunggu_pembayaran') {
+            return redirect()->back()->with('error', 'Status tidak valid untuk konfirmasi.');
+        }
+
+        $surat->update([
+            'Status'        => 'pembayaran_lunas',
+            'Tanggal_Bayar' => Carbon::now(), // Mengisi kolom Tanggal_Bayar otomatis
+        ]);
+
+        $this->sendNotification($surat->Id_User, 'Pembayaran Diterima', 'Pembayaran legalisir Anda telah lunas. Berkas masuk tahap stempel.', $surat->id_no);
+
+        return redirect()->back()->with('success', 'Pembayaran lunas telah dikonfirmasi.');
+    }
+
+    /**
+     * Update Progres Alur Berkas Fisik
+     */
+    public function updateProgress(Request $request, $id)
+    {
+        $this->checkAccess();
+
+        $surat = SuratLegalisir::with('tugasSurat')->findOrFail($id);
+        $statusSekarang = $surat->Status;
+        $pesanNotifikasi = '';
+
+        switch ($statusSekarang) {
+            case 'pembayaran_lunas':
+                $surat->Status = 'proses_stempel_paraf';
+                $pesanNotifikasi = 'Berkas sedang dalam tahap penomoran dan stempel.';
+                break;
+
+            case 'proses_stempel_paraf':
+                // Set Pejabat (Dekan) otomatis jika ada
+                $pejabatDekan = Pejabat::where('Nama_Jabatan', 'LIKE', '%Dekan%')->first();
+                if ($pejabatDekan) { $surat->Id_Pejabat = $pejabatDekan->Id_Pejabat; }
+                
+                $surat->Status = 'menunggu_ttd_pimpinan';
+                $pesanNotifikasi = 'Berkas sedang menunggu tanda tangan pimpinan.';
+                break;
+
+            case 'menunggu_ttd_pimpinan':
+                $surat->Status = 'siap_diambil';
+                $pesanNotifikasi = 'Legalisir selesai. Silakan ambil berkas Anda di loket.';
+                break;
+
+            case 'siap_diambil':
+                $surat->Status = 'selesai';
+                if ($surat->tugasSurat) {
+                    $surat->tugasSurat->update([
+                        'Status_Tugas_Surat'    => 'selesai',
+                        'Tanggal_Diselesaikan'  => Carbon::now()
+                    ]);
+                }
+                $pesanNotifikasi = 'Pengajuan selesai. Terima kasih.';
+                break;
+
+            default:
+                return redirect()->back()->with('error', 'Tidak ada progres lanjutan.');
+        }
+
+        $surat->save();
+
+        if ($pesanNotifikasi) {
+            $this->sendNotification($surat->Id_User, 'Update Legalisir', $pesanNotifikasi, $surat->id_no);
+        }
+
+        return redirect()->back()->with('success', 'Status progres berhasil diperbarui.');
+    }
+
+    /**
+     * Fungsi Kirim Notifikasi ke Mahasiswa
+     */
+    private function sendNotification($destUser, $title, $message, $idNo)
+    {
+        Notifikasi::create([
+            'Tipe_Notifikasi' => 'Info',
+            'Pesan'           => $message,
+            'Dest_user'       => $destUser,
+            'Source_User'     => Auth::id(),
+            'Is_Read'         => false,
+            'Data_Tambahan'   => json_encode(['id' => $idNo, 'type' => 'legalisir'])
+        ]);
     }
 }

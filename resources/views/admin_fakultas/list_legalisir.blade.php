@@ -2,161 +2,200 @@
 
 @section('title', 'Daftar Pengajuan Legalisir')
 
+@push('styles')
+<style>
+    /* Desain Card & Tabel Modern */
+    .card-legalisir {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        overflow: hidden;
+    }
+    
+    .header-gradient {
+        background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+        padding: 1.2rem;
+        color: white;
+    }
+
+    .table-custom {
+        font-size: 0.9rem;
+    }
+    
+    .table-custom thead th {
+        background-color: #f8f9fc;
+        color: #4e73df;
+        font-weight: 700;
+        text-transform: uppercase;
+        border: none;
+        padding: 12px;
+    }
+
+    .badge-status {
+        padding: 0.5rem 0.8rem;
+        border-radius: 50px;
+        font-weight: 600;
+        font-size: 0.75rem;
+    }
+
+    .btn-action {
+        border-radius: 8px;
+        padding: 0.4rem 0.8rem;
+        font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .btn-action:hover {
+        transform: translateY(-2px);
+    }
+</style>
+@endpush
+
 @section('content')
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <div>
-        <h1 class="h3 mb-1 text-gray-800">Daftar Pengajuan Legalisir</h1>
-        <p class="text-muted small mb-0">Kelola pengajuan legalisir ijazah dan transkrip nilai</p>
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-gray-800 fw-bold">Antrean Legalisir</h1>
+            <p class="text-muted small">Kelola pembayaran dan progres berkas fisik mahasiswa</p>
+        </div>
+        <a href="{{ route('admin_fakultas.surat_legalisir.create') }}" class="btn btn-primary btn-action shadow-sm">
+            <i class="fas fa-plus me-1"></i> Input Pengajuan Baru
+        </a>
     </div>
-    <a href="{{ route('admin_fakultas.surat.manage') }}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-2"></i>Kembali
-    </a>
-</div>
 
-@if(session('success'))
-    <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 12px; border-left: 4px solid #1cc88a;">
-        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
+    {{-- Pesan Sukses --}}
+    @if(session('success'))
+        <div class="alert alert-success alert-dismissible fade show border-0 shadow-sm" role="alert" style="border-radius: 10px;">
+            <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    @endif
 
-@if(session('error'))
-    <div class="alert alert-danger alert-dismissible fade show shadow-sm" role="alert" style="border-radius: 12px; border-left: 4px solid #e74a3b;">
-        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
-        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-    </div>
-@endif
-
-<div class="card shadow mb-4" style="border-radius: 12px; border: none;">
-    <div class="card-header py-3" style="background: linear-gradient(135deg, #f6c23e 0%, #dda20a 100%); border-radius: 12px 12px 0 0;">
-        <h6 class="m-0 font-weight-bold text-white">
-            <i class="fas fa-stamp me-2"></i>Tabel Pengajuan Legalisir
-        </h6>
-    </div>
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover" width="100%" cellspacing="0">
-                <thead style="background-color: #f8f9fc;">
-                    <tr>
-                        <th>No</th>
-                        <th>Nama Mahasiswa</th>
-                        <th>Jenis Dokumen</th>
-                        <th>Jumlah</th>
-                        <th>Tanggal Pengajuan</th>
-                        <th>Status</th>
-                        <th>Aksi</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($daftarSurat as $index => $surat)
-                    <tr>
-                        <td>{{ $index + 1 }}</td>
-                        <td>
-                            <div class="fw-bold">{{ $surat->user->Name_User ?? 'N/A' }}</div>
-                        </td>
-                        <td>{{ $surat->Jenis_Dokumen }}</td>
-                        <td>{{ $surat->Jumlah_Salinan }}</td>
-                        <td>{{ \Carbon\Carbon::parse($surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') }}</td>
-                        <td class="text-center">
-                            @php
-                                $status = $surat->Status ?? 'pending';
-                                $badgeClass = 'secondary';
-                                $icon = 'circle';
-                                
-                                switch(strtolower($status)) {
-                                    case 'selesai':
-                                    case 'siap_diambil':
-                                        $badgeClass = 'success';
-                                        $icon = 'check';
-                                        break;
-                                    case 'ditolak':
-                                        $badgeClass = 'danger';
-                                        $icon = 'times';
-                                        break;
-                                    case 'menunggu_pembayaran':
-                                    case 'menunggu_ttd_pimpinan':
-                                        $badgeClass = 'warning';
-                                        $icon = 'clock';
-                                        break;
-                                    case 'pembayaran_lunas':
-                                    case 'proses_stempel_paraf':
-                                        $badgeClass = 'info';
-                                        $icon = 'spinner fa-spin';
-                                        break;
-                                    default:
-                                        $badgeClass = 'secondary';
-                                        $icon = 'circle';
-                                }
-                            @endphp
-                            <span class="badge rounded-pill bg-{{ $badgeClass }} px-3 py-2">
-                                <i class="fas fa-{{ $icon }} me-1"></i>
-                                {{ ucfirst(str_replace('_', ' ', $status)) }}
-                            </span>
-                        </td>
-                        <td>
-                            {{-- Tombol Aksi Berdasarkan Status --}}
-                            @if($surat->Status == 'pending')
-                                <form action="{{ route('admin_fakultas.surat_legalisir.verifikasi', $surat->id_no) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-primary" onclick="return confirm('Verifikasi berkas ini?')">
-                                        <i class="fas fa-check me-1"></i>Verifikasi
+    <div class="card card-legalisir">
+        <div class="header-gradient">
+            <h6 class="m-0 fw-bold"><i class="fas fa-list me-2"></i>Daftar Dokumen Masuk</h6>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-custom mb-0" id="tableLegalisir">
+                    <thead class="text-center">
+                        <tr>
+                            <th>No</th>
+                            <th class="text-start">Mahasiswa</th>
+                            <th>Dokumen</th>
+                            <th>Jumlah</th>
+                            <th>Biaya</th>
+                            <th>Tgl Bayar</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach($daftarSurat as $index => $surat)
+                        <tr class="text-center align-middle">
+                            <td>{{ $index + 1 }}</td>
+                            <td class="text-start">
+                                <div class="fw-bold text-primary">{{ $surat->user->Name_User ?? 'N/A' }}</div>
+                                <small class="text-muted">{{ $surat->user->mahasiswa->NIM ?? '-' }}</small>
+                            </td>
+                            <td>
+                                <span class="badge bg-light text-dark border">{{ $surat->Jenis_Dokumen }}</span>
+                            </td>
+                            <td>{{ $surat->Jumlah_Salinan }} Copy</td>
+                            <td class="fw-bold text-success">
+                                {{ $surat->Biaya ? 'Rp '.number_format($surat->Biaya, 0, ',', '.') : '-' }}
+                            </td>
+                            <td>
+                                <small>
+                                    {{ $surat->Tanggal_Bayar ? \Carbon\Carbon::parse($surat->Tanggal_Bayar)->format('d/m/Y') : 'Belum Bayar' }}
+                                </small>
+                            </td>
+                            <td>
+                                @php
+                                    $status = $surat->Status;
+                                    $bg = 'secondary';
+                                    if($status == 'menunggu_pembayaran') $bg = 'warning text-dark';
+                                    elseif($status == 'pembayaran_lunas') $bg = 'info';
+                                    elseif($status == 'siap_diambil' || $status == 'selesai') $bg = 'success';
+                                @endphp
+                                <span class="badge badge-status bg-{{ $bg }}">
+                                    {{ strtoupper(str_replace('_', ' ', $status)) }}
+                                </span>
+                            </td>
+                            <td>
+                                @if($surat->Status == 'menunggu_pembayaran')
+                                    {{-- Tombol Pemicu Modal --}}
+                                    <button type="button" class="btn btn-sm btn-success btn-action" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalBayar{{ $surat->id_no }}">
+                                        <i class="fas fa-cash-register me-1"></i>Bayar
                                     </button>
-                                </form>
-                            @elseif($surat->Status == 'menunggu_pembayaran')
-                                <button type="button" class="btn btn-sm btn-success" data-toggle="modal" data-target="#modalBayar{{ $surat->id_no }}">
-                                    <i class="fas fa-money-bill me-1"></i>Konfirmasi Bayar
-                                </button>
-                                
-                                {{-- Modal Pembayaran --}}
-                                <div class="modal fade" id="modalBayar{{ $surat->id_no }}" tabindex="-1" role="dialog" aria-hidden="true">
-                                    <div class="modal-dialog" role="document">
-                                        <div class="modal-content" style="border-radius: 12px;">
-                                            <form action="{{ route('admin_fakultas.surat_legalisir.bayar', $surat->id_no) }}" method="POST">
-                                                @csrf
-                                                <div class="modal-header" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); border-radius: 12px 12px 0 0;">
-                                                    <h5 class="modal-title text-white">
-                                                        <i class="fas fa-money-bill-wave me-2"></i>Konfirmasi Pembayaran
-                                                    </h5>
-                                                    <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                                                        <span aria-hidden="true">&times;</span>
-                                                    </button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <div class="form-group">
-                                                        <label class="fw-bold">Masukkan Nominal Biaya (Rp)</label>
-                                                        <input type="number" name="biaya" class="form-control" required min="0" placeholder="Contoh: 50000">
-                                                    </div>
-                                                </div>
-                                                <div class="modal-footer">
-                                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                                                        <i class="fas fa-times me-1"></i>Batal
-                                                    </button>
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="fas fa-save me-1"></i>Simpan
-                                                    </button>
-                                                </div>
-                                            </form>
+                                @elseif($surat->Status != 'selesai')
+                                    <form action="{{ route('admin_fakultas.surat_legalisir.progress', $surat->id_no) }}" method="POST" class="d-inline">
+                                        @csrf
+                                        <button type="submit" class="btn btn-sm btn-primary btn-action" onclick="return confirm('Update progres ke tahap selanjutnya?')">
+                                            <i class="fas fa-arrow-right me-1"></i>Lanjut
+                                        </button>
+                                    </form>
+                                @else
+                                    <i class="fas fa-check-double text-success"></i> <small class="text-muted">Selesai</small>
+                                @endif
+                            </td>
+                        </tr>
+
+                        {{-- MODAL KONFIRMASI PEMBAYARAN (Harus di dalam loop @foreach) --}}
+                        @if($surat->Status == 'menunggu_pembayaran')
+                        <div class="modal fade" id="modalBayar{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content" style="border-radius: 15px;">
+                                    <form action="{{ route('admin_fakultas.surat_legalisir.bayar', $surat->id_no) }}" method="POST">
+                                        @csrf
+                                        <div class="modal-header bg-success text-white" style="border-radius: 15px 15px 0 0;">
+                                            <h5 class="modal-title fw-bold">Konfirmasi Pembayaran</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>
-                                    </div>
+                                        <div class="modal-body p-4 text-center">
+                                            <p class="mb-1 text-muted">Aksi ini akan menandai tagihan mahasiswa berikut sebagai <strong>LUNAS</strong>:</p>
+                                            <h5 class="fw-bold mb-3">{{ $surat->user->Name_User }}</h5>
+                                            
+                                            <div class="p-3 bg-light rounded-3 border mb-3">
+                                                <small class="text-muted d-block">Total Pembayaran:</small>
+                                                <h3 class="fw-bold text-success mb-0">Rp {{ number_format($surat->Biaya, 0, ',', '.') }}</h3>
+                                            </div>
+                                            <p class="small text-danger italic">*Tanggal bayar akan tercatat secara otomatis hari ini.</p>
+                                        </div>
+                                        <div class="modal-footer border-0">
+                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">Konfirmasi Lunas</button>
+                                        </div>
+                                    </form>
                                 </div>
-                            @elseif(in_array($surat->Status, ['pembayaran_lunas', 'proses_stempel_paraf', 'menunggu_ttd_pimpinan', 'siap_diambil']))
-                                <form action="{{ route('admin_fakultas.surat_legalisir.progress', $surat->id_no) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    <button type="submit" class="btn btn-sm btn-info" onclick="return confirm('Lanjutkan ke tahap berikutnya?')">
-                                        <i class="fas fa-arrow-right me-1"></i>Lanjut Proses
-                                    </button>
-                                </form>
-                            @endif
-                            
-                            <a href="{{ Storage::url($surat->Path_File) }}" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                <i class="fas fa-file-pdf me-1"></i>Lihat PDF
-                            </a>
-                        </td>
-                    </tr>
-                    @endforeach
-                </tbody>
-            </table>
+                            </div>
+                        </div>
+                        @endif
+                        {{-- END MODAL --}}
+
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    $(document).ready(function() {
+        // Inisialisasi DataTable jika tersedia
+        if ($.fn.DataTable) {
+            $('#tableLegalisir').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
+                },
+                "pageLength": 10
+            });
+        }
+    });
+</script>
+@endpush
