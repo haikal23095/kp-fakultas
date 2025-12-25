@@ -38,13 +38,6 @@
             </a>
         </li>
         <li class="nav-item">
-            <a href="{{ route('admin_fakultas.surat_magang.index') }}" 
-            class="nav-link text-white {{ request()->routeIs('admin_fakultas.surat_magang.*') ? 'active' : '' }}">
-                <i class="fas fa-briefcase me-2"></i>
-                <span>Surat Magang</span>
-            </a>
-        </li>
-        <li class="nav-item">
             <a href="{{ route('admin_fakultas.surat.archive') }}" class="nav-link text-white {{ request()->routeIs('admin_fakultas.surat.archive') ? 'active' : '' }}">
                 <i class="fas fa-archive me-2"></i>
                 Arsip Surat

@@ -88,10 +88,22 @@ class ManajemenSuratController extends Controller
             ->whereIn('Status', ['selesai', 'Success', 'siap_diambil'])
             ->count();
 
+        // TODO: Counter untuk jenis surat baru (setelah database dibuat)
+        $countMobilDinas = 0;
+        $countCuti = 0;
+        $countTidakBeasiswa = 0;
+        $countDispensasi = 0;
+        $countBerkelakuanBaik = 0;
+        $countSKFakultas = 0;
+        $countPeminjamanGedung = 0;
+        $countLembur = 0;
+
         return view('admin_fakultas.manajemen_surat_index', compact(
             'countAktif', 'pendingAktif', 'prosesAktif', 'selesaiAktif',
             'countMagang', 'pendingMagang', 'prosesMagang', 'selesaiMagang',
             'countLegalisir', 'pendingLegalisir', 'prosesLegalisir', 'selesaiLegalisir',
+            'countMobilDinas', 'countCuti', 'countTidakBeasiswa', 'countDispensasi',
+            'countBerkelakuanBaik', 'countSKFakultas', 'countPeminjamanGedung', 'countLembur',
             'totalSemua'
         ));
     }
@@ -166,6 +178,47 @@ class ManajemenSuratController extends Controller
         ->paginate(15);
 
         return view('admin_fakultas.list_magang', compact('daftarTugas'));
+    }
+
+    // TODO: Method placeholder untuk jenis surat baru
+    public function listMobilDinas() {
+        $daftarTugas = collect(); // Empty collection untuk sementara
+        return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
+    }
+
+    public function listCuti() {
+        $daftarTugas = collect();
+        return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
+    }
+
+    public function listTidakBeasiswa() {
+        $daftarTugas = collect();
+        return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
+    }
+
+    public function listDispensasi() {
+        $daftarTugas = collect();
+        return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
+    }
+
+    public function listBerkelakuanBaik() {
+        $daftarTugas = collect();
+        return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
+    }
+
+    public function listSKFakultas() {
+        $daftarTugas = collect();
+        return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
+    }
+
+    public function listPeminjamanGedung() {
+        $daftarTugas = collect();
+        return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
+    }
+
+    public function listLembur() {
+        $daftarTugas = collect();
+        return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
 
     public function archive()
