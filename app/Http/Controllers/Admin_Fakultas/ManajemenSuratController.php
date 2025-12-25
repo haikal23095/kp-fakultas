@@ -226,10 +226,9 @@ class ManajemenSuratController extends Controller
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        $arsipSurat = TugasSurat::query()
-            ->whereHas('suratMagang', function ($q) {
-                $q->where('Status', 'Success');
-            })
+        // Ambil semua surat yang sudah selesai (tidak peduli jenis surat)
+        $arsipTugas = TugasSurat::query()
+            ->whereIn('Status', ['Selesai', 'selesai', 'Disetujui', 'disetujui', 'Success'])
             ->where(function ($q) use ($fakultasId) {
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
@@ -241,10 +240,48 @@ class ManajemenSuratController extends Controller
                         $subQ->where('Id_Fakultas', $fakultasId);
                     });
             })
-            ->with(['pemberiTugas', 'jenisSurat'])
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa.prodi', 'jenisSurat', 'suratKetAktif', 'suratMagang', 'suratLegalisir'])
             ->orderBy('Tanggal_Diselesaikan', 'desc')
-            ->paginate(20);
+            ->get();
 
-        return view('admin_fakultas.arsip_surat', compact('arsipSurat'));
+        // Ambil semua jenis surat agar card tetap muncul meskipun kosong
+        $allJenisSurat = \App\Models\JenisSurat::all();
+        
+        // Grouping manual agar semua jenis surat masuk list
+        $arsipByJenis = $allJenisSurat->map(function($jenis) use ($arsipTugas) {
+            return (object) [
+                'jenis' => $jenis,
+                'items' => $arsipTugas->where('Id_Jenis_Surat', $jenis->Id_Jenis_Surat)
+            ];
+        });
+
+        return view('admin_fakultas.arsip_surat', compact('arsipTugas', 'arsipByJenis'));
+    }
+
+    public function archiveDetail($id)
+    {
+        $jenisSurat = \App\Models\JenisSurat::findOrFail($id);
+        $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
+
+        $arsipTugas = TugasSurat::query()
+            ->where('Id_Jenis_Surat', $id)
+            ->whereIn('Status', ['Selesai', 'selesai', 'Disetujui', 'disetujui', 'Success'])
+            ->where(function ($q) use ($fakultasId) {
+                $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                    $subQ->where('Id_Fakultas', $fakultasId);
+                })
+                ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                    $subQ->where('Id_Fakultas', $fakultasId);
+                })
+                ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                    $subQ->where('Id_Fakultas', $fakultasId);
+                });
+            })
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa.prodi', 'jenisSurat'])
+            ->orderBy('Tanggal_Diselesaikan', 'desc')
+            ->get();
+
+        return view('admin_fakultas.arsip_detail', compact('jenisSurat', 'arsipTugas'));
     }
 }

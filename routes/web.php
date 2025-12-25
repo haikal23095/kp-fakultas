@@ -200,6 +200,8 @@ Route::middleware('auth')->group(function () {
         // Arsip surat
         Route::get('/arsip-surat', [FakultasManajemenSuratController::class, 'archive'])
             ->name('surat.archive');
+        Route::get('/arsip-surat/{id}', [FakultasManajemenSuratController::class, 'archiveDetail'])
+            ->name('surat.archive.detail');
 
         Route::get('/pengaturan', function () {
             return view('admin_fakultas.pengaturan');
