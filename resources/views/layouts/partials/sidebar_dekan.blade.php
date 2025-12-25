@@ -34,20 +34,12 @@
 
         <li class="nav-heading mt-3 mb-1 small">DEKAN MENU</li>
         <li>
-            {{-- Menggunakan href langsung ke URL persetujuan --}}
-            <a href="/dekan/persetujuan-surat" class="nav-link text-white {{ request()->is('dekan/persetujuan-surat*') ? 'active' : '' }}">
+            <a href="{{ route('dekan.persetujuan.index') }}" class="nav-link text-white {{ request()->is('dekan/persetujuan-surat*') ? 'active' : '' }}">
                 <i class="fas fa-signature me-2"></i>
-                Surat Keterangan Aktif
+                Persetujuan Surat
             </a>
         </li>
         <li>
-            <a href="/dekan/surat-magang" class="nav-link text-white {{ request()->is('dekan/surat-magang*') ? 'active' : '' }}">
-                <i class="fas fa-file-contract me-2"></i>
-                Persetujuan Surat Magang
-            </a>
-        </li>
-        <li>
-            {{-- Menggunakan href langsung ke URL arsip --}}
             <a href="/dekan/arsip-surat" class="nav-link text-white {{ request()->is('dekan/arsip-surat*') ? 'active' : '' }}">
                 <i class="fas fa-archive me-2"></i>
                 Arsip Surat

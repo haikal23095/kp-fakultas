@@ -11,7 +11,6 @@ use App\Http\Controllers\Admin_Prodi\DetailSuratController;
 use App\Http\Controllers\Admin_Prodi\ManajemenSuratController;
 use App\Http\Controllers\Admin_Fakultas\DetailSuratController as FakultasDetailSuratController;
 use App\Http\Controllers\Admin_Fakultas\ManajemenSuratController as FakultasManajemenSuratController;
-use App\Http\Controllers\Admin_Fakultas\SuratMagangController as FakultasSuratMagangController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotifikasiController;
 use App\Http\Controllers\SuratVerificationController;
@@ -20,11 +19,14 @@ use App\Http\Controllers\QrCodeVerificationController;
 // Import Controller untuk Pengajuan Surat (Modular)
 use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
 use App\Http\Controllers\PengajuanSurat\SuratPengantarMagangController;
+use App\Http\Controllers\PengajuanSurat\SuratLegalisirController;
+use App\Http\Controllers\Admin_Fakultas\SuratLegalisirController as FakultasSuratLegalisirController;
 
 // Impor Model untuk route pengajuan
 use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use App\Models\Prodi;
+use App\Models\Pejabat;
 use App\Models\JenisSurat; // Pastikan ini ada
 use App\Models\TugasSurat;
 use App\Models\Role;
@@ -122,18 +124,58 @@ Route::middleware('auth')->group(function () {
     // FITUR ADMIN FAKULTAS
     Route::prefix('admin-fakultas')->name('admin_fakultas.')->group(function () {
 
+        // DEBUG ROUTE - HAPUS SETELAH TESTING
+        Route::get('/debug-surat', function() {
+            $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
+            $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
+            
+            $allSurat = \App\Models\TugasSurat::with(['jenisSurat', 'pemberiTugas.mahasiswa.prodi.fakultas'])
+                ->where(function ($q) use ($fakultasId) {
+                    $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    })
+                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    })
+                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    });
+                })
+                ->get();
+            
+            $grouped = $allSurat->groupBy('Id_Jenis_Surat');
+            
+            $result = "<h2>Debug Surat - Fakultas ID: {$fakultasId}</h2>";
+            $result .= "<p>Total Surat: " . $allSurat->count() . "</p>";
+            $result .= "<h3>Group by Id_Jenis_Surat:</h3><ul>";
+            
+            foreach($grouped as $jenisId => $surats) {
+                $namaJenis = $surats->first()->jenisSurat->Nama_Surat ?? 'Unknown';
+                $result .= "<li>Id_Jenis_Surat {$jenisId} ({$namaJenis}): " . $surats->count() . " surat</li>";
+            }
+            $result .= "</ul>";
+            
+            return $result;
+        })->name('debug.surat');
+
         Route::get('/manajemen-surat', [FakultasManajemenSuratController::class, 'index'])
             ->name('surat.manage');
 
-        // Surat Magang Routes
-        Route::get('/surat-magang', [FakultasSuratMagangController::class, 'index'])
-            ->name('surat_magang.index');
-        Route::get('/surat-magang/{id}', [FakultasSuratMagangController::class, 'show'])
-            ->name('surat_magang.show');
-        Route::get('/surat-magang/{id}/download', [FakultasSuratMagangController::class, 'downloadProposal'])
-            ->name('surat_magang.download');
-        Route::post('/surat-magang/{id}/assign', [FakultasSuratMagangController::class, 'assignNomorSurat'])
-            ->name('surat_magang.assign');
+        // Route untuk list per jenis surat
+        Route::get('/surat-aktif', [FakultasManajemenSuratController::class, 'listAktif'])
+            ->name('surat.aktif');
+        Route::get('/surat-magang-list', [FakultasManajemenSuratController::class, 'listMagang'])
+            ->name('surat.magang');
+        
+        // TODO: Routes untuk jenis surat baru (setelah implementasi database)
+        Route::get('/surat-mobil-dinas', [FakultasManajemenSuratController::class, 'listMobilDinas'])->name('surat.mobil_dinas');
+        Route::get('/surat-cuti', [FakultasManajemenSuratController::class, 'listCuti'])->name('surat.cuti');
+        Route::get('/surat-tidak-beasiswa', [FakultasManajemenSuratController::class, 'listTidakBeasiswa'])->name('surat.tidak_beasiswa');
+        Route::get('/surat-dispensasi', [FakultasManajemenSuratController::class, 'listDispensasi'])->name('surat.dispensasi');
+        Route::get('/surat-berkelakuan-baik', [FakultasManajemenSuratController::class, 'listBerkelakuanBaik'])->name('surat.berkelakuan_baik');
+        Route::get('/surat-sk-fakultas', [FakultasManajemenSuratController::class, 'listSKFakultas'])->name('surat.sk_fakultas');
+        Route::get('/surat-peminjaman-gedung', [FakultasManajemenSuratController::class, 'listPeminjamanGedung'])->name('surat.peminjaman_gedung');
+        Route::get('/surat-lembur', [FakultasManajemenSuratController::class, 'listLembur'])->name('surat.lembur');
 
         // Detail surat (lihat detail berdasarkan Id_Tugas_Surat)
         Route::get('/surat/{id}/detail', [FakultasDetailSuratController::class, 'show'])->name('surat.detail');
@@ -147,6 +189,14 @@ Route::middleware('auth')->group(function () {
         // Route: Teruskan ke Dekan (setelah beri nomor)
         Route::post('/surat/{id}/forward', [FakultasDetailSuratController::class, 'forwardToDean'])->name('surat.forward');
 
+        // Route: Legalisir - Tandai Sudah Bayar
+        Route::get('/surat-legalisir', [FakultasSuratLegalisirController::class, 'index'])->name('surat_legalisir.index');
+        Route::get('/input', [FakultasSuratLegalisirController::class, 'create'])->name('surat_legalisir.create');
+        Route::post('/store', [FakultasSuratLegalisirController::class, 'store'])->name('surat_legalisir.store');
+        Route::post('/surat-legalisir/{id}/verifikasi', [FakultasSuratLegalisirController::class, 'verifikasi'])->name('surat_legalisir.verifikasi');
+        Route::post('/surat-legalisir/{id}/bayar', [FakultasSuratLegalisirController::class, 'konfirmasiPembayaran'])->name('surat_legalisir.bayar');
+        Route::post('/surat-legalisir/{id}/progress', [FakultasSuratLegalisirController::class, 'updateProgress'])->name('surat_legalisir.progress');
+
         // Arsip surat
         Route::get('/arsip-surat', [FakultasManajemenSuratController::class, 'archive'])
             ->name('surat.archive');
@@ -158,7 +208,21 @@ Route::middleware('auth')->group(function () {
 
     // FITUR DEKAN
     Route::prefix('dekan')->name('dekan.')->group(function () {
+        // Halaman index persetujuan (dengan card pilihan jenis surat)
         Route::get('/persetujuan-surat', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'index'])->name('persetujuan.index');
+        
+        // List per jenis surat
+        Route::get('/persetujuan-surat/aktif', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listAktif'])->name('persetujuan.aktif');
+        Route::get('/persetujuan-surat/magang', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listMagang'])->name('persetujuan.magang');
+        Route::get('/persetujuan-surat/legalisir', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listLegalisir'])->name('persetujuan.legalisir');
+        
+        // TODO: Routes untuk jenis surat baru (setelah implementasi database)
+        Route::get('/persetujuan-surat/cuti-dosen', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listCutiDosen'])->name('persetujuan.cuti_dosen');
+        Route::get('/persetujuan-surat/tidak-beasiswa', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listTidakBeasiswa'])->name('persetujuan.tidak_beasiswa');
+        Route::get('/persetujuan-surat/sk-fakultas', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSKFakultas'])->name('persetujuan.sk_fakultas');
+        Route::get('/persetujuan-surat/surat-tugas', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSuratTugas'])->name('persetujuan.surat_tugas');
+        Route::get('/persetujuan-surat/mbkm', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listMBKM'])->name('persetujuan.mbkm');
+        
         Route::get('/surat/{id}/detail', [App\Http\Controllers\Dekan\DetailSuratController::class, 'show'])->name('surat.detail');
         Route::get('/surat/{id}/preview', [App\Http\Controllers\Dekan\DetailSuratController::class, 'previewDraft'])->name('surat.preview');
         Route::get('/surat/{id}/download', [App\Http\Controllers\Dekan\DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
@@ -399,6 +463,8 @@ Route::middleware('auth')->group(function () {
             ->name('riwayat.aktif');
         Route::get('/riwayat/magang', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatMagang'])
             ->name('riwayat.magang');
+        Route::get('/riwayat/legalisir', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatLegalisir'])
+            ->name('riwayat.legalisir');
 
         // Download Surat dengan QR Code
         Route::get('/surat/download/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadSurat'])
@@ -416,10 +482,14 @@ Route::middleware('auth')->group(function () {
         Route::post('/ajakan-magang/{id}/reject', [\App\Http\Controllers\AjakanMagangController::class, 'reject'])
             ->name('ajakan-magang.reject');
 
+        // --- ROUTE SURAT LEGALISIR ---
+        Route::get('/pengajuan-surat/legalisir', [SuratLegalisirController::class, 'create'])->name('pengajuan.legalisir.create');
+        Route::post('/pengajuan-surat/legalisir', [SuratLegalisirController::class, 'store'])->name('pengajuan.legalisir.store');
+
         // Rute lainnya
-        Route::get('/legalisir', function () {
-            return view('mahasiswa.legalisir');
-        })->name('legalisir.create');
+        // Route::get('/legalisir', function () {
+        //     return view('mahasiswa.legalisir');
+        // })->name('legalisir.create');
     });
 
 });

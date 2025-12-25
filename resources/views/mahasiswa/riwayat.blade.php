@@ -1,6 +1,6 @@
 @extends('layouts.mahasiswa')
 
-@section('title', 'Riwayat Pengajuan Surat')
+@section('title', $title ?? 'Riwayat Pengajuan Surat')
 
 @push('styles')
 <style>
@@ -116,6 +116,9 @@
             <p class="mb-0 text-muted small">Pilih jenis surat untuk melihat riwayat pengajuan</p>
         </div>
         <div>
+            <a href="{{ route('dashboard.mahasiswa') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
             <a href="{{ route('mahasiswa.pengajuan.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Ajukan Surat Baru
             </a>
@@ -171,6 +174,24 @@
                     </div>
                     <h5>Surat Pengantar KP/Magang</h5>
                     <p>Lihat riwayat pengajuan surat pengantar kerja praktek dan magang</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Legalisir Online --}}
+    <div class="col-md-6 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.legalisir') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-success badge-count">
+                    {{ $countLegalisir ?? 0 }} Surat
+                </span>
+                <div class="card-body">
+                    <div class="card-icon blue">
+                        <i class="fas fa-stamp"></i>
+                    </div>
+                    <h5>Legalisir Online</h5>
+                    <p>Lihat riwayat pengajuan legalisir ijazah dan transkrip nilai</p>
                 </div>
             </div>
         </a>
