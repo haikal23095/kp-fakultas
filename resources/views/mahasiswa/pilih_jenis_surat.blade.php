@@ -62,6 +62,11 @@
         background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         color: white;
     }
+
+    .card-legalisir .surat-icon {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+    }
 </style>
 @endpush
 
@@ -131,6 +136,21 @@
             </a>
         </div>
     @endforeach
+
+    {{-- Card Legalisir Dokumen (Manual) --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('mahasiswa.legalisir.create') }}" class="text-decoration-none">
+            <div class="card surat-card shadow-sm card-legalisir">
+                <div class="card-body">
+                    <div class="surat-icon">
+                        <i class="fas fa-stamp"></i>
+                    </div>
+                    <h5>Legalisir Dokumen</h5>
+                    <p>Ajukan legalisir ijazah atau transkrip nilai secara online</p>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>
 
 <div class="card border-0 shadow-sm mt-4">

@@ -15,9 +15,10 @@ class RiwayatSuratController extends Controller
     /**
      * Tampilkan pilihan jenis surat
      */
-    public function index()
+    public function index(Request $request)
     {
         $user = Auth::user();
+        $type = $request->query('type');
 
         // Hitung jumlah surat per jenis
         $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)

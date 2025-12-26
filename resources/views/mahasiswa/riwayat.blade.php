@@ -1,6 +1,6 @@
 @extends('layouts.mahasiswa')
 
-@section('title', 'Riwayat Pengajuan Surat')
+@section('title', $title ?? 'Riwayat Pengajuan Surat')
 
 @push('styles')
 <style>
@@ -116,6 +116,9 @@
             <p class="mb-0 text-muted small">Pilih jenis surat untuk melihat riwayat pengajuan</p>
         </div>
         <div>
+            <a href="{{ route('dashboard.mahasiswa') }}" class="btn btn-outline-secondary me-2">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
             <a href="{{ route('mahasiswa.pengajuan.create') }}" class="btn btn-primary">
                 <i class="fas fa-plus me-2"></i>Ajukan Surat Baru
             </a>

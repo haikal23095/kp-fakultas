@@ -52,12 +52,7 @@
                 @endif
             </a>
         </li>
-        <li>
-            <a href="{{ route('mahasiswa.legalisir.create') }}" class="nav-link text-white {{ request()->routeIs('mahasiswa.legalisir.*') ? 'active' : '' }}">
-                <i class="fas fa-stamp me-2"></i>
-                Legalisir Dokumen
-            </a>
-        </li>
+
     </ul>
     <hr>
     {{-- Notifikasi Link --}}
