@@ -223,13 +223,17 @@ class AuthController extends Controller
             ->take(5)
             ->get();
 
+        // Get SK Dosen Wali pending count
+        $skDosenWaliPending = \App\Models\SKDosenWali::where('Status', 'Dikerjakan admin')->count();
+
         return view('dashboard.admin_fakultas', compact(
             'permohonanBaru',
             'menungguTTE',
             'suratSelesaiBulanIni',
             'totalArsip',
             'antrianSurat',
-            'namaFakultas'
+            'namaFakultas',
+            'skDosenWaliPending'
         ));
     }
 

@@ -151,6 +151,22 @@ Route::middleware('auth')->group(function () {
         Route::get('/arsip-surat', [FakultasManajemenSuratController::class, 'archive'])
             ->name('surat.archive');
 
+        // SK Dosen Routes
+        Route::get('/sk', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'index'])
+            ->name('sk.index');
+        Route::get('/sk/dosen-wali', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'dosenWali'])
+            ->name('sk.dosen-wali');
+        Route::get('/sk/dosen-wali/preview-pdf', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'previewPDF'])
+            ->name('sk.dosen-wali.preview-pdf');
+        Route::post('/sk/dosen-wali/submit-wadek', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'submitToWadek'])
+            ->name('sk.dosen-wali.submit-wadek');
+        Route::post('/sk/dosen-wali/get-details', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'getDetails'])
+            ->name('sk.dosen-wali.get-details');
+        Route::get('/sk/dosen-wali/{id}', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'dosenWaliDetail'])
+            ->name('sk.dosen-wali.detail');
+        Route::post('/sk/dosen-wali/{id}/process', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'dosenWaliProcess'])
+            ->name('sk.dosen-wali.process');
+
         Route::get('/pengaturan', function () {
             return view('admin_fakultas.pengaturan');
         })->name('settings.index');

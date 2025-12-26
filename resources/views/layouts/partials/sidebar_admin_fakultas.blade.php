@@ -45,6 +45,13 @@
             </a>
         </li>
         <li class="nav-item">
+            <a href="{{ route('admin_fakultas.sk.index') }}" 
+            class="nav-link text-white {{ request()->routeIs('admin_fakultas.sk.*') ? 'active' : '' }}">
+                <i class="fas fa-file-signature me-2"></i>
+                <span>SK Dosen</span>
+            </a>
+        </li>
+        <li class="nav-item">
             <a href="{{ route('admin_fakultas.surat.archive') }}" class="nav-link text-white {{ request()->routeIs('admin_fakultas.surat.archive') ? 'active' : '' }}">
                 <i class="fas fa-archive me-2"></i>
                 Arsip Surat

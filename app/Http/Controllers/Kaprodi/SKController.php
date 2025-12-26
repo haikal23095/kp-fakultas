@@ -101,7 +101,7 @@ class SKController extends Controller
                 'Prodi' => $request->id_prodi,
                 'Semester' => $request->semester,
                 'Tahun_Akademik' => $request->tahun_akademik,
-                'Data_Dosen_Wali' => json_encode($dataDosen),
+                'Data_Dosen_Wali' => $dataDosen, // Laravel akan auto-encode karena ada casting di model
                 'Status' => 'Dikerjakan admin',
                 'Tanggal-Pengajuan' => $tanggalPengajuan,
                 'Tanggal-Tenggat' => $tanggalTenggat

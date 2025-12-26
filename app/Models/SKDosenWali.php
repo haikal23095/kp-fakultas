@@ -19,6 +19,7 @@ class SKDosenWali extends Model
         'Semester',
         'Tahun_Akademik',
         'Data_Dosen_Wali',
+        'Nomor_Surat',
         'Status',
         'Tanggal-Pengajuan',
         'Tanggal-Tenggat'

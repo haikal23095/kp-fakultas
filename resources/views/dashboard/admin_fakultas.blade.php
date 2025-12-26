@@ -45,6 +45,22 @@
     </div>
     
     <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card border-start border-info border-4 shadow-sm h-100">
+            <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                    <div class="col me-2">
+                        <div class="text-xs fw-bold text-info text-uppercase mb-1">SK Dosen Pending</div>
+                        <div class="h5 mb-0 fw-bold text-gray-800">{{ $skDosenWaliPending ?? 0 }}</div>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-file-signature fa-2x text-gray-300"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-3 col-md-6 mb-4">
         <div class="card border-start border-success border-4 shadow-sm h-100">
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
@@ -54,22 +70,6 @@
                     </div>
                     <div class="col-auto">
                         <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-start border-secondary border-4 shadow-sm h-100">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col me-2">
-                        <div class="text-xs fw-bold text-secondary text-uppercase mb-1">Total Arsip Surat</div>
-                        <div class="h5 mb-0 fw-bold text-gray-800">{{ number_format($totalArsip) }}</div>
-                    </div>
-                    <div class="col-auto">
-                        <i class="fas fa-archive fa-2x text-gray-300"></i>
                     </div>
                 </div>
             </div>

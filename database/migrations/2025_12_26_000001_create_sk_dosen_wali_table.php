@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->enum('Semester', ['Ganjil', 'Genap']);
             $table->string('Tahun_Akademik', 12);
             $table->json('Data_Dosen_Wali');
+            $table->string('Nomor_Surat', 100)->nullable();
             $table->enum('Status', [
                 'Dikerjakan admin',
                 'Menunggu-Persetujuan-Wadek-1',
