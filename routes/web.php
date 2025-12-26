@@ -456,6 +456,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/riwayat/legalisir', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatLegalisir'])
             ->name('riwayat.legalisir');
 
+        // Riwayat Jenis Surat Lainnya
+        Route::get('/riwayat/mobil-dinas', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatMobilDinas'])->name('riwayat.mobil_dinas');
+        Route::get('/riwayat/tidak-beasiswa', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatTidakBeasiswa'])->name('riwayat.tidak_beasiswa');
+        Route::get('/riwayat/cek-plagiasi', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatCekPlagiasi'])->name('riwayat.cek_plagiasi');
+        Route::get('/riwayat/dispensasi', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatDispensasi'])->name('riwayat.dispensasi');
+        Route::get('/riwayat/berkelakuan-baik', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatBerkelakuanBaik'])->name('riwayat.berkelakuan_baik');
+        Route::get('/riwayat/surat-tugas', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatSuratTugas'])->name('riwayat.surat_tugas');
+        Route::get('/riwayat/mbkm', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatMBKM'])->name('riwayat.mbkm');
+        Route::get('/riwayat/peminjaman-gedung', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatPeminjamanGedung'])->name('riwayat.peminjaman_gedung');
+        Route::get('/riwayat/lembur', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatLembur'])->name('riwayat.lembur');
+        Route::get('/riwayat/peminjaman-ruang', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatPeminjamanRuang'])->name('riwayat.peminjaman_ruang');
+
         // Download Surat dengan QR Code
         Route::get('/surat/download/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadSurat'])
             ->name('surat.download');
