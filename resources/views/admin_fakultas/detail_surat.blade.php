@@ -22,12 +22,23 @@
 		<div>
 			<h4 class="mb-1"><i class="fa fa-file-alt text-primary me-2"></i> Detail Surat</h4>
 			<div class="text-muted small">Nomor: <strong>{{ optional($surat)->Nomor_Surat ?? 'N/A' }}</strong> &middot; ID: <strong>{{ optional($surat)->Id_Tugas_Surat ?? '-' }}</strong></div>
-            @if($isAktif && $surat->suratKetAktif->is_urgent)
-                <div class="mt-2">
-                    <span class="badge bg-danger blink-badge"><i class="fas fa-exclamation-circle me-1"></i> URGENT</span>
-                    @if($surat->suratKetAktif->urgent_reason)
-                        <small class="text-danger ms-2">Alasan: {{ $surat->suratKetAktif->urgent_reason }}</small>
+            
+            @if($isAktif)
+                <div class="mt-2 d-flex align-items-center flex-wrap gap-2">
+                    @if($surat->suratKetAktif->is_urgent)
+                        <span class="badge bg-danger blink-badge"><i class="fas fa-exclamation-circle me-1"></i> URGENT</span>
+                        @if($surat->suratKetAktif->urgent_reason)
+                            <small class="text-danger">Alasan: {{ $surat->suratKetAktif->urgent_reason }}</small>
+                        @endif
                     @endif
+                    
+                    {{-- Tombol Toggle Urgent --}}
+                    <button type="button" class="btn btn-sm {{ $surat->suratKetAktif->is_urgent ? 'btn-outline-secondary' : 'btn-outline-danger' }}" 
+                            data-bs-toggle="modal" data-bs-target="#urgentModal"
+                            title="{{ $surat->suratKetAktif->is_urgent ? 'Hapus status urgent' : 'Tandai sebagai urgent' }}">
+                        <i class="fas {{ $surat->suratKetAktif->is_urgent ? 'fa-minus-circle' : 'fa-exclamation-circle' }}"></i>
+                        {{ $surat->suratKetAktif->is_urgent ? 'Batalkan Prioritas' : 'Set Prioritas' }}
+                    </button>
                 </div>
             @endif
 		</div>
@@ -191,5 +202,41 @@
         </div>
     </div>
 </div>
+
+{{-- Modal Urgent --}}
+@if($isAktif)
+<div class="modal fade" id="urgentModal" tabindex="-1" aria-labelledby="urgentModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form action="{{ route('admin_fakultas.surat.toggle_urgent', $surat->Id_Tugas_Surat) }}" method="POST">
+                @csrf
+                <div class="modal-header">
+                    <h5 class="modal-title" id="urgentModalLabel">
+                        {{ $surat->suratKetAktif->is_urgent ? 'Batalkan Prioritas' : 'Set Prioritas Surat' }}
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    @if($surat->suratKetAktif->is_urgent)
+                        <p>Apakah Anda yakin ingin membatalkan status prioritas (urgent) untuk surat ini?</p>
+                        <input type="hidden" name="urgent_reason" value="">
+                    @else
+                        <div class="mb-3">
+                            <label for="urgent_reason" class="form-label">Alasan Prioritas</label>
+                            <textarea class="form-control" id="urgent_reason" name="urgent_reason" rows="3" placeholder="Contoh: Dibutuhkan segera untuk beasiswa..." required></textarea>
+                        </div>
+                    @endif
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn {{ $surat->suratKetAktif->is_urgent ? 'btn-danger' : 'btn-primary' }}">
+                        {{ $surat->suratKetAktif->is_urgent ? 'Ya, Batalkan' : 'Simpan Prioritas' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endif
 
 @endsection

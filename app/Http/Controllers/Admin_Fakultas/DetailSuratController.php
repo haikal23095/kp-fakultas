@@ -204,4 +204,29 @@ class DetailSuratController extends Controller
         return redirect()->route('admin_fakultas.surat.detail', $tugas->Id_Tugas_Surat)
             ->with('success', 'Nomor surat disimpan dan surat diteruskan ke Dekan.');
     }
+
+    /**
+     * Toggle status urgent surat.
+     */
+    public function toggleUrgent(Request $request, $id)
+    {
+        $tugasSurat = TugasSurat::with('suratKetAktif')->findOrFail($id);
+
+        if ($tugasSurat->suratKetAktif) {
+            $tugasSurat->suratKetAktif->is_urgent = !$tugasSurat->suratKetAktif->is_urgent;
+            
+            // Jika di-set urgent, bisa tambahkan alasan default atau ambil dari request
+            if ($tugasSurat->suratKetAktif->is_urgent) {
+                $tugasSurat->suratKetAktif->urgent_reason = $request->input('urgent_reason', 'Ditandai urgent oleh Admin Fakultas');
+            } else {
+                $tugasSurat->suratKetAktif->urgent_reason = null;
+            }
+            
+            $tugasSurat->suratKetAktif->save();
+
+            return redirect()->back()->with('success', 'Status prioritas berhasil diperbarui.');
+        }
+
+        return redirect()->back()->with('error', 'Jenis surat ini tidak mendukung fitur prioritas.');
+    }
 }

@@ -186,6 +186,8 @@ Route::middleware('auth')->group(function () {
 
         // Route: Tolak Surat
         Route::post('/surat/{id}/reject', [FakultasDetailSuratController::class, 'reject'])->name('surat.reject');
+        // Route: Toggle Urgent
+        Route::post('/surat/{id}/toggle-urgent', [FakultasDetailSuratController::class, 'toggleUrgent'])->name('surat.toggle_urgent');
         // Route: Teruskan ke Dekan (setelah beri nomor)
         Route::post('/surat/{id}/forward', [FakultasDetailSuratController::class, 'forwardToDean'])->name('surat.forward');
 
@@ -305,7 +307,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/pengajuan-surat', function () {
             // Definisikan surat apa saja yang boleh diajukan Mahasiswa
             $namaSuratMahasiswa = [
-                'Surat Keterangan Aktif Kuliah',
+                'Surat Keterangan Aktif',
                 'Surat Rekomendasi',
                 'Surat Pengantar KP/Magang'
             ];
@@ -331,7 +333,7 @@ Route::middleware('auth')->group(function () {
             }
 
             // Ambil ID jenis surat
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Keterangan Aktif Kuliah')->first();
+            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Keterangan Aktif')->first();
 
             return view('mahasiswa.form_surat_aktif', [
                 'mahasiswa' => $mahasiswa,

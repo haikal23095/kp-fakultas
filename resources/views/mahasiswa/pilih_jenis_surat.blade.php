@@ -155,7 +155,7 @@
                 $route = '';
                 $description = '';
                 
-                if($surat->Nama_Surat == 'Surat Keterangan Aktif Kuliah') {
+                if($surat->Nama_Surat == 'Surat Keterangan Aktif') {
                     $cardClass = 'card-aktif';
                     $icon = 'fa-user-graduate';
                     $route = route('mahasiswa.pengajuan.aktif.form');

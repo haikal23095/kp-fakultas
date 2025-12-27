@@ -69,7 +69,7 @@
                             </small>
                         </td>
                         <td>
-                            {{ optional($tugas->suratKetAktif)->Keperluan ?? 'N/A' }}
+                            {{ optional($tugas->suratKetAktif)->Deskripsi ?? 'N/A' }}
                             @if(optional($tugas->suratKetAktif)->is_urgent && optional($tugas->suratKetAktif)->urgent_reason)
                                 <div class="mt-1 small text-danger border-start border-danger ps-2">
                                     <strong>Alasan:</strong> {{ \Illuminate\Support\Str::limit($tugas->suratKetAktif->urgent_reason, 50) }}
