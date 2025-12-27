@@ -6,14 +6,17 @@
 <style>
     .preview-document {
         font-family: 'Times New Roman', Times, serif;
-        background: #fdfdfd;
+        background: #ffffff;
         color: #000;
-        border: 1px solid #ccc;
-        padding: 30px;
+        border: 1px solid #000;
+        padding: 2cm 2.5cm;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
         font-size: 11pt;
-        line-height: 1.6;
+        line-height: 1.5;
         min-height: 500px;
+        width: 21cm;
+        max-width: 100%;
+        margin: 0 auto;
     }
     .preview-header {
         text-align: center;
@@ -57,24 +60,35 @@
     .preview-table-dosen {
         width: 100%;
         border-collapse: collapse;
-        margin: 15px 0;
+        margin: 10px 0 15px 0;
         font-size: 10pt;
+        border: 1px solid #000;
+        table-layout: fixed;
     }
     .preview-table-dosen th,
     .preview-table-dosen td {
         border: 1px solid #000;
-        padding: 6px 8px;
-        text-align: left;
+        padding: 3px 6px;
         vertical-align: middle;
+        word-wrap: break-word;
     }
-    .preview-table-dosen th {
-        background-color: #e8e8e8;
+    .preview-table-dosen thead th {
+        background-color: #eaeaea;
         font-weight: bold;
+        font-size: 10pt;
         text-align: center;
+    }
+    .preview-table-dosen tbody td {
         font-size: 10pt;
     }
-    .preview-table-dosen td {
-        font-size: 10pt;
+    .preview-table-dosen tbody td:nth-child(1) {
+        text-align: center;
+    }
+    .preview-table-dosen tbody td:nth-child(2) {
+        text-align: left;
+    }
+    .preview-table-dosen tbody td:nth-child(3) {
+        text-align: center;
     }
     .preview-signature {
         margin-top: 40px;
@@ -453,27 +467,9 @@
                                     </table>
                                 </div>
 
-                                <!-- Tabel Dosen -->
-                                <table class="preview-table-dosen" id="preview-table-dosen" style="margin-top: 15px;">
-                                    <thead>
-                                        <tr>
-                                            <th style="width: 8%;">No</th>
-                                            <th style="width: 65%;">Nama Dosen</th>
-                                            <th style="width: 27%;">Jumlah Anak Wali</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="3" class="text-center">
-                                                <span class="preview-placeholder">Data akan muncul setelah memilih SK</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
                                 <!-- Ketiga -->
-                                <div class="preview-content">
-                                    <table style="width: 100%; margin-top: 15px; margin-bottom: 15px; font-size: 10pt;">
+                                <div class="preview-content" style="margin-bottom: 10px;">
+                                    <table style="width: 100%; font-size: 10pt;">
                                         <tr>
                                             <td style="width: 15%; vertical-align: top; font-weight: normal;">Ketiga</td>
                                             <td style="width: 3%; vertical-align: top;">:</td>
@@ -481,6 +477,29 @@
                                         </tr>
                                     </table>
                                 </div>
+
+                                <!-- Tabel Dosen -->
+                                <table class="preview-table-dosen" id="preview-table-dosen">
+                                    <colgroup>
+                                        <col style="width: 8%;">
+                                        <col style="width: 67%;">
+                                        <col style="width: 25%;">
+                                    </colgroup>
+                                    <thead>
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>Nama Dosen</th>
+                                            <th>Jumlah Anak Wali</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td colspan="3" style="text-align: center;">
+                                                <span class="preview-placeholder">Data akan muncul setelah memilih SK</span>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
 
                                 <!-- Tanda Tangan -->
                                 <div class="preview-signature" style="font-size: 10pt;">
@@ -631,9 +650,9 @@
         
         dosenList.forEach(dosen => {
             tbody += `<tr>
-                <td class="text-center">${counter++}</td>
+                <td>${counter++}.</td>
                 <td>${dosen.nama_dosen}</td>
-                <td class="text-center">${dosen.jumlah_anak_wali}</td>
+                <td>${dosen.jumlah_anak_wali}</td>
             </tr>`;
         });
         
