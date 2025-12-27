@@ -60,32 +60,35 @@
     .preview-table-dosen {
         width: 100%;
         border-collapse: collapse;
-        margin: 10px 0 15px 0;
-        font-size: 10pt;
+        margin: 15px 0;
+        font-size: 11pt; /* Ukuran font disesuaikan agar lebih jelas */
         border: 1px solid #000;
-        table-layout: fixed;
     }
     .preview-table-dosen th,
     .preview-table-dosen td {
         border: 1px solid #000;
-        padding: 3px 6px;
+        padding: 5px 8px; /* Tambah padding agar tidak terlalu sempit */
         vertical-align: middle;
-        word-wrap: break-word;
+        line-height: 1.3;
+        color: #000;
     }
     .preview-table-dosen thead th {
-        background-color: #eaeaea;
+        background-color: #ffffff; /* Ubah jadi putih/transparan sesuai gambar target */
         font-weight: bold;
-        font-size: 10pt;
         text-align: center;
+        text-transform: capitalize;
     }
     .preview-table-dosen tbody td {
         font-size: 10pt;
+        vertical-align: top;
     }
     .preview-table-dosen tbody td:nth-child(1) {
         text-align: center;
+        vertical-align: top;
     }
     .preview-table-dosen tbody td:nth-child(2) {
         text-align: left;
+        
     }
     .preview-table-dosen tbody td:nth-child(3) {
         text-align: center;
@@ -478,6 +481,28 @@
                                     </table>
                                 </div>
 
+                                <!-- Tanda Tangan Dekan -->
+                                <div class="preview-signature" style="font-size: 10pt; margin: 40px 0 30px 0;">
+                                    <p style="margin-bottom: 3px;">Ditetapkan di Bangkalan</p>
+                                    <p style="margin-bottom: 3px;">pada tanggal <span id="preview-tanggal">{{ date('d F Y') }}</span></p>
+                                    <p style="margin-bottom: 70px;"><strong>DEKAN,</strong></p>
+                                    <p style="margin-bottom: 0;">
+                                        <strong><u>FAIKUL UMAM</u></strong><br>
+                                        NIP. 198301182008121001
+                                    </p>
+                                </div>
+
+                                <!-- Judul Lampiran Tabel -->
+                                <div style="font-size: 11pt; text-align: left; margin-top: 30px; margin-bottom: 10px;">
+                                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
+                                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR <span id="preview-nomor-surat-lampiran"><span class="preview-placeholder">[Nomor Surat]</span></span></p>
+                                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PERIHAL</p>
+                                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER <span id="preview-semester-lampiran">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-lampiran">2023/2024</span></p>
+                                    <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold; text-decoration: underline;">Daftar Dosen Wali Mahasiswa Prodi <span id="preview-prodi-lampiran">-</span></p>
+                                </div>
+
                                 <!-- Tabel Dosen -->
                                 <table class="preview-table-dosen" id="preview-table-dosen">
                                     <colgroup>
@@ -501,15 +526,17 @@
                                     </tbody>
                                 </table>
 
-                                <!-- Tanda Tangan -->
-                                <div class="preview-signature" style="font-size: 10pt;">
-                                    <p style="margin-bottom: 3px;">Ditetapkan di Bangkalan</p>
-                                    <p style="margin-bottom: 3px;">pada tanggal <span id="preview-tanggal">{{ date('d F Y') }}</span></p>
-                                    <p style="margin-bottom: 70px;"><strong>DEKAN,</strong></p>
-                                    <p style="margin-bottom: 0;">
-                                        <strong><u>FAIKUL UMAM</u></strong><br>
-                                        NIP. 198301182008121001
-                                    </p>
+                                <!-- Tanda Tangan Dekan - Lampiran -->
+                                <div style="margin-top: 50px; font-size: 10pt;">
+                                    <div style="text-align: right;">
+                                        <p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
+                                        <p style="margin: 0 0 30px 0;">pada tanggal <span id="preview-tanggal-lampiran">27 December 2025</span></p>
+                                        <p style="margin: 0 0 70px 0;"><strong>DEKAN,</strong></p>
+                                        <p style="margin: 0 0 0 0;">
+                                            <strong><u>FAIKUL UMAM</u></strong><br>
+                                            NIP. 198301182008121001
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -632,13 +659,12 @@
 
     // Update preview table dengan data dosen
     function updatePreviewTable(dosenList) {
-        let tbody = '<tbody>';
-        let counter = 1;
-        
         // Update semester dan tahun akademik di semua tempat
         if (selectedSK.length > 0) {
             const firstSK = selectedSK[0];
             const semesterUpper = firstSK.semester.toUpperCase();
+            
+            // Update untuk bagian "Memutuskan"
             document.getElementById('preview-semester-text').textContent = semesterUpper;
             document.getElementById('preview-semester-text-2').textContent = semesterUpper;
             document.getElementById('preview-semester-text-3').textContent = firstSK.semester;
@@ -646,32 +672,38 @@
             document.getElementById('preview-tahun-text-2').textContent = firstSK.tahun;
             document.getElementById('preview-tahun-text-3').textContent = firstSK.tahun;
             document.getElementById('preview-tahun-text-4').textContent = firstSK.tahun;
+            
+            // Update untuk bagian Lampiran
+            document.getElementById('preview-semester-lampiran').textContent = semesterUpper;
+            document.getElementById('preview-tahun-lampiran').textContent = firstSK.tahun;
+            document.getElementById('preview-prodi-lampiran').textContent = firstSK.prodi;
         }
         
-        dosenList.forEach(dosen => {
-            tbody += `<tr>
-                <td>${counter++}.</td>
-                <td>${dosen.nama_dosen}</td>
-                <td>${dosen.jumlah_anak_wali}</td>
-            </tr>`;
-        });
-        
-        tbody += '</tbody>';
-        
-        document.querySelector('#preview-table-dosen tbody').replaceWith(
-            document.createRange().createContextualFragment(tbody)
-        );
+        // Update tabel dengan data dosen
+        document.querySelector('#preview-table-dosen tbody').innerHTML = `
+            ${dosenList.map((dosen, index) => `
+                <tr>
+                    <td>${index + 1}.</td>
+                    <td>${dosen.nama_dosen}</td>
+                    <td>${dosen.jumlah_anak_wali}</td>
+                </tr>
+            `).join('')}
+        `;
     }
 
     // Live update nomor surat
     document.getElementById('nomorSurat').addEventListener('input', function(e) {
         const nomor = e.target.value.trim();
         const previewElement = document.getElementById('preview-nomor-surat');
+        const previewElementLampiran = document.getElementById('preview-nomor-surat-lampiran');
         
         if (nomor) {
             previewElement.innerHTML = nomor;
+            previewElementLampiran.innerHTML = nomor;
         } else {
-            previewElement.innerHTML = '<span class="preview-placeholder">[Nomor Surat]</span>';
+            const placeholder = '<span class="preview-placeholder">[Nomor Surat]</span>';
+            previewElement.innerHTML = placeholder;
+            previewElementLampiran.innerHTML = placeholder;
         }
     });
 
