@@ -4,15 +4,17 @@ namespace App\Helpers;
 
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Endroid\QrCode\QrCode;
+use Endroid\QrCode\Writer\PngWriter;
 
 class QrCodeHelper
 {
     /**
-     * Generate QR Code menggunakan Python script
+     * Generate QR Code menggunakan Endroid library
      * Simpan sebagai file PNG di storage dan return URL publik
      * 
      * @param string $data Data yang akan di-encode (URL verifikasi)
-     * @param int $boxSize Ukuran pixel per box (default 10, ignored for backward compat)
+     * @param int $boxSize Ukuran pixel per box (default 10, untuk backward compat convert ke size)
      * @return string|null URL publik file QR code, atau null jika gagal
      */
     public static function generate($data, $boxSize = 10)
@@ -25,29 +27,35 @@ class QrCodeHelper
             // Path absolut untuk simpan file
             $absolutePath = storage_path('app/public/' . $relativePath);
             
-            // Path ke Python script
-            $scriptPath = base_path('generate_qr.py');
+            // Pastikan direktori ada
+            $directory = dirname($absolutePath);
+            if (!file_exists($directory)) {
+                mkdir($directory, 0777, true);
+            }
             
-            // Escape arguments untuk command line
-            $dataEscaped = escapeshellarg($data);
-            $pathEscaped = escapeshellarg($absolutePath);
+            // Convert boxSize to pixel size (boxSize 10 = ~200px)
+            $size = $boxSize * 20;
             
-            // Execute Python script
-            $command = "python \"{$scriptPath}\" {$dataEscaped} {$pathEscaped} {$boxSize}";
-            $output = [];
-            $returnCode = 0;
+            // Generate QR Code dengan Endroid v6.0 (readonly constructor)
+            $qrCode = new QrCode(
+                data: $data,
+                size: $size,
+                margin: 10
+            );
             
-            exec($command . ' 2>&1', $output, $returnCode);
+            $writer = new PngWriter();
+            $result = $writer->write($qrCode);
+            
+            // Simpan file
+            $result->saveToFile($absolutePath);
             
             // Cek apakah berhasil
-            if ($returnCode === 0 && file_exists($absolutePath)) {
+            if (file_exists($absolutePath)) {
                 // Return URL publik untuk akses file
                 return asset('storage/' . $relativePath);
             } else {
-                \Log::error('Failed to generate QR Code', [
-                    'command' => $command,
-                    'output' => implode("\n", $output),
-                    'return_code' => $returnCode
+                \Log::error('Failed to save QR Code file', [
+                    'path' => $absolutePath
                 ]);
                 return null;
             }
@@ -75,28 +83,32 @@ class QrCodeHelper
             // Path absolut untuk simpan file
             $absolutePath = storage_path('app/public/' . $relativePath);
             
-            // Path ke Python script
-            $scriptPath = base_path('generate_qr.py');
+            // Pastikan direktori ada
+            $directory = dirname($absolutePath);
+            if (!file_exists($directory)) {
+                mkdir($directory, 0777, true);
+            }
             
-            // Escape arguments
-            $dataEscaped = escapeshellarg($data);
-            $pathEscaped = escapeshellarg($absolutePath);
+            // Convert boxSize to pixel size
+            $size = $boxSize * 20;
             
-            // Execute Python script
-            $command = "python \"{$scriptPath}\" {$dataEscaped} {$pathEscaped} {$boxSize}";
-            $output = [];
-            $returnCode = 0;
+            // Generate QR Code
+            $qrCode = new QrCode(
+                data: $data,
+                size: $size,
+                margin: 10
+            );
             
-            exec($command . ' 2>&1', $output, $returnCode);
+            $writer = new PngWriter();
+            $result = $writer->write($qrCode);
+            $result->saveToFile($absolutePath);
             
             // Cek berhasil
-            if ($returnCode === 0 && file_exists($absolutePath)) {
+            if (file_exists($absolutePath)) {
                 return $relativePath; // Return path relatif untuk DB
             } else {
-                \Log::error('Failed to generate QR Code', [
-                    'command' => $command,
-                    'output' => implode("\n", $output),
-                    'return_code' => $returnCode
+                \Log::error('Failed to save QR Code file', [
+                    'path' => $absolutePath
                 ]);
                 return null;
             }

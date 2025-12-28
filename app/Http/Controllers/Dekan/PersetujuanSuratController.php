@@ -46,7 +46,10 @@ class PersetujuanSuratController extends Controller
         // TODO: Implementasi counting untuk jenis surat baru
         // Untuk sementara set 0, bisa diimplementasikan setelah tabel database dibuat
         $countCutiDosen = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
-        $countTidakBeasiswa = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
+        $countTidakBeasiswa = TugasSurat::where('Id_Jenis_Surat', 6)
+            ->whereHas('suratTidakBeasiswa')
+            ->where('Status', 'menunggu-ttd')
+            ->count();
         $countSKFakultas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countSuratTugas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countMBKM = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
@@ -164,21 +167,21 @@ class PersetujuanSuratController extends Controller
 
     /**
      * Tampilkan daftar surat keterangan tidak menerima beasiswa yang menunggu persetujuan
-     * TODO: Implementasi lengkap setelah tabel database dibuat
      */
     public function listTidakBeasiswa()
     {
         $user = Auth::user();
         
-        // TODO: Ganti dengan query yang sesuai
         $daftarSurat = TugasSurat::with([
                 'jenisSurat', 
                 'pemberiTugas.role', 
-                'penerimaTugas'
+                'pemberiTugas.mahasiswa.prodi',
+                'penerimaTugas',
+                'suratTidakBeasiswa'
             ])
-            ->where('Id_Jenis_Surat', 99) // TODO: Ganti dengan Id_Jenis_Surat yang benar
+            ->where('Id_Jenis_Surat', 6)
+            ->whereHas('suratTidakBeasiswa')
             ->where('Status', 'menunggu-ttd')
-            ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->get();
 

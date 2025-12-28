@@ -225,6 +225,11 @@ class TugasSurat extends Model
         return $this->hasOne(SuratLegalisir::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
     }
 
+    public function suratTidakBeasiswa()
+    {
+        return $this->hasOne(SuratTidakBeasiswa::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
     /**
      * Relasi ke SuratVerification (one-to-one)
      * Untuk mengambil data QR Code dan tanda tangan digital

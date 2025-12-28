@@ -229,7 +229,7 @@
 
     {{-- Card Tidak Menerima Beasiswa --}}
     <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card shadow-sm border-start border-danger border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(16)">
+        <div class="card shadow-sm border-start border-danger border-4 h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <div class="bg-danger text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
@@ -237,7 +237,10 @@
                     </div>
                     <h6 class="card-title mb-0 fw-bold">Tidak Menerima Beasiswa</h6>
                 </div>
-                <p class="card-text text-muted small mb-0">Surat keterangan tidak menerima beasiswa</p>
+                <p class="card-text text-muted small mb-2">Surat keterangan tidak menerima beasiswa</p>
+                <a href="{{ route('mahasiswa.pengajuan.tidak_beasiswa.create') }}" class="btn btn-sm btn-danger text-white">
+                    <i class="fas fa-arrow-right me-1"></i>Buka Halaman
+                </a>
             </div>
         </div>
     </div>

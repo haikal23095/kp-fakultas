@@ -323,6 +323,7 @@ class DetailSuratController extends Controller
             'penerimaTugas',
             'suratMagang',
             'suratKetAktif',
+            'suratTidakBeasiswa',
             'verification.penandatangan.pegawai',
             'verification.penandatangan.dosen'
         ])->findOrFail($id);
@@ -360,6 +361,18 @@ class DetailSuratController extends Controller
                 'mahasiswa' => $mahasiswa,
                 'jenisSurat' => $jenisSurat,
                 'verification' => $tugasSurat->verification,
+                'mode' => 'preview'
+            ]);
+        }
+
+        // Untuk surat tidak beasiswa
+        if ($tugasSurat->suratTidakBeasiswa) {
+            return view('dekan.preview.surat_tidak_beasiswa', [
+                'surat' => $tugasSurat,
+                'mahasiswa' => $mahasiswa,
+                'jenisSurat' => $jenisSurat,
+                'verification' => $tugasSurat->verification,
+                'suratTidakBeasiswa' => $tugasSurat->suratTidakBeasiswa,
                 'mode' => 'preview'
             ]);
         }

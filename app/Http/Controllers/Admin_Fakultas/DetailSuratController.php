@@ -26,6 +26,7 @@ class DetailSuratController extends Controller
             'jenisSurat',
             'suratMagang',
             'suratKetAktif',
+            'suratTidakBeasiswa',
         ])->findOrFail($id);
 
         // Ambil detail pengaju
@@ -73,6 +74,9 @@ class DetailSuratController extends Controller
         } elseif ($tugasSurat->suratKetAktif) {
             // Untuk Surat Keterangan Aktif, file pendukung adalah KRS
             $filePath = $tugasSurat->suratKetAktif->KRS;
+        } elseif ($tugasSurat->suratTidakBeasiswa) {
+            // Untuk Surat Tidak Beasiswa, file pendukung adalah surat pernyataan
+            $filePath = $tugasSurat->suratTidakBeasiswa->File_Pernyataan;
         }
 
         if (!$filePath || !Storage::disk('public')->exists($filePath)) {
@@ -103,6 +107,9 @@ class DetailSuratController extends Controller
         } elseif ($tugasSurat->suratKetAktif) {
             // Untuk Surat Keterangan Aktif, file pendukung adalah KRS
             $filePath = $tugasSurat->suratKetAktif->KRS;
+        } elseif ($tugasSurat->suratTidakBeasiswa) {
+            // Untuk Surat Tidak Beasiswa, file pendukung adalah surat pernyataan
+            $filePath = $tugasSurat->suratTidakBeasiswa->File_Pernyataan;
         }
 
         if (!$filePath || !Storage::disk('public')->exists($filePath)) {

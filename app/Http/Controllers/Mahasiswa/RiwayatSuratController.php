@@ -10,6 +10,7 @@ use App\Models\SuratVerification;
 use App\Models\SuratKetAktif;
 use App\Models\SuratMagang;
 use App\Models\SuratLegalisir;
+use App\Models\SuratTidakBeasiswa;
 
 class RiwayatSuratController extends Controller
 {
@@ -36,7 +37,7 @@ class RiwayatSuratController extends Controller
 
         // Hitung jenis surat lainnya
         $countMobilDinas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 15)->count();
-        $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 16)->count();
+        $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 6)->count();
         $countCekPlagiasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 17)->count();
         $countDispensasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 18)->count();
         $countBerkelakuanBaik = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 19)->count();
@@ -247,7 +248,21 @@ class RiwayatSuratController extends Controller
     }
 
     public function riwayatMobilDinas() { return $this->getGenericRiwayat(15, 'Riwayat Peminjaman Mobil Dinas'); }
-    public function riwayatTidakBeasiswa() { return $this->getGenericRiwayat(16, 'Riwayat Surat Keterangan Tidak Menerima Beasiswa'); }
+    
+    public function riwayatTidakBeasiswa() { 
+        $user = Auth::user();
+        $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratTidakBeasiswa'])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 6)
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('mahasiswa.riwayat_tidak_beasiswa', [
+            'riwayatSurat' => $riwayatSurat,
+            'title' => 'Riwayat Surat Keterangan Tidak Menerima Beasiswa'
+        ]);
+    }
+    
     public function riwayatCekPlagiasi() { return $this->getGenericRiwayat(17, 'Riwayat Cek Plagiasi'); }
     public function riwayatDispensasi() { return $this->getGenericRiwayat(18, 'Riwayat Surat Dispensasi'); }
     public function riwayatBerkelakuanBaik() { return $this->getGenericRiwayat(19, 'Riwayat Surat Keterangan Berkelakuan Baik'); }
