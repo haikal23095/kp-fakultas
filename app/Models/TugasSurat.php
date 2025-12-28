@@ -231,6 +231,14 @@ class TugasSurat extends Model
     }
 
     /**
+     * Relasi ke SuratKelakuanBaik (one-to-one)
+     */
+    public function suratKelakuanBaik()
+    {
+        return $this->hasOne(SuratKelakuanBaik::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
      * Relasi ke SuratVerification (one-to-one)
      * Untuk mengambil data QR Code dan tanda tangan digital
      */

@@ -173,7 +173,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat-cuti', [FakultasManajemenSuratController::class, 'listCuti'])->name('surat.cuti');
         Route::get('/surat-tidak-beasiswa', [\App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController::class, 'indexAdmin'])->name('surat.tidak_beasiswa');
         Route::get('/surat-dispensasi', [FakultasManajemenSuratController::class, 'listDispensasi'])->name('surat.dispensasi');
-        Route::get('/surat-berkelakuan-baik', [FakultasManajemenSuratController::class, 'listBerkelakuanBaik'])->name('surat.berkelakuan_baik');
+        Route::get('/surat-berkelakuan-baik', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'indexAdmin'])->name('surat.berkelakuan_baik');
         Route::get('/surat-sk-fakultas', [FakultasManajemenSuratController::class, 'listSKFakultas'])->name('surat.sk_fakultas');
         Route::get('/surat-peminjaman-gedung', [FakultasManajemenSuratController::class, 'listPeminjamanGedung'])->name('surat.peminjaman_gedung');
         Route::get('/surat-lembur', [FakultasManajemenSuratController::class, 'listLembur'])->name('surat.lembur');
@@ -240,6 +240,7 @@ Route::middleware('auth')->group(function () {
         // TODO: Routes untuk jenis surat baru (setelah implementasi database)
         Route::get('/persetujuan-surat/cuti-dosen', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listCutiDosen'])->name('persetujuan.cuti_dosen');
         Route::get('/persetujuan-surat/tidak-beasiswa', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listTidakBeasiswa'])->name('persetujuan.tidak_beasiswa');
+        Route::get('/persetujuan-surat/berkelakuan-baik', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listBerkelakuanBaik'])->name('persetujuan.berkelakuan_baik');
         Route::get('/persetujuan-surat/sk-fakultas', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSKFakultas'])->name('persetujuan.sk_fakultas');
         Route::get('/persetujuan-surat/surat-tugas', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSuratTugas'])->name('persetujuan.surat_tugas');
         Route::get('/persetujuan-surat/mbkm', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listMBKM'])->name('persetujuan.mbkm');
@@ -512,6 +513,10 @@ Route::middleware('auth')->group(function () {
         // Download Surat Tidak Beasiswa (Signed by Dekan)
         Route::get('/surat/download-tidak-beasiswa/{id}', [SuratTidakBeasiswaController::class, 'downloadSurat'])
             ->name('surat.download_tidak_beasiswa');
+        
+        // Download Surat Berkelakuan Baik (Signed by Dekan)
+        Route::get('/surat/download-berkelakuan-baik/{id}', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'downloadSurat'])
+            ->name('surat.download_berkelakuan_baik');
 
         // --- AJAKAN MAGANG ROUTES ---
         Route::get('/ajakan-magang', [\App\Http\Controllers\AjakanMagangController::class, 'index'])
@@ -528,6 +533,10 @@ Route::middleware('auth')->group(function () {
         // --- ROUTE SURAT TIDAK MENERIMA BEASISWA ---
         Route::get('/pengajuan-surat/tidak-beasiswa', [\App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController::class, 'create'])->name('pengajuan.tidak_beasiswa.create');
         Route::post('/pengajuan-surat/tidak-beasiswa', [\App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController::class, 'store'])->name('pengajuan.tidak_beasiswa.store');
+
+        // --- ROUTE SURAT KETERANGAN BERKELAKUAN BAIK ---
+        Route::get('/pengajuan-surat/berkelakuan-baik', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'create'])->name('pengajuan.kelakuan_baik.create');
+        Route::post('/pengajuan-surat/berkelakuan-baik', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'store'])->name('pengajuan.kelakuan_baik.store');
 
         // Rute lainnya
         // Route::get('/legalisir', function () {

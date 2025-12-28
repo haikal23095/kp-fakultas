@@ -50,6 +50,12 @@ class PersetujuanSuratController extends Controller
             ->whereHas('suratTidakBeasiswa')
             ->where('Status', 'menunggu-ttd')
             ->count();
+        $countBerkelakuanBaik = TugasSurat::whereHas('jenisSurat', function($q) {
+                $q->where('Nama_Surat', 'LIKE', '%Berkelakuan Baik%');
+            })
+            ->whereHas('suratKelakuanBaik')
+            ->where('Status', 'menunggu-ttd')
+            ->count();
         $countSKFakultas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countSuratTugas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countMBKM = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
@@ -60,6 +66,7 @@ class PersetujuanSuratController extends Controller
             'countLegalisir',
             'countCutiDosen',
             'countTidakBeasiswa',
+            'countBerkelakuanBaik',
             'countSKFakultas',
             'countSuratTugas',
             'countMBKM'
@@ -181,6 +188,30 @@ class PersetujuanSuratController extends Controller
             ])
             ->where('Id_Jenis_Surat', 6)
             ->whereHas('suratTidakBeasiswa')
+            ->where('Status', 'menunggu-ttd')
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+    }
+
+    /**
+     * Tampilkan daftar Surat Keterangan Berkelakuan Baik yang menunggu persetujuan
+     */
+    public function listBerkelakuanBaik()
+    {
+        $user = Auth::user();
+        
+        $daftarSurat = TugasSurat::with([
+                'jenisSurat', 
+                'pemberiTugas.role', 
+                'penerimaTugas',
+                'suratKelakuanBaik.user.mahasiswa'
+            ])
+            ->whereHas('jenisSurat', function($q) {
+                $q->where('Nama_Surat', 'LIKE', '%Berkelakuan Baik%');
+            })
+            ->whereHas('suratKelakuanBaik')
             ->where('Status', 'menunggu-ttd')
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->get();

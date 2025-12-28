@@ -277,7 +277,7 @@
 
     {{-- Card Berkelakuan Baik --}}
     <div class="col-lg-4 col-md-6 mb-3">
-        <div class="card shadow-sm border-start border-success border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(19)">
+        <div class="card shadow-sm border-start border-success border-4 h-100">
             <div class="card-body">
                 <div class="d-flex align-items-center mb-2">
                     <div class="bg-success text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
@@ -285,7 +285,10 @@
                     </div>
                     <h6 class="card-title mb-0 fw-bold">Berkelakuan Baik</h6>
                 </div>
-                <p class="card-text text-muted small mb-0">Surat keterangan berkelakuan baik</p>
+                <p class="card-text text-muted small mb-2">Surat keterangan berkelakuan baik</p>
+                <a href="{{ route('mahasiswa.pengajuan.kelakuan_baik.create') }}" class="btn btn-sm btn-success text-white">
+                    <i class="fas fa-arrow-right me-1"></i>Buka Halaman
+                </a>
             </div>
         </div>
     </div>

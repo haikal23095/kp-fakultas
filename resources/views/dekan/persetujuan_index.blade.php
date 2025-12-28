@@ -254,6 +254,24 @@
         </a>
     </div>
 
+    {{-- Card Berkelakuan Baik --}}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <a href="{{ route('dekan.persetujuan.berkelakuan_baik') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-success badge-count">
+                    {{ $countBerkelakuanBaik ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon purple">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h5>Berkelakuan Baik</h5>
+                    <p>Verifikasi dan tandatangani surat keterangan berkelakuan baik</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
     {{-- Card SK Fakultas --}}
     <div class="col-md-6 col-lg-4 mb-4">
         <a href="{{ route('dekan.persetujuan.sk_fakultas') }}" class="text-decoration-none">

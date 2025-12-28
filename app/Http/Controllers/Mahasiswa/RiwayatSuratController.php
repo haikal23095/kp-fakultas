@@ -265,7 +265,25 @@ class RiwayatSuratController extends Controller
     
     public function riwayatCekPlagiasi() { return $this->getGenericRiwayat(17, 'Riwayat Cek Plagiasi'); }
     public function riwayatDispensasi() { return $this->getGenericRiwayat(18, 'Riwayat Surat Dispensasi'); }
-    public function riwayatBerkelakuanBaik() { return $this->getGenericRiwayat(19, 'Riwayat Surat Keterangan Berkelakuan Baik'); }
+    
+    public function riwayatBerkelakuanBaik() { 
+        $user = Auth::user();
+        
+        // Query dengan relasi suratKelakuanBaik dan verification
+        $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratKelakuanBaik', 'verification'])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->whereHas('jenisSurat', function($q) {
+                $q->where('Nama_Surat', 'LIKE', '%Berkelakuan Baik%');
+            })
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('mahasiswa.riwayat_berkelakuan_baik', [
+            'riwayatSurat' => $riwayatSurat,
+            'title' => 'Riwayat Surat Keterangan Berkelakuan Baik'
+        ]);
+    }
+    
     public function riwayatSuratTugas() { return $this->getGenericRiwayat(20, 'Riwayat Surat Tugas'); }
     public function riwayatMBKM() { return $this->getGenericRiwayat(21, 'Riwayat Surat Rekomendasi MBKM'); }
     public function riwayatPeminjamanGedung() { return $this->getGenericRiwayat(22, 'Riwayat Peminjaman Gedung'); }

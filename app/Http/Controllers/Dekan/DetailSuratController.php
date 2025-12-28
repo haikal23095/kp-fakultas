@@ -28,7 +28,8 @@ class DetailSuratController extends Controller
             'jenisSurat',
             'penerimaTugas.role',
             'suratMagang',      // Tambahkan ini
-            'suratKetAktif'     // Tambahkan ini
+            'suratKetAktif',    // Tambahkan ini
+            'suratKelakuanBaik' // Tambahkan ini
         ];
 
         if (method_exists(TugasSurat::class, 'fileArsip')) {
@@ -171,6 +172,55 @@ class DetailSuratController extends Controller
                 } catch (\Throwable $e) {
                     // Jika gagal (misal enum belum dimigrasi), log dan lanjutkan tanpa blokir
                     \Log::warning('Gagal update status child Surat_Magang ke Success: ' . $e->getMessage());
+                }
+            }
+
+            // Update Surat Kelakuan Baik jika ada
+            if ($tugasSurat->suratKelakuanBaik) {
+                try {
+                    // Get data Dekan yang login
+                    $dekan = Auth::user();
+
+                    // Generate QR Code untuk verifikasi
+                    $qrContent = route('surat.verify', $token);
+                    $qrFileName = 'qr_codes/kelakuan_baik_' . $tugasSurat->suratKelakuanBaik->Id_Surat_Kelakuan_Baik . '_' . time() . '.png';
+                    $qrPath = storage_path('app/public/' . $qrFileName);
+
+                    // Pastikan direktori ada
+                    if (!file_exists(dirname($qrPath))) {
+                        mkdir(dirname($qrPath), 0777, true);
+                    }
+
+                    // Generate QR Code dengan Endroid v6.0
+                    $qrCode = new \Endroid\QrCode\QrCode(
+                        data: $qrContent,
+                        size: 200,
+                        margin: 10
+                    );
+                    $writer = new \Endroid\QrCode\Writer\PngWriter();
+                    $result = $writer->write($qrCode);
+                    $result->saveToFile($qrPath);
+
+                    // Update Surat Kelakuan Baik
+                    $tugasSurat->suratKelakuanBaik->Qr_Code = $qrFileName;
+                    $tugasSurat->suratKelakuanBaik->Status_Surat = 'Disetujui';
+                    $tugasSurat->suratKelakuanBaik->Tanggal_TTD = Carbon::now();
+
+                    // Simpan Nama dan NIP Dekan (Wakil Dekan 3 Kemahasiswaan)
+                    if ($dekan->dosen) {
+                        $tugasSurat->suratKelakuanBaik->Nama_Pejabat = $dekan->dosen->Nama_Dosen;
+                        $tugasSurat->suratKelakuanBaik->NIP_Pejabat = $dekan->dosen->NIP;
+                    } elseif ($dekan->pegawaiFakultas) {
+                        $tugasSurat->suratKelakuanBaik->Nama_Pejabat = $dekan->pegawaiFakultas->Nama_Pegawai;
+                        $tugasSurat->suratKelakuanBaik->NIP_Pejabat = $dekan->pegawaiFakultas->Nip_Pegawai;
+                    } else {
+                        $tugasSurat->suratKelakuanBaik->Nama_Pejabat = $dekan->Name_User;
+                        $tugasSurat->suratKelakuanBaik->NIP_Pejabat = '-';
+                    }
+
+                    $tugasSurat->suratKelakuanBaik->save();
+                } catch (\Throwable $e) {
+                    \Log::warning('Gagal update Surat_Kelakuan_Baik: ' . $e->getMessage());
                 }
             }
             // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
@@ -324,6 +374,7 @@ class DetailSuratController extends Controller
             'suratMagang',
             'suratKetAktif',
             'suratTidakBeasiswa',
+            'suratKelakuanBaik.user.mahasiswa',
             'verification.penandatangan.pegawai',
             'verification.penandatangan.dosen'
         ])->findOrFail($id);
@@ -373,6 +424,19 @@ class DetailSuratController extends Controller
                 'jenisSurat' => $jenisSurat,
                 'verification' => $tugasSurat->verification,
                 'suratTidakBeasiswa' => $tugasSurat->suratTidakBeasiswa,
+                'mode' => 'preview'
+            ]);
+        }
+
+        // Untuk surat berkelakuan baik
+        if ($tugasSurat->suratKelakuanBaik) {
+            $mahasiswaKelakuanBaik = $tugasSurat->suratKelakuanBaik->user->mahasiswa ?? null;
+            return view('dekan.preview.surat_kelakuan_baik', [
+                'surat' => $tugasSurat,
+                'mahasiswa' => $mahasiswaKelakuanBaik,
+                'jenisSurat' => $jenisSurat,
+                'verification' => $tugasSurat->verification,
+                'suratKelakuanBaik' => $tugasSurat->suratKelakuanBaik,
                 'mode' => 'preview'
             ]);
         }

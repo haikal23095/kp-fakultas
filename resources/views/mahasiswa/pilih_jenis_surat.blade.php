@@ -249,7 +249,7 @@
 
     {{-- Card Berkelakuan Baik --}}
     <div class="col-lg-4 col-md-6 mb-4">
-        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
+        <a href="{{ route('mahasiswa.pengajuan.kelakuan_baik.create') }}" class="text-decoration-none">
             <div class="card surat-card shadow-sm card-berkelakuan-baik">
                 <div class="card-body">
                     <div class="surat-icon">
