@@ -162,26 +162,213 @@
     <h1 class="h3 mb-0 text-gray-800">Pengajuan Surat Baru</h1>
 </div>
 
-{{-- Card Link ke Legalisir --}}
+{{-- Card Grid untuk Semua Jenis Surat --}}
 <div class="row mb-4">
-    <div class="col-12">
-        <div class="card shadow-sm border-start border-primary border-4">
-            <div class="card-body d-flex align-items-center justify-content-between">
-                <div>
-                    <h5 class="card-title text-primary fw-bold mb-1">Legalisir Dokumen</h5>
-                    <p class="card-text text-muted mb-0">Ajukan legalisir ijazah atau transkrip nilai secara online.</p>
+    {{-- Card Surat Keterangan Aktif --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-primary border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(3)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-id-card"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Surat Keterangan Aktif</h6>
                 </div>
-                <a href="{{ route('mahasiswa.legalisir.create') }}" class="btn btn-primary">
-                    <i class="fas fa-arrow-right me-2"></i>Buka Halaman Legalisir
+                <p class="card-text text-muted small mb-0">Surat keterangan bahwa Anda masih terdaftar sebagai mahasiswa aktif</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Surat Pengantar Magang/KP --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-success border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(13)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-success text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-briefcase"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Surat Pengantar KP/Magang</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Surat pengantar untuk keperluan Kerja Praktik atau Magang di perusahaan/instansi</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Legalisir --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-warning border-4 h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-warning text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-stamp"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Legalisir Dokumen</h6>
+                </div>
+                <p class="card-text text-muted small mb-2">Ajukan legalisir ijazah atau transkrip nilai secara online</p>
+                <a href="{{ route('mahasiswa.pengajuan.legalisir.create') }}" class="btn btn-sm btn-warning text-white">
+                    <i class="fas fa-arrow-right me-1"></i>Buka Halaman
                 </a>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Peminjaman Mobil Dinas --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-info border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(15)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-info text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-car"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Peminjaman Mobil Dinas</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Ajukan permohonan peminjaman mobil dinas fakultas</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Tidak Menerima Beasiswa --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-danger border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(16)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-danger text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Tidak Menerima Beasiswa</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Surat keterangan tidak menerima beasiswa</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Cek Plagiasi --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-secondary border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(17)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-secondary text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Cek Plagiasi (Turnitin)</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Permohonan cek plagiasi dokumen/skripsi</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Dispensasi --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-primary border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(18)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-clock"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Surat Dispensasi</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Dispensasi kehadiran kuliah</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Berkelakuan Baik --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-success border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(19)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-success text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-user-check"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Berkelakuan Baik</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Surat keterangan berkelakuan baik</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Surat Tugas --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-info border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(20)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-info text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-tasks"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Surat Tugas Kegiatan</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Permohonan surat tugas untuk kegiatan</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card MBKM --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-warning border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(21)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-warning text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Rekomendasi MBKM</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Surat rekomendasi untuk program MBKM</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Peminjaman Gedung --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-danger border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(22)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-danger text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-building"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Peminjaman Gedung</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Ajukan peminjaman gedung dan ruangan</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Lembur --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-secondary border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(23)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-secondary text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Surat Perintah Lembur</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Permohonan surat perintah lembur</p>
+            </div>
+        </div>
+    </div>
+
+    {{-- Card Peminjaman Ruang --}}
+    <div class="col-lg-4 col-md-6 mb-3">
+        <div class="card shadow-sm border-start border-primary border-4 h-100" style="cursor: pointer;" onclick="selectJenisSurat(24)">
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-2">
+                    <div class="bg-primary text-white rounded-circle p-3 me-3" style="width: 50px; height: 50px; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-door-open"></i>
+                    </div>
+                    <h6 class="card-title mb-0 fw-bold">Peminjaman Ruang</h6>
+                </div>
+                <p class="card-text text-muted small mb-0">Ajukan peminjaman ruang rapat/lab</p>
             </div>
         </div>
     </div>
 </div>
 
-<div class="card shadow mb-4">
-    <div class="card-header py-3">
+<div class="card shadow mb-4" id="form-container" style="display: none;">
+    <div class="card-header py-3 d-flex justify-content-between align-items-center">
         <h6 class="m-0 font-weight-bold text-primary">Formulir Pengajuan</h6>
+        <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('form-container').style.display='none'; document.getElementById('jenisSurat').value='';">
+            <i class="fas fa-times"></i> Tutup Form
+        </button>
     </div>
     <div class="card-body">
         
@@ -600,7 +787,457 @@
                 </div>
             </div>
 
-            {{-- ... (Form dinamis lainnya akan Anda tambahkan di sini) ... --}}
+            {{-- FORM SPESIFIK: PEMINJAMAN MOBIL DINAS --}}
+            <div id="form-mobil-dinas" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Peminjaman Mobil Dinas</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Pemohon</strong></label>
+                        <input type="text" class="form-control" value="{{ Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Jabatan/Posisi</strong></label>
+                        <input type="text" class="form-control" value="{{ Auth::user()->role->Name_Role ?? 'N/A' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tanggal_pinjam" class="form-label"><strong>Tanggal Peminjaman</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[tanggal_pinjam]" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="tanggal_kembali" class="form-label"><strong>Tanggal Pengembalian</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[tanggal_kembali]" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tujuan_peminjaman" class="form-label"><strong>Tujuan/Keperluan Peminjaman</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_MobilDinas" rows="3" placeholder="Contoh: Untuk keperluan kunjungan ke instansi..." required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tujuan_lokasi" class="form-label"><strong>Lokasi Tujuan</strong></label>
+                    <input type="text" class="form-control" name="data_spesifik[lokasi_tujuan]" placeholder="Contoh: Surabaya, Jawa Timur" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="dokumen_surat_tugas" class="form-label"><strong>Unggah Surat Tugas/Undangan (Opsional)</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_mobil_dinas">
+                    <div class="form-text">Format: PDF (Maks. 2MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: SURAT KETERANGAN TIDAK MENERIMA BEASISWA --}}
+            <div id="form-tidak-beasiswa" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Surat Keterangan Tidak Menerima Beasiswa</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Mahasiswa</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->Nama_Mahasiswa ?? Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>NPM/NIM</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->NIM ?? 'NIM Tidak Ditemukan' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Program Studi</strong></label>
+                        <input type="text" class="form-control" value="{{ $prodi->Nama_Prodi ?? 'Prodi Tidak Ditemukan' }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="semester" class="form-label"><strong>Semester Saat Ini</strong></label>
+                        <input type="number" class="form-control" name="data_spesifik[semester]" placeholder="Contoh: 5" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="keperluan" class="form-label"><strong>Keperluan Surat</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_TidakBeasiswa" rows="3" placeholder="Contoh: Untuk syarat pengajuan beasiswa..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="dokumen_ktp" class="form-label"><strong>Unggah KTP/Identitas</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_tidak_beasiswa" required>
+                    <div class="form-text">Format: PDF atau JPG (Maks. 1MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: CEK PLAGIASI (TURNITIN) --}}
+            <div id="form-cek-plagiasi" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Permohonan Cek Plagiasi (Turnitin)</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Mahasiswa</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->Nama_Mahasiswa ?? Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>NPM/NIM</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->NIM ?? 'NIM Tidak Ditemukan' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="judul_naskah" class="form-label"><strong>Judul Naskah/Skripsi</strong></label>
+                    <input type="text" class="form-control" name="data_spesifik[judul_naskah]" placeholder="Judul lengkap naskah..." required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="jenis_dokumen" class="form-label"><strong>Jenis Dokumen</strong></label>
+                    <select class="form-select" name="data_spesifik[jenis_dokumen]" required>
+                        <option value="" selected disabled>-- Pilih Jenis Dokumen --</option>
+                        <option value="Skripsi">Skripsi</option>
+                        <option value="Tugas Akhir">Tugas Akhir</option>
+                        <option value="Proposal">Proposal</option>
+                        <option value="Jurnal">Jurnal</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="catatan" class="form-label"><strong>Catatan Tambahan</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_CekPlagiasi" rows="3" placeholder="Catatan atau informasi tambahan..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="file_naskah" class="form-label"><strong>Unggah File Naskah</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_cek_plagiasi" required>
+                    <div class="form-text">Format: DOCX atau PDF (Maks. 5MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: SURAT DISPENSASI --}}
+            <div id="form-dispensasi" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Surat Dispensasi</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Mahasiswa</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->Nama_Mahasiswa ?? Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>NPM/NIM</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->NIM ?? 'NIM Tidak Ditemukan' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tanggal_mulai_dispensasi" class="form-label"><strong>Tanggal Mulai Dispensasi</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[tanggal_mulai]" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="tanggal_selesai_dispensasi" class="form-label"><strong>Tanggal Selesai Dispensasi</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[tanggal_selesai]" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="alasan_dispensasi" class="form-label"><strong>Alasan/Keperluan Dispensasi</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_Dispensasi" rows="3" placeholder="Contoh: Mengikuti lomba/kegiatan..." required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label for="mata_kuliah" class="form-label"><strong>Mata Kuliah yang Tidak Dihadiri</strong></label>
+                    <input type="text" class="form-control" name="data_spesifik[mata_kuliah]" placeholder="Contoh: Basis Data, Pemrograman Web" required>
+                </div>
+
+                <div class="mb-4">
+                    <label for="file_surat_undangan" class="form-label"><strong>Unggah Surat Undangan/Bukti</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_dispensasi" required>
+                    <div class="form-text">Format: PDF (Maks. 2MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: SURAT KETERANGAN BERKELAKUAN BAIK --}}
+            <div id="form-berkelakuan-baik" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Surat Keterangan Berkelakuan Baik</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Mahasiswa</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->Nama_Mahasiswa ?? Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>NPM/NIM</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->NIM ?? 'NIM Tidak Ditemukan' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Program Studi</strong></label>
+                        <input type="text" class="form-control" value="{{ $prodi->Nama_Prodi ?? 'Prodi Tidak Ditemukan' }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="angkatan" class="form-label"><strong>Angkatan</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->Angkatan ?? 'N/A' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="keperluan_skbb" class="form-label"><strong>Keperluan Surat</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_BerkelakuanBaik" rows="3" placeholder="Contoh: Untuk persyaratan melamar pekerjaan..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="file_ktp_skbb" class="form-label"><strong>Unggah KTP/Identitas</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_berkelakuan_baik" required>
+                    <div class="form-text">Format: PDF atau JPG (Maks. 1MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: SURAT TUGAS --}}
+            <div id="form-surat-tugas" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Permohonan Surat Tugas</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Pemohon</strong></label>
+                        <input type="text" class="form-control" value="{{ Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Jabatan/Posisi</strong></label>
+                        <input type="text" class="form-control" value="{{ Auth::user()->role->Name_Role ?? 'N/A' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="nama_kegiatan" class="form-label"><strong>Nama Kegiatan</strong></label>
+                    <input type="text" class="form-control" name="data_spesifik[nama_kegiatan]" placeholder="Contoh: Seminar Nasional..." required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tanggal_kegiatan" class="form-label"><strong>Tanggal Kegiatan</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[tanggal_kegiatan]" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="lokasi_kegiatan" class="form-label"><strong>Lokasi Kegiatan</strong></label>
+                        <input type="text" class="form-control" name="data_spesifik[lokasi_kegiatan]" placeholder="Contoh: Jakarta" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="tujuan_kegiatan" class="form-label"><strong>Tujuan/Deskripsi Kegiatan</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_SuratTugas" rows="3" placeholder="Jelaskan tujuan dan deskripsi kegiatan..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="file_proposal" class="form-label"><strong>Unggah Proposal/Undangan</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_surat_tugas" required>
+                    <div class="form-text">Format: PDF (Maks. 3MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: SURAT REKOMENDASI MBKM --}}
+            <div id="form-mbkm" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Surat Rekomendasi MBKM</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Mahasiswa</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->Nama_Mahasiswa ?? Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>NPM/NIM</strong></label>
+                        <input type="text" class="form-control" value="{{ $mahasiswa->NIM ?? 'NIM Tidak Ditemukan' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="program_mbkm" class="form-label"><strong>Program MBKM</strong></label>
+                    <select class="form-select" name="data_spesifik[program_mbkm]" required>
+                        <option value="" selected disabled>-- Pilih Program MBKM --</option>
+                        <option value="Magang/Studi Independen">Magang/Studi Independen</option>
+                        <option value="Kampus Mengajar">Kampus Mengajar</option>
+                        <option value="Pertukaran Mahasiswa">Pertukaran Mahasiswa</option>
+                        <option value="Wirausaha">Wirausaha</option>
+                        <option value="Riset/Proyek Kemanusiaan">Riset/Proyek Kemanusiaan</option>
+                        <option value="KKN Tematik">KKN Tematik</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="nama_mitra" class="form-label"><strong>Nama Mitra/Instansi Tujuan</strong></label>
+                    <input type="text" class="form-control" name="data_spesifik[nama_mitra]" placeholder="Contoh: PT. Google Indonesia" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="periode_mulai" class="form-label"><strong>Periode Mulai</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[periode_mulai]" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="periode_selesai" class="form-label"><strong>Periode Selesai</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[periode_selesai]" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="deskripsi_kegiatan" class="form-label"><strong>Deskripsi Kegiatan MBKM</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_MBKM" rows="3" placeholder="Jelaskan kegiatan MBKM yang akan dilakukan..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="file_proposal_mbkm" class="form-label"><strong>Unggah Proposal MBKM</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_mbkm" required>
+                    <div class="form-text">Format: PDF (Maks. 3MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: PEMINJAMAN GEDUNG --}}
+            <div id="form-peminjaman-gedung" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Peminjaman Gedung</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Pemohon</strong></label>
+                        <input type="text" class="form-control" value="{{ Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="organisasi" class="form-label"><strong>Organisasi/Unit</strong></label>
+                        <input type="text" class="form-control" name="data_spesifik[organisasi]" placeholder="Contoh: Himpunan Mahasiswa Teknik Informatika" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="nama_kegiatan_gedung" class="form-label"><strong>Nama Kegiatan</strong></label>
+                    <input type="text" class="form-control" name="data_spesifik[nama_kegiatan]" placeholder="Contoh: Seminar Teknologi" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tanggal_pinjam_gedung" class="form-label"><strong>Tanggal Penggunaan</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[tanggal_pinjam]" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="waktu_penggunaan" class="form-label"><strong>Waktu Penggunaan</strong></label>
+                        <input type="text" class="form-control" name="data_spesifik[waktu_penggunaan]" placeholder="Contoh: 08.00 - 17.00 WIB" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="gedung_yang_dipinjam" class="form-label"><strong>Gedung/Ruang yang Dipinjam</strong></label>
+                    <input type="text" class="form-control" name="data_spesifik[gedung]" placeholder="Contoh: Gedung Serba Guna Lantai 2" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="jumlah_peserta" class="form-label"><strong>Estimasi Jumlah Peserta</strong></label>
+                    <input type="number" class="form-control" name="data_spesifik[jumlah_peserta]" placeholder="Contoh: 150" required>
+                </div>
+
+                <div class="mb-3">
+                    <label for="keperluan_gedung" class="form-label"><strong>Keperluan/Deskripsi Acara</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_PeminjamanGedung" rows="3" placeholder="Jelaskan kebutuhan dan deskripsi acara..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="file_proposal_gedung" class="form-label"><strong>Unggah Proposal Kegiatan</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_peminjaman_gedung" required>
+                    <div class="form-text">Format: PDF (Maks. 3MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: LEMBUR --}}
+            <div id="form-lembur" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Permohonan Lembur</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Pemohon</strong></label>
+                        <input type="text" class="form-control" value="{{ Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Jabatan/Posisi</strong></label>
+                        <input type="text" class="form-control" value="{{ Auth::user()->role->Name_Role ?? 'N/A' }}" readonly>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tanggal_lembur" class="form-label"><strong>Tanggal Lembur</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[tanggal_lembur]" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="jam_lembur" class="form-label"><strong>Jam Lembur</strong></label>
+                        <input type="text" class="form-control" name="data_spesifik[jam_lembur]" placeholder="Contoh: 18.00 - 22.00 WIB" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="pekerjaan_lembur" class="form-label"><strong>Pekerjaan yang Dilakukan</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_Lembur" rows="3" placeholder="Jelaskan pekerjaan yang akan dilakukan saat lembur..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="file_rab" class="form-label"><strong>Unggah RAB/Dokumen Pendukung (Opsional)</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_lembur">
+                    <div class="form-text">Format: PDF (Maks. 2MB).</div>
+                </div>
+            </div>
+
+            {{-- FORM SPESIFIK: PEMINJAMAN RUANG --}}
+            <div id="form-peminjaman-ruang" class="dynamic-form" style="display: none;">
+                <h5 class="mb-3">Formulir Peminjaman Ruang</h5>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label"><strong>Nama Pemohon</strong></label>
+                        <input type="text" class="form-control" value="{{ Auth::user()->Name_User }}" readonly>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="organisasi_ruang" class="form-label"><strong>Organisasi/Unit</strong></label>
+                        <input type="text" class="form-control" name="data_spesifik[organisasi]" placeholder="Contoh: UKM Robotika" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="nama_kegiatan_ruang" class="form-label"><strong>Nama Kegiatan</strong></label>
+                    <input type="text" class="form-control" name="data_spesifik[nama_kegiatan]" placeholder="Contoh: Rapat Koordinasi" required>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="tanggal_pinjam_ruang" class="form-label"><strong>Tanggal Penggunaan</strong></label>
+                        <input type="date" class="form-control" name="data_spesifik[tanggal_pinjam]" required>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="waktu_ruang" class="form-label"><strong>Waktu Penggunaan</strong></label>
+                        <input type="text" class="form-control" name="data_spesifik[waktu_penggunaan]" placeholder="Contoh: 13.00 - 15.00 WIB" required>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="ruang_yang_dipinjam" class="form-label"><strong>Ruang yang Dipinjam</strong></label>
+                    <select class="form-select" name="data_spesifik[ruang]" required>
+                        <option value="" selected disabled>-- Pilih Ruang --</option>
+                        <option value="Lab Komputer 1">Lab Komputer 1</option>
+                        <option value="Lab Komputer 2">Lab Komputer 2</option>
+                        <option value="Ruang Rapat A">Ruang Rapat A</option>
+                        <option value="Ruang Rapat B">Ruang Rapat B</option>
+                        <option value="Aula Lantai 3">Aula Lantai 3</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label for="keperluan_ruang" class="form-label"><strong>Keperluan/Deskripsi</strong></label>
+                    <textarea class="form-control" name="Deskripsi_Tugas_Surat_PeminjamanRuang" rows="3" placeholder="Jelaskan keperluan peminjaman ruang..." required></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label for="file_proposal_ruang" class="form-label"><strong>Unggah Surat Permohonan (Opsional)</strong></label>
+                    <input class="form-control" type="file" name="file_pendukung_peminjaman_ruang">
+                    <div class="form-text">Format: PDF (Maks. 2MB).</div>
+                </div>
+            </div>
+
             {{-- Tombol Aksi (Selalu Terlihat) --}}
             <hr>
             <div class="d-flex justify-content-end">
@@ -619,6 +1256,20 @@
 @push('scripts')
 {{-- Konfigurasi untuk JavaScript --}}
 <script>
+    // Function untuk select jenis surat dari card
+    function selectJenisSurat(idJenis) {
+        // Set value dropdown
+        document.getElementById('jenisSurat').value = idJenis;
+        
+        // Trigger change event
+        const event = new Event('change');
+        document.getElementById('jenisSurat').dispatchEvent(event);
+        
+        // Show form container & scroll to it
+        document.getElementById('form-container').style.display = 'block';
+        document.getElementById('form-container').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
     // Set route configuration for JavaScript module
     window.formIdMap = {
         '3': { // ID untuk "Surat Keterangan Aktif Kuliah"
@@ -628,6 +1279,46 @@
         '13': { // ID untuk "Surat Pengantar KP/Magang"
             formId: 'form-surat-magang',
             route: "{{ route('mahasiswa.pengajuan.magang.store') }}"
+        },
+        '15': { // Peminjaman Mobil Dinas
+            formId: 'form-mobil-dinas',
+            route: "#" // Placeholder route - belum diimplementasi
+        },
+        '16': { // Tidak Menerima Beasiswa
+            formId: 'form-tidak-beasiswa',
+            route: "#"
+        },
+        '17': { // Cek Plagiasi
+            formId: 'form-cek-plagiasi',
+            route: "#"
+        },
+        '18': { // Dispensasi
+            formId: 'form-dispensasi',
+            route: "#"
+        },
+        '19': { // Berkelakuan Baik
+            formId: 'form-berkelakuan-baik',
+            route: "#"
+        },
+        '20': { // Surat Tugas
+            formId: 'form-surat-tugas',
+            route: "#"
+        },
+        '21': { // MBKM
+            formId: 'form-mbkm',
+            route: "#"
+        },
+        '22': { // Peminjaman Gedung
+            formId: 'form-peminjaman-gedung',
+            route: "#"
+        },
+        '23': { // Lembur
+            formId: 'form-lembur',
+            route: "#"
+        },
+        '24': { // Peminjaman Ruang
+            formId: 'form-peminjaman-ruang',
+            route: "#"
         }
     };
     

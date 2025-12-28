@@ -161,7 +161,13 @@ class TugasSurat extends Model
             return $this->suratMagang->Status;
         }
 
-        // if ($this->suratKetAktif) { return $this->suratKetAktif->Status; }
+        if ($this->relationLoaded('suratKetAktif') && $this->suratKetAktif) {
+            return $this->suratKetAktif->Status;
+        }
+
+        if ($this->relationLoaded('suratLegalisir') && $this->suratLegalisir) {
+            return $this->suratLegalisir->Status;
+        }
 
         return null;
     }
@@ -209,6 +215,14 @@ class TugasSurat extends Model
     public function suratKetAktif()
     {
         return $this->hasOne(SuratKetAktif::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
+     * Relasi ke SuratLegalisir (one-to-one)
+     */
+    public function suratLegalisir()
+    {
+        return $this->hasOne(SuratLegalisir::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
     }
 
     /**

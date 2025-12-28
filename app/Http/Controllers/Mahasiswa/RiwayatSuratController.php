@@ -9,6 +9,7 @@ use App\Models\TugasSurat;
 use App\Models\SuratVerification;
 use App\Models\SuratKetAktif;
 use App\Models\SuratMagang;
+use App\Models\SuratLegalisir;
 
 class RiwayatSuratController extends Controller
 {
@@ -21,17 +22,44 @@ class RiwayatSuratController extends Controller
         $type = $request->query('type');
 
         // Hitung jumlah surat per jenis
-        $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->where('Id_Jenis_Surat', 3) // ID untuk Surat Keterangan Aktif
-            ->count();
+        $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 3)->count();
+        $countMagang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 13)->count();
+        
+        // Cari ID Jenis Surat untuk Legalisir
+        $jenisSuratLegalisir = \App\Models\JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
+        $countLegalisir = 0;
+        if ($jenisSuratLegalisir) {
+            $countLegalisir = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+                ->where('Id_Jenis_Surat', $jenisSuratLegalisir->Id_Jenis_Surat)
+                ->count();
+        }
 
-        $countMagang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->where('Id_Jenis_Surat', 13) // ID untuk Surat Pengantar Magang
-            ->count();
+        // Hitung jenis surat lainnya
+        $countMobilDinas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 15)->count();
+        $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 16)->count();
+        $countCekPlagiasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 17)->count();
+        $countDispensasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 18)->count();
+        $countBerkelakuanBaik = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 19)->count();
+        $countSuratTugas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 20)->count();
+        $countMBKM = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 21)->count();
+        $countPeminjamanGedung = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 22)->count();
+        $countLembur = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 23)->count();
+        $countPeminjamanRuang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 24)->count();
 
         return view('mahasiswa.riwayat', [
             'countAktif' => $countAktif,
-            'countMagang' => $countMagang
+            'countMagang' => $countMagang,
+            'countLegalisir' => $countLegalisir,
+            'countMobilDinas' => $countMobilDinas,
+            'countTidakBeasiswa' => $countTidakBeasiswa,
+            'countCekPlagiasi' => $countCekPlagiasi,
+            'countDispensasi' => $countDispensasi,
+            'countBerkelakuanBaik' => $countBerkelakuanBaik,
+            'countSuratTugas' => $countSuratTugas,
+            'countMBKM' => $countMBKM,
+            'countPeminjamanGedung' => $countPeminjamanGedung,
+            'countLembur' => $countLembur,
+            'countPeminjamanRuang' => $countPeminjamanRuang,
         ]);
     }
 
@@ -79,6 +107,38 @@ class RiwayatSuratController extends Controller
             ->get();
 
         return view('mahasiswa.riwayat_magang', [
+            'riwayatSurat' => $riwayatSurat
+        ]);
+    }
+
+    /**
+     * Tampilkan riwayat pengajuan legalisir
+     */
+    public function riwayatLegalisir()
+    {
+        $user = Auth::user();
+
+        // Cari ID Jenis Surat untuk Legalisir
+        $jenisSuratLegalisir = \App\Models\JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
+        
+        if (!$jenisSuratLegalisir) {
+            return view('mahasiswa.riwayat_legalisir', [
+                'riwayatSurat' => collect([])
+            ]);
+        }
+
+        // Query surat legalisir dengan relasi ke Surat_Legalisir
+        $riwayatSurat = TugasSurat::with([
+            'jenisSurat',
+            'penerimaTugas',
+            'suratLegalisir', // Relasi ke tabel Surat_Legalisir
+        ])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', $jenisSuratLegalisir->Id_Jenis_Surat)
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('mahasiswa.riwayat_legalisir', [
             'riwayatSurat' => $riwayatSurat
         ]);
     }
@@ -167,4 +227,33 @@ class RiwayatSuratController extends Controller
             'mode' => 'preview'
         ]);
     }
+
+    /**
+     * Helper untuk menampilkan riwayat generic
+     */
+    private function getGenericRiwayat($idJenisSurat, $title)
+    {
+        $user = Auth::user();
+        $riwayatSurat = TugasSurat::with(['jenisSurat'])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', $idJenisSurat)
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('mahasiswa.riwayat_generic', [
+            'riwayatSurat' => $riwayatSurat,
+            'title' => $title
+        ]);
+    }
+
+    public function riwayatMobilDinas() { return $this->getGenericRiwayat(15, 'Riwayat Peminjaman Mobil Dinas'); }
+    public function riwayatTidakBeasiswa() { return $this->getGenericRiwayat(16, 'Riwayat Surat Keterangan Tidak Menerima Beasiswa'); }
+    public function riwayatCekPlagiasi() { return $this->getGenericRiwayat(17, 'Riwayat Cek Plagiasi'); }
+    public function riwayatDispensasi() { return $this->getGenericRiwayat(18, 'Riwayat Surat Dispensasi'); }
+    public function riwayatBerkelakuanBaik() { return $this->getGenericRiwayat(19, 'Riwayat Surat Keterangan Berkelakuan Baik'); }
+    public function riwayatSuratTugas() { return $this->getGenericRiwayat(20, 'Riwayat Surat Tugas'); }
+    public function riwayatMBKM() { return $this->getGenericRiwayat(21, 'Riwayat Surat Rekomendasi MBKM'); }
+    public function riwayatPeminjamanGedung() { return $this->getGenericRiwayat(22, 'Riwayat Peminjaman Gedung'); }
+    public function riwayatLembur() { return $this->getGenericRiwayat(23, 'Riwayat Surat Perintah Lembur'); }
+    public function riwayatPeminjamanRuang() { return $this->getGenericRiwayat(24, 'Riwayat Peminjaman Ruang'); }
 }

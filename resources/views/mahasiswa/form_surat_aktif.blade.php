@@ -101,20 +101,6 @@
                 <textarea class="form-control" name="Deskripsi_Tugas_Surat_Aktif" rows="3" placeholder="Contoh: Untuk keperluan administrasi beasiswa." required></textarea>
             </div>
 
-            {{-- [BARU] Opsi Urgent --}}
-            <div class="mb-3 p-3 bg-warning bg-opacity-10 border border-warning rounded">
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="checkbox" value="1" id="is_urgent" name="is_urgent">
-                    <label class="form-check-label fw-bold text-dark" for="is_urgent">
-                        Ajukan sebagai Prioritas (Urgent)
-                    </label>
-                </div>
-                <div id="urgent_reason_container" style="display: none;">
-                    <label for="urgent_reason" class="form-label small text-muted">Alasan Mendesak:</label>
-                    <textarea class="form-control form-control-sm" id="urgent_reason" name="urgent_reason" rows="2" placeholder="Jelaskan mengapa surat ini butuh diproses cepat..."></textarea>
-                </div>
-            </div>
-
             <hr>
             <h5 class="mb-3">Dokumen Pendukung</h5>
 
@@ -140,22 +126,5 @@
 @endsection
 
 @push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const urgentCheckbox = document.getElementById('is_urgent');
-        const urgentReasonContainer = document.getElementById('urgent_reason_container');
-        const urgentReasonInput = document.getElementById('urgent_reason');
 
-        urgentCheckbox.addEventListener('change', function() {
-            if (this.checked) {
-                urgentReasonContainer.style.display = 'block';
-                urgentReasonInput.setAttribute('required', 'required');
-            } else {
-                urgentReasonContainer.style.display = 'none';
-                urgentReasonInput.removeAttribute('required');
-                urgentReasonInput.value = '';
-            }
-        });
-    });
-</script>
 @endpush

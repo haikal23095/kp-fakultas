@@ -51,6 +51,21 @@
         background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         color: white;
     }
+
+    .card-icon.orange {
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        color: white;
+    }
+    
+    .card-icon.teal {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+    }
+    
+    .card-icon.red {
+        background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%);
+        color: white;
+    }
     
     .card-jenis-surat h5 {
         font-weight: 700;
@@ -144,7 +159,7 @@
 {{-- Card Pilihan Jenis Surat --}}
 <div class="row">
     {{-- Card Surat Keterangan Aktif --}}
-    <div class="col-md-6 mb-4">
+    <div class="col-md-4 mb-4">
         <a href="{{ route('mahasiswa.riwayat.aktif') }}" class="text-decoration-none">
             <div class="card card-jenis-surat position-relative">
                 <span class="badge bg-primary badge-count">
@@ -154,15 +169,15 @@
                     <div class="card-icon blue">
                         <i class="fas fa-id-card"></i>
                     </div>
-                    <h5>Surat Keterangan Aktif Kuliah</h5>
-                    <p>Lihat riwayat pengajuan surat keterangan mahasiswa aktif</p>
+                    <h5>Surat Keterangan Aktif</h5>
+                    <p>Riwayat pengajuan surat aktif kuliah</p>
                 </div>
             </div>
         </a>
     </div>
 
     {{-- Card Surat Pengantar Magang --}}
-    <div class="col-md-6 mb-4">
+    <div class="col-md-4 mb-4">
         <a href="{{ route('mahasiswa.riwayat.magang') }}" class="text-decoration-none">
             <div class="card card-jenis-surat position-relative">
                 <span class="badge bg-danger badge-count">
@@ -172,8 +187,166 @@
                     <div class="card-icon green">
                         <i class="fas fa-briefcase"></i>
                     </div>
-                    <h5>Surat Pengantar KP/Magang</h5>
-                    <p>Lihat riwayat pengajuan surat pengantar kerja praktek dan magang</p>
+                    <h5>Surat Pengantar Magang</h5>
+                    <p>Riwayat pengajuan surat magang/KP</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Legalisir Online --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.legalisir') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-success badge-count">
+                    {{ $countLegalisir ?? 0 }} Surat
+                </span>
+                <div class="card-body">
+                    <div class="card-icon orange">
+                        <i class="fas fa-stamp"></i>
+                    </div>
+                    <h5>Legalisir Online</h5>
+                    <p>Riwayat pengajuan legalisir</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Peminjaman Mobil Dinas --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.mobil_dinas') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-info badge-count">{{ $countMobilDinas ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon teal"><i class="fas fa-car"></i></div>
+                    <h5>Peminjaman Mobil Dinas</h5>
+                    <p>Riwayat peminjaman mobil dinas</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Tidak Menerima Beasiswa --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.tidak_beasiswa') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-warning badge-count">{{ $countTidakBeasiswa ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon red"><i class="fas fa-money-bill-wave"></i></div>
+                    <h5>Ket. Tidak Menerima Beasiswa</h5>
+                    <p>Riwayat surat keterangan beasiswa</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Cek Plagiasi --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.cek_plagiasi') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-secondary badge-count">{{ $countCekPlagiasi ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon blue"><i class="fas fa-search"></i></div>
+                    <h5>Cek Plagiasi</h5>
+                    <p>Riwayat permohonan cek plagiasi</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Dispensasi --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.dispensasi') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-primary badge-count">{{ $countDispensasi ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon green"><i class="fas fa-clock"></i></div>
+                    <h5>Surat Dispensasi</h5>
+                    <p>Riwayat pengajuan dispensasi</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Berkelakuan Baik --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.berkelakuan_baik') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-success badge-count">{{ $countBerkelakuanBaik ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon orange"><i class="fas fa-user-check"></i></div>
+                    <h5>Ket. Berkelakuan Baik</h5>
+                    <p>Riwayat surat berkelakuan baik</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Surat Tugas --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.surat_tugas') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-info badge-count">{{ $countSuratTugas ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon teal"><i class="fas fa-tasks"></i></div>
+                    <h5>Surat Tugas</h5>
+                    <p>Riwayat permohonan surat tugas</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card MBKM --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.mbkm') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-warning badge-count">{{ $countMBKM ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon red"><i class="fas fa-graduation-cap"></i></div>
+                    <h5>Rekomendasi MBKM</h5>
+                    <p>Riwayat surat rekomendasi MBKM</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Peminjaman Gedung --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.peminjaman_gedung') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-danger badge-count">{{ $countPeminjamanGedung ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon blue"><i class="fas fa-building"></i></div>
+                    <h5>Peminjaman Gedung</h5>
+                    <p>Riwayat peminjaman gedung</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Lembur --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.lembur') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-secondary badge-count">{{ $countLembur ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon green"><i class="fas fa-moon"></i></div>
+                    <h5>Surat Perintah Lembur</h5>
+                    <p>Riwayat surat perintah lembur</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card Peminjaman Ruang --}}
+    <div class="col-md-4 mb-4">
+        <a href="{{ route('mahasiswa.riwayat.peminjaman_ruang') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-primary badge-count">{{ $countPeminjamanRuang ?? 0 }} Surat</span>
+                <div class="card-body">
+                    <div class="card-icon orange"><i class="fas fa-door-open"></i></div>
+                    <h5>Peminjaman Ruang</h5>
+                    <p>Riwayat peminjaman ruang</p>
                 </div>
             </div>
         </a>

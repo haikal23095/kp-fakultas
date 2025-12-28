@@ -7,6 +7,33 @@
 
 @section('content')
 
+{{-- Alert Success/Error --}}
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
+@if($errors->any())
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-triangle me-2"></i><strong>Terjadi kesalahan:</strong>
+        <ul class="mb-0 mt-2">
+            @foreach($errors->all() as $error)
+                <li>{{ $error }}</li>
+            @endforeach
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+@endif
+
 {{-- Header Halaman --}}
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <h1 class="h3 mb-0 text-gray-800">Pengajuan Legalisir Online</h1>
@@ -21,11 +48,12 @@
             <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Perhatian!</h5>
             <p>Pastikan file yang Anda unggah adalah hasil scan dokumen asli dengan kualitas yang baik dan jelas terbaca. Ukuran file tidak boleh melebihi 5MB.</p>
         </div>
-        <form>
+        <form method="POST" action="{{ route('mahasiswa.pengajuan.legalisir.store') }}" enctype="multipart/form-data">
+            @csrf
             {{-- Pilihan Jenis Dokumen --}}
             <div class="mb-3">
                 <label for="jenisDokumen" class="form-label"><strong>Jenis Dokumen</strong></label>
-                <select class="form-select" id="jenisDokumen" required>
+                <select class="form-select" id="jenisDokumen" name="jenis_dokumen" required>
                     <option selected disabled value="">-- Pilih dokumen yang akan dilegalisir --</option>
                     <option value="1">Ijazah</option>
                     <option value="2">Transkrip Nilai</option>
@@ -35,13 +63,13 @@
             {{-- Unggah File --}}
             <div class="mb-3">
                 <label for="fileDokumen" class="form-label"><strong>Unggah File Dokumen (PDF)</strong></label>
-                <input class="form-control" type="file" id="fileDokumen" accept=".pdf" required>
+                <input class="form-control" type="file" id="fileDokumen" name="file_dokumen" accept=".pdf" required>
             </div>
 
             {{-- Jumlah Salinan --}}
             <div class="mb-4">
                 <label for="jumlahSalinan" class="form-label"><strong>Jumlah Salinan Legalisir</strong></label>
-                <input type="number" class="form-control" id="jumlahSalinan" value="1" min="1" max="10">
+                <input type="number" class="form-control" id="jumlahSalinan" name="jumlah_salinan" value="1" min="1" max="10">
             </div>
             
             <hr>
