@@ -331,6 +331,16 @@
                                 <i class="fas fa-info-circle me-1"></i>Format: Nomor/Kode/Tahun
                             </div>
                         </div>
+                        <div class="mt-4">
+                            <label for="tahun-akademik" class="form-label fw-bold">
+                                Tahun Akademik <span class="text-danger">*</span>
+                            </label>
+                            <input type="text" class="form-control" id="tahun-akademik" 
+                                   placeholder="Contoh: 2023/2024" required>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle me-1"></i>Format: Tahun sekarang/Tahun depan
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Right Column: Document Preview -->
@@ -367,7 +377,7 @@
                                 <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
                                     DOSEN WALI MAHASISWA FAKULTAS TEKNIK<br>
                                     UNIVERSITAS TRUNOJOYO MADURA<br>
-                                    SEMESTER <span id="preview-semester-text">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-text">2023/2024</span>
+                                    SEMESTER <span id="preview-semester-text">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-text"><span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></span>
                                 </div>
 
                                 <div style="margin: 20px 0; font-weight: bold; font-size: 11pt;">
@@ -446,7 +456,7 @@
                                         <tr>
                                             <td style="width: 15%; vertical-align: top; font-weight: normal;">Menetapkan</td>
                                             <td style="width: 3%; vertical-align: top;">:</td>
-                                            <td style="text-align: justify; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER <span id="preview-semester-text-2">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-text-3">2023/2024</span>.</td>
+                                            <td style="text-align: justify; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER <span id="preview-semester-text-2">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-text-3"><span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></span>.</td>
                                         </tr>
                                     </table>
 
@@ -454,7 +464,7 @@
                                         <tr>
                                             <td style="width: 15%; vertical-align: top; font-weight: normal;">Kesatu</td>
                                             <td style="width: 3%; vertical-align: top;">:</td>
-                                            <td style="text-align: justify;">Menugaskan dosen tetap di Fakultas Teknik Universitas Trunojoyo Madura yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester <span id="preview-semester-text-3">Ganjil</span> Tahun Akademik <span id="preview-tahun-text-4">2023/2024</span>;</td>
+                                            <td style="text-align: justify;">Menugaskan dosen tetap di Fakultas Teknik Universitas Trunojoyo Madura yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester <span id="preview-semester-text-3">Ganjil</span> Tahun Akademik <span id="preview-tahun-text-4"><span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></span>;</td>
                                         </tr>
                                     </table>
 
@@ -498,8 +508,9 @@
                                     <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
                                     <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR <span id="preview-nomor-surat-lampiran"><span class="preview-placeholder">[Nomor Surat]</span></span></p>
                                     <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PERIHAL</p>
+                                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">DOSEN WALI MAHASISWA FAKULAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER GANJIL TAHUN AKADEMIK <span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></p>
                                     <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
-                                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER <span id="preview-semester-lampiran">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-lampiran">2023/2024</span></p>
+                                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER <span id="preview-semester-lampiran">GANJIL</span> TAHUN AKADEMIK <span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></p>
                                     <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold; text-decoration: underline;">Daftar Dosen Wali Mahasiswa Prodi <span id="preview-prodi-lampiran">-</span></p>
                                 </div>
 
@@ -665,18 +676,34 @@
             const semesterUpper = firstSK.semester.toUpperCase();
             
             // Update untuk bagian "Memutuskan"
-            document.getElementById('preview-semester-text').textContent = semesterUpper;
-            document.getElementById('preview-semester-text-2').textContent = semesterUpper;
-            document.getElementById('preview-semester-text-3').textContent = firstSK.semester;
-            document.getElementById('preview-tahun-text').textContent = firstSK.tahun;
-            document.getElementById('preview-tahun-text-2').textContent = firstSK.tahun;
-            document.getElementById('preview-tahun-text-3').textContent = firstSK.tahun;
-            document.getElementById('preview-tahun-text-4').textContent = firstSK.tahun;
+            const semText = document.getElementById('preview-semester-text');
+            const semText2 = document.getElementById('preview-semester-text-2');
+            const semText3 = document.getElementById('preview-semester-text-3');
+            const tahunText = document.getElementById('preview-tahun-text');
+            const tahunText2 = document.getElementById('preview-tahun-text-2');
+            const tahunText3 = document.getElementById('preview-tahun-text-3');
+            const tahunText4 = document.getElementById('preview-tahun-text-4');
+
+            if (semText) semText.textContent = semesterUpper;
+            if (semText2) semText2.textContent = semesterUpper;
+            if (semText3) semText3.textContent = firstSK.semester;
+            if (tahunText) tahunText.textContent = firstSK.tahun;
+            if (tahunText2) tahunText2.textContent = firstSK.tahun;
+            if (tahunText3) tahunText3.textContent = firstSK.tahun;
+            if (tahunText4) tahunText4.textContent = firstSK.tahun;
             
             // Update untuk bagian Lampiran
-            document.getElementById('preview-semester-lampiran').textContent = semesterUpper;
-            document.getElementById('preview-tahun-lampiran').textContent = firstSK.tahun;
-            document.getElementById('preview-prodi-lampiran').textContent = firstSK.prodi;
+            const semLampiran = document.getElementById('preview-semester-lampiran');
+            const prodiLampiran = document.getElementById('preview-prodi-lampiran');
+            if (semLampiran) semLampiran.textContent = semesterUpper;
+            if (prodiLampiran) prodiLampiran.textContent = firstSK.prodi;
+
+            // Untuk teks tahun akademik di lampiran gunakan class umum
+            const tahunLampiranNodes = document.querySelectorAll('.preview-tahun-akademik-lampiran');
+            tahunLampiranNodes.forEach(el => {
+                el.textContent = firstSK.tahun;
+                el.classList.remove('preview-placeholder');
+            });
         }
         
         // Update tabel dengan data dosen
@@ -704,6 +731,37 @@
             const placeholder = '<span class="preview-placeholder">[Nomor Surat]</span>';
             previewElement.innerHTML = placeholder;
             previewElementLampiran.innerHTML = placeholder;
+        }
+    });
+    // Live update tahun akademik
+    document.getElementById('tahun-akademik').addEventListener('input', function(e) {
+        const tahunAkademik = e.target.value.trim();
+
+        // Elemen teks tahun akademik yang eksplisit (bukan placeholder kuning)
+        const tahunText2 = document.getElementById('preview-tahun-text-2');
+
+        // Semua placeholder yang memakai class preview-tahun-akademik-lampiran
+        const tahunPlaceholders = document.querySelectorAll('.preview-tahun-akademik-lampiran');
+
+        if (tahunAkademik) {
+            if (tahunText2) {
+                tahunText2.textContent = tahunAkademik;
+            }
+
+            tahunPlaceholders.forEach(el => {
+                el.textContent = tahunAkademik;
+                el.classList.remove('preview-placeholder');
+            });
+        } else {
+            // Kembalikan ke default saat input dikosongkan
+            if (tahunText2) {
+                tahunText2.textContent = '2023/2024';
+            }
+
+            tahunPlaceholders.forEach(el => {
+                el.textContent = '[2023/2024]';
+                el.classList.add('preview-placeholder');
+            });
         }
     });
 
