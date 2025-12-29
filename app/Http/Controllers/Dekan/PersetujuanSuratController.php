@@ -30,14 +30,8 @@ class PersetujuanSuratController extends Controller
             })
             ->count();
         
-        $countMagang = TugasSurat::where('Id_Jenis_Surat', 2)
-            ->where(function ($q) {
-                $q->where('Status', 'menunggu-ttd')
-                  ->orWhereHas('suratMagang', function ($subQ) {
-                      $subQ->where('Status', 'menunggu-ttd');
-                  });
-            })
-            ->count();
+        // Hitung surat magang dengan status 'Diajukan-ke-dekan'
+        $countMagang = \App\Models\SuratMagang::where('Status', 'Diajukan-ke-dekan')->count();
         
         $countLegalisir = TugasSurat::where('Id_Jenis_Surat', 14) // Legalisir menggunakan Id_Jenis_Surat = 14
             ->whereHas('suratLegalisir') // Hanya yang punya relasi ke Surat_Legalisir
@@ -107,24 +101,17 @@ class PersetujuanSuratController extends Controller
     {
         $user = Auth::user();
         
-        $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas', 
-                'suratMagang',
-                'pemberiTugas.mahasiswa.prodi'
+        // Ambil surat magang dengan status 'Diajukan-ke-dekan' (bukan 'menunggu-ttd')
+        $daftarSurat = \App\Models\SuratMagang::with([
+                'tugasSurat.pemberiTugas.mahasiswa.prodi',
+                'tugasSurat.jenisSurat',
+                'koordinator'
             ])
-            ->where('Id_Jenis_Surat', 2)
-            ->where(function ($q) {
-                $q->where('Status', 'menunggu-ttd')
-                  ->orWhereHas('suratMagang', function ($subQ) {
-                      $subQ->where('Status', 'menunggu-ttd');
-                  });
-            })
-            ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
+            ->where('Status', 'Diajukan-ke-dekan')
+            ->orderBy('id_no', 'desc')
             ->get();
 
-        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+        return view('dekan.surat_magang.index', compact('daftarSurat'));
     }
 
     /**

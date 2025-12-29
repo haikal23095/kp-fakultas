@@ -23,7 +23,7 @@ class SuratMagang extends Model
         'Foto_ttd',
         'Qr_code',
         'Qr_code_dekan',
-        'Nomor_Surat',
+        // 'Nomor_Surat', // KOLOM INI TIDAK ADA DI DATABASE, ada di Tugas_Surat
         'Data_Mahasiswa',
         'Data_Dosen_pembiming',
         'Dokumen_Proposal',

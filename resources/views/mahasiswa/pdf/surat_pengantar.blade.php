@@ -270,19 +270,27 @@
                         // Handle Foto TTD Mahasiswa path
                         $ttdPath = $magang->Foto_ttd;
                         
-                        // Cek path storage
-                        if (!file_exists(public_path($ttdPath)) && file_exists(public_path('storage/' . $ttdPath))) {
-                            $ttdPath = 'storage/' . $ttdPath;
+                        // Path ada di storage/app/public/
+                        $absoluteTtdPath = storage_path('app/public/' . $ttdPath);
+                        
+                        // Fallback: cek di public/ langsung
+                        if (!file_exists($absoluteTtdPath)) {
+                            $absoluteTtdPath = public_path($ttdPath);
                         }
                         
-                        $absoluteTtdPath = public_path($ttdPath);
+                        // Fallback: cek di public/storage/
+                        if (!file_exists($absoluteTtdPath)) {
+                            $absoluteTtdPath = public_path('storage/' . $ttdPath);
+                        }
                         
                         $ttdImageSrc = '';
                         if (file_exists($absoluteTtdPath)) {
                             $ttdData = base64_encode(file_get_contents($absoluteTtdPath));
-                            $ttdImageSrc = 'data:image/png;base64,' . $ttdData;
+                            $mimeType = mime_content_type($absoluteTtdPath);
+                            $ttdImageSrc = 'data:' . $mimeType . ';base64,' . $ttdData;
                         } else {
-                            $ttdImageSrc = asset($ttdPath);
+                            // Fallback ke asset URL
+                            $ttdImageSrc = asset('storage/' . $ttdPath);
                         }
                     @endphp
                     <div class="qr-code-box" style="margin: 10px auto;">
@@ -308,21 +316,29 @@
                 
                 @if($magang->Acc_Dekan && $magang->Qr_code_dekan)
                     @php
-                        // Handle QR Code Dekan path
-                        $qrDekanPath = $magang->Qr_code_dekan;
+                        // Handle QR Code Dekan path (dari QrCodeHelper, path relatif dari storage/app/public/)
+                        $qrDekanPath = $magang->Qr_code_dekan; // e.g., qr-codes/qr_xxxxx.png
                         
-                        if (!file_exists(public_path($qrDekanPath)) && file_exists(public_path('storage/' . $qrDekanPath))) {
-                            $qrDekanPath = 'storage/' . $qrDekanPath;
+                        // Path ada di storage/app/public/
+                        $absoluteDekanPath = storage_path('app/public/' . $qrDekanPath);
+                        
+                        // Fallback: cek di public/storage/
+                        if (!file_exists($absoluteDekanPath)) {
+                            $absoluteDekanPath = public_path('storage/' . $qrDekanPath);
                         }
                         
-                        $absoluteDekanPath = public_path($qrDekanPath);
+                        // Fallback: cek di public/ langsung
+                        if (!file_exists($absoluteDekanPath)) {
+                            $absoluteDekanPath = public_path($qrDekanPath);
+                        }
                         
                         $qrDekanSrc = '';
                         if (file_exists($absoluteDekanPath)) {
                             $dekanData = base64_encode(file_get_contents($absoluteDekanPath));
                             $qrDekanSrc = 'data:image/png;base64,' . $dekanData;
                         } else {
-                            $qrDekanSrc = asset($qrDekanPath);
+                            // Fallback ke asset URL
+                            $qrDekanSrc = asset('storage/' . $qrDekanPath);
                         }
                     @endphp
                     <div class="qr-code-box" style="margin: 10px auto;">

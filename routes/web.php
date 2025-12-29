@@ -168,6 +168,14 @@ Route::middleware('auth')->group(function () {
             ->name('surat.aktif');
         Route::get('/surat-magang-list', [FakultasManajemenSuratController::class, 'listMagang'])
             ->name('surat.magang');
+        Route::get('/surat-magang/{id}', [FakultasManajemenSuratController::class, 'showMagang'])
+            ->name('surat_magang.show');
+        Route::post('/surat-magang/{id}/assign', [FakultasManajemenSuratController::class, 'assignNomorMagang'])
+            ->name('surat_magang.assign');
+        Route::get('/surat-magang/{id}/download', [FakultasManajemenSuratController::class, 'downloadProposalMagang'])
+            ->name('surat_magang.download');
+        Route::get('/surat-magang/{id}/download-surat', [FakultasManajemenSuratController::class, 'downloadSuratPengantarMagang'])
+            ->name('surat_magang.download_surat');
 
         // TODO: Routes untuk jenis surat baru (setelah implementasi database)
         Route::get('/surat-mobil-dinas', [FakultasManajemenSuratController::class, 'listMobilDinas'])->name('surat.mobil_dinas');

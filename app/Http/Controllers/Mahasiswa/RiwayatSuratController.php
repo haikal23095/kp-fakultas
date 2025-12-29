@@ -205,10 +205,11 @@ class RiwayatSuratController extends Controller
                 ->with('error', 'Bukan surat magang.');
         }
 
-        // Cek apakah sudah disetujui koordinator
-        if (!$tugasSurat->suratMagang->Acc_Koordinator) {
+        // Cek apakah sudah disetujui (koordinator atau dekan)
+        // Jika belum ACC Koordinator tapi sudah ACC Dekan (Success), tetap bisa download
+        if (!$tugasSurat->suratMagang->Acc_Koordinator && !$tugasSurat->suratMagang->Acc_Dekan) {
             return redirect()->route('mahasiswa.riwayat')
-                ->with('error', 'Surat Pengantar belum disetujui Koordinator.');
+                ->with('error', 'Surat Pengantar belum disetujui.');
         }
 
         // Render PDF view

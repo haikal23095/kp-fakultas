@@ -112,11 +112,36 @@
                                 @endif
                             </td>
                             <td class="text-center">
-                                @if(!empty($t->File_Surat))
+                                @if($t->suratMagang)
+                                    {{-- Untuk Surat Magang: Download Surat Pengantar dan Proposal --}}
+                                    <div class="btn-group" role="group">
+                                        @if($t->suratMagang->Acc_Dekan || $t->suratMagang->Acc_Koordinator)
+                                            <a href="{{ route('admin_fakultas.surat_magang.download_surat', $t->Id_Tugas_Surat) }}" 
+                                               target="_blank" 
+                                               class="btn btn-success btn-sm"
+                                               title="Download Surat Pengantar">
+                                                <i class="fas fa-file-pdf me-1"></i>Surat
+                                            </a>
+                                        @endif
+                                        @if($t->suratMagang->File_proposal_kegiatan)
+                                            <a href="{{ asset('storage/' . $t->suratMagang->File_proposal_kegiatan) }}" 
+                                               target="_blank" 
+                                               class="btn btn-info btn-sm"
+                                               title="Download Proposal">
+                                                <i class="fas fa-file-alt me-1"></i>Proposal
+                                            </a>
+                                        @endif
+                                    </div>
+                                    @if(!$t->suratMagang->Acc_Dekan && !$t->suratMagang->Acc_Koordinator && !$t->suratMagang->File_proposal_kegiatan)
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                @elseif(!empty($t->File_Surat))
+                                    {{-- Untuk surat lain yang punya File_Surat --}}
                                     <a href="{{ asset('storage/' . ltrim($t->File_Surat, '/')) }}" target="_blank" class="btn btn-primary btn-sm">
                                         <i class="fas fa-download me-1"></i>Unduh
                                     </a>
                                 @elseif(!empty($t->dokumen_pendukung))
+                                    {{-- Fallback ke dokumen_pendukung --}}
                                     <a href="{{ asset('storage/' . ltrim($t->dokumen_pendukung, '/')) }}" target="_blank" class="btn btn-primary btn-sm">
                                         <i class="fas fa-download me-1"></i>Unduh
                                     </a>

@@ -58,20 +58,25 @@ class ManajemenSuratController extends Controller
             ->whereIn('Status', ['selesai', 'Success', 'Disetujui'])
             ->count();
 
-        // Hitung untuk Surat Magang - GUNAKAN RELASI
-        $countMagang = $baseQuery()->has('suratMagang')->count();
+        // Hitung untuk Surat Magang - GUNAKAN RELASI (hanya yang belum ada nomor surat)
+        $countMagang = $baseQuery()->has('suratMagang')->where(function($q) {
+            $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
+        })->count();
         $pendingMagang = $baseQuery()
             ->has('suratMagang')
+            ->where(function($q) {
+                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
+            })
             ->whereIn('Status', ['baru', 'pending', 'Diajukan-ke-koordinator'])
             ->count();
         $prosesMagang = $baseQuery()
             ->has('suratMagang')
-            ->whereIn('Status', ['proses', 'Dikerjakan-admin', 'Diajukan-ke-dekan'])
+            ->where(function($q) {
+                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
+            })
+            ->whereIn('Status', ['proses', 'Dikerjakan-admin'])
             ->count();
-        $selesaiMagang = $baseQuery()
-            ->has('suratMagang')
-            ->whereIn('Status', ['selesai', 'Success'])
-            ->count();
+        $selesaiMagang = 0; // Selesai pindah ke arsip (yang sudah ada nomor)
 
         // Hitung untuk Legalisir - GUNAKAN RELASI
         $countLegalisir = $baseQuery()->has('suratLegalisir')->count();
@@ -156,6 +161,9 @@ class ManajemenSuratController extends Controller
 
         $baseQuery = TugasSurat::query()
             ->has('suratMagang') // GUNAKAN RELASI BUKAN Id_Jenis_Surat
+            ->where(function($q) {
+                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', ''); // Hanya yang belum ada nomor surat
+            })
             ->where(function ($q) use ($fakultasId) {
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
@@ -178,6 +186,112 @@ class ManajemenSuratController extends Controller
         ->paginate(15);
 
         return view('admin_fakultas.list_magang', compact('daftarTugas'));
+    }
+
+    /**
+     * Show detail Surat Magang
+     */
+    public function showMagang($id)
+    {
+        $surat = \App\Models\SuratMagang::with([
+            'tugasSurat.pemberiTugas.mahasiswa.prodi.fakultas',
+            'tugasSurat.jenisSurat',
+            'koordinator'
+        ])->findOrFail($id);
+
+        // Decode JSON data
+        $dataMahasiswa = is_array($surat->Data_Mahasiswa)
+            ? $surat->Data_Mahasiswa
+            : json_decode($surat->Data_Mahasiswa, true);
+
+        $dataDosenPembimbing = is_array($surat->Data_Dosen_pembiming)
+            ? $surat->Data_Dosen_pembiming
+            : json_decode($surat->Data_Dosen_pembiming, true);
+
+        return view('admin_fakultas.surat_magang.detail', compact('surat', 'dataMahasiswa', 'dataDosenPembimbing'));
+    }
+
+    /**
+     * Assign nomor surat magang dan teruskan ke Dekan
+     */
+    public function assignNomorMagang(Request $request, $id)
+    {
+        $request->validate([
+            'nomor_surat' => 'required|string|max:100'
+        ], [
+            'nomor_surat.required' => 'Nomor surat wajib diisi',
+            'nomor_surat.max' => 'Nomor surat maksimal 100 karakter'
+        ]);
+
+        $surat = \App\Models\SuratMagang::findOrFail($id);
+        
+        // Update status di tabel Surat_Magang - pakai 'Diajukan-ke-dekan' (enum Surat_Magang)
+        $surat->Status = 'Diajukan-ke-dekan';
+        $surat->save();
+
+        // Update Nomor_Surat dan Status di TugasSurat - pakai 'Diajukan ke Dekan' (enum Tugas_Surat)
+        if ($surat->tugasSurat) {
+            $surat->tugasSurat->Nomor_Surat = $request->nomor_surat;
+            $surat->tugasSurat->Status = 'Diajukan ke Dekan'; // ENUM: dengan spasi, bukan dash
+            $surat->tugasSurat->save();
+        }
+
+        return redirect()->route('admin_fakultas.surat.magang')
+            ->with('success', 'Nomor surat berhasil diberikan dan diteruskan ke Dekan.');
+    }
+
+    /**
+     * Download dokumen proposal magang
+     */
+    public function downloadProposalMagang($id)
+    {
+        $surat = \App\Models\SuratMagang::findOrFail($id);
+
+        if (!$surat->Dokumen_Proposal) {
+            return back()->with('error', 'Dokumen proposal tidak ditemukan.');
+        }
+
+        $filePath = storage_path('app/public/' . $surat->Dokumen_Proposal);
+
+        if (!file_exists($filePath)) {
+            return back()->with('error', 'File tidak ditemukan di server.');
+        }
+
+        return response()->download($filePath);
+    }
+
+    /**
+     * Download Surat Pengantar Magang (untuk admin fakultas view arsip)
+     */
+    public function downloadSuratPengantarMagang($id)
+    {
+        $tugasSurat = TugasSurat::with([
+            'jenisSurat',
+            'pemberiTugas.mahasiswa.prodi',
+            'suratMagang.koordinator',
+            'suratMagang.dekan'
+        ])
+            ->where('Id_Tugas_Surat', $id)
+            ->firstOrFail();
+
+        // Cek apakah surat magang ada
+        if (!$tugasSurat->suratMagang) {
+            return back()->with('error', 'Bukan surat magang.');
+        }
+
+        // Cek apakah sudah disetujui (koordinator atau dekan)
+        if (!$tugasSurat->suratMagang->Acc_Koordinator && !$tugasSurat->suratMagang->Acc_Dekan) {
+            return back()->with('error', 'Surat Pengantar belum disetujui.');
+        }
+
+        // Render PDF view
+        return view('mahasiswa.pdf.surat_pengantar', [
+            'surat' => $tugasSurat,
+            'magang' => $tugasSurat->suratMagang,
+            'mahasiswa' => $tugasSurat->pemberiTugas->mahasiswa,
+            'koordinator' => $tugasSurat->suratMagang->koordinator,
+            'mode' => 'preview'
+        ]);
     }
 
     // TODO: Method placeholder untuk jenis surat baru
@@ -226,9 +340,10 @@ class ManajemenSuratController extends Controller
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        // Ambil semua surat yang sudah selesai (tidak peduli jenis surat)
+        // Ambil semua surat yang SUDAH ADA NOMOR SURAT (sudah diproses admin), tidak peduli statusnya
         $arsipTugas = TugasSurat::query()
-            ->whereIn('Status', ['Selesai', 'selesai', 'Disetujui', 'disetujui', 'Success'])
+            ->whereNotNull('Nomor_Surat')
+            ->where('Nomor_Surat', '!=', '')
             ->where(function ($q) use ($fakultasId) {
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
@@ -266,7 +381,8 @@ class ManajemenSuratController extends Controller
 
         $arsipTugas = TugasSurat::query()
             ->where('Id_Jenis_Surat', $id)
-            ->whereIn('Status', ['Selesai', 'selesai', 'Disetujui', 'disetujui', 'Success'])
+            ->whereNotNull('Nomor_Surat')
+            ->where('Nomor_Surat', '!=', '')
             ->where(function ($q) use ($fakultasId) {
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
@@ -278,7 +394,7 @@ class ManajemenSuratController extends Controller
                     $subQ->where('Id_Fakultas', $fakultasId);
                 });
             })
-            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa.prodi', 'jenisSurat'])
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa.prodi', 'jenisSurat', 'suratMagang'])
             ->orderBy('Tanggal_Diselesaikan', 'desc')
             ->get();
 
