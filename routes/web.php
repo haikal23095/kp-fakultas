@@ -68,6 +68,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/admin_prodi', [AuthController::class, 'dashboardAdmin'])->name('dashboard.admin_prodi');
     Route::get('/dashboard/admin-fakultas', [AuthController::class, 'dashboardAdminFakultas'])->name('dashboard.admin_fakultas');
     Route::get('/dashboard/dekan', [AuthController::class, 'dashboardDekan'])->name('dashboard.dekan');
+    Route::get('/dashboard/wadek1', [AuthController::class, 'dashboardWadek1'])->name('dashboard.wadek1');
     Route::get('/dashboard/kajur', [AuthController::class, 'dashboardKajur'])->name('dashboard.kajur');
     Route::get('/dashboard/kaprodi', [AuthController::class, 'dashboardKaprodi'])->name('dashboard.kaprodi');
     Route::get('/dashboard/dosen', [AuthController::class, 'dashboardDosen'])->name('dashboard.dosen');
@@ -126,36 +127,36 @@ Route::middleware('auth')->group(function () {
     Route::prefix('admin-fakultas')->name('admin_fakultas.')->group(function () {
 
         // DEBUG ROUTE - HAPUS SETELAH TESTING
-        Route::get('/debug-surat', function() {
+        Route::get('/debug-surat', function () {
             $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
             $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
-            
+
             $allSurat = \App\Models\TugasSurat::with(['jenisSurat', 'pemberiTugas.mahasiswa.prodi.fakultas'])
                 ->where(function ($q) use ($fakultasId) {
                     $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                         $subQ->where('Id_Fakultas', $fakultasId);
                     })
-                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    })
-                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    });
+                        ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                            $subQ->where('Id_Fakultas', $fakultasId);
+                        })
+                        ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                            $subQ->where('Id_Fakultas', $fakultasId);
+                        });
                 })
                 ->get();
-            
+
             $grouped = $allSurat->groupBy('Id_Jenis_Surat');
-            
+
             $result = "<h2>Debug Surat - Fakultas ID: {$fakultasId}</h2>";
             $result .= "<p>Total Surat: " . $allSurat->count() . "</p>";
             $result .= "<h3>Group by Id_Jenis_Surat:</h3><ul>";
-            
-            foreach($grouped as $jenisId => $surats) {
+
+            foreach ($grouped as $jenisId => $surats) {
                 $namaJenis = $surats->first()->jenisSurat->Nama_Surat ?? 'Unknown';
                 $result .= "<li>Id_Jenis_Surat {$jenisId} ({$namaJenis}): " . $surats->count() . " surat</li>";
             }
             $result .= "</ul>";
-            
+
             return $result;
         })->name('debug.surat');
 
@@ -167,7 +168,7 @@ Route::middleware('auth')->group(function () {
             ->name('surat.aktif');
         Route::get('/surat-magang-list', [FakultasManajemenSuratController::class, 'listMagang'])
             ->name('surat.magang');
-        
+
         // TODO: Routes untuk jenis surat baru (setelah implementasi database)
         Route::get('/surat-mobil-dinas', [FakultasManajemenSuratController::class, 'listMobilDinas'])->name('surat.mobil_dinas');
         Route::get('/surat-cuti', [FakultasManajemenSuratController::class, 'listCuti'])->name('surat.cuti');
@@ -231,12 +232,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('dekan')->name('dekan.')->group(function () {
         // Halaman index persetujuan (dengan card pilihan jenis surat)
         Route::get('/persetujuan-surat', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'index'])->name('persetujuan.index');
-        
+
         // List per jenis surat
         Route::get('/persetujuan-surat/aktif', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listAktif'])->name('persetujuan.aktif');
         Route::get('/persetujuan-surat/magang', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listMagang'])->name('persetujuan.magang');
         Route::get('/persetujuan-surat/legalisir', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listLegalisir'])->name('persetujuan.legalisir');
-        
+
         // TODO: Routes untuk jenis surat baru (setelah implementasi database)
         Route::get('/persetujuan-surat/cuti-dosen', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listCutiDosen'])->name('persetujuan.cuti_dosen');
         Route::get('/persetujuan-surat/tidak-beasiswa', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listTidakBeasiswa'])->name('persetujuan.tidak_beasiswa');
@@ -244,7 +245,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/persetujuan-surat/sk-fakultas', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSKFakultas'])->name('persetujuan.sk_fakultas');
         Route::get('/persetujuan-surat/surat-tugas', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSuratTugas'])->name('persetujuan.surat_tugas');
         Route::get('/persetujuan-surat/mbkm', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listMBKM'])->name('persetujuan.mbkm');
-        
+
         Route::get('/surat/{id}/detail', [App\Http\Controllers\Dekan\DetailSuratController::class, 'show'])->name('surat.detail');
         Route::get('/surat/{id}/preview', [App\Http\Controllers\Dekan\DetailSuratController::class, 'previewDraft'])->name('surat.preview');
         Route::get('/surat/{id}/download', [App\Http\Controllers\Dekan\DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
@@ -261,6 +262,21 @@ Route::middleware('auth')->group(function () {
         Route::get('/arsip-surat', function () {
             return view('dekan.arsip_surat');
         })->name('arsip.index');
+    });
+
+    // FITUR WADEK 1
+    Route::prefix('wadek1')->name('wadek1.')->group(function () {
+        Route::get('/sk-dosen', [\App\Http\Controllers\Wadek1\SKController::class, 'index'])
+            ->name('sk.index');
+
+        Route::get('/sk-dosen-wali', [\App\Http\Controllers\Wadek1\SKController::class, 'dosenWaliIndex'])
+            ->name('sk.dosen-wali.index');
+
+        Route::get('/sk-dosen-wali/{id}', [\App\Http\Controllers\Wadek1\SKController::class, 'dosenWaliDetail'])
+            ->name('sk.dosen-wali.detail');
+
+        Route::post('/sk-dosen-wali/{id}/approve', [\App\Http\Controllers\Wadek1\SKController::class, 'dosenWaliApprove'])
+            ->name('sk.dosen-wali.approve');
     });
 
     // FITUR DOSEN

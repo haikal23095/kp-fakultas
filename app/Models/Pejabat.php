@@ -17,4 +17,12 @@ class Pejabat extends Model
         'Id_Pejabat',
         'Nama_Jabatan',
     ];
+
+    /**
+     * Relasi ke Dosen
+     */
+    public function dosen()
+    {
+        return $this->hasOne(Dosen::class, 'Id_Pejabat', 'Id_Pejabat');
+    }
 }

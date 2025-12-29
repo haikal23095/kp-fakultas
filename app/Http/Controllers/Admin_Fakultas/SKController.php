@@ -5,7 +5,10 @@ namespace App\Http\Controllers\Admin_Fakultas;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SKDosenWali;
+use App\Models\AccDekanDosenWali;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use App\Models\Dosen;
 
 class SKController extends Controller
 {
@@ -49,7 +52,7 @@ class SKController extends Controller
         }
 
         if ($request->filled('prodi')) {
-            $query->where('Prodi', $request->prodi);
+            $query->where('Id_Prodi', $request->prodi);
         }
 
         if ($request->filled('semester')) {
@@ -61,7 +64,26 @@ class SKController extends Controller
         // Get prodi list for filter
         $prodiList = \App\Models\Prodi::orderBy('Nama_Prodi')->get();
 
-        return view('admin_fakultas.sk.dosen-wali.index', compact('skList', 'prodiList'));
+        // Ambil data dekan berdasarkan fakultas admin yang login
+        $user = Auth::user()->load('pegawaiFakultas.fakultas');
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
+
+        $dekan = null;
+        if ($fakultasId) {
+            $dekan = Dosen::with(['pejabat', 'prodi.fakultas'])
+                ->whereHas('prodi.fakultas', function ($q) use ($fakultasId) {
+                    $q->where('Id_Fakultas', $fakultasId);
+                })
+                ->whereHas('pejabat', function ($q) {
+                    $q->where('Nama_Jabatan', 'like', 'DEKAN%');
+                })
+                ->first();
+        }
+
+        $dekanName = $dekan->Nama_Dosen ?? 'FAIKUL UMAM';
+        $dekanNip = $dekan->NIP ?? '198301182008121001';
+
+        return view('admin_fakultas.sk.dosen-wali.index', compact('skList', 'prodiList', 'dekanName', 'dekanNip'));
     }
 
     /**
@@ -107,32 +129,87 @@ class SKController extends Controller
     {
         $request->validate([
             'sk_ids' => 'required|array|min:1',
-            'sk_ids.*' => 'exists:SK_Dosen_Wali,No',
+            'sk_ids.*' => 'exists:Req_SK_Dosen_Wali,No',
             'nomor_surat' => 'required|string|max:100'
         ]);
 
         try {
-            // Update all selected SK items
-            $updated = SKDosenWali::whereIn('No', $request->sk_ids)
-                ->where('Status', 'Dikerjakan admin')
-                ->update([
-                    'Status' => 'Menunggu-Persetujuan-Wadek-1',
-                    'Nomor_Surat' => $request->nomor_surat
-                ]);
+            DB::beginTransaction();
 
-            if ($updated === 0) {
+            // Ambil semua SK yang akan diajukan
+            $skItems = SKDosenWali::whereIn('No', $request->sk_ids)
+                ->where('Status', 'Dikerjakan admin')
+                ->get();
+
+            if ($skItems->isEmpty()) {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'Tidak ada SK yang dapat diproses. Pastikan SK memiliki status "Dikerjakan admin"'
                 ], 400);
             }
 
+            // Gabungkan semua data dosen wali dari SK yang dipilih
+            $mergedDosenWali = [];
+            $tenggatTerdekat = null;
+
+            foreach ($skItems as $sk) {
+                // Ambil dan decode data dosen wali (antisipasi data lama yang double-encoded)
+                $dosenData = $sk->Data_Dosen_Wali;
+                if (is_string($dosenData)) {
+                    $dosenData = json_decode($dosenData, true);
+                }
+
+                if (is_array($dosenData)) {
+                    foreach ($dosenData as $dosen) {
+                        $mergedDosenWali[] = array_merge($dosen, [
+                            'prodi' => $sk->prodi->Nama_Prodi ?? '-',
+                            'Id_Prodi' => $sk->Id_Prodi,
+                        ]);
+                    }
+                }
+
+                // Hitung tenggat terdekat dari semua SK yang diajukan
+                $tanggalTenggatSk = $sk->{'Tanggal-Tenggat'};
+                if ($tanggalTenggatSk) {
+                    if ($tenggatTerdekat === null || $tanggalTenggatSk->lessThan($tenggatTerdekat)) {
+                        $tenggatTerdekat = $tanggalTenggatSk;
+                    }
+                }
+
+                // Update status di tabel request
+                $sk->Status = 'Menunggu-Persetujuan-Wadek-1';
+                $sk->Nomor_Surat = $request->nomor_surat;
+                $sk->save();
+            }
+
+            // Buat satu entri gabungan di ACC_Dekan_Dosen_Wali
+            $firstSk = $skItems->first();
+
+            AccDekanDosenWali::create([
+                'Semester' => $firstSk->Semester,
+                'Tahun_Akademik' => $firstSk->Tahun_Akademik,
+                'Data_Dosen_Wali' => $mergedDosenWali,
+                'Nomor_Surat' => $request->nomor_surat,
+                'Status' => 'Menunggu-Persetujuan-Wadek-1',
+                'Tanggal-Pengajuan' => now(),
+                'Tanggal-Tenggat' => $tenggatTerdekat ?? now()->addDays(3),
+            ]);
+
+            DB::commit();
+
+            $jumlah = $skItems->count();
+
+            // Flash pesan sukses untuk ditampilkan sebagai alert hijau setelah reload
+            session()->flash('success', "Berhasil mengajukan {$jumlah} SK Dosen Wali ke Wadek 1");
+
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil mengajukan {$updated} SK Dosen Wali ke Wadek 1"
+                'message' => "Berhasil mengajukan {$jumlah} SK Dosen Wali ke Wadek 1"
             ]);
 
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()

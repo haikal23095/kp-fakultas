@@ -10,9 +10,9 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('Req_SK_Dosen_Wali', function (Blueprint $table) {
+        // Tabel ACC_SK_Dosen_Wali sesuai struktur yang diminta
+        Schema::create('ACC_SK_Dosen_Wali', function (Blueprint $table) {
             $table->integer('No')->primary()->autoIncrement();
-            $table->integer('Id_Prodi');
             $table->enum('Semester', ['Ganjil', 'Genap']);
             $table->string('Tahun_Akademik', 12);
             $table->json('Data_Dosen_Wali');
@@ -23,12 +23,9 @@ return new class extends Migration {
                 'Menunggu-Persetujuan-Dekan',
                 'Selesai',
                 'Ditolak'
-            ])->default('Dikerjakan admin');
+            ])->default('Menunggu-Persetujuan-Wadek-1');
             $table->timestamp('Tanggal_Pengajuan')->useCurrent();
             $table->dateTime('Tanggal_Tenggat');
-
-            // Foreign key
-            $table->foreign('Id_Prodi')->references('Id_Prodi')->on('Prodi')->onDelete('cascade');
         });
     }
 
@@ -37,6 +34,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('Req_SK_Dosen_Wali');
+        Schema::dropIfExists('ACC_SK_Dosen_Wali');
     }
 };

@@ -1,0 +1,511 @@
+@extends('layouts.wadek1')
+
+@section('title', 'SK Dosen Wali - Wadek 1')
+
+@push('styles')
+<style>
+    .preview-document {
+        font-family: 'Times New Roman', Times, serif;
+        background: #ffffff;
+        color: #000;
+        border: 1px solid #000;
+        padding: 2cm 2.5cm;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        font-size: 11pt;
+        line-height: 1.5;
+        min-height: 500px;
+        width: 21cm;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    .preview-header {
+        text-align: center;
+        margin-bottom: 20px;
+        border-bottom: 3px double #000;
+        padding-bottom: 10px;
+    }
+    .preview-header img {
+        width: 80px;
+        float: left;
+        margin-top: -5px;
+    }
+    .preview-header strong {
+        display: block;
+        text-transform: uppercase;
+    }
+    .preview-header .line-1 { font-size: 14pt; font-weight: bold; }
+    .preview-header .line-2 { font-size: 16pt; font-weight: bold; }
+    .preview-header .line-3 { font-size: 14pt; font-weight: bold; }
+    .preview-header .address {
+        font-size: 10pt;
+        margin-top: 5px;
+        font-weight: normal;
+    }
+    .preview-table-dosen {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+        font-size: 11pt;
+        border: 1px solid #000;
+    }
+    .preview-table-dosen th,
+    .preview-table-dosen td {
+        border: 1px solid #000;
+        padding: 5px 8px;
+        vertical-align: middle;
+        line-height: 1.3;
+        color: #000;
+    }
+    .preview-table-dosen thead th {
+        background-color: #ffffff;
+        font-weight: bold;
+        text-align: center;
+    }
+    .preview-table-dosen tbody td {
+        font-size: 10pt;
+        vertical-align: top;
+    }
+    .preview-table-dosen tbody td:nth-child(1) {
+        text-align: center;
+    }
+    .preview-table-dosen tbody td:nth-child(2) {
+        text-align: left;
+    }
+    .preview-table-dosen tbody td:nth-child(3) {
+        text-align: center;
+    }
+</style>
+@endpush
+
+@section('content')
+
+@if(session('success'))
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+@if(session('error'))
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+@endif
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 fw-bold mb-0">Daftar SK Dosen Wali</h1>
+        <p class="mb-0 text-muted">SK Dosen Wali yang menunggu persetujuan Wadek 1.</p>
+    </div>
+    <div>
+        <a href="{{ route('wadek1.sk.index') }}" class="btn btn-outline-secondary btn-sm">
+            <i class="fas fa-arrow-left me-1"></i> Kembali ke Ringkasan SK
+        </a>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h6 class="m-0 fw-bold text-success">SK Dosen Wali Menunggu Persetujuan</h6>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>No</th>
+                        <th>Semester</th>
+                        <th>Tahun Akademik</th>
+                        <th>Nomor Surat</th>
+                        <th>Tanggal Pengajuan</th>
+                        <th>Status</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($skList as $sk)
+                        <tr>
+                            <td>{{ $sk->No }}</td>
+                            <td>
+                                <span class="badge bg-{{ $sk->Semester === 'Ganjil' ? 'primary' : 'info' }}">{{ $sk->Semester }}</span>
+                            </td>
+                            <td>{{ $sk->Tahun_Akademik }}</td>
+                            <td>{{ $sk->Nomor_Surat ?? '-' }}</td>
+                            <td>
+                                @php $tgl = $sk->{'Tanggal-Pengajuan'}; @endphp
+                                {{ $tgl ? $tgl->format('d M Y H:i') : '-' }}
+                            </td>
+                            <td>
+                                <span class="badge bg-warning text-dark">{{ $sk->Status }}</span>
+                            </td>
+                            <td class="text-center">
+                                <button class="btn btn-sm btn-primary me-1" onclick="showDetail({{ $sk->No }})">
+                                    <i class="fas fa-eye me-1"></i>Detail
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="approveSK({{ $sk->No }})">
+                                    <i class="fas fa-check me-1"></i>Setujui
+                                </button>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-4">
+                                <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+                                Belum ada SK Dosen Wali yang menunggu persetujuan Wadek 1.
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @if($skList->hasPages())
+        <div class="card-footer bg-white">
+            {{ $skList->links() }}
+        </div>
+    @endif
+</div>
+
+<!-- Modal Detail SK -->
+<div class="modal fade" id="modalDetail" tabindex="-1" aria-labelledby="modalDetailLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalDetailLabel">
+                    <i class="fas fa-file-alt me-2"></i>Detail SK Dosen Wali
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div style="max-height: 750px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">
+                    <div class="preview-document" id="previewContent">
+                        <div class="text-center">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@push('scripts')
+<script>
+    const dekanName = @json($dekanName ?? '');
+    const dekanNip = @json($dekanNip ?? '');
+    
+    console.log('Global dekanName:', dekanName);
+    console.log('Global dekanNip:', dekanNip);
+
+    function showDetail(skId) {
+        // Show modal
+        const modal = new bootstrap.Modal(document.getElementById('modalDetail'));
+        modal.show();
+
+        // Fetch detail
+        fetch(`{{ url('/wadek1/sk-dosen-wali') }}/${skId}`, {
+            method: 'GET',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('===== RESPONSE DEBUG =====');
+            console.log('Full Response:', data);
+            console.log('Success:', data.success);
+            console.log('SK Data:', data.sk);
+            console.log('Dekan Name from response:', data.dekanName);
+            console.log('Dekan NIP from response:', data.dekanNip);
+            console.log('Debug info:', data.debug);
+            console.log('========================');
+            
+            if (data.success) {
+                renderPreview(data.sk, data.dekanName, data.dekanNip);
+            } else {
+                alert('Gagal memuat detail SK: ' + (data.message || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat memuat detail: ' + error.message);
+        });
+    }
+
+    function renderPreview(sk, dekanNameParam, dekanNipParam) {
+        // Use parameter if provided, otherwise fall back to global variables
+        const finalDekanName = dekanNameParam || dekanName || '-';
+        const finalDekanNip = dekanNipParam || dekanNip || '-';
+        
+        console.log('renderPreview called');
+        console.log('dekanNameParam:', dekanNameParam);
+        console.log('dekanNipParam:', dekanNipParam);
+        console.log('finalDekanName:', finalDekanName);
+        console.log('finalDekanNip:', finalDekanNip);
+        
+        const dosenList = sk.Data_Dosen_Wali || [];
+        const semesterUpper = (sk.Semester || 'GANJIL').toUpperCase();
+        const semesterText = sk.Semester || 'Ganjil';
+        const tahunAkademik = sk.Tahun_Akademik || '2023/2024';
+        const nomorSurat = sk.Nomor_Surat || '-';
+
+        // Kelompokkan dosen per prodi
+        const groupedByProdi = {};
+        dosenList.forEach(dosen => {
+            const prodiName = dosen.prodi || '-';
+            if (!groupedByProdi[prodiName]) {
+                groupedByProdi[prodiName] = [];
+            }
+            groupedByProdi[prodiName].push(dosen);
+        });
+
+        let lampiranHtml = '';
+        Object.keys(groupedByProdi).forEach((prodiName, index) => {
+            const dosenProdi = groupedByProdi[prodiName];
+            lampiranHtml += `
+                <div class="lampiran-prodi" style="margin-top: ${index === 0 ? '30px' : '60px'}; page-break-before: ${index === 0 ? 'auto' : 'always'};">
+                    <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR ${nomorSurat}</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PERIHAL</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
+                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold; text-decoration: underline;">Daftar Dosen Wali Mahasiswa Prodi ${prodiName}</p>
+                    </div>
+                    <table class="preview-table-dosen">
+                        <thead>
+                            <tr>
+                                <th style="width: 8%;">No.</th>
+                                <th style="width: 67%;">Nama Dosen</th>
+                                <th style="width: 25%;">Jumlah Anak Wali</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dosenProdi.map((dosen, idx) => `
+                                <tr>
+                                    <td>${idx + 1}.</td>
+                                    <td>${dosen.nama_dosen}</td>
+                                    <td>${dosen.jumlah_anak_wali}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 50px; font-size: 10pt;">
+                        <div style="text-align: right;">
+                            <p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
+                            <p style="margin: 0 0 30px 0;">pada tanggal ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+                            <p style="margin: 0 0 70px 0;"><strong>DEKAN,</strong></p>
+                            <p style="margin: 0 0 0 0;">
+                                <strong><u>${finalDekanName}</u></strong><br>
+                                NIP. ${finalDekanNip}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        const html = `
+            <div class="preview-header">
+                <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
+                <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</strong>
+                <strong class="line-2">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                <strong class="line-3">FAKULTAS TEKNIK</strong>
+                <div class="address">
+                    Kampus UTM, Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
+                    Telp: (031) 3011146, Fax: (031) 3011506
+                </div>
+                <div style="clear: both;"></div>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0; font-weight: bold; font-size: 11pt;">
+                KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
+                UNIVERSITAS TRUNOJOYO MADURA<br>
+                NOMOR ${nomorSurat}
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
+                TENTANG
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
+                DOSEN WALI MAHASISWA FAKULTAS TEKNIK<br>
+                UNIVERSITAS TRUNOJOYO MADURA<br>
+                SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}
+            </div>
+
+            <div style="margin: 20px 0; font-weight: bold; font-size: 11pt;">
+                DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
+            </div>
+
+            <div style="text-align: justify; margin-bottom: 20px;">
+                <p style="margin-bottom: 10px; font-weight: normal;">Menimbang</p>
+                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
+                    <tr>
+                        <td style="width: 10%; vertical-align: top;">:</td>
+                        <td style="width: 5%; vertical-align: top;">a.</td>
+                        <td style="text-align: justify;">bahwa dalam rangka membantu mahasiswa menyelesaikan program sarjana/diploma sesuai rencana studi, perlu menugaskan dosen tetap di lingkungan Fakultas Teknik Universitas Trunojoyo Madura sebagai dosen wali;</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="vertical-align: top;">b.</td>
+                        <td style="text-align: justify;">bahwa untuk pelaksanaan butir a di atas, perlu menerbitkan Surat Keputusan Dekan Fakultas Teknik;</td>
+                    </tr>
+                </table>
+
+                <p style="margin-bottom: 10px; font-weight: normal;">Mengingat</p>
+                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
+                    <tr>
+                        <td style="width: 10%; vertical-align: top;">:</td>
+                        <td style="width: 5%; vertical-align: top;">1.</td>
+                        <td style="text-align: justify;">Undang-Undang Nomor 20 tahun 2003, tentang Sistem Pendidikan Nasional;</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="vertical-align: top;">2.</td>
+                        <td style="text-align: justify;">Peraturan Pemerintah Nomor 60 tahun 1999, tentang Pendidikan Tinggi;</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="vertical-align: top;">3.</td>
+                        <td style="text-align: justify;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunojoyo Madura;</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="vertical-align: top;">4.</td>
+                        <td style="text-align: justify;">Keputusan Menteri Pendidikan dan Kebudayaan RI Nomor 232/U/2000, tentang pedoman Penyusunan Kurikulum Pendidikan Tinggi dan Penilaian Hasil Belajar Mahasiswa;</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="vertical-align: top;">5.</td>
+                        <td style="text-align: justify;">Keputusan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 73649/MPK.A/KP.06.02/2022 tentang pengangkatan Rektor UTM periode 2022-2026;</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="vertical-align: top;">6.</td>
+                        <td style="text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunojoyo Madura periode 2021-2025;</td>
+                    </tr>
+                </table>
+
+                <p style="margin-bottom: 10px; font-weight: normal;">Memperhatikan</p>
+                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
+                    <tr>
+                        <td style="width: 10%; vertical-align: top;">:</td>
+                        <td style="width: 5%; vertical-align: top;">1.</td>
+                        <td style="text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunojoyo Madura Tahun Akademik 2016/2017;</td>
+                    </tr>
+                    <tr>
+                        <td></td>
+                        <td style="vertical-align: top;">2.</td>
+                        <td style="text-align: justify;">Surat dari masing-masing Ketua Jurusan Fakultas Teknik tentang permohonan SK Dosen Wali ${semesterText} ${tahunAkademik};</td>
+                    </tr>
+                </table>
+
+                <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
+                    MEMUTUSKAN :
+                </div>
+
+                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
+                    <tr>
+                        <td style="width: 15%; vertical-align: top; font-weight: normal;">Menetapkan</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td style="text-align: justify; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%; margin-bottom: 10px; font-size: 10pt;">
+                    <tr>
+                        <td style="width: 15%; vertical-align: top; font-weight: normal;">Kesatu</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td style="text-align: justify;">Menugaskan dosen tetap di Fakultas Teknik Universitas Trunojoyo Madura yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester ${semesterText} Tahun Akademik ${tahunAkademik};</td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
+                    <tr>
+                        <td style="width: 15%; vertical-align: top; font-weight: normal;">Kedua</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td style="text-align: justify;">Tugas dan fungsi dosen wali tersebut yaitu:<br>
+                            <span style="margin-left: 15px;">a. Membantu mengarahkan dan mengesahkan rencana studi;</span><br>
+                            <span style="margin-left: 15px;">b. Memberi bimbingan dan nasehat mengenai berbagai masalah yang bersifat kurikuler akademik;</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%; font-size: 10pt; margin-bottom: 10px;">
+                    <tr>
+                        <td style="width: 15%; vertical-align: top; font-weight: normal;">Ketiga</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td style="text-align: justify;">Keputusan ini berlaku sejak tanggal ditetapkan.</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="font-size: 10pt; margin: 40px 0 30px 0; text-align: right;">
+                <p style="margin-bottom: 3px;">Ditetapkan di Bangkalan</p>
+                <p style="margin-bottom: 3px;">pada tanggal ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+                <p style="margin-bottom: 70px;"><strong>DEKAN,</strong></p>
+                <p style="margin-bottom: 0;">
+                    <strong><u>${finalDekanName}</u></strong><br>
+                    NIP. ${finalDekanNip}
+                </p>
+            </div>
+
+            ${lampiranHtml}
+        `;
+
+        document.getElementById('previewContent').innerHTML = html;
+    }
+
+    function approveSK(skId) {
+        if (!confirm('Apakah Anda yakin ingin menyetujui SK Dosen Wali ini? SK akan diteruskan ke Dekan.')) {
+            return;
+        }
+
+        fetch(`{{ url('/wadek1/sk-dosen-wali') }}/${skId}/approve`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menyetujui SK: ' + error.message);
+        });
+    }
+</script>
+@endpush
+
+@endsection

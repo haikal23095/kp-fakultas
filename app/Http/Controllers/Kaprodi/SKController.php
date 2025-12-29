@@ -98,7 +98,7 @@ class SKController extends Controller
 
             // Simpan ke database
             SKDosenWali::create([
-                'Prodi' => $request->id_prodi,
+                'Id_Prodi' => $request->id_prodi,
                 'Semester' => $request->semester,
                 'Tahun_Akademik' => $request->tahun_akademik,
                 'Data_Dosen_Wali' => $dataDosen, // Laravel akan auto-encode karena ada casting di model
