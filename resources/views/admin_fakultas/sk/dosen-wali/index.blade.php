@@ -497,56 +497,54 @@
                                     <p style="margin-bottom: 3px;">pada tanggal <span id="preview-tanggal">{{ date('d F Y') }}</span></p>
                                     <p style="margin-bottom: 70px;"><strong>DEKAN,</strong></p>
                                     <p style="margin-bottom: 0;">
-                                        <strong><u>FAIKUL UMAM</u></strong><br>
-                                        NIP. 198301182008121001
+                                        <strong><u>{{ $dekanName }}</u></strong><br>
+                                        NIP. {{ $dekanNip }}
                                     </p>
                                 </div>
 
-                                <!-- Judul Lampiran Tabel -->
-                                <div style="font-size: 11pt; text-align: left; margin-top: 30px; margin-bottom: 10px;">
-                                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
-                                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
-                                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR <span id="preview-nomor-surat-lampiran"><span class="preview-placeholder">[Nomor Surat]</span></span></p>
-                                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PERIHAL</p>
-                                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">DOSEN WALI MAHASISWA FAKULAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER GANJIL TAHUN AKADEMIK <span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></p>
-                                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
-                                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER <span id="preview-semester-lampiran">GANJIL</span> TAHUN AKADEMIK <span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></p>
-                                    <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold; text-decoration: underline;">Daftar Dosen Wali Mahasiswa Prodi <span id="preview-prodi-lampiran">-</span></p>
-                                </div>
-
-                                <!-- Tabel Dosen -->
-                                <table class="preview-table-dosen" id="preview-table-dosen">
-                                    <colgroup>
-                                        <col style="width: 8%;">
-                                        <col style="width: 67%;">
-                                        <col style="width: 25%;">
-                                    </colgroup>
-                                    <thead>
-                                        <tr>
-                                            <th>No.</th>
-                                            <th>Nama Dosen</th>
-                                            <th>Jumlah Anak Wali</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td colspan="3" style="text-align: center;">
-                                                <span class="preview-placeholder">Data akan muncul setelah memilih SK</span>
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-
-                                <!-- Tanda Tangan Dekan - Lampiran -->
-                                <div style="margin-top: 50px; font-size: 10pt;">
-                                    <div style="text-align: right;">
-                                        <p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
-                                        <p style="margin: 0 0 30px 0;">pada tanggal <span id="preview-tanggal-lampiran">27 December 2025</span></p>
-                                        <p style="margin: 0 0 70px 0;"><strong>DEKAN,</strong></p>
-                                        <p style="margin: 0 0 0 0;">
-                                            <strong><u>FAIKUL UMAM</u></strong><br>
-                                            NIP. 198301182008121001
-                                        </p>
+                                <!-- Lampiran: akan digenerate per prodi oleh JavaScript -->
+                                    <div id="lampiran-container">
+                                    <div style="font-size: 11pt; text-align: left; margin-top: 30px; margin-bottom: 10px;">
+                                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
+                                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR <span class="preview-placeholder preview-nomor-surat-lampiran">[Nomor Surat]</span></p>
+                                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PERIHAL</p>
+                                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">DOSEN WALI MAHASISWA FAKULAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER GANJIL TAHUN AKADEMIK <span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></p>
+                                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER GANJIL TAHUN AKADEMIK <span class="preview-placeholder preview-tahun-akademik-lampiran">[2023/2024]</span></p>
+                                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold; text-decoration: underline;">Daftar Dosen Wali Mahasiswa Prodi -</p>
+                                    </div>
+                                    <table class="preview-table-dosen">
+                                        <colgroup>
+                                            <col style="width: 8%;">
+                                            <col style="width: 67%;">
+                                            <col style="width: 25%;">
+                                        </colgroup>
+                                        <thead>
+                                            <tr>
+                                                <th>No.</th>
+                                                <th>Nama Dosen</th>
+                                                <th>Jumlah Anak Wali</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td colspan="3" style="text-align: center;">
+                                                    <span class="preview-placeholder">Data akan muncul setelah memilih SK</span>
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                    <div style="margin-top: 50px; font-size: 10pt;">
+                                        <div style="text-align: right;">
+                                            <p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
+                                            <p style="margin: 0 0 30px 0;">pada tanggal <span>27 December 2025</span></p>
+                                            <p style="margin: 0 0 70px 0;"><strong>DEKAN,</strong></p>
+                                            <p style="margin: 0 0 0 0;">
+                                                <strong><u>{{ $dekanName }}</u></strong><br>
+                                                NIP. {{ $dekanNip }}
+                                            </p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -568,6 +566,8 @@
 
 @push('scripts')
 <script>
+    const dekanName = @json($dekanName ?? '');
+    const dekanNip = @json($dekanNip ?? '');
     let selectedSK = [];
 
     // Select All Checkbox Handler
@@ -679,58 +679,126 @@
             const semText = document.getElementById('preview-semester-text');
             const semText2 = document.getElementById('preview-semester-text-2');
             const semText3 = document.getElementById('preview-semester-text-3');
-            const tahunText = document.getElementById('preview-tahun-text');
-            const tahunText2 = document.getElementById('preview-tahun-text-2');
-            const tahunText3 = document.getElementById('preview-tahun-text-3');
-            const tahunText4 = document.getElementById('preview-tahun-text-4');
 
             if (semText) semText.textContent = semesterUpper;
             if (semText2) semText2.textContent = semesterUpper;
             if (semText3) semText3.textContent = firstSK.semester;
-            if (tahunText) tahunText.textContent = firstSK.tahun;
-            if (tahunText2) tahunText2.textContent = firstSK.tahun;
-            if (tahunText3) tahunText3.textContent = firstSK.tahun;
-            if (tahunText4) tahunText4.textContent = firstSK.tahun;
-            
-            // Update untuk bagian Lampiran
-            const semLampiran = document.getElementById('preview-semester-lampiran');
-            const prodiLampiran = document.getElementById('preview-prodi-lampiran');
-            if (semLampiran) semLampiran.textContent = semesterUpper;
-            if (prodiLampiran) prodiLampiran.textContent = firstSK.prodi;
 
-            // Untuk teks tahun akademik di lampiran gunakan class umum
-            const tahunLampiranNodes = document.querySelectorAll('.preview-tahun-akademik-lampiran');
-            tahunLampiranNodes.forEach(el => {
-                el.textContent = firstSK.tahun;
-                el.classList.remove('preview-placeholder');
-            });
+            // Set default Tahun Akademik di input kalau masih kosong,
+            // lalu paksa semua tampilan tahun mengikuti input tersebut.
+            const tahunInput = document.getElementById('tahun-akademik');
+            if (tahunInput && !tahunInput.value.trim()) {
+                tahunInput.value = firstSK.tahun;
+            }
+            if (tahunInput) {
+                tahunInput.dispatchEvent(new Event('input'));
+            }
         }
-        
-        // Update tabel dengan data dosen
-        document.querySelector('#preview-table-dosen tbody').innerHTML = `
-            ${dosenList.map((dosen, index) => `
-                <tr>
-                    <td>${index + 1}.</td>
-                    <td>${dosen.nama_dosen}</td>
-                    <td>${dosen.jumlah_anak_wali}</td>
-                </tr>
-            `).join('')}
-        `;
+
+        // Kelompokkan dosen per prodi
+        const groupedByProdi = {};
+        dosenList.forEach(dosen => {
+            const prodiName = dosen.prodi || '-';
+            if (!groupedByProdi[prodiName]) {
+                groupedByProdi[prodiName] = [];
+            }
+            groupedByProdi[prodiName].push(dosen);
+        });
+
+        const lampiranContainer = document.getElementById('lampiran-container');
+        if (!lampiranContainer) return;
+
+        const nomorSuratInput = document.getElementById('nomorSurat');
+        const tahunAkademikInput = document.getElementById('tahun-akademik');
+        const firstSK = selectedSK[0] || {};
+        const semesterUpper = (firstSK.semester || 'GANJIL').toUpperCase();
+
+        const nomorSuratValue = nomorSuratInput && nomorSuratInput.value.trim();
+        const nomorSuratHtml = nomorSuratValue
+            ? nomorSuratValue
+            : '<span class="preview-placeholder">[Nomor Surat]</span>';
+
+        const tahunAkademikText = (tahunAkademikInput && tahunAkademikInput.value.trim())
+            ? tahunAkademikInput.value.trim()
+            : '2023/2024';
+
+        let lampiranHtml = '';
+
+        Object.keys(groupedByProdi).forEach((prodiName, index) => {
+            const dosenProdi = groupedByProdi[prodiName];
+
+            lampiranHtml += `
+                <div class="lampiran-prodi" style="margin-top: ${index === 0 ? '30px' : '60px'};">
+                    <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR <span class="preview-nomor-surat-lampiran">${nomorSuratHtml}</span></p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PERIHAL</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">DOSEN WALI MAHASISWA FAKULAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
+                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold; text-decoration: underline;">Daftar Dosen Wali Mahasiswa Prodi ${prodiName}</p>
+                    </div>
+                    <table class="preview-table-dosen">
+                        <colgroup>
+                            <col style="width: 8%;">
+                            <col style="width: 67%;">
+                            <col style="width: 25%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>No.</th>
+                                <th>Nama Dosen</th>
+                                <th>Jumlah Anak Wali</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${dosenProdi.map((dosen, idx) => `
+                                <tr>
+                                    <td>${idx + 1}.</td>
+                                    <td>${dosen.nama_dosen}</td>
+                                    <td>${dosen.jumlah_anak_wali}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 50px; font-size: 10pt;">
+                        <div style="text-align: right;">
+                            <p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
+                            <p style="margin: 0 0 30px 0;">pada tanggal <span>${document.getElementById('preview-tanggal').textContent}</span></p>
+                            <p style="margin: 0 0 70px 0;"><strong>DEKAN,</strong></p>
+                            <p style="margin: 0 0 0 0;">
+                                <strong><u>${dekanName}</u></strong><br>
+                                NIP. ${dekanNip}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        lampiranContainer.innerHTML = lampiranHtml;
     }
 
     // Live update nomor surat
     document.getElementById('nomorSurat').addEventListener('input', function(e) {
         const nomor = e.target.value.trim();
         const previewElement = document.getElementById('preview-nomor-surat');
-        const previewElementLampiran = document.getElementById('preview-nomor-surat-lampiran');
-        
+        const lampiranElements = document.querySelectorAll('.preview-nomor-surat-lampiran');
+
         if (nomor) {
             previewElement.innerHTML = nomor;
-            previewElementLampiran.innerHTML = nomor;
+            lampiranElements.forEach(el => {
+                el.innerHTML = nomor;
+                el.classList.remove('preview-placeholder');
+            });
         } else {
             const placeholder = '<span class="preview-placeholder">[Nomor Surat]</span>';
             previewElement.innerHTML = placeholder;
-            previewElementLampiran.innerHTML = placeholder;
+            lampiranElements.forEach(el => {
+                el.innerHTML = '[Nomor Surat]';
+                el.classList.add('preview-placeholder');
+            });
         }
     });
     // Live update tahun akademik
@@ -797,7 +865,7 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                alert('Berhasil diajukan ke Wadek 1');
+                // Reload halaman agar alert hijau dari session('success') muncul di atas
                 window.location.reload();
             } else {
                 alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));

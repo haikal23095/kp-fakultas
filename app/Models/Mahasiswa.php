@@ -38,10 +38,20 @@ class Mahasiswa extends Model
         'Nama_Mahasiswa',
         'Jenis_Kelamin_Mahasiswa',
         'Alamat_Mahasiswa',
+        'Status_KP',
         'Angkatan',
         'Id_User',
         'Id_Prodi',
+        'Id_Fakultas',
     ];
+
+    /**
+     * Definisikan relasi ke tabel Fakultas
+     */
+    public function fakultas()
+    {
+        return $this->belongsTo(Fakultas::class, 'Id_Fakultas', 'Id_Fakultas');
+    }
 
     /**
      * Definisikan relasi ke tabel User

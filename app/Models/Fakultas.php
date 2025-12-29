@@ -30,3 +30,4 @@ class Fakultas extends Model
         return $this->hasMany(PegawaiFakultas::class, 'Id_Fakultas', 'Id_Fakultas');
     }
 }
+

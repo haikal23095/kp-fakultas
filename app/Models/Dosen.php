@@ -25,8 +25,15 @@ class Dosen extends Model
         'Alamat_Dosen',
         'Id_User',
         'Id_Prodi',
+        'Id_Fakultas',
         'Id_Pejabat'
     ];
+
+    // Relasi ke Fakultas
+    public function fakultas()
+    {
+        return $this->belongsTo(Fakultas::class, 'Id_Fakultas', 'Id_Fakultas');
+    }
 
     // Relasi ke Prodi
     public function prodi()
@@ -38,5 +45,11 @@ class Dosen extends Model
     public function user()
     {
         return $this->belongsTo(User::class, 'Id_User', 'Id_User');
+    }
+
+    // Relasi ke Pejabat (misal Dekan, Kajur, dsb.)
+    public function pejabat()
+    {
+        return $this->belongsTo(Pejabat::class, 'Id_Pejabat', 'Id_Pejabat');
     }
 }
