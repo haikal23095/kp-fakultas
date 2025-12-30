@@ -125,40 +125,6 @@ Route::middleware('auth')->group(function () {
     // FITUR ADMIN FAKULTAS
     Route::prefix('admin-fakultas')->name('admin_fakultas.')->group(function () {
 
-        // DEBUG ROUTE - HAPUS SETELAH TESTING
-        Route::get('/debug-surat', function () {
-            $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
-            $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
-
-            $allSurat = \App\Models\TugasSurat::with(['jenisSurat', 'pemberiTugas.mahasiswa.prodi.fakultas'])
-                ->where(function ($q) use ($fakultasId) {
-                    $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    })
-                        ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                            $subQ->where('Id_Fakultas', $fakultasId);
-                        })
-                        ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                            $subQ->where('Id_Fakultas', $fakultasId);
-                        });
-                })
-                ->get();
-
-            $grouped = $allSurat->groupBy('Id_Jenis_Surat');
-
-            $result = "<h2>Debug Surat - Fakultas ID: {$fakultasId}</h2>";
-            $result .= "<p>Total Surat: " . $allSurat->count() . "</p>";
-            $result .= "<h3>Group by Id_Jenis_Surat:</h3><ul>";
-
-            foreach ($grouped as $jenisId => $surats) {
-                $namaJenis = $surats->first()->jenisSurat->Nama_Surat ?? 'Unknown';
-                $result .= "<li>Id_Jenis_Surat {$jenisId} ({$namaJenis}): " . $surats->count() . " surat</li>";
-            }
-            $result .= "</ul>";
-
-            return $result;
-        })->name('debug.surat');
-
         Route::get('/manajemen-surat', [FakultasManajemenSuratController::class, 'index'])
             ->name('surat.manage');
 

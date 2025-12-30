@@ -80,6 +80,14 @@ class SKController extends Controller
         ]);
 
         try {
+            // Get kaprodi's Id_Dosen
+            $user = Auth::user();
+            $idDosenKaprodi = null;
+
+            if ($user->dosen) {
+                $idDosenKaprodi = $user->dosen->Id_Dosen;
+            }
+
             // Prepare data dosen wali untuk disimpan ke JSON
             $dataDosen = [];
             foreach ($request->dosen as $dosen) {
@@ -104,7 +112,8 @@ class SKController extends Controller
                 'Data_Dosen_Wali' => $dataDosen, // Laravel akan auto-encode karena ada casting di model
                 'Status' => 'Dikerjakan admin',
                 'Tanggal-Pengajuan' => $tanggalPengajuan,
-                'Tanggal-Tenggat' => $tanggalTenggat
+                'Tanggal-Tenggat' => $tanggalTenggat,
+                'Id_Dosen_Kaprodi' => $idDosenKaprodi
             ]);
 
             return redirect()->route('kaprodi.sk.index')
