@@ -69,6 +69,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/dashboard/admin-fakultas', [AuthController::class, 'dashboardAdminFakultas'])->name('dashboard.admin_fakultas');
     Route::get('/dashboard/dekan', [AuthController::class, 'dashboardDekan'])->name('dashboard.dekan');
     Route::get('/dashboard/wadek1', [AuthController::class, 'dashboardWadek1'])->name('dashboard.wadek1');
+    Route::get('/dashboard/wadek2', [AuthController::class, 'dashboardWadek2'])->name('dashboard.wadek2');
+    Route::get('/dashboard/wadek3', [AuthController::class, 'dashboardWadek3'])->name('dashboard.wadek3');
     Route::get('/dashboard/kajur', [AuthController::class, 'dashboardKajur'])->name('dashboard.kajur');
     Route::get('/dashboard/kaprodi', [AuthController::class, 'dashboardKaprodi'])->name('dashboard.kaprodi');
     Route::get('/dashboard/dosen', [AuthController::class, 'dashboardDosen'])->name('dashboard.dosen');
@@ -286,6 +288,34 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/sk-dosen-wali/{id}/approve', [\App\Http\Controllers\Wadek1\SKController::class, 'dosenWaliApprove'])
             ->name('sk.dosen-wali.approve');
+    });
+
+    // FITUR WADEK 2
+    Route::prefix('wadek2')->name('wadek2.')->group(function () {
+        // Sarana Prasarana
+        Route::get('/sarpras/persetujuan-mobil', [\App\Http\Controllers\Wadek2\PeminjamanController::class, 'persetujuanMobil'])
+            ->name('sarpras.persetujuan-mobil');
+        Route::get('/sarpras/persetujuan-ruang', [\App\Http\Controllers\Wadek2\PeminjamanController::class, 'persetujuanRuang'])
+            ->name('sarpras.persetujuan-ruang');
+
+        // SDM Kepegawaian
+        Route::get('/sdm/validasi-cuti', [\App\Http\Controllers\Wadek2\KepegawaianController::class, 'validasiCuti'])
+            ->name('sdm.validasi-cuti');
+        Route::get('/sdm/validasi-lembur', [\App\Http\Controllers\Wadek2\KepegawaianController::class, 'validasiLembur'])
+            ->name('sdm.validasi-lembur');
+
+        // Surat Keputusan
+        Route::get('/sk/validasi-sk-fakultas', [\App\Http\Controllers\Wadek2\SuratKeputusanController::class, 'validasiSKFakultas'])
+            ->name('sk.validasi-sk-fakultas');
+    });
+
+    // FITUR WADEK 3
+    Route::prefix('wadek3')->name('wadek3.')->group(function () {
+        // Kemahasiswaan
+        Route::get('/kemahasiswaan/validasi-dispensasi', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'validasiDispensasi'])
+            ->name('kemahasiswaan.validasi-dispensasi');
+        Route::get('/kemahasiswaan/validasi-kelakuan-baik', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'validasiKelakuanBaik'])
+            ->name('kemahasiswaan.validasi-kelakuan-baik');
     });
 
     // FITUR DOSEN

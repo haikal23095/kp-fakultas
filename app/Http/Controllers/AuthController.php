@@ -100,6 +100,10 @@ class AuthController extends Controller
                 return redirect()->route('dashboard.admin_fakultas');
             case 8:
                 return redirect()->route('dashboard.wadek1');
+            case 9:
+                return redirect()->route('dashboard.wadek2');
+            case 10:
+                return redirect()->route('dashboard.wadek3');
             default:
                 return redirect()->route('dashboard.default');
         }
@@ -247,6 +251,16 @@ class AuthController extends Controller
     public function dashboardWadek1()
     {
         return view('dashboard.wadek1');
+    }
+
+    public function dashboardWadek2()
+    {
+        return view('dashboard.wadek2');
+    }
+
+    public function dashboardWadek3()
+    {
+        return view('dashboard.wadek3');
     }
 
     public function dashboardKajur()
