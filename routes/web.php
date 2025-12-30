@@ -450,7 +450,7 @@ Route::middleware('auth')->group(function () {
 
             $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Pengantar KP/Magang')->first();
 
-            return view('mahasiswa.form_surat_magang', [
+            return view('mahasiswa.magang.form_surat_magang', [
                 'mahasiswa' => $mahasiswa,
                 'prodi' => $prodi,
                 'jurusan' => $jurusan,
