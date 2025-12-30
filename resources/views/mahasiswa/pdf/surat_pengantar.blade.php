@@ -180,13 +180,6 @@
             margin-top: 5px;
             font-size: 11pt;
         }
-
-        /* Default Desktop/Print Style for TTD */
-        .ttd-section {
-            display: flex; 
-            justify-content: space-between; 
-            margin-top: 40px;
-        }
     </style>
 </head>
 <body>
@@ -200,25 +193,30 @@
         <div class="kop-surat">
             <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas">
             <div class="kop-surat-text">
-                <h2>UNIVERSITAS TRUNOJOYO MADURA</h2>
-                <h2>FAKULTAS TEKNIK</h2>
+                <h3 style="font-weight: 400; margin-bottom: 0;">KEMENTRIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</h2>
+                <h3 style="font-weight: 400; margin-top: 0; margin-bottom: 0;">UNIVERSITAS TRUNOJOYO MADURA</h2>
+                <h3 style="margin-top: 0; margin-bottom: 0;">FAKULTAS TEKNIK</h2>
                 <p>Jl. Raya Telang, PO Box 2 Kamal, Bangkalan - Madura</p>
                 <p>Telp: (031) 3011146, Fax. (031) 3011506</p>
+                <p>Laman : www.trunojoyo.ac.id</p>
             </div>
         </div>
 
         <div class="nomor-surat">
             <h3>SURAT PENGANTAR PERMOHONAN KERJA PRAKTIK</h3>
-            <p>Nomor: {{ $surat->Nomor_Surat ?? '[Nomor Surat Belum Diterbitkan]' }}</p>
+            <p>Nomor: {{ $magang->Nomor_Surat ?? '[Nomor Surat Belum Diterbitkan]' }}</p>
         </div>
 
         <div class="isi-surat">
-            <p>Yth. Pimpinan HRD/Personalia<br>
+            <p>Yth. Kepala
             <strong>{{ $magang->Nama_Instansi }}</strong><br>
             {{ $magang->Alamat_Instansi }}</p>
 
             <p>Dengan hormat,</p>
-            <p>Sehubungan dengan pelaksanaan mata kuliah Kerja Praktik (KP), kami memohon kesediaan Bapak/Ibu untuk menerima mahasiswa kami berikut ini untuk melaksanakan Kerja Praktik di instansi yang Bapak/Ibu pimpin:</p>
+            <p>Sehubungan dalam Memperkenalkan mahasiswa pada dunia kerja  sesuai bidang masing-masing, maka sesuai ketentuan Program Merdeka Belajar - Kampus Merdeka (MBKM) mahasiswa diperkenankan melaksanakan magang. Guna memperlancar kegiatan tersebut, kami mohon Bapak/Ibu untuk memberikan izin kepada mahasiswa kami untuk dapat melaksanakan kegiatan magang di perusahaan tersebut pada tanggal 
+                <strong>{{ $magang->Tanggal_Mulai ? \Carbon\Carbon::parse($magang->Tanggal_Mulai)->format('d M Y') : '-' }}</strong> s.d. 
+                <strong>{{ $magang->Tanggal_Selesai ? \Carbon\Carbon::parse($magang->Tanggal_Selesai)->format('d M Y') : '-' }}</strong>
+            </p>
 
             @php
                 $dataMahasiswa = $magang->Data_Mahasiswa;
@@ -251,58 +249,14 @@
                 </tbody>
             </table>
 
-            <p>Waktu pelaksanaan: 
-                <strong>{{ $magang->Tanggal_Mulai ? \Carbon\Carbon::parse($magang->Tanggal_Mulai)->format('d M Y') : '-' }}</strong> s.d. 
-                <strong>{{ $magang->Tanggal_Selesai ? \Carbon\Carbon::parse($magang->Tanggal_Selesai)->format('d M Y') : '-' }}</strong>
-            </p>
+            <p>Besar Harapan kami dapat menerima konfirmasi kesediaan menerima atau menolak pengajuan Magang Mandiri ini maksimal 14 (empat belas) hari dari tanggal surat ini dikeluarkan</p><br>
 
-            <p>Demikian surat permohonan ini kami sampaikan. Atas perhatian dan kerjasamanya kami ucapkan terima kasih.</p>
+            <p>Demikian, atas perhatian dan bantuannya kami ucapkan terima kasih.</p>
         </div>
 
         <div class="ttd-section">
-            {{-- Tanda Tangan Mahasiswa (Pemohon) --}}
-            <div class="ttd-content" style="text-align: center; min-width: 200px;">
-                <p>&nbsp;</p>
-                <p><strong>Pemohon</strong></p>
-                
-                @if($magang->Foto_ttd)
-                    @php
-                        // Handle Foto TTD Mahasiswa path
-                        $ttdPath = $magang->Foto_ttd;
-                        
-                        // Cek path storage
-                        if (!file_exists(public_path($ttdPath)) && file_exists(public_path('storage/' . $ttdPath))) {
-                            $ttdPath = 'storage/' . $ttdPath;
-                        }
-                        
-                        $absoluteTtdPath = public_path($ttdPath);
-                        
-                        $ttdImageSrc = '';
-                        if (file_exists($absoluteTtdPath)) {
-                            $ttdData = base64_encode(file_get_contents($absoluteTtdPath));
-                            $ttdImageSrc = 'data:image/png;base64,' . $ttdData;
-                        } else {
-                            $ttdImageSrc = asset($ttdPath);
-                        }
-                    @endphp
-                    <div class="qr-code-box" style="margin: 10px auto;">
-                        <img src="{{ $ttdImageSrc }}" alt="TTD Mahasiswa" style="width: 100px; height: auto; max-height: 100px;">
-                    </div>
-                @else
-                    <div style="height: 100px;"></div>
-                @endif
-
-                {{-- Ambil nama mahasiswa pertama (Ketua/Pemohon) --}}
-                @php
-                    $namaPemohon = $dataMahasiswa[0]['nama'] ?? 'Mahasiswa';
-                    $nimPemohon = $dataMahasiswa[0]['nim'] ?? '-';
-                @endphp
-                <div class="ttd-name">{{ $namaPemohon }}</div>
-                <div class="ttd-position">NIM. {{ $nimPemohon }}</div>
-            </div>
-
             {{-- Tanda Tangan Dekan (dengan QR Code Dekan) --}}
-            <div class="ttd-content" style="text-align: center; min-width: 200px;">
+            <div class="ttd-content">
                 <p>Bangkalan, {{ \Carbon\Carbon::now()->locale('id')->isoFormat('D MMMM YYYY') }}</p>
                 <p><strong>Dekan Fakultas Teknik</strong></p>
                 
