@@ -368,12 +368,12 @@ class ManajemenSuratController extends Controller
         
         // Grouping manual agar semua jenis surat masuk list
         $arsipByJenis = $allJenisSurat->map(function($jenis) use ($arsipTugas, $arsipLegalisir) {
-            $items = $arsipTugas->where('Id_Jenis_Surat', $jenis->Id_Jenis_Surat);
             
-            // Jika jenis surat adalah legalisir (ID=3), tambahkan data dari Surat_Legalisir
+            // KHUSUS LEGALISIR (ID=3): HANYA ambil dari $arsipLegalisir, JANGAN dari $arsipTugas
             if($jenis->Id_Jenis_Surat == 3) {
-                // Merge dengan arsip legalisir
-                $items = $items->merge($arsipLegalisir);
+                $items = $arsipLegalisir; // Hanya dari Surat_Legalisir
+            } else {
+                $items = $arsipTugas->where('Id_Jenis_Surat', $jenis->Id_Jenis_Surat);
             }
             
             return (object) [

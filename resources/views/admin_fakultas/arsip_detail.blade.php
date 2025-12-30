@@ -12,7 +12,13 @@
     <div class="card shadow mb-4">
         <div class="card-header py-3 d-flex justify-content-between align-items-center">
             <h6 class="m-0 font-weight-bold text-primary">Daftar Arsip</h6>
-            <span class="badge bg-primary">{{ $arsipTugas->count() }} Arsip</span>
+            @php
+                $totalArsip = $arsipTugas->count();
+                if(isset($arsipLegalisir)) {
+                    $totalArsip += $arsipLegalisir->count();
+                }
+            @endphp
+            <span class="badge bg-primary">{{ $totalArsip }} Arsip</span>
         </div>
         <div class="card-body">
             <div class="filter-section mb-4">
@@ -71,6 +77,10 @@
                             <th><i class="fas fa-calendar me-2"></i>Tanggal</th>
                             <th><i class="fas fa-file-alt me-2"></i>No. Surat</th>
                             <th><i class="fas fa-user me-2"></i>Pengaju</th>
+                            @if($jenisSurat->Id_Jenis_Surat == 3)
+                                <th class="text-center"><i class="fas fa-print me-2"></i>Jumlah Cetak</th>
+                                <th class="text-center"><i class="fas fa-money-bill me-2"></i>Harga</th>
+                            @endif
                             <th class="text-center"><i class="fas fa-check-circle me-2"></i>Status</th>
                             @if($jenisSurat->Id_Jenis_Surat != 3)
                                 <th class="text-center"><i class="fas fa-download me-2"></i>File</th>
@@ -100,12 +110,14 @@
                             
                             if($isLegalisir) {
                                 // Data dari Surat_Legalisir
-                                $tanggal = $t->tugasSurat ? $t->tugasSurat->Tanggal_Diselesaikan : null;
+                                $tanggal = $t->tugasSurat ? $t->tugasSurat->Tanggal_Diselesaikan : ($t->Tanggal_Bayar ?? $t->created_at);
                                 $nomorSurat = $t->Nomor_Surat_Legalisir;
                                 $namaPengaju = $t->user->Name_User ?? 'N/A';
                                 $roleJabatan = $t->user->role->Name_Role ?? 'N/A';
                                 $namaProdi = $t->user->mahasiswa->prodi->Nama_Prodi ?? 'N/A';
                                 $status = $t->Status;
+                                $jumlahCetak = $t->Jumlah_Salinan ?? 0;
+                                $harga = $t->Biaya ?? 0;
                             } else {
                                 // Data dari Tugas_Surat
                                 $tanggal = $t->Tanggal_Diselesaikan;
@@ -140,6 +152,14 @@
                                     @endif
                                 </small>
                             </td>
+                            @if($jenisSurat->Id_Jenis_Surat == 3)
+                            <td class="text-center">
+                                <span class="badge bg-info">{{ $jumlahCetak ?? 0 }} Berkas</span>
+                            </td>
+                            <td class="text-center">
+                                <span class="badge bg-success">Rp {{ number_format($harga ?? 0, 0, ',', '.') }}</span>
+                            </td>
+                            @endif
                             <td class="text-center">
                                 @php $statusLower = strtolower(trim($status)); @endphp
                                 @if(in_array($statusLower, ['selesai', 'disetujui', 'success']))
