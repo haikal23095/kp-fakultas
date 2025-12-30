@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Dekan;
 
 use App\Http\Controllers\Controller;
 use App\Models\SuratMagang;
+use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -12,7 +13,7 @@ class SuratMagangController extends Controller
 {
     public function index()
     {
-        // Ambil surat magang yang statusnya "Diajukan-ke-dekan"
+        // Ambil surat magang yang statusnya "Diajukan-ke-dekan" (Menunggu Persetujuan)
         $daftarSurat = SuratMagang::with([
             'tugasSurat.pemberiTugas.mahasiswa.prodi',
             'tugasSurat.jenisSurat',
@@ -22,7 +23,18 @@ class SuratMagangController extends Controller
             ->orderBy('id_no', 'desc')
             ->get();
 
-        return view('dekan.surat_magang.index', compact('daftarSurat'));
+        // Ambil riwayat surat yang sudah disetujui (Status = Success)
+        $riwayatSurat = SuratMagang::with([
+            'tugasSurat.pemberiTugas.mahasiswa.prodi',
+            'tugasSurat.jenisSurat',
+            'koordinator'
+        ])
+            ->where('Status', 'Success')
+            ->where('Acc_Dekan', true)
+            ->orderBy('id_no', 'desc')
+            ->get();
+
+        return view('dekan.surat_magang.index', compact('daftarSurat', 'riwayatSurat'));
     }
 
     public function show($id)
@@ -79,6 +91,33 @@ class SuratMagangController extends Controller
         }
 
         $surat->save();
+
+        // Update Status_KP mahasiswa menjadi "Sedang_Melaksanakan"
+        $dataMahasiswa = is_array($surat->Data_Mahasiswa)
+            ? $surat->Data_Mahasiswa
+            : json_decode($surat->Data_Mahasiswa, true);
+
+        if ($dataMahasiswa && is_array($dataMahasiswa)) {
+            foreach ($dataMahasiswa as $mhs) {
+                if (isset($mhs['nim'])) {
+                    // Update Status_KP
+                    \App\Models\Mahasiswa::where('NIM', $mhs['nim'])
+                        ->update(['Status_KP' => 'Sedang_Melaksanakan']);
+
+                    // Kirim notifikasi ke setiap mahasiswa yang mengajukan
+                    $mahasiswa = \App\Models\Mahasiswa::where('NIM', $mhs['nim'])->first();
+                    if ($mahasiswa && $mahasiswa->Id_User) {
+                        Notifikasi::create([
+                            'Dest_user' => $mahasiswa->Id_User, // Id_User mahasiswa
+                            'Source_User' => Auth::id(), // Id_User Dekan yang login
+                            'Tipe_Notifikasi' => 'Accepted',
+                            'Pesan' => 'Surat pengantar magang Anda dengan nomor ' . ($surat->Nomor_Surat ?? 'N/A') . ' telah disetujui dan ditandatangani oleh Dekan. Anda dapat melihat dan mengunduh surat di halaman riwayat surat.',
+                            'Is_Read' => false
+                        ]);
+                    }
+                }
+            }
+        }
 
         return redirect()->route('dekan.surat_magang.index')
             ->with('success', 'Surat magang berhasil disetujui dan ditandatangani.');

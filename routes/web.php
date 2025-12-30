@@ -168,16 +168,16 @@ Route::middleware('auth')->group(function () {
         // Route untuk list per jenis surat
         Route::get('/surat-aktif', [FakultasManajemenSuratController::class, 'listAktif'])
             ->name('surat.aktif');
-        Route::get('/surat-magang-list', [FakultasManajemenSuratController::class, 'listMagang'])
+
+        // Routes untuk Surat Magang (menggunakan SuratMagangController)
+        Route::get('/surat-magang', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'index'])
             ->name('surat.magang');
-        Route::get('/surat-magang/{id}', [FakultasManajemenSuratController::class, 'showMagang'])
-            ->name('surat_magang.show');
-        Route::post('/surat-magang/{id}/assign', [FakultasManajemenSuratController::class, 'assignNomorMagang'])
-            ->name('surat_magang.assign');
-        Route::get('/surat-magang/{id}/download', [FakultasManajemenSuratController::class, 'downloadProposalMagang'])
-            ->name('surat_magang.download');
-        Route::get('/surat-magang/{id}/download-surat', [FakultasManajemenSuratController::class, 'downloadSuratPengantarMagang'])
-            ->name('surat_magang.download_surat');
+        Route::get('/surat-magang/{id}', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'show'])
+            ->name('surat.magang.detail');
+        Route::get('/surat-magang/{id}/download-proposal', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'downloadProposal'])
+            ->name('surat.magang.download_proposal');
+        Route::post('/surat-magang/{id}/assign-nomor', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'assignNomorSurat'])
+            ->name('surat.magang.assign_nomor');
 
         // TODO: Routes untuk jenis surat baru (setelah implementasi database)
         Route::get('/surat-mobil-dinas', [FakultasManajemenSuratController::class, 'listMobilDinas'])->name('surat.mobil_dinas');
@@ -572,6 +572,10 @@ Route::middleware('auth')->group(function () {
         // Download Surat Berkelakuan Baik (Signed by Dekan)
         Route::get('/surat/download-berkelakuan-baik/{id}', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'downloadSurat'])
             ->name('surat.download_berkelakuan_baik');
+
+        // Preview Form Pengantar (TTD Mahasiswa & QR Kaprodi)
+        Route::get('/surat/preview-form-pengantar/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'previewFormPengantar'])
+            ->name('surat.preview_form_pengantar');
 
         // --- AJAKAN MAGANG ROUTES ---
         Route::get('/ajakan-magang', [\App\Http\Controllers\AjakanMagangController::class, 'index'])

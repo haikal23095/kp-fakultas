@@ -80,7 +80,7 @@ class SuratKeteranganAktifController extends Controller
         }
 
         $judul = "Pengajuan " . $jenisSurat->Nama_Surat;
-        
+
         // Append deskripsi ke judul agar admin tahu keperluannya (karena tidak ada kolom deskripsi di DB)
         if (!empty($deskripsi)) {
             $judul .= " - " . \Illuminate\Support\Str::limit($deskripsi, 150);
@@ -102,10 +102,10 @@ class SuratKeteranganAktifController extends Controller
         $tugasSurat->Id_Penerima_Tugas_Surat = $penerima_tugas_id;
         $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
         $tugasSurat->Judul_Tugas_Surat = $judul;
-        
+
         // Set status default 'baru' untuk surat yang baru diajukan
         $tugasSurat->Status = 'baru';
-        
+
         $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now();
         $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(3);
 
@@ -143,11 +143,11 @@ class SuratKeteranganAktifController extends Controller
                 'Id_Pemberi' => $pemberi_tugas_id,
                 'dokumen_pendukung' => $pathDokumenPendukung,
             ]);
-            
+
             // Kirim notifikasi ke admin fakultas
             if ($adminUser) {
                 Notifikasi::create([
-                    'Tipe_Notifikasi' => 'Invitation',
+                    'Tipe_Notifikasi' => 'Caution',
                     'Pesan' => '📬 Pengajuan surat baru: Surat Keterangan Mahasiswa Aktif dari ' . Auth::user()->Name_User,
                     'Dest_user' => $adminUser->Id_User,
                     'Source_User' => Auth::id(),

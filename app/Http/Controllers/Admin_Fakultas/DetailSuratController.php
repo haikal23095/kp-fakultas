@@ -130,23 +130,23 @@ class DetailSuratController extends Controller
 
         $user = Auth::user();
         $tugas = TugasSurat::findOrFail($id);
-        
+
         // UPDATE: Status ada di tabel parent (Tugas_Surat) dan child table yang punya kolom Status
         $tugas->Status = 'ditolak';
-        
+
         // Update status di child table jika ada dan punya kolom Status
         if ($tugas->suratMagang) {
             $tugas->suratMagang->Status = 'ditolak';
             $tugas->suratMagang->save();
         }
         // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
-        
+
         // Update data_spesifik with rejection reason
         $dataSpesifik = $tugas->data_spesifik ?? [];
         $dataSpesifik['alasan_penolakan'] = $request->input('alasan_penolakan');
         $dataSpesifik['tanggal_penolakan'] = now()->toDateTimeString();
         $dataSpesifik['ditolak_oleh'] = $user->Name_User;
-        
+
         $tugas->data_spesifik = $dataSpesifik;
         $tugas->save();
 
@@ -176,17 +176,17 @@ class DetailSuratController extends Controller
         $user = Auth::user();
         $tugas = TugasSurat::findOrFail($id);
         $tugas->Nomor_Surat = $request->input('nomor_surat');
-        
+
         // UPDATE: Status ada di tabel parent (Tugas_Surat) dan child table yang punya kolom Status
         $tugas->Status = 'menunggu-ttd';
-        
+
         // Update status di child table jika ada dan punya kolom Status
         if ($tugas->suratMagang) {
             $tugas->suratMagang->Status = 'menunggu-ttd';
             $tugas->suratMagang->save();
         }
         // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
-        
+
         // Cari user Dekan
         $dekan = User::whereHas('role', function ($q) {
             $q->whereRaw("LOWER(TRIM(Name_Role)) = 'dekan'");
@@ -194,10 +194,10 @@ class DetailSuratController extends Controller
 
         if ($dekan) {
             $tugas->Id_Penerima_Tugas_Surat = $dekan->Id_User;
-            
+
             // Kirim notifikasi ke Dekan
             Notifikasi::create([
-                'Tipe_Notifikasi' => 'Invitation',
+                'Tipe_Notifikasi' => 'Caution',
                 'Pesan' => '📝 Surat baru menunggu persetujuan dan tanda tangan Anda. Nomor: ' . $tugas->Nomor_Surat,
                 'Dest_user' => $dekan->Id_User,
                 'Source_User' => $user->Id_User,
@@ -221,14 +221,14 @@ class DetailSuratController extends Controller
 
         if ($tugasSurat->suratKetAktif) {
             $tugasSurat->suratKetAktif->is_urgent = !$tugasSurat->suratKetAktif->is_urgent;
-            
+
             // Jika di-set urgent, bisa tambahkan alasan default atau ambil dari request
             if ($tugasSurat->suratKetAktif->is_urgent) {
                 $tugasSurat->suratKetAktif->urgent_reason = $request->input('urgent_reason', 'Ditandai urgent oleh Admin Fakultas');
             } else {
                 $tugasSurat->suratKetAktif->urgent_reason = null;
             }
-            
+
             $tugasSurat->suratKetAktif->save();
 
             return redirect()->back()->with('success', 'Status prioritas berhasil diperbarui.');

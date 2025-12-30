@@ -22,22 +22,30 @@ class RiwayatSuratController extends Controller
         $user = Auth::user();
         $type = $request->query('type');
 
-        // Hitung jumlah surat per jenis (sesuai JenisSuratSeeder)
-        $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 1)->count(); // Surat Keterangan Aktif
-        $countMagang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 2)->count(); // Surat Pengantar KP/Magang
-        $countLegalisir = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 3)->count(); // Legalisir Online
-        $countMobilDinas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 4)->count(); // Surat Mobil Dinas
-        $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 6)->count(); // Surat Keterangan Tidak Menerima Beasiswa
-        $countDispensasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 7)->count(); // Surat Dispensasi
-        $countBerkelakuanBaik = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 8)->count(); // Surat Keterangan Berkelakuan Baik
-        $countPeminjamanGedung = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 10)->count(); // Peminjaman Gedung
-        $countLembur = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 11)->count(); // Surat Lembur
-        
-        // Set nilai 0 untuk jenis surat yang belum ada di seeder
-        $countCekPlagiasi = 0; // Belum ada di seeder
-        $countSuratTugas = 0; // Belum ada di seeder
-        $countMBKM = 0; // Belum ada di seeder
-        $countPeminjamanRuang = 0; // Belum ada di seeder
+        // Hitung jumlah surat per jenis
+        $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 3)->count();
+        $countMagang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 2)->count();
+
+        // Cari ID Jenis Surat untuk Legalisir
+        $jenisSuratLegalisir = \App\Models\JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
+        $countLegalisir = 0;
+        if ($jenisSuratLegalisir) {
+            $countLegalisir = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+                ->where('Id_Jenis_Surat', $jenisSuratLegalisir->Id_Jenis_Surat)
+                ->count();
+        }
+
+        // Hitung jenis surat lainnya
+        $countMobilDinas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 15)->count();
+        $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 16)->count();
+        $countCekPlagiasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 17)->count();
+        $countDispensasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 18)->count();
+        $countBerkelakuanBaik = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 19)->count();
+        $countSuratTugas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 20)->count();
+        $countMBKM = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 21)->count();
+        $countPeminjamanGedung = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 22)->count();
+        $countLembur = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 23)->count();
+        $countPeminjamanRuang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 24)->count();
 
         return view('mahasiswa.riwayat', [
             'countAktif' => $countAktif,
@@ -87,16 +95,17 @@ class RiwayatSuratController extends Controller
     {
         $user = Auth::user();
 
-        // Query surat magang dengan relasi ke Surat_Magang
-        $riwayatSurat = TugasSurat::with([
-            'jenisSurat',
-            'penerimaTugas',
-            'suratMagang', // Relasi ke tabel Surat_Magang
-            'verification'
+        // Query langsung dari Surat_Magang dan filter berdasarkan mahasiswa
+        $riwayatSurat = SuratMagang::with([
+            'tugasSurat.jenisSurat',
+            'tugasSurat.penerimaTugas',
+            'tugasSurat.verification',
+            'koordinator'
         ])
-            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->where('Id_Jenis_Surat', 2) // ID untuk Surat Pengantar Magang
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->whereHas('tugasSurat', function ($query) use ($user) {
+                $query->where('Id_Pemberi_Tugas_Surat', $user->Id_User);
+            })
+            ->orderBy('id_no', 'desc')
             ->get();
 
         return view('mahasiswa.riwayat_magang', [
@@ -200,6 +209,39 @@ class RiwayatSuratController extends Controller
 
         // Render PDF view
         return view('mahasiswa.pdf.surat_pengantar', [
+            'surat' => $tugasSurat,
+            'magang' => $tugasSurat->suratMagang,
+            'mahasiswa' => $tugasSurat->pemberiTugas->mahasiswa,
+            'koordinator' => $tugasSurat->suratMagang->koordinator,
+            'mode' => 'preview'
+        ]);
+    }
+
+    /**
+     * Preview Form Surat Pengantar (TTD Mahasiswa & QR Kaprodi)
+     */
+    public function previewFormPengantar($id)
+    {
+        $user = Auth::user();
+
+        // Ambil surat
+        $tugasSurat = TugasSurat::with([
+            'jenisSurat',
+            'pemberiTugas.mahasiswa.prodi.jurusan',
+            'suratMagang.koordinator'
+        ])
+            ->where('Id_Tugas_Surat', $id)
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->firstOrFail();
+
+        // Cek apakah surat magang ada
+        if (!$tugasSurat->suratMagang) {
+            return redirect()->route('mahasiswa.riwayat')
+                ->with('error', 'Bukan surat magang.');
+        }
+
+        // Render PDF view form pengantar
+        return view('mahasiswa.pdf.form_pengantar', [
             'surat' => $tugasSurat,
             'magang' => $tugasSurat->suratMagang,
             'mahasiswa' => $tugasSurat->pemberiTugas->mahasiswa,

@@ -184,7 +184,7 @@
 
     {{-- Card Surat Pengantar Magang --}}
     <div class="col-md-6 col-lg-4 mb-4">
-        <a href="{{ route('dekan.persetujuan.magang') }}" class="text-decoration-none">
+        <a href="{{ route('dekan.surat_magang.index') }}" class="text-decoration-none">
             <div class="card card-jenis-surat position-relative">
                 <span class="badge bg-danger badge-count">
                     {{ $countMagang ?? 0 }}

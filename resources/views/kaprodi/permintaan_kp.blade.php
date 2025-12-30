@@ -118,9 +118,15 @@
                                 </span>
                             </td>
                             <td class="text-center">
-                                <span class="badge bg-warning text-dark border border-warning">
-                                    <i class="fas fa-clock me-1"></i> Menunggu
-                                </span>
+                                @if($surat->Status == 'Dikerjakan-admin')
+                                    <span class="badge bg-success text-white border border-success">
+                                        <i class="fas fa-check-circle me-1"></i> Disetujui
+                                    </span>
+                                @else
+                                    <span class="badge bg-warning text-dark border border-warning">
+                                        <i class="fas fa-clock me-1"></i> Menunggu
+                                    </span>
+                                @endif
                             </td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-primary btn-sm shadow-sm px-3" data-bs-toggle="modal" data-bs-target="#detailModal{{ $surat->id_no }}">
@@ -242,21 +248,29 @@
                         <div class="card border-0 shadow-sm">
                             <div class="card-body">
                                 <h6 class="fw-bold mb-3">Keputusan Anda</h6>
-                                <div class="d-grid gap-2">
-                                    <form action="{{ route('kaprodi.surat.approve', $surat->id_no) }}" method="POST">
-                                        @csrf
-                                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold" onclick="return confirm('Setujui surat ini? QR Code akan digenerate otomatis.')">
-                                            <i class="fas fa-check-circle me-2"></i>SETUJUI & TTD
+                                @if($surat->Status == 'Dikerjakan-admin')
+                                    <div class="alert alert-success mb-0">
+                                        <i class="fas fa-check-circle me-2"></i>
+                                        <strong>Surat telah disetujui</strong>
+                                        <p class="mb-0 mt-2 small">QR Code telah digenerate dan surat sedang diproses oleh Admin Fakultas.</p>
+                                    </div>
+                                @else
+                                    <div class="d-grid gap-2">
+                                        <form action="{{ route('kaprodi.surat.approve', $surat->id_no) }}" method="POST">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success w-100 py-2 fw-bold" onclick="return confirm('Setujui surat ini? QR Code akan digenerate otomatis.')">
+                                                <i class="fas fa-check-circle me-2"></i>SETUJUI & TTD
+                                            </button>
+                                        </form>
+                                        <button type="button" class="btn btn-outline-danger w-100 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $surat->id_no }}" data-bs-dismiss="modal">
+                                            <i class="fas fa-times-circle me-2"></i>TOLAK
                                         </button>
-                                    </form>
-                                    <button type="button" class="btn btn-outline-danger w-100 py-2 fw-bold" data-bs-toggle="modal" data-bs-target="#rejectModal{{ $surat->id_no }}" data-bs-dismiss="modal">
-                                        <i class="fas fa-times-circle me-2"></i>TOLAK
-                                    </button>
-                                </div>
-                                <div class="alert alert-info mt-3 mb-0 small">
-                                    <i class="fas fa-info-circle me-1"></i>
-                                    Menyetujui akan membubuhkan Tanda Tangan Digital (QR Code) pada surat.
-                                </div>
+                                    </div>
+                                    <div class="alert alert-info mt-3 mb-0 small">
+                                        <i class="fas fa-info-circle me-1"></i>
+                                        Menyetujui akan membubuhkan Tanda Tangan Digital (QR Code) pada surat.
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -342,11 +356,17 @@
 
                                             <div class="row mt-5">
                                                 <div class="col-6 text-center">
-                                                    <p class="mb-5">Menyetujui,<br>Koordinator KP/TA</p>
-                                                    <div class="border rounded p-2 d-inline-block bg-light text-muted mb-2" style="border-style: dashed !important;">
-                                                        <small>QR Code akan muncul disini<br>setelah disetujui</small>
-                                                    </div>
-                                                    <p class="fw-bold mb-0">{{ $surat->koordinator->Nama_Dosen ?? '[Nama Kaprodi]' }}</p>
+                                                    <p class="mb-3">Menyetujui,<br>Koordinator KP/TA</p>
+                                                    @if($surat->Acc_Koordinator && $surat->Qr_code)
+                                                        <div class="mb-2">
+                                                            <img src="{{ asset('storage/' . $surat->Qr_code) }}" alt="QR Code" style="width: 100px; height: 100px;">
+                                                        </div>
+                                                    @else
+                                                        <div class="border rounded p-3 d-inline-block bg-light text-muted mb-2" style="border-style: dashed !important; width: 100px; height: 100px; display: flex; align-items: center; justify-content: center;">
+                                                            <small class="text-center">QR Code<br>akan muncul<br>setelah disetujui</small>
+                                                        </div>
+                                                    @endif
+                                                    <p class="fw-bold mb-0 mt-2">{{ $surat->koordinator->Nama_Dosen ?? '[Nama Kaprodi]' }}</p>
                                                     <p class="small">NIP. {{ $surat->koordinator->NIP ?? $kaprodiNIP ?? '...' }}</p>
                                                 </div>
                                                 <div class="col-6 text-center">
