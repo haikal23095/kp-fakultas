@@ -36,20 +36,14 @@ class SuratLegalisirController extends Controller
         try {
             $user = Auth::user();
             
-            // Cari ID Jenis Surat Legalisir
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
-            
-            // Fallback jika tidak ditemukan (sebaiknya di-seed)
-            if (!$jenisSurat) {
-                // Coba cari yang mirip atau hardcode jika tahu ID-nya
-                // Untuk keamanan, kita throw error jika tidak ada
-                throw new \Exception('Jenis Surat Legalisir tidak ditemukan di database.');
-            }
+            // ID Jenis Surat Legalisir = 3 (sesuai database admin)
+            // PENTING: Legalisir HARUS tetap masuk ke Tugas_Surat dengan Id_Jenis_Surat=3
+            $idJenisSuratLegalisir = 3;
 
             // 1. Buat Parent TugasSurat
             $tugasSurat = TugasSurat::create([
                 'Id_Pemberi_Tugas_Surat'        => $user->Id_User,
-                'Id_Jenis_Surat'                => $jenisSurat->Id_Jenis_Surat, 
+                'Id_Jenis_Surat'                => $idJenisSuratLegalisir, 
                 'Tanggal_Diberikan_Tugas_Surat' => Carbon::now(),
                 'Judul_Tugas_Surat'             => 'Permohonan Legalisir ' . $request->jenis_dokumen,
             ]);
@@ -66,7 +60,7 @@ class SuratLegalisirController extends Controller
                 'Jenis_Dokumen'  => $request->jenis_dokumen,
                 'Jumlah_Salinan' => $request->jumlah_salinan,
                 'Biaya'          => $totalBiaya,
-                'Status'         => 'Menunggu Pembayaran',
+                'Status'         => 'menunggu_pembayaran', // sesuai enum di database
             ]);
 
             DB::commit();

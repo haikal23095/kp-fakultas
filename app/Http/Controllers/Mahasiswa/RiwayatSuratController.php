@@ -111,28 +111,14 @@ class RiwayatSuratController extends Controller
     {
         $user = Auth::user();
 
-        // Cari ID Jenis Surat untuk Legalisir
-        $jenisSuratLegalisir = \App\Models\JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
-        
-        if (!$jenisSuratLegalisir) {
-            return view('mahasiswa.riwayat_legalisir', [
-                'riwayatSurat' => collect([])
-            ]);
-        }
-
-        // Query surat legalisir dengan relasi ke Surat_Legalisir
-        $riwayatSurat = TugasSurat::with([
-            'jenisSurat',
-            'penerimaTugas',
-            'suratLegalisir', // Relasi ke tabel Surat_Legalisir
-        ])
-            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->where('Id_Jenis_Surat', $jenisSuratLegalisir->Id_Jenis_Surat)
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+        // Ambil data legalisir langsung dari tabel Surat_Legalisir (tidak perlu Jenis_Surat)
+        $daftarRiwayat = SuratLegalisir::with(['tugasSurat', 'user.mahasiswa.prodi'])
+            ->where('Id_User', $user->Id_User)
+            ->orderBy('id_no', 'desc')
             ->get();
 
         return view('mahasiswa.riwayat_legalisir', [
-            'riwayatSurat' => $riwayatSurat
+            'daftarRiwayat' => $daftarRiwayat
         ]);
     }
 
@@ -205,10 +191,11 @@ class RiwayatSuratController extends Controller
                 ->with('error', 'Bukan surat magang.');
         }
 
-        // Cek apakah sudah disetujui koordinator
-        if (!$tugasSurat->suratMagang->Acc_Koordinator) {
+        // Cek apakah sudah disetujui (koordinator atau dekan)
+        // Jika belum ACC Koordinator tapi sudah ACC Dekan (Success), tetap bisa download
+        if (!$tugasSurat->suratMagang->Acc_Koordinator && !$tugasSurat->suratMagang->Acc_Dekan) {
             return redirect()->route('mahasiswa.riwayat')
-                ->with('error', 'Surat Pengantar belum disetujui Koordinator.');
+                ->with('error', 'Surat Pengantar belum disetujui.');
         }
 
         // Render PDF view

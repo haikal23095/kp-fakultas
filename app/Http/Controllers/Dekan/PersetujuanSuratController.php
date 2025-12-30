@@ -30,18 +30,11 @@ class PersetujuanSuratController extends Controller
             })
             ->count();
         
-        $countMagang = TugasSurat::where('Id_Jenis_Surat', 2)
-            ->where(function ($q) {
-                $q->where('Status', 'menunggu-ttd')
-                  ->orWhereHas('suratMagang', function ($subQ) {
-                      $subQ->where('Status', 'menunggu-ttd');
-                  });
-            })
-            ->count();
+        // Hitung surat magang dengan status 'Diajukan-ke-dekan'
+        $countMagang = \App\Models\SuratMagang::where('Status', 'Diajukan-ke-dekan')->count();
         
-        $countLegalisir = TugasSurat::where('Id_Jenis_Surat', 14) // Legalisir menggunakan Id_Jenis_Surat = 14
-            ->whereHas('suratLegalisir') // Hanya yang punya relasi ke Surat_Legalisir
-            ->count();
+        // Hitung legalisir yang menunggu TTD Dekan (HANYA legalisir)
+        $countLegalisir = \App\Models\SuratLegalisir::where('Status', 'menunggu_ttd_pimpinan')->count();
         
         // TODO: Implementasi counting untuk jenis surat baru
         // Untuk sementara set 0, bisa diimplementasikan setelah tabel database dibuat
@@ -107,46 +100,38 @@ class PersetujuanSuratController extends Controller
     {
         $user = Auth::user();
         
-        $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas', 
-                'suratMagang',
-                'pemberiTugas.mahasiswa.prodi'
+        // Ambil surat magang dengan status 'Diajukan-ke-dekan' (bukan 'menunggu-ttd')
+        $daftarSurat = \App\Models\SuratMagang::with([
+                'tugasSurat.pemberiTugas.mahasiswa.prodi',
+                'tugasSurat.jenisSurat',
+                'koordinator'
             ])
-            ->where('Id_Jenis_Surat', 2)
-            ->where(function ($q) {
-                $q->where('Status', 'menunggu-ttd')
-                  ->orWhereHas('suratMagang', function ($subQ) {
-                      $subQ->where('Status', 'menunggu-ttd');
-                  });
-            })
-            ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
+            ->where('Status', 'Diajukan-ke-dekan')
+            ->orderBy('id_no', 'desc')
             ->get();
 
-        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+        return view('dekan.surat_magang.index', compact('daftarSurat'));
     }
 
     /**
-     * Tampilkan daftar legalisir yang menunggu persetujuan
+     * Tampilkan daftar legalisir yang menunggu TTD Dekan
      */
     public function listLegalisir()
     {
         $user = Auth::user();
         
-        $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas', 
-                'suratLegalisir.user.role', // Eager load user (pemohon) dari Surat_Legalisir
-                'pemberiTugas.mahasiswa.prodi'
+        // Ambil data legalisir langsung dari tabel Surat_Legalisir dengan status menunggu_ttd_pimpinan
+        $daftarLegalisir = \App\Models\SuratLegalisir::with([
+                'user.mahasiswa.prodi',
+                'user.role',
+                'tugasSurat.jenisSurat',
+                'pejabat'
             ])
-            ->where('Id_Jenis_Surat', 14) // Legalisir menggunakan Id_Jenis_Surat = 14
-            ->whereHas('suratLegalisir') // Hanya yang punya relasi ke Surat_Legalisir
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->where('Status', 'menunggu_ttd_pimpinan')
+            ->orderBy('id_no', 'desc')
             ->get();
 
-        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+        return view('dekan.persetujuan_legalisir', compact('daftarLegalisir'));
     }
 
     /**

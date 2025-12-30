@@ -30,6 +30,7 @@ class SuratLegalisir extends Model
         'Jumlah_Salinan',
         'Biaya',
         'Tanggal_Bayar',
+        'Nomor_Surat_Legalisir',
         'Status',
     ];
 

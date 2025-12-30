@@ -211,7 +211,7 @@
                                         $statusLower = $status;
                                         $isSuccess = ($statusLower === 'success');
                                         $isDitolak = ($statusLower === 'ditolak');
-                                        $hasKaprodiApproval = $surat->suratMagang && $surat->suratMagang->Acc_Koordinator;
+                                        $hasDekanApproval = $surat->suratMagang && $surat->suratMagang->Acc_Dekan;
                                     @endphp
                                     
                                     {{-- Tombol Trigger Modal Aksi --}}
@@ -227,21 +227,27 @@
                                     <div id="action-content-{{ $index }}" class="d-none">
                                         <div class="d-grid gap-2">
                                             {{-- 2. Aksi Utama Berdasarkan Status --}}
-                                            @if($isSuccess)
-                                                {{-- Surat Pengantar (Jika sudah ACC Kaprodi dan Success) --}}
-                                                @if($hasKaprodiApproval)
-                                                    <a href="{{ route('mahasiswa.surat.download_pengantar', $surat->Id_Tugas_Surat) }}" 
+                                            @if($isSuccess && $hasDekanApproval)
+                                                {{-- Download Surat Pengantar (Jika sudah Success dan ACC Dekan) --}}
+                                                <a href="{{ route('mahasiswa.surat.download_pengantar', $surat->Id_Tugas_Surat) }}" 
+                                                   class="btn btn-success text-white" target="_blank">
+                                                    <i class="fas fa-file-download me-2"></i> Download Surat Pengantar Magang
+                                                </a>
+                                                
+                                                {{-- Verifikasi QR Code jika ada --}}
+                                                @if($surat->suratMagang->Qr_code_dekan)
+                                                    <a href="{{ asset('storage/' . $surat->suratMagang->Qr_code_dekan) }}" 
                                                        class="btn btn-info text-white" target="_blank">
-                                                        <i class="fas fa-file-alt me-2"></i> Download Surat Pengantar
+                                                        <i class="fas fa-qrcode me-2"></i> Lihat QR Code Dekan
                                                     </a>
                                                 @endif
                                                 
-                                                @if($surat->verification)
-                                                    <a href="{{ route('surat.verify', $surat->verification->token) }}" 
-                                                       class="btn btn-primary" target="_blank">
-                                                        <i class="fas fa-qrcode me-2"></i> Verifikasi Dokumen
-                                                    </a>
-                                                @endif
+                                                <div class="alert alert-success text-start mb-0">
+                                                    <h6 class="alert-heading fw-bold"><i class="fas fa-check-circle me-2"></i>Surat Disetujui</h6>
+                                                    <hr class="my-2">
+                                                    <p class="small mb-1"><strong>Status:</strong> Surat telah disetujui dan ditandatangani oleh Dekan</p>
+                                                    <p class="small mb-0"><strong>Nomor Surat:</strong> {{ $surat->suratMagang->tugasSurat->Nomor_Surat ?? '-' }}</p>
+                                                </div>
                                             @elseif($isDitolak)
                                                 @php
                                                     $komentarPenolakan = $surat->suratMagang->Komentar ?? 'Tidak ada komentar';

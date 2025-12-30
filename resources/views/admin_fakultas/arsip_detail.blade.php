@@ -72,51 +72,116 @@
                             <th><i class="fas fa-file-alt me-2"></i>No. Surat</th>
                             <th><i class="fas fa-user me-2"></i>Pengaju</th>
                             <th class="text-center"><i class="fas fa-check-circle me-2"></i>Status</th>
-                            <th class="text-center"><i class="fas fa-download me-2"></i>File</th>
+                            @if($jenisSurat->Id_Jenis_Surat != 3)
+                                <th class="text-center"><i class="fas fa-download me-2"></i>File</th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody>
-                        @foreach($arsipTugas->sortByDesc('Tanggal_Diselesaikan') as $t)
-                        <tr data-tanggal="{{ optional($t->Tanggal_Diselesaikan)->format('Y-m-d') ?? '' }}"
-                            data-bulan="{{ optional($t->Tanggal_Diselesaikan)->format('m') ?? '' }}"
-                            data-tahun="{{ optional($t->Tanggal_Diselesaikan)->format('Y') ?? '' }}"
-                            data-nomor="{{ strtolower($t->Nomor_Surat ?? '') }}">
+                        {{-- Gabungkan Tugas_Surat dan Surat_Legalisir --}}
+                        @php
+                            $allArsip = $arsipTugas;
+                            if(isset($arsipLegalisir) && $arsipLegalisir->count() > 0) {
+                                $allArsip = $allArsip->concat($arsipLegalisir);
+                            }
+                            $allArsip = $allArsip->sortByDesc(function($item) {
+                                // Untuk legalisir, ambil dari tugasSurat atau created_at
+                                if(isset($item->tugasSurat)) {
+                                    return $item->tugasSurat->Tanggal_Diselesaikan ?? $item->Tanggal_Bayar;
+                                }
+                                return $item->Tanggal_Diselesaikan ?? null;
+                            });
+                        @endphp
+
+                        @foreach($allArsip as $t)
+                        @php
+                            // Deteksi apakah ini legalisir atau tugas surat biasa
+                            $isLegalisir = isset($t->Nomor_Surat_Legalisir);
+                            
+                            if($isLegalisir) {
+                                // Data dari Surat_Legalisir
+                                $tanggal = $t->tugasSurat ? $t->tugasSurat->Tanggal_Diselesaikan : null;
+                                $nomorSurat = $t->Nomor_Surat_Legalisir;
+                                $namaPengaju = $t->user->Name_User ?? 'N/A';
+                                $roleJabatan = $t->user->role->Name_Role ?? 'N/A';
+                                $namaProdi = $t->user->mahasiswa->prodi->Nama_Prodi ?? 'N/A';
+                                $status = $t->Status;
+                            } else {
+                                // Data dari Tugas_Surat
+                                $tanggal = $t->Tanggal_Diselesaikan;
+                                $nomorSurat = $t->Nomor_Surat;
+                                $namaPengaju = $t->pemberiTugas?->Name_User ?? 'User Dihapus';
+                                $roleJabatan = $t->pemberiTugas?->role?->Name_Role ?? 'Role N/A';
+                                $namaProdi = $t->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi ?? null;
+                                $status = $t->Status ?? '';
+                            }
+                        @endphp
+                        <tr data-tanggal="{{ optional($tanggal)->format('Y-m-d') ?? '' }}"
+                            data-bulan="{{ optional($tanggal)->format('m') ?? '' }}"
+                            data-tahun="{{ optional($tanggal)->format('Y') ?? '' }}"
+                            data-nomor="{{ strtolower($nomorSurat ?? '') }}">
                             <td>
-                                <div class="fw-bold">{{ optional($t->Tanggal_Diselesaikan)->format('d M Y') ?? '-' }}</div>
-                                <small class="text-muted"><i class="far fa-clock me-1"></i>{{ optional($t->Tanggal_Diselesaikan)->format('H:i') ?? '' }}</small>
+                                <div class="fw-bold">{{ optional($tanggal)->format('d M Y') ?? '-' }}</div>
+                                <small class="text-muted"><i class="far fa-clock me-1"></i>{{ optional($tanggal)->format('H:i') ?? '' }}</small>
                             </td>
                             <td>
-                                @if($t->Nomor_Surat)
-                                    <span class="badge bg-light text-dark fw-bold">{{ $t->Nomor_Surat }}</span>
+                                @if($nomorSurat)
+                                    <span class="badge bg-light text-dark fw-bold">{{ $nomorSurat }}</span>
                                 @else
                                     <span class="text-muted fst-italic small">Belum ada nomor</span>
                                 @endif
                             </td>
                             <td>
-                                <div class="fw-bold">{{ $t->pemberiTugas?->Name_User ?? 'User Dihapus' }}</div>
+                                <div class="fw-bold">{{ $namaPengaju }}</div>
                                 <small class="text-muted">
-                                    <i class="fas fa-id-badge me-1"></i>{{ $t->pemberiTugas?->role?->Name_Role ?? 'Role N/A' }}
-                                    @if($t->pemberiTugas?->mahasiswa?->prodi)
-                                        <br><i class="fas fa-building me-1"></i>{{ $t->pemberiTugas->mahasiswa->prodi->Nama_Prodi }}
+                                    <i class="fas fa-id-badge me-1"></i>{{ $roleJabatan }}
+                                    @if($namaProdi)
+                                        <br><i class="fas fa-building me-1"></i>{{ $namaProdi }}
                                     @endif
                                 </small>
                             </td>
                             <td class="text-center">
-                                @php $status = strtolower(trim($t->Status ?? '')); @endphp
-                                @if(in_array($status, ['selesai', 'disetujui', 'success']))
-                                    <span class="badge bg-success text-white"><i class="fas fa-check me-1"></i>{{ ucfirst($status) }}</span>
-                                @elseif($status === 'ditolak')
-                                    <span class="badge bg-danger text-white"><i class="fas fa-times me-1"></i>{{ ucfirst($status) }}</span>
+                                @php $statusLower = strtolower(trim($status)); @endphp
+                                @if(in_array($statusLower, ['selesai', 'disetujui', 'success']))
+                                    <span class="badge bg-success text-white"><i class="fas fa-check me-1"></i>{{ ucfirst($statusLower) }}</span>
+                                @elseif($statusLower === 'ditolak')
+                                    <span class="badge bg-danger text-white"><i class="fas fa-times me-1"></i>{{ ucfirst($statusLower) }}</span>
                                 @else
-                                    <span class="badge bg-secondary text-white">{{ ucfirst($status) }}</span>
+                                    <span class="badge bg-secondary text-white">{{ ucfirst($statusLower) }}</span>
                                 @endif
                             </td>
+                            @if($jenisSurat->Id_Jenis_Surat != 3)
                             <td class="text-center">
-                                @if(!empty($t->File_Surat))
+                                @if($t->suratMagang)
+                                    {{-- Untuk Surat Magang: Download Surat Pengantar dan Proposal --}}
+                                    <div class="btn-group" role="group">
+                                        @if($t->suratMagang->Acc_Dekan || $t->suratMagang->Acc_Koordinator)
+                                            <a href="{{ route('admin_fakultas.surat_magang.download_surat', $t->Id_Tugas_Surat) }}" 
+                                               target="_blank" 
+                                               class="btn btn-success btn-sm"
+                                               title="Download Surat Pengantar">
+                                                <i class="fas fa-file-pdf me-1"></i>Surat
+                                            </a>
+                                        @endif
+                                        @if($t->suratMagang->File_proposal_kegiatan)
+                                            <a href="{{ asset('storage/' . $t->suratMagang->File_proposal_kegiatan) }}" 
+                                               target="_blank" 
+                                               class="btn btn-info btn-sm"
+                                               title="Download Proposal">
+                                                <i class="fas fa-file-alt me-1"></i>Proposal
+                                            </a>
+                                        @endif
+                                    </div>
+                                    @if(!$t->suratMagang->Acc_Dekan && !$t->suratMagang->Acc_Koordinator && !$t->suratMagang->File_proposal_kegiatan)
+                                        <span class="text-muted">-</span>
+                                    @endif
+                                @elseif(!empty($t->File_Surat))
+                                    {{-- Untuk surat lain yang punya File_Surat --}}
                                     <a href="{{ asset('storage/' . ltrim($t->File_Surat, '/')) }}" target="_blank" class="btn btn-primary btn-sm">
                                         <i class="fas fa-download me-1"></i>Unduh
                                     </a>
                                 @elseif(!empty($t->dokumen_pendukung))
+                                    {{-- Fallback ke dokumen_pendukung --}}
                                     <a href="{{ asset('storage/' . ltrim($t->dokumen_pendukung, '/')) }}" target="_blank" class="btn btn-primary btn-sm">
                                         <i class="fas fa-download me-1"></i>Unduh
                                     </a>
@@ -124,6 +189,7 @@
                                     <span class="text-muted">-</span>
                                 @endif
                             </td>
+                            @endif
                         </tr>
                         @endforeach
                     </tbody>

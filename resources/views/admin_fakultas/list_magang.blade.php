@@ -5,8 +5,8 @@
 @section('content')
 <div class="d-sm-flex align-items-center justify-content-between mb-4">
     <div>
-        <h1 class="h3 mb-1 text-gray-800">Daftar Surat Pengantar KP/Magang</h1>
-        <p class="text-muted small mb-0">Kelola pengajuan surat pengantar kerja praktek dan magang</p>
+        <h1 class="h3 mb-1 text-gray-800">Daftar Surat Pengantar Magang/KP</h1>
+        <p class="text-muted small mb-0">Kelola pengajuan surat pengantar magang dan kerja praktek mahasiswa</p>
     </div>
     <a href="{{ route('admin_fakultas.surat.manage') }}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left me-2"></i>Kembali
@@ -30,7 +30,7 @@
 <div class="card shadow mb-4" style="border-radius: 12px; border: none;">
     <div class="card-header py-3" style="background: linear-gradient(135deg, #1cc88a 0%, #13855c 100%); border-radius: 12px 12px 0 0;">
         <h6 class="m-0 font-weight-bold text-white">
-            <i class="fas fa-briefcase me-2"></i>Tabel Pengajuan Surat Pengantar Magang
+            <i class="fas fa-briefcase me-2"></i>Tabel Pengajuan Surat Pengantar Magang/KP
         </h6>
     </div>
     <div class="card-body">
@@ -41,13 +41,21 @@
                         <th>Tgl. Masuk</th>
                         <th>Nomor Surat</th>
                         <th>Mahasiswa</th>
-                        <th>Perusahaan</th>
+                        <th>Instansi</th>
+                        <th>Periode</th>
                         <th>Status</th>
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($daftarTugas as $tugas)
+                    @php
+                        $suratMagang = $tugas->suratMagang;
+                        $dataMahasiswa = is_array($suratMagang->Data_Mahasiswa) 
+                            ? $suratMagang->Data_Mahasiswa 
+                            : json_decode($suratMagang->Data_Mahasiswa, true);
+                        $mahasiswaPertama = $dataMahasiswa[0] ?? null;
+                    @endphp
                     <tr>
                         <td>
                             {{ $tugas->Tanggal_Diberikan_Tugas_Surat->format('d M Y') }}
@@ -60,21 +68,28 @@
                             @endif
                         </td>
                         <td>
-                            <div class="fw-bold">{{ $tugas->pemberiTugas?->Name_User ?? 'N/A' }}</div>
+                            <div class="fw-bold">{{ $mahasiswaPertama['nama'] ?? 'N/A' }}</div>
                             <small class="text-muted">
-                                {{ $tugas->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi ?? 'N/A' }}
+                                NIM: {{ $mahasiswaPertama['nim'] ?? 'N/A' }}
+                                @if(count($dataMahasiswa) > 1)
+                                    <span class="badge bg-info text-dark">+{{ count($dataMahasiswa) - 1 }} lainnya</span>
+                                @endif
                             </small>
                         </td>
                         <td>
-                            {{ optional($tugas->suratMagang)->nama_perusahaan ?? 'N/A' }}
-                            <br>
-                            <small class="text-muted">
-                                {{ optional($tugas->suratMagang)->kota_perusahaan ?? '' }}
+                            <div class="fw-bold">{{ $suratMagang->Nama_Instansi ?? 'N/A' }}</div>
+                            <small class="text-muted">{{ \Illuminate\Support\Str::limit($suratMagang->Alamat_Instansi ?? '', 40) }}</small>
+                        </td>
+                        <td>
+                            <small>
+                                {{ \Carbon\Carbon::parse($suratMagang->Tanggal_Mulai)->format('d M Y') }} 
+                                s/d 
+                                {{ \Carbon\Carbon::parse($suratMagang->Tanggal_Selesai)->format('d M Y') }}
                             </small>
                         </td>
                         <td class="align-middle text-center">
                             @php 
-                                $status = optional($tugas->suratMagang)->Status ?? $tugas->Status ?? 'baru';
+                                $status = $tugas->Status ?? 'baru';
                                 $status = trim($status);
                             @endphp
                             
@@ -93,17 +108,20 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <a href="{{ route('admin_fakultas.surat.detail', $tugas->Id_Tugas_Surat) }}" 
-                               class="btn btn-sm btn-outline-primary shadow-sm">
-                                <i class="fas fa-eye me-1"></i> Detail
+                            <a href="{{ route('admin_fakultas.surat_magang.show', $suratMagang->id_no) }}" 
+                               class="btn btn-sm btn-outline-primary" 
+                               title="Lihat Detail">
+                                <i class="fas fa-eye"></i> Detail
                             </a>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="text-center py-4">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">Tidak ada data surat pengantar magang.</p>
+                        <td colspan="7" class="text-center py-4">
+                            <div class="text-muted">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <p class="mb-0">Belum ada pengajuan surat pengantar magang/KP</p>
+                            </div>
                         </td>
                     </tr>
                     @endforelse
@@ -111,10 +129,11 @@
             </table>
         </div>
         
+        {{-- Pagination --}}
         @if($daftarTugas->hasPages())
-        <div class="mt-3">
-            {{ $daftarTugas->links() }}
-        </div>
+            <div class="d-flex justify-content-center mt-4">
+                {{ $daftarTugas->links() }}
+            </div>
         @endif
     </div>
 </div>

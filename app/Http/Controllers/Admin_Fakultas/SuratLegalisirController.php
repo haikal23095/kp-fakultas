@@ -33,8 +33,10 @@ class SuratLegalisirController extends Controller
     {
         $this->checkAccess();
 
-        // Eager loading relasi user dan mahasiswa agar tidak error "property Name_User on null"
+        // HANYA ambil data mahasiswa (bukan dekan/pegawai) dan yang belum selesai
         $daftarSurat = SuratLegalisir::with(['user.mahasiswa', 'tugasSurat'])
+            ->whereHas('user.mahasiswa') // FILTER: Hanya yang punya relasi mahasiswa
+            ->where('Status', '!=', 'selesai') // EXCLUDE: Data yang sudah selesai
             ->orderBy('id_no', 'desc')
             ->get();
 
@@ -124,7 +126,45 @@ class SuratLegalisirController extends Controller
     }
 
     /**
+     * Input Nomor Surat Legalisir dan kirim ke Dekan
+     */
+    public function beriNomorSurat(Request $request, $id)
+    {
+        $this->checkAccess();
+
+        $request->validate([
+            'nomor_surat' => 'required|string|max:100',
+        ]);
+
+        $surat = SuratLegalisir::findOrFail($id);
+
+        if ($surat->Status !== 'pembayaran_lunas') {
+            return redirect()->back()->with('error', 'Status berkas tidak valid untuk pemberian nomor.');
+        }
+
+        // Set Pejabat Dekan otomatis
+        $pejabatDekan = Pejabat::where('Nama_Jabatan', 'LIKE', '%Dekan%')->first();
+        
+        $surat->update([
+            'Nomor_Surat_Legalisir' => $request->nomor_surat,
+            'Status'                => 'menunggu_ttd_pimpinan',
+            'Id_Pejabat'            => $pejabatDekan ? $pejabatDekan->Id_Pejabat : null,
+        ]);
+
+        // Notifikasi ke mahasiswa
+        $this->sendNotification(
+            $surat->Id_User, 
+            'Nomor Surat Legalisir', 
+            'Nomor surat legalisir Anda: ' . $request->nomor_surat . '. Sedang menunggu tanda tangan Dekan.', 
+            $surat->id_no
+        );
+
+        return redirect()->back()->with('success', 'Nomor surat berhasil diberikan dan berkas dikirim ke Dekan.');
+    }
+
+    /**
      * Memperbarui Progres Berkas (Alur Kerja)
+     * ALUR: menunggu_ttd_pimpinan → siap_diambil → selesai
      */
     public function updateProgress(Request $request, $id)
     {
@@ -135,26 +175,14 @@ class SuratLegalisirController extends Controller
         $pesanNotif = '';
 
         switch ($statusSekarang) {
-            case 'pembayaran_lunas':
-                $surat->Status = 'proses_stempel_paraf';
-                $pesanNotif = 'Berkas Anda sedang dalam proses penomoran dan stempel.';
-                break;
-
-            case 'proses_stempel_paraf':
-                // Set Pejabat otomatis (Misal Dekan) jika ada
-                $pejabatDekan = Pejabat::where('Nama_Jabatan', 'LIKE', '%Dekan%')->first();
-                if ($pejabatDekan) { $surat->Id_Pejabat = $pejabatDekan->Id_Pejabat; }
-                
-                $surat->Status = 'menunggu_ttd_pimpinan';
-                $pesanNotif = 'Berkas sedang menunggu tanda tangan pimpinan.';
-                break;
-
             case 'menunggu_ttd_pimpinan':
+                // Dekan sudah TTD, admin kasih stampel manual offline
                 $surat->Status = 'siap_diambil';
                 $pesanNotif = 'Legalisir selesai. Silakan ambil berkas Anda di loket fakultas.';
                 break;
 
             case 'siap_diambil':
+                // Mahasiswa sudah ambil, proses selesai
                 $surat->Status = 'selesai';
                 if ($surat->tugasSurat) {
                     $surat->tugasSurat->update([

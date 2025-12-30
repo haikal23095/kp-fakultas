@@ -18,9 +18,10 @@ return new class extends Migration {
                 $table->integer('Id_Pejabat')->nullable()->comment('Pejabat yang berwenang');
                 
                 $table->enum('Jenis_Dokumen', ['Ijazah', 'Transkrip'])->comment('Jenis dokumen yang dilegalisir');
-                $table->string('Path_File', 500)->comment('Path file scan dokumen asli (PDF)');
                 $table->integer('Jumlah_Salinan')->default(1);
                 $table->integer('Biaya')->nullable()->comment('Biaya legalisir');
+                $table->date('Tanggal_Bayar')->nullable()->comment('Tanggal pembayaran lunas');
+                $table->string('Nomor_Surat_Legalisir', 100)->nullable()->comment('Nomor surat legalisir yang diberikan admin');
                 
                 $table->enum('Status', [
                     'pending',
