@@ -252,6 +252,39 @@
         </a>
     </div>
 
+    {{-- Card SK Dosen --}}
+    <div class="col-lg-4 col-md-6 mb-4">
+        <a href="{{ route('admin_fakultas.sk.index') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-primary badge-count">
+                    {{ $countSKDosen ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon blue">
+                        <i class="fas fa-file-signature"></i>
+                    </div>
+                    <h5>SK Dosen Wali</h5>
+                    <p>Kelola pengajuan Surat Keputusan Dosen Wali Mahasiswa</p>
+                    
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <div class="stat-label">Pending</div>
+                            <div class="stat-value text-warning">{{ $pendingSKDosen ?? 0 }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Proses</div>
+                            <div class="stat-value text-info">{{ $prosesSKDosen ?? 0 }}</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-label">Selesai</div>
+                            <div class="stat-value text-success">{{ $selesaiSKDosen ?? 0 }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+
     {{-- Card Legalisir Online --}}
     <div class="col-lg-4 col-md-6 mb-4">
         <a href="{{ route('admin_fakultas.surat_legalisir.index') }}" class="text-decoration-none">

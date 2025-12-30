@@ -40,8 +40,7 @@ class PermintaanSuratController extends Controller
 
         // Ambil Surat Magang yang:
         // 1. Nama_Koordinator = ID Kaprodi yang sedang login
-        // 2. Status = 'Diajukan-ke-koordinator'
-        // 3. Acc_Koordinator = false (belum disetujui)
+        // 2. Status = 'Diajukan-ke-koordinator' atau 'Dikerjakan-admin' (sudah disetujui)
         $daftarSurat = SuratMagang::query()
             ->with([
                 'tugasSurat.pemberiTugas.mahasiswa.prodi',
@@ -49,8 +48,7 @@ class PermintaanSuratController extends Controller
                 'koordinator' // Load relasi ke Dosen (Koordinator)
             ])
             ->where('Nama_Koordinator', $kaprodiId)
-            ->where('Status', 'Diajukan-ke-koordinator')
-            ->where('Acc_Koordinator', false)
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])
             ->orderBy('id_no', 'desc')
             ->get();
 

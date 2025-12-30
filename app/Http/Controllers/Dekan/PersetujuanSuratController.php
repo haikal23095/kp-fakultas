@@ -19,30 +19,27 @@ class PersetujuanSuratController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // Hitung jumlah surat per jenis yang menunggu persetujuan
         $countAktif = TugasSurat::where('Id_Jenis_Surat', 1)
             ->where(function ($q) {
                 $q->where('Status', 'menunggu-ttd')
-                  ->orWhereHas('suratKetAktif', function ($subQ) {
-                      $subQ->where('Status', 'menunggu-ttd');
-                  });
+                    ->orWhereHas('suratKetAktif', function ($subQ) {
+                        $subQ->where('Status', 'menunggu-ttd');
+                    });
             })
             ->count();
-        
+
         $countMagang = TugasSurat::where('Id_Jenis_Surat', 2)
-            ->where(function ($q) {
-                $q->where('Status', 'menunggu-ttd')
-                  ->orWhereHas('suratMagang', function ($subQ) {
-                      $subQ->where('Status', 'menunggu-ttd');
-                  });
+            ->whereHas('suratMagang', function ($subQ) {
+                $subQ->where('Status', 'Diajukan-ke-dekan');
             })
             ->count();
-        
+
         $countLegalisir = TugasSurat::where('Id_Jenis_Surat', 14) // Legalisir menggunakan Id_Jenis_Surat = 14
             ->whereHas('suratLegalisir') // Hanya yang punya relasi ke Surat_Legalisir
             ->count();
-        
+
         // TODO: Implementasi counting untuk jenis surat baru
         // Untuk sementara set 0, bisa diimplementasikan setelah tabel database dibuat
         $countCutiDosen = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
@@ -50,10 +47,10 @@ class PersetujuanSuratController extends Controller
         $countSKFakultas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countSuratTugas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countMBKM = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
-        
+
         return view('dekan.persetujuan_index', compact(
-            'countAktif', 
-            'countMagang', 
+            'countAktif',
+            'countMagang',
             'countLegalisir',
             'countCutiDosen',
             'countTidakBeasiswa',
@@ -69,20 +66,20 @@ class PersetujuanSuratController extends Controller
     public function listAktif()
     {
         $user = Auth::user();
-        
+
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas', 
-                'suratKetAktif',
-                'pemberiTugas.mahasiswa.prodi'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'penerimaTugas',
+            'suratKetAktif',
+            'pemberiTugas.mahasiswa.prodi'
+        ])
             ->where('Id_Jenis_Surat', 1)
             ->where(function ($q) {
                 $q->where('Status', 'menunggu-ttd')
-                  ->orWhereHas('suratKetAktif', function ($subQ) {
-                      $subQ->where('Status', 'menunggu-ttd');
-                  });
+                    ->orWhereHas('suratKetAktif', function ($subQ) {
+                        $subQ->where('Status', 'menunggu-ttd');
+                    });
             })
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->get();
@@ -96,22 +93,18 @@ class PersetujuanSuratController extends Controller
     public function listMagang()
     {
         $user = Auth::user();
-        
+
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas', 
-                'suratMagang',
-                'pemberiTugas.mahasiswa.prodi'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'penerimaTugas',
+            'suratMagang',
+            'pemberiTugas.mahasiswa.prodi'
+        ])
             ->where('Id_Jenis_Surat', 2)
-            ->where(function ($q) {
-                $q->where('Status', 'menunggu-ttd')
-                  ->orWhereHas('suratMagang', function ($subQ) {
-                      $subQ->where('Status', 'menunggu-ttd');
-                  });
+            ->whereHas('suratMagang', function ($subQ) {
+                $subQ->where('Status', 'Diajukan-ke-dekan');
             })
-            ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
             ->get();
 
         return view('dekan.persetujuan_surat', compact('daftarSurat'));
@@ -123,14 +116,14 @@ class PersetujuanSuratController extends Controller
     public function listLegalisir()
     {
         $user = Auth::user();
-        
+
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas', 
-                'suratLegalisir.user.role', // Eager load user (pemohon) dari Surat_Legalisir
-                'pemberiTugas.mahasiswa.prodi'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'penerimaTugas',
+            'suratLegalisir.user.role', // Eager load user (pemohon) dari Surat_Legalisir
+            'pemberiTugas.mahasiswa.prodi'
+        ])
             ->where('Id_Jenis_Surat', 14) // Legalisir menggunakan Id_Jenis_Surat = 14
             ->whereHas('suratLegalisir') // Hanya yang punya relasi ke Surat_Legalisir
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
@@ -146,13 +139,13 @@ class PersetujuanSuratController extends Controller
     public function listCutiDosen()
     {
         $user = Auth::user();
-        
+
         // TODO: Ganti dengan query yang sesuai setelah tabel surat_cuti_dosen dibuat
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'penerimaTugas'
+        ])
             ->where('Id_Jenis_Surat', 99) // TODO: Ganti dengan Id_Jenis_Surat yang benar
             ->where('Status', 'menunggu-ttd')
             ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
@@ -169,13 +162,13 @@ class PersetujuanSuratController extends Controller
     public function listTidakBeasiswa()
     {
         $user = Auth::user();
-        
+
         // TODO: Ganti dengan query yang sesuai
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'penerimaTugas'
+        ])
             ->where('Id_Jenis_Surat', 99) // TODO: Ganti dengan Id_Jenis_Surat yang benar
             ->where('Status', 'menunggu-ttd')
             ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
@@ -192,13 +185,13 @@ class PersetujuanSuratController extends Controller
     public function listSKFakultas()
     {
         $user = Auth::user();
-        
+
         // TODO: Ganti dengan query yang sesuai
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'penerimaTugas'
+        ])
             ->where('Id_Jenis_Surat', 99) // TODO: Ganti dengan Id_Jenis_Surat yang benar
             ->where('Status', 'menunggu-ttd')
             ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
@@ -215,13 +208,13 @@ class PersetujuanSuratController extends Controller
     public function listSuratTugas()
     {
         $user = Auth::user();
-        
+
         // TODO: Ganti dengan query yang sesuai
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'penerimaTugas'
+        ])
             ->where('Id_Jenis_Surat', 99) // TODO: Ganti dengan Id_Jenis_Surat yang benar
             ->where('Status', 'menunggu-ttd')
             ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
@@ -238,13 +231,13 @@ class PersetujuanSuratController extends Controller
     public function listMBKM()
     {
         $user = Auth::user();
-        
+
         // TODO: Ganti dengan query yang sesuai
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'penerimaTugas'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'penerimaTugas'
+        ])
             ->where('Id_Jenis_Surat', 99) // TODO: Ganti dengan Id_Jenis_Surat yang benar
             ->where('Status', 'menunggu-ttd')
             ->where('Id_Penerima_Tugas_Surat', $user->Id_User)

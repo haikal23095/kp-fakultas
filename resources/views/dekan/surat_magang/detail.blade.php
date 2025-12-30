@@ -39,7 +39,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4 fw-bold">Nomor Surat:</div>
                     <div class="col-md-8">
-                        <span class="badge bg-primary">{{ $surat->tugasSurat?->Nomor_Surat ?? $surat->Nomor_Surat ?? '-' }}</span>
+                        <span class="badge bg-primary">{{ $surat->Nomor_Surat ?? '-' }}</span>
                     </div>
                 </div>
 
@@ -132,7 +132,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4 fw-bold">Preview Surat:</div>
                     <div class="col-md-8">
-                        <button type="button" class="btn btn-sm btn-outline-success" onclick="togglePreviewSurat()">
+                        <button type="button" class="btn btn-sm btn-success" onclick="togglePreviewSurat()">
                             <i class="fas fa-file-contract"></i> Lihat Surat Pengantar Magang
                         </button>
                     </div>
@@ -171,7 +171,7 @@
                             <tr>
                                 <td style="width: 25%;">Nomor</td>
                                 <td style="width: 2%;">:</td>
-                                <td><strong>{{ $surat->tugasSurat?->Nomor_Surat ?? $surat->Nomor_Surat ?? '[Nomor Surat]' }}</strong></td>
+                                <td><strong>{{ $surat->Nomor_Surat ?? '[Nomor Surat]' }}</strong></td>
                             </tr>
                             <tr>
                                 <td>Perihal</td>
@@ -253,7 +253,19 @@
                                 </td>
                                 <td style="width: 50%; text-align: center; vertical-align: top;">
                                     <p style="margin: 0 0 5px 0;">Dekan Fakultas Teknik,</p>
-                                    <div style="height: 100px;"></div>
+                                    
+                                    @if($surat->Acc_Dekan && $surat->Qr_code_dekan)
+                                        {{-- Tampilkan QR Code jika sudah disetujui --}}
+                                        <div style="margin: 10px 0;">
+                                            <img src="{{ asset('storage/' . $surat->Qr_code_dekan) }}" 
+                                                 alt="QR Code Dekan" 
+                                                 style="width: 100px; height: 100px; display: inline-block;">
+                                        </div>
+                                    @else
+                                        {{-- Placeholder jika belum disetujui --}}
+                                        <div style="height: 100px;"></div>
+                                    @endif
+                                    
                                     @php
                                         // Ambil Dekan dari fakultas mahasiswa yang mengajukan
                                         $mahasiswaPengaju = $surat->tugasSurat?->pemberiTugas?->mahasiswa;
@@ -302,6 +314,21 @@
                     <small>Setelah disetujui, QR Code akan digenerate dan status berubah menjadi <strong>"Success"</strong></small>
                 </div>
 
+                @if($surat->Acc_Dekan && $surat->Status === 'Success')
+                    {{-- Surat sudah disetujui --}}
+                    <div class="alert alert-success">
+                        <h6 class="alert-heading fw-bold"><i class="fas fa-check-circle me-2"></i>Surat Telah Disetujui</h6>
+                        <hr>
+                        <p class="mb-0 small">Surat ini telah Anda setujui dan ditandatangani secara digital dengan QR Code.</p>
+                        @if($surat->Qr_code_dekan)
+                            <div class="text-center mt-3">
+                                <img src="{{ asset('storage/' . $surat->Qr_code_dekan) }}" alt="QR Code Dekan" style="width: 150px; height: 150px; border: 2px solid #198754; padding: 10px; background: white;">
+                                <p class="mt-2 mb-0 small text-muted">QR Code Tanda Tangan Digital Dekan</p>
+                            </div>
+                        @endif
+                    </div>
+                @else
+                    {{-- Form Persetujuan --}}
                 <form action="{{ route('dekan.surat_magang.approve', $surat->id_no) }}" method="POST">
                     @csrf
                     <div class="d-grid gap-2 mb-3">
@@ -314,6 +341,7 @@
                 <button type="button" class="btn btn-outline-danger w-100" data-bs-toggle="modal" data-bs-target="#rejectModal">
                     <i class="fas fa-times-circle me-2"></i>TOLAK
                 </button>
+                @endif
 
                 <div class="alert alert-warning mt-3 mb-0 small">
                     <i class="fas fa-exclamation-triangle me-1"></i>
