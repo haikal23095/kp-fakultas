@@ -42,6 +42,12 @@
                 Riwayat Surat
             </a>
         </li>
+        <li>
+            <a href="{{ route('dosen.sk.index') }}" class="nav-link text-white {{ request()->routeIs('dosen.sk.*') ? 'active' : '' }}">
+                <i class="fas fa-file-signature me-2"></i>
+                SK Dosen
+            </a>
+        </li>
     </ul>
     <hr>
     {{-- Notifikasi Link --}}

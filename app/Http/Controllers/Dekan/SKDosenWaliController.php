@@ -22,7 +22,7 @@ class SKDosenWaliController extends Controller
             ->orderBy('Tanggal-Pengajuan', 'desc')
             ->get();
 
-        return view('dekan.sk_dosen_wali', compact('daftarSK'));
+        return view('dekan.sk.dosen-wali', compact('daftarSK'));
     }
 
     /**
@@ -115,6 +115,15 @@ class SKDosenWaliController extends Controller
             Log::info('SK updated successfully', [
                 'status' => $sk->Status,
                 'qr_path' => $sk->QR_Code
+            ]);
+
+            // Update status di tabel Req_SK_Dosen_Wali yang terhubung dengan SK ini
+            $updatedCount = \App\Models\SKDosenWali::where('Id_Acc_SK_Dosen_Wali', $sk->No)
+                ->update(['Status' => 'Selesai']);
+
+            Log::info('Updated Req_SK_Dosen_Wali status', [
+                'acc_sk_id' => $sk->No,
+                'updated_count' => $updatedCount
             ]);
 
             return response()->json([

@@ -274,7 +274,7 @@ class PersetujuanSuratController extends Controller
         // Hitung total SK Dosen untuk badge di menu utama
         $countSKDosen = $skDosenWaliCount + $skBebanMengajarCount + $skPembimbingSkripsiCount + $skPengujiSkripsiCount;
 
-        return view('dekan.sk_dosen', compact(
+        return view('dekan.sk.index', compact(
             'skDosenWaliCount',
             'skDosenWaliTotal',
             'skBebanMengajarCount',
@@ -299,7 +299,7 @@ class PersetujuanSuratController extends Controller
             ->orderBy('Tanggal-Pengajuan', 'desc')
             ->get();
 
-        return view('dekan.sk_dosen_wali', compact('daftarSK'));
+        return view('dekan.sk.dosen-wali', compact('daftarSK'));
     }
 
     /**

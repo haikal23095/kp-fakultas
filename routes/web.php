@@ -275,6 +275,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/bimbingan', function () {
             return view('dosen.bimbingan_akademik');
         })->name('bimbingan.index');
+
+        // SK Dosen Routes
+        Route::get('/sk', [\App\Http\Controllers\Dosen\SKController::class, 'index'])->name('sk.index');
+        Route::get('/sk/dosen-wali', [\App\Http\Controllers\Dosen\SKController::class, 'indexDosenWali'])->name('sk.dosen-wali.index');
+        Route::get('/sk/dosen-wali/{id}/detail', [\App\Http\Controllers\Dosen\SKController::class, 'detailDosenWali'])->name('sk.dosen-wali.detail');
+        Route::get('/sk/dosen-wali/{id}/download', [\App\Http\Controllers\Dosen\SKController::class, 'downloadDosenWali'])->name('sk.dosen-wali.download');
     });
 
     // FITUR KAJUR
@@ -312,10 +318,16 @@ Route::middleware('auth')->group(function () {
             ->name('sk.index');
         Route::get('/sk/beban-mengajar/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createBebanMengajar'])
             ->name('sk.beban-mengajar.create');
+        Route::get('/sk/dosen-wali', [\App\Http\Controllers\Kaprodi\SKController::class, 'indexDosenWali'])
+            ->name('sk.dosen-wali.index');
         Route::get('/sk/dosen-wali/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createDosenWali'])
             ->name('sk.dosen-wali.create');
         Route::post('/sk/dosen-wali', [\App\Http\Controllers\Kaprodi\SKController::class, 'storeDosenWali'])
             ->name('sk.dosen-wali.store');
+        Route::get('/sk/dosen-wali/{id}/detail', [\App\Http\Controllers\Kaprodi\SKController::class, 'detailDosenWali'])
+            ->name('sk.dosen-wali.detail');
+        Route::get('/sk/dosen-wali/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadDosenWali'])
+            ->name('sk.dosen-wali.download');
         Route::get('/sk/pembimbing-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPembimbingSkripsi'])
             ->name('sk.pembimbing-skripsi.create');
         Route::get('/sk/penguji-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPengujiSkripsi'])
