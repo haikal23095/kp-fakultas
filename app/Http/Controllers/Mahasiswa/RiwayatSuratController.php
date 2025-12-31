@@ -23,7 +23,11 @@ class RiwayatSuratController extends Controller
 
         // Hitung jumlah surat per jenis
         $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 3)->count();
-        $countMagang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 2)->count();
+
+        // Ambil jumlah magang langsung dari tabel Surat_Magang via relasi TugasSurat
+        $countMagang = SuratMagang::whereHas('tugasSurat', function ($query) use ($user) {
+            $query->where('Id_Pemberi_Tugas_Surat', $user->Id_User);
+        })->count();
 
         // Cari ID Jenis Surat untuk Legalisir
         $jenisSuratLegalisir = \App\Models\JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
@@ -107,7 +111,7 @@ class RiwayatSuratController extends Controller
             ->orderBy('id_no', 'desc')
             ->get();
 
-        return view('mahasiswa.riwayat_magang', [
+        return view('mahasiswa.magang.riwayat_magang', [
             'riwayatSurat' => $riwayatSurat
         ]);
     }

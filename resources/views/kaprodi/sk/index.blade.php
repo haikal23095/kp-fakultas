@@ -23,6 +23,9 @@
         <h1 class="h3 fw-bold mb-0">Ajukan Surat Keputusan (SK)</h1>
         <p class="mb-0 text-muted">Pilih jenis SK yang ingin Anda ajukan</p>
     </div>
+    <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#riwayatModal">
+        <i class="fas fa-history me-2"></i>Riwayat Pengajuan SK
+    </button>
 </div>
 
 <div class="row g-4">
@@ -131,6 +134,102 @@
     </div>
 </div>
 
+<!-- Modal Riwayat Pengajuan SK -->
+<div class="modal fade" id="riwayatModal" tabindex="-1" aria-labelledby="riwayatModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="riwayatModalLabel">
+                    <i class="fas fa-history me-2"></i>Riwayat Pengajuan SK
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-4">Pilih jenis SK untuk melihat riwayat pengajuan Anda</p>
+                
+                <div class="row g-4">
+                    <!-- SK Beban Mengajar -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="card border hover-card-modal h-100">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <div class="icon-circle bg-primary bg-opacity-10 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                    <i class="fas fa-chalkboard-teacher fa-lg text-primary"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">SK Beban Mengajar</h6>
+                                    <p class="mb-0 small text-muted">Lihat riwayat pengajuan SK beban mengajar</p>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" onclick="alert('Fitur riwayat SK Beban Mengajar akan segera tersedia')">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SK Dosen Wali -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="card border hover-card-modal h-100">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <div class="icon-circle bg-success bg-opacity-10 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                    <i class="fas fa-user-graduate fa-lg text-success"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">SK Dosen Wali</h6>
+                                    <p class="mb-0 small text-muted">Lihat riwayat pengajuan SK dosen wali</p>
+                                </div>
+                                <a href="{{ route('kaprodi.sk.dosen-wali.index') }}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-arrow-right"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SK Pembimbing Skripsi -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="card border hover-card-modal h-100">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <div class="icon-circle bg-warning bg-opacity-10 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                    <i class="fas fa-book-reader fa-lg text-warning"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">SK Pembimbing Skripsi</h6>
+                                    <p class="mb-0 small text-muted">Lihat riwayat pengajuan SK pembimbing</p>
+                                </div>
+                                <button class="btn btn-sm btn-outline-warning" onclick="alert('Fitur riwayat SK Pembimbing Skripsi akan segera tersedia')">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SK Penguji Skripsi -->
+                    <div class="col-lg-6 col-md-6">
+                        <div class="card border hover-card-modal h-100">
+                            <div class="card-body d-flex align-items-center p-3">
+                                <div class="icon-circle bg-danger bg-opacity-10 me-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                    <i class="fas fa-user-check fa-lg text-danger"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1 fw-bold">SK Penguji Skripsi</h6>
+                                    <p class="mb-0 small text-muted">Lihat riwayat pengajuan SK penguji</p>
+                                </div>
+                                <button class="btn btn-sm btn-outline-danger" onclick="alert('Fitur riwayat SK Penguji Skripsi akan segera tersedia')">
+                                    <i class="fas fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @push('styles')
 <style>
     .hover-card {
@@ -149,6 +248,15 @@
     
     .hover-card:hover .icon-circle {
         transform: scale(1.1);
+    }
+
+    .hover-card-modal {
+        transition: all 0.2s ease;
+    }
+
+    .hover-card-modal:hover {
+        box-shadow: 0 0.25rem 0.75rem rgba(0, 0, 0, 0.1);
+        transform: translateX(5px);
     }
 </style>
 @endpush

@@ -22,7 +22,9 @@ class SKDosenWali extends Model
         'Nomor_Surat',
         'Status',
         'Tanggal-Pengajuan',
-        'Tanggal-Tenggat'
+        'Tanggal-Tenggat',
+        'Id_Dosen_Kaprodi',
+        'Id_Acc_SK_Dosen_Wali'
     ];
 
     protected $casts = [
@@ -37,5 +39,21 @@ class SKDosenWali extends Model
     public function prodi()
     {
         return $this->belongsTo(Prodi::class, 'Id_Prodi', 'Id_Prodi');
+    }
+
+    /**
+     * Relasi ke Dosen (Kaprodi yang mengajukan)
+     */
+    public function kaprodi()
+    {
+        return $this->belongsTo(Dosen::class, 'Id_Dosen_Kaprodi', 'Id_Dosen');
+    }
+
+    /**
+     * Relasi ke Acc_SK_Dosen_Wali (SK yang sudah digabungkan oleh admin)
+     */
+    public function accSK()
+    {
+        return $this->belongsTo(AccDekanDosenWali::class, 'Id_Acc_SK_Dosen_Wali', 'No');
     }
 }

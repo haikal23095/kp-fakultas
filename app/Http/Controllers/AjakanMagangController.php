@@ -35,7 +35,7 @@ class AjakanMagangController extends Controller
             ->orderBy('invited_at', 'desc')
             ->get();
 
-        return view('mahasiswa.ajakan_magang', compact('invitations'));
+        return view('mahasiswa.magang.ajakan_magang', compact('invitations'));
     }
 
     /**

@@ -155,9 +155,14 @@ class SKController extends Controller
                 ], 400);
             }
 
-            // Update status ke Menunggu-Persetujuan-Dekan
+            // Update status di tabel Acc_SK_Dosen_Wali ke Menunggu-Persetujuan-Dekan
             $sk->Status = 'Menunggu-Persetujuan-Dekan';
             $sk->save();
+
+            // Update status di tabel Req_SK_Dosen_Wali yang terhubung dengan SK ini (melalui Id_Acc_SK_Dosen_Wali)
+            SKDosenWali::where('Id_Acc_SK_Dosen_Wali', $sk->No)
+                ->where('Status', 'Menunggu-Persetujuan-Wadek-1')
+                ->update(['Status' => 'Menunggu-Persetujuan-Dekan']);
 
             DB::commit();
 

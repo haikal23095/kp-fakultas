@@ -80,6 +80,14 @@ class SKController extends Controller
         ]);
 
         try {
+            // Get kaprodi's Id_Dosen
+            $user = Auth::user();
+            $idDosenKaprodi = null;
+
+            if ($user->dosen) {
+                $idDosenKaprodi = $user->dosen->Id_Dosen;
+            }
+
             // Prepare data dosen wali untuk disimpan ke JSON
             $dataDosen = [];
             foreach ($request->dosen as $dosen) {
@@ -104,7 +112,8 @@ class SKController extends Controller
                 'Data_Dosen_Wali' => $dataDosen, // Laravel akan auto-encode karena ada casting di model
                 'Status' => 'Dikerjakan admin',
                 'Tanggal-Pengajuan' => $tanggalPengajuan,
-                'Tanggal-Tenggat' => $tanggalTenggat
+                'Tanggal-Tenggat' => $tanggalTenggat,
+                'Id_Dosen_Kaprodi' => $idDosenKaprodi
             ]);
 
             return redirect()->route('kaprodi.sk.index')
@@ -113,6 +122,123 @@ class SKController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Gagal mengajukan SK Dosen Wali: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Display list of submitted SK Dosen Wali
+     */
+    public function indexDosenWali()
+    {
+        // Get user info
+        $user = Auth::user();
+
+        // Get prodi from logged in kaprodi
+        $idProdi = null;
+        if ($user->dosen) {
+            $idProdi = $user->dosen->Id_Prodi;
+        } elseif ($user->pegawai) {
+            $idProdi = $user->pegawai->Id_Prodi;
+        }
+
+        // Get SK Dosen Wali data for this prodi
+        $skList = SKDosenWali::with('prodi')
+            ->when($idProdi, function ($query) use ($idProdi) {
+                return $query->where('Id_Prodi', $idProdi);
+            })
+            ->orderBy('Tanggal-Pengajuan', 'desc')
+            ->get();
+
+        return view('kaprodi.sk.dosen-wali.index', compact('skList'));
+    }
+
+    /**
+     * Get detail SK Dosen Wali for preview
+     */
+    public function detailDosenWali($id)
+    {
+        try {
+            // Get SK from Req_SK_Dosen_Wali
+            $sk = SKDosenWali::with('prodi')->findOrFail($id);
+
+            // Get Acc_SK if exists to get the final data
+            $accSK = null;
+            if ($sk->Id_Acc_SK_Dosen_Wali) {
+                $accSK = \App\Models\AccDekanDosenWali::find($sk->Id_Acc_SK_Dosen_Wali);
+            }
+
+            // Get Dekan info
+            $dekan = Dosen::where('Id_Pejabat', 1)->first();
+            $dekanName = $dekan ? $dekan->Nama_Dosen : 'Dr. Budi Hartono, S.Kom., M.Kom.';
+            $dekanNip = $dekan ? $dekan->NIP : '198503152010121001';
+
+            // If SK is completed and has Acc_SK, use data from Acc_SK
+            if ($sk->Status === 'Selesai' && $accSK) {
+                return response()->json([
+                    'success' => true,
+                    'sk' => $accSK, // Use Acc_SK data instead
+                    'accSK' => $accSK,
+                    'dekanName' => $dekanName,
+                    'dekanNip' => $dekanNip,
+                    'isFromAcc' => true // Flag to indicate data is from Acc_SK
+                ]);
+            }
+
+            // Otherwise return original SK data
+            return response()->json([
+                'success' => true,
+                'sk' => $sk,
+                'accSK' => $accSK,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip,
+                'isFromAcc' => false
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat detail SK: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Download SK Dosen Wali as PDF
+     */
+    public function downloadDosenWali($id)
+    {
+        try {
+            // Get SK from Req_SK_Dosen_Wali
+            $sk = SKDosenWali::with('prodi')->findOrFail($id);
+
+            // Check if SK is completed
+            if ($sk->Status !== 'Selesai') {
+                return redirect()->back()->with('error', 'SK belum selesai, tidak dapat diunduh');
+            }
+
+            // Get Acc_SK for QR code
+            $accSK = null;
+            if ($sk->Id_Acc_SK_Dosen_Wali) {
+                $accSK = \App\Models\AccDekanDosenWali::find($sk->Id_Acc_SK_Dosen_Wali);
+            }
+
+            if (!$accSK || !$accSK->QR_Code) {
+                return redirect()->back()->with('error', 'QR Code tidak ditemukan');
+            }
+
+            // Get Dekan info
+            $dekan = Dosen::where('Id_Pejabat', 1)->first();
+            $dekanName = $dekan ? $dekan->Nama_Dosen : 'Dr. Budi Hartono, S.Kom., M.Kom.';
+            $dekanNip = $dekan ? $dekan->NIP : '198503152010121001';
+
+            // Return view for print/download
+            return view('kaprodi.sk.dosen-wali.download', [
+                'sk' => $sk,
+                'accSK' => $accSK,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mendownload SK: ' . $e->getMessage());
         }
     }
 
