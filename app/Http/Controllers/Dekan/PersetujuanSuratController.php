@@ -10,6 +10,8 @@ use App\Models\Dosen;
 use App\Models\Mahasiswa;
 use App\Models\Pegawai;
 use App\Models\Prodi;
+use App\Models\Pejabat;
+use App\Helpers\QrCodeHelper;
 
 class PersetujuanSuratController extends Controller
 {
@@ -48,6 +50,9 @@ class PersetujuanSuratController extends Controller
         $countSuratTugas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countMBKM = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
 
+        // Hitung jumlah SK Dosen yang menunggu persetujuan
+        $countSKDosen = \App\Models\AccDekanDosenWali::where('Status', 'Menunggu-Persetujuan-Dekan')->count();
+
         return view('dekan.persetujuan_index', compact(
             'countAktif',
             'countMagang',
@@ -56,7 +61,8 @@ class PersetujuanSuratController extends Controller
             'countTidakBeasiswa',
             'countSKFakultas',
             'countSuratTugas',
-            'countMBKM'
+            'countMBKM',
+            'countSKDosen'
         ));
     }
 
@@ -245,5 +251,158 @@ class PersetujuanSuratController extends Controller
             ->get();
 
         return view('dekan.persetujuan_surat', compact('daftarSurat'));
+    }
+
+    /**
+     * Tampilkan halaman pilihan SK Dosen dengan beberapa card jenis SK
+     */
+    public function listSKDosen()
+    {
+        $user = Auth::user();
+
+        // Hitung jumlah per jenis SK Dosen yang menunggu persetujuan
+        $skDosenWaliCount = \App\Models\AccDekanDosenWali::where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->count();
+
+        $skDosenWaliTotal = \App\Models\AccDekanDosenWali::count();
+
+        // TODO: Implementasi counting untuk jenis SK lainnya
+        $skBebanMengajarCount = 0;
+        $skPembimbingSkripsiCount = 0;
+        $skPengujiSkripsiCount = 0;
+
+        // Hitung total SK Dosen untuk badge di menu utama
+        $countSKDosen = $skDosenWaliCount + $skBebanMengajarCount + $skPembimbingSkripsiCount + $skPengujiSkripsiCount;
+
+        return view('dekan.sk_dosen', compact(
+            'skDosenWaliCount',
+            'skDosenWaliTotal',
+            'skBebanMengajarCount',
+            'skPembimbingSkripsiCount',
+            'skPengujiSkripsiCount'
+        ));
+    }
+
+    /**
+     * Tampilkan daftar SK Dosen Wali yang menunggu persetujuan Dekan
+     */
+    public function listSKDosenWali()
+    {
+        $user = Auth::user();
+
+        // Ambil SK Dosen Wali dari tabel Acc_SK_Dosen_Wali yang menunggu persetujuan Dekan
+        $daftarSK = \App\Models\AccDekanDosenWali::with([
+            'reqSKDosenWali.prodi',
+            'reqSKDosenWali.kaprodi.user'
+        ])
+            ->where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->orderBy('Tanggal-Pengajuan', 'desc')
+            ->get();
+
+        return view('dekan.sk_dosen_wali', compact('daftarSK'));
+    }
+
+    /**
+     * Tampilkan detail SK Dosen Wali untuk preview (JSON)
+     */
+    public function showSKDosenWaliDetail($id)
+    {
+        try {
+            $sk = \App\Models\AccDekanDosenWali::findOrFail($id);
+
+            // Ambil data dekan dengan try-catch terpisah
+            $dekanName = 'Nama Dekan';
+            $dekanNip = '1234567890';
+
+            try {
+                // Cari Dosen yang memiliki Id_Pejabat = 1 (Dekan)
+                $dekanDosen = Dosen::where('Id_Pejabat', 1)
+                    ->with('user')
+                    ->first();
+
+                if ($dekanDosen) {
+                    // Prioritas: ambil dari Nama_Dosen (lebih lengkap dengan gelar)
+                    if ($dekanDosen->Nama_Dosen) {
+                        $dekanName = $dekanDosen->Nama_Dosen;
+                    } elseif ($dekanDosen->user) {
+                        $dekanName = $dekanDosen->user->name;
+                    }
+
+                    if ($dekanDosen->NIP) {
+                        $dekanNip = $dekanDosen->NIP;
+                    }
+                }
+            } catch (\Exception $dekanError) {
+                \Log::warning('Could not load Dekan data: ' . $dekanError->getMessage());
+                // Continue dengan default values
+            }
+
+            return response()->json([
+                'success' => true,
+                'sk' => $sk,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip,
+                'debug' => [
+                    'sk_id' => $sk->No,
+                    'semester' => $sk->Semester,
+                    'tahun_akademik' => $sk->Tahun_Akademik
+                ]
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'SK Dosen Wali tidak ditemukan'
+            ], 404);
+        } catch (\Exception $e) {
+            \Log::error('Error in showSKDosenWaliDetail: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat detail SK: ' . $e->getMessage(),
+                'error_type' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ], 500);
+        }
+    }
+
+    /**
+     * Approve SK Dosen Wali dan generate QR Code untuk tanda tangan
+     */
+    public function approveSKDosenWali($id)
+    {
+        try {
+            $sk = \App\Models\AccDekanDosenWali::findOrFail($id);
+
+            // Generate QR Code untuk verifikasi
+            $qrContent = url("/verify-sk-dosen-wali/{$sk->No}");
+            $qrPath = QrCodeHelper::generate($qrContent, 200);
+
+            if (!$qrPath) {
+                throw new \Exception('Gagal generate QR Code');
+            }
+
+            // Get URL untuk ditampilkan di preview
+            $qrUrl = asset('storage/' . $qrPath);
+
+            // Update status dan simpan QR code path
+            $sk->Status = 'Disetujui Dekan';
+            $sk->QR_Code = $qrPath; // Simpan path relatif ke database
+            $sk->Tanggal_Persetujuan_Dekan = now();
+            $sk->Id_Dekan = Auth::user()->Id_User;
+            $sk->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'SK Dosen Wali berhasil disetujui dan ditandatangani',
+                'qr_code' => $qrUrl  // Return URL untuk ditampilkan di HTML
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyetujui SK: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

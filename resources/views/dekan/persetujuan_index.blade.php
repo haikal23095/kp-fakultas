@@ -307,6 +307,24 @@
             </div>
         </a>
     </div>
+
+    {{-- Card SK Dosen --}}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <a href="{{ route('dekan.persetujuan.sk_dosen') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-success badge-count">
+                    {{ $countSKDosen ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon green">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <h5>SK Dosen</h5>
+                    <p>Tandatangani Surat Keputusan (SK) untuk dosen</p>
+                </div>
+            </div>
+        </a>
+    </div>
 </div>
 
 {{-- Info Card --}}

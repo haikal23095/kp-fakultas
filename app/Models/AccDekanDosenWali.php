@@ -29,4 +29,12 @@ class AccDekanDosenWali extends Model
         'Tanggal-Pengajuan' => 'datetime',
         'Tanggal-Tenggat' => 'datetime',
     ];
+
+    /**
+     * Relasi ke Req_SK_Dosen_Wali (Request SK yang sudah digabungkan)
+     */
+    public function reqSKDosenWali()
+    {
+        return $this->hasMany(SKDosenWali::class, 'Id_Acc_SK_Dosen_Wali', 'No');
+    }
 }

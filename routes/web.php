@@ -218,6 +218,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/persetujuan-surat/surat-tugas', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSuratTugas'])->name('persetujuan.surat_tugas');
         Route::get('/persetujuan-surat/mbkm', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listMBKM'])->name('persetujuan.mbkm');
 
+        // Route untuk SK Dosen
+        Route::get('/persetujuan-surat/sk-dosen', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSKDosen'])->name('persetujuan.sk_dosen');
+
+        // Route untuk SK Dosen Wali - menggunakan controller terpisah
+        Route::get('/persetujuan-surat/sk-dosen-wali', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'index'])->name('persetujuan.sk_dosen_wali');
+        Route::get('/sk-dosen-wali/history', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'history'])->name('sk_dosen_wali.history');
+        Route::get('/sk-dosen-wali/{id}', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'detail'])->name('sk_dosen_wali.detail');
+        Route::post('/sk-dosen-wali/{id}/approve', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'approve'])->name('sk_dosen_wali.approve');
+
         Route::get('/surat/{id}/detail', [App\Http\Controllers\Dekan\DetailSuratController::class, 'show'])->name('surat.detail');
         Route::get('/surat/{id}/preview', [App\Http\Controllers\Dekan\DetailSuratController::class, 'previewDraft'])->name('surat.preview');
         Route::get('/surat/{id}/download', [App\Http\Controllers\Dekan\DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
