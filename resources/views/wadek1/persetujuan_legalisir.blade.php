@@ -1,4 +1,4 @@
-@extends('layouts.dekan')
+@extends('layouts.wadek1')
 
 @section('title', 'Persetujuan Legalisir')
 
@@ -22,7 +22,7 @@
 
     <div class="card shadow-sm border-0">
         <div class="card-header bg-white py-3">
-            <h6 class="m-0 fw-bold text-primary">Daftar Legalisir Menunggu Tanda Tangan</h6>
+            <h6 class="m-0 fw-bold text-success">Daftar Legalisir Menunggu Tanda Tangan</h6>
         </div>
         <div class="card-body">
             <div class="alert alert-info border-0 mb-4">
@@ -58,7 +58,7 @@
                                 <td>{{ $legalisir->Jumlah_Salinan }} Lembar</td>
                                 <td>
                                     @if($legalisir->File_Scan_Path)
-                                        <button type="button" class="btn btn-sm btn-outline-primary" 
+                                        <button type="button" class="btn btn-sm btn-outline-success" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#modalPreview{{ $legalisir->id_no }}">
                                             <i class="fas fa-file-pdf me-1"></i>Lihat PDF
@@ -75,7 +75,7 @@
                                     @endif
                                 </td>
                                 <td class="text-center">
-                                    <form action="{{ route('dekan.legalisir.approve', $legalisir->id_no) }}" method="POST" class="d-inline">
+                                    <form action="{{ route('wadek1.legalisir.approve', $legalisir->id_no) }}" method="POST" class="d-inline">
                                         @csrf
                                         <button type="submit" class="btn btn-sm btn-success" onclick="return confirm('Tanda tangani dokumen legalisir ini dengan QR digital Anda?')">
                                             <i class="fas fa-signature me-1"></i>Tanda Tangan
@@ -89,7 +89,7 @@
                             <div class="modal fade" id="modalPreview{{ $legalisir->id_no }}" tabindex="-1" aria-hidden="true">
                                 <div class="modal-dialog modal-xl modal-dialog-centered">
                                     <div class="modal-content">
-                                        <div class="modal-header bg-primary text-white">
+                                        <div class="modal-header bg-success text-white">
                                             <h5 class="modal-title fw-bold">Preview File Scan - {{ $legalisir->user->Name_User ?? 'N/A' }}</h5>
                                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                                         </div>

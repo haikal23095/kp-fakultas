@@ -33,6 +33,12 @@
 
         <li class="nav-heading mt-3 mb-1 small">WADEK 1 MENU</li>
         <li>
+            <a href="{{ route('wadek1.persetujuan.legalisir') }}" class="nav-link text-white {{ request()->is('wadek1/persetujuan-surat/legalisir') ? 'active' : '' }}">
+                <i class="fas fa-stamp me-2"></i>
+                Legalisir
+            </a>
+        </li>
+        <li>
             <a href="{{ route('wadek1.sk.index') }}" class="nav-link text-white {{ request()->is('wadek1/sk-dosen*') ? 'active' : '' }}">
                 <i class="fas fa-file-signature me-2"></i>
                 SK Dosen

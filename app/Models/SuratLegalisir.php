@@ -30,7 +30,11 @@ class SuratLegalisir extends Model
         'Jumlah_Salinan',
         'Biaya',
         'Tanggal_Bayar',
-        'Nomor_Surat_Legalisir',
+        'File_Scan_Path',
+        'File_Signed_Path',
+        'Is_Verified',
+        'TTD_Oleh',
+        'TTD_At',
         'Status',
     ];
 
@@ -58,5 +62,30 @@ class SuratLegalisir extends Model
     public function pejabat()
     {
         return $this->belongsTo(Pejabat::class, 'Id_Pejabat', 'Id_Pejabat');
+    }
+
+    /**
+     * Relasi ke User yang TTD (Dekan atau Wadek1)
+     */
+    public function penandatangan()
+    {
+        // TTD_Oleh berisi Id_User dari pejabat yang TTD
+        return $this->belongsTo(User::class, 'TTD_Oleh', 'Id_User');
+    }
+
+    /**
+     * Cek apakah file scan sudah diverifikasi
+     */
+    public function isVerified()
+    {
+        return $this->Is_Verified == true;
+    }
+
+    /**
+     * Cek apakah sudah ada file signed (sudah TTD)
+     */
+    public function isSigned()
+    {
+        return !empty($this->File_Signed_Path);
     }
 }

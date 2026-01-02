@@ -203,13 +203,11 @@ Route::middleware('auth')->group(function () {
         // Route: Teruskan ke Dekan (setelah beri nomor)
         Route::post('/surat/{id}/forward', [FakultasDetailSuratController::class, 'forwardToDean'])->name('surat.forward');
 
-        // Route: Legalisir - Tandai Sudah Bayar
+        // Route: Legalisir - Verifikasi File, Bayar, Kirim TTD
         Route::get('/surat-legalisir', [FakultasSuratLegalisirController::class, 'index'])->name('surat_legalisir.index');
-        Route::get('/input', [FakultasSuratLegalisirController::class, 'create'])->name('surat_legalisir.create');
-        Route::post('/store', [FakultasSuratLegalisirController::class, 'store'])->name('surat_legalisir.store');
-        Route::post('/surat-legalisir/{id}/verifikasi', [FakultasSuratLegalisirController::class, 'verifikasi'])->name('surat_legalisir.verifikasi');
+        Route::post('/surat-legalisir/{id}/verifikasi', [FakultasSuratLegalisirController::class, 'verifikasiFile'])->name('surat_legalisir.verifikasi');
         Route::post('/surat-legalisir/{id}/bayar', [FakultasSuratLegalisirController::class, 'konfirmasiPembayaran'])->name('surat_legalisir.bayar');
-        Route::post('/surat-legalisir/{id}/beri-nomor', [FakultasSuratLegalisirController::class, 'beriNomorSurat'])->name('surat_legalisir.beri_nomor');
+        Route::post('/surat-legalisir/{id}/kirim-pimpinan', [FakultasSuratLegalisirController::class, 'kirimKePimpinan'])->name('surat_legalisir.kirim_pimpinan');
         Route::post('/surat-legalisir/{id}/progress', [FakultasSuratLegalisirController::class, 'updateProgress'])->name('surat_legalisir.progress');
 
         // Arsip surat
@@ -248,6 +246,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/persetujuan-surat/aktif', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listAktif'])->name('persetujuan.aktif');
         Route::get('/persetujuan-surat/magang', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listMagang'])->name('persetujuan.magang');
         Route::get('/persetujuan-surat/legalisir', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listLegalisir'])->name('persetujuan.legalisir');
+        Route::post('/legalisir/{id}/approve', [App\Http\Controllers\Dekan\LegalisirController::class, 'approve'])->name('legalisir.approve');
 
         // TODO: Routes untuk jenis surat baru (setelah implementasi database)
         Route::get('/persetujuan-surat/cuti-dosen', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listCutiDosen'])->name('persetujuan.cuti_dosen');
@@ -277,6 +276,10 @@ Route::middleware('auth')->group(function () {
 
     // FITUR WADEK 1
     Route::prefix('wadek1')->name('wadek1.')->group(function () {
+        // Persetujuan Legalisir
+        Route::get('/persetujuan-surat/legalisir', [\App\Http\Controllers\Wadek1\PersetujuanSuratController::class, 'listLegalisir'])->name('persetujuan.legalisir');
+        Route::post('/legalisir/{id}/approve', [\App\Http\Controllers\Wadek1\LegalisirController::class, 'approve'])->name('legalisir.approve');
+        
         Route::get('/sk-dosen', [\App\Http\Controllers\Wadek1\SKController::class, 'index'])
             ->name('sk.index');
 

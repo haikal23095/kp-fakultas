@@ -56,11 +56,8 @@
     <div class="d-sm-flex align-items-center justify-content-between mb-4">
         <div>
             <h1 class="h3 mb-0 text-gray-800 fw-bold">Antrean Legalisir</h1>
-            <p class="text-muted small">Kelola pembayaran dan progres berkas fisik mahasiswa</p>
+            <p class="text-muted small">Kelola verifikasi file, pembayaran dan progres berkas fisik mahasiswa</p>
         </div>
-        <a href="{{ route('admin_fakultas.surat_legalisir.create') }}" class="btn btn-primary btn-action shadow-sm">
-            <i class="fas fa-plus me-1"></i> Input Pengajuan Baru
-        </a>
     </div>
 
     {{-- Pesan Sukses --}}
@@ -84,7 +81,7 @@
                             <th class="text-start">Mahasiswa</th>
                             <th>Dokumen</th>
                             <th>Jumlah</th>
-                            <th>Nomor Surat</th>
+                            <th>File Scan</th>
                             <th>Biaya</th>
                             <th>Tgl Bayar</th>
                             <th>Status</th>
@@ -104,10 +101,24 @@
                             </td>
                             <td>{{ $surat->Jumlah_Salinan }} Copy</td>
                             <td>
-                                @if($surat->Nomor_Surat_Legalisir)
-                                    <span class="fw-bold text-primary">{{ $surat->Nomor_Surat_Legalisir }}</span>
+                                @if($surat->isSigned() && $surat->File_Signed_Path)
+                                    {{-- Tampilkan PDF Signed (sudah TTD) --}}
+                                    <button type="button" class="btn btn-sm btn-success" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalPreview_{{ $surat->id_no }}">
+                                        <i class="fas fa-check-circle me-1"></i>PDF Signed (TTD)
+                                    </button>
+                                    <br><small class="text-success fw-bold" style="font-size: 0.7rem;">✓ Ditandatangani</small>
+                                @elseif($surat->File_Scan_Path)
+                                    {{-- Tampilkan PDF Scan (belum TTD) --}}
+                                    <button type="button" class="btn btn-sm btn-outline-primary" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalPreview_{{ $surat->id_no }}">
+                                        <i class="fas fa-file-pdf me-1"></i>Lihat PDF
+                                    </button>
+                                    <br><small class="text-muted" style="font-size: 0.7rem;">{{ basename($surat->File_Scan_Path) }}</small>
                                 @else
-                                    <small class="text-muted fst-italic">Belum ada nomor</small>
+                                    <small class="text-muted fst-italic">Tidak ada file</small>
                                 @endif
                             </td>
                             <td class="fw-bold text-success">
@@ -131,27 +142,34 @@
                                 </span>
                             </td>
                             <td>
-                                @if($surat->Status == 'menunggu_pembayaran')
+                                @if($surat->Status == 'menunggu_pembayaran' && !$surat->Is_Verified)
+                                    {{-- Tombol Lihat & Verifikasi File --}}
+                                    @if($surat->File_Scan_Path)
+                                        <button type="button" class="btn btn-sm btn-info btn-action" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalVerifikasi_{{ $surat->id_no }}">
+                                            <i class="fas fa-eye me-1"></i>Lihat & Verifikasi
+                                        </button>
+                                    @else
+                                        <span class="text-muted small">File tidak tersedia</span>
+                                    @endif
+                                @elseif($surat->Status == 'menunggu_pembayaran' && $surat->Is_Verified)
                                     {{-- Tombol Pemicu Modal Pembayaran --}}
                                     <button type="button" class="btn btn-sm btn-success btn-action" 
                                             data-bs-toggle="modal" 
-                                            data-bs-target="#modalBayar{{ $surat->id_no }}">
+                                            data-bs-target="#modalBayar_{{ $surat->id_no }}">
                                         <i class="fas fa-cash-register me-1"></i>Bayar
                                     </button>
                                 @elseif($surat->Status == 'pembayaran_lunas')
-                                    {{-- Tombol Input Nomor Surat --}}
-                                    <button type="button" class="btn btn-sm btn-warning btn-action" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#modalNomor{{ $surat->id_no }}">
-                                        <i class="fas fa-hashtag me-1"></i>Beri Nomor
-                                    </button>
-                                @elseif($surat->Status == 'menunggu_ttd_pimpinan')
-                                    <form action="{{ route('admin_fakultas.surat_legalisir.progress', $surat->id_no) }}" method="POST" class="d-inline">
+                                    {{-- Tombol Kirim ke Pimpinan --}}
+                                    <form action="{{ route('admin_fakultas.surat_legalisir.kirim_pimpinan', $surat->id_no) }}" method="POST" class="d-inline">
                                         @csrf
-                                        <button type="submit" class="btn btn-sm btn-info btn-action" onclick="return confirm('Apakah berkas sudah ditandatangani Dekan?')">
-                                            <i class="fas fa-signature me-1"></i>Sudah TTD
+                                        <button type="submit" class="btn btn-sm btn-warning btn-action" onclick="return confirm('Kirim ke Dekan dan Wadek1 untuk TTD?')">
+                                            <i class="fas fa-paper-plane me-1"></i>Kirim TTD
                                         </button>
                                     </form>
+                                @elseif($surat->Status == 'menunggu_ttd_pimpinan')
+                                    <span class="badge bg-warning text-dark"><i class="fas fa-hourglass-half me-1"></i>Menunggu TTD Pimpinan</span>
                                 @elseif($surat->Status == 'siap_diambil')
                                     <form action="{{ route('admin_fakultas.surat_legalisir.progress', $surat->id_no) }}" method="POST" class="d-inline">
                                         @csrf
@@ -167,7 +185,7 @@
 
                         {{-- MODAL KONFIRMASI PEMBAYARAN (Harus di dalam loop @foreach) --}}
                         @if($surat->Status == 'menunggu_pembayaran')
-                        <div class="modal fade" id="modalBayar{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
+                        <div class="modal fade" id="modalBayar_{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
                             <div class="modal-dialog modal-dialog-centered">
                                 <div class="modal-content" style="border-radius: 15px;">
                                     <form action="{{ route('admin_fakultas.surat_legalisir.bayar', $surat->id_no) }}" method="POST">
@@ -197,39 +215,70 @@
                         @endif
                         {{-- END MODAL PEMBAYARAN --}}
 
-                        {{-- MODAL INPUT NOMOR SURAT (Untuk status pembayaran_lunas) --}}
-                        @if($surat->Status == 'pembayaran_lunas')
-                        <div class="modal fade" id="modalNomor{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
-                            <div class="modal-dialog modal-dialog-centered">
+                        {{-- MODAL VERIFIKASI FILE (Untuk yang belum terverifikasi) --}}
+                        @if($surat->Status == 'menunggu_pembayaran' && !$surat->Is_Verified && $surat->File_Scan_Path)
+                        <div class="modal fade" id="modalVerifikasi_{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-xl modal-dialog-centered">
                                 <div class="modal-content" style="border-radius: 15px;">
-                                    <form action="{{ route('admin_fakultas.surat_legalisir.beri_nomor', $surat->id_no) }}" method="POST">
-                                        @csrf
-                                        <div class="modal-header bg-warning text-dark" style="border-radius: 15px 15px 0 0;">
-                                            <h5 class="modal-title fw-bold">Input Nomor Surat Legalisir</h5>
-                                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                    <div class="modal-header bg-info text-white" style="border-radius: 15px 15px 0 0;">
+                                        <h5 class="modal-title fw-bold">Verifikasi File Scan - {{ $surat->user->Name_User ?? 'N/A' }}</h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-0">
+                                        <div class="alert alert-warning m-3 mb-0">
+                                            <i class="fas fa-exclamation-triangle me-2"></i>
+                                            <strong>Perhatian:</strong> Pastikan file scan sesuai dengan dokumen asli ({{ $surat->Jenis_Dokumen }}) yang dibawa mahasiswa.
                                         </div>
-                                        <div class="modal-body p-4">
-                                            <div class="mb-3">
-                                                <label class="form-label fw-bold">Nomor Surat Legalisir</label>
-                                                <input type="text" name="nomor_surat" class="form-control" 
-                                                       placeholder="Contoh: 123/UN12.3/LG/2025" required>
-                                                <small class="text-muted">Format: Nomor/Kode/LG/Tahun</small>
-                                            </div>
-                                            <div class="alert alert-info border-0 small mb-0">
-                                                <i class="fas fa-info-circle me-1"></i> 
-                                                Setelah nomor surat diberikan, berkas akan dikirim ke Dekan untuk ditandatangani.
-                                            </div>
-                                        </div>
-                                        <div class="modal-footer border-0">
-                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
-                                            <button type="submit" class="btn btn-warning rounded-pill px-4 fw-bold shadow-sm">Simpan & Kirim ke Dekan</button>
-                                        </div>
-                                    </form>
+                                        <iframe src="{{ asset('storage/' . $surat->File_Scan_Path) }}" 
+                                                style="width:100%; height:500px; border:none;"></iframe>
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                        <form action="{{ route('admin_fakultas.surat_legalisir.verifikasi', $surat->id_no) }}" method="POST" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-success rounded-pill px-4 fw-bold shadow-sm">
+                                                <i class="fas fa-check-circle me-1"></i>Verifikasi File Ini
+                                            </button>
+                                        </form>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                         @endif
-                        {{-- END MODAL NOMOR SURAT --}}
+                        {{-- END MODAL VERIFIKASI --}}
+
+                        {{-- MODAL PREVIEW PDF (Untuk yang sudah terverifikasi, hanya lihat) --}}
+                        @if($surat->File_Scan_Path || $surat->File_Signed_Path)
+                        <div class="modal fade" id="modalPreview_{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-xl modal-dialog-centered">
+                                <div class="modal-content" style="border-radius: 15px;">
+                                    <div class="modal-header {{ $surat->isSigned() ? 'bg-success' : 'bg-primary' }} text-white" style="border-radius: 15px 15px 0 0;">
+                                        <h5 class="modal-title fw-bold">
+                                            @if($surat->isSigned())
+                                                <i class="fas fa-check-circle me-2"></i>Preview File Signed (TTD) - {{ $surat->user->Name_User ?? 'N/A' }}
+                                            @else
+                                                Preview File Scan - {{ $surat->user->Name_User ?? 'N/A' }}
+                                            @endif
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    </div>
+                                    <div class="modal-body p-0">
+                                        @if($surat->isSigned() && $surat->File_Signed_Path)
+                                            <iframe src="{{ asset('storage/' . $surat->File_Signed_Path) }}" 
+                                                    style="width:100%; height:600px; border:none;"></iframe>
+                                        @else
+                                            <iframe src="{{ asset('storage/' . $surat->File_Scan_Path) }}" 
+                                                    style="width:100%; height:600px; border:none;"></iframe>
+                                        @endif
+                                    </div>
+                                    <div class="modal-footer border-0">
+                                        <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Tutup</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                        {{-- END MODAL PREVIEW --}}
 
                         @endforeach
                     </tbody>
@@ -242,16 +291,11 @@
 
 @push('scripts')
 <script>
-    $(document).ready(function() {
-        // Inisialisasi DataTable jika tersedia
-        if ($.fn.DataTable) {
-            $('#tableLegalisir').DataTable({
-                "language": {
-                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Indonesian.json"
-                },
-                "pageLength": 10
-            });
-        }
+    // Modal Bootstrap 5 sudah otomatis initialize via data-bs-toggle
+    // TIDAK perlu DataTables karena data tidak banyak dan bikin conflict dengan Bootstrap Modal
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log('✅ Legalisir list loaded - Modals ready');
     });
 </script>
 @endpush

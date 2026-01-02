@@ -37,10 +37,17 @@ class RiwayatSuratController extends Controller
 
         // Hitung jenis surat lainnya
         $countMobilDinas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 15)->count();
-        $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 16)->count();
+        $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 6)
+            ->whereHas('suratTidakBeasiswa')
+            ->count();
         $countCekPlagiasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 17)->count();
         $countDispensasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 18)->count();
-        $countBerkelakuanBaik = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 19)->count();
+        $countBerkelakuanBaik = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->whereHas('jenisSurat', function($q) {
+                $q->where('Nama_Surat', 'LIKE', '%Berkelakuan Baik%');
+            })
+            ->count();
         $countSuratTugas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 20)->count();
         $countMBKM = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 21)->count();
         $countPeminjamanGedung = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 22)->count();
@@ -272,9 +279,10 @@ class RiwayatSuratController extends Controller
     
     public function riwayatTidakBeasiswa() { 
         $user = Auth::user();
-        $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratTidakBeasiswa'])
+        $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratTidakBeasiswa', 'verification'])
             ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
             ->where('Id_Jenis_Surat', 6)
+            ->whereHas('suratTidakBeasiswa')
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->get();
 

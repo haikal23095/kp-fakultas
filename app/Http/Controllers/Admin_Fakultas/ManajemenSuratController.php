@@ -43,8 +43,11 @@ class ManajemenSuratController extends Controller
         // Total semua surat
         $totalSemua = $baseQuery()->count();
 
-        // Hitung untuk Surat Keterangan Aktif - GUNAKAN RELASI
-        $countAktif = $baseQuery()->has('suratKetAktif')->count();
+        // Hitung untuk Surat Keterangan Aktif - GUNAKAN RELASI (exclude yang sudah selesai)
+        $countAktif = $baseQuery()
+            ->has('suratKetAktif')
+            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'Telah ditandatangani Dekan'])
+            ->count();
         $pendingAktif = $baseQuery()
             ->has('suratKetAktif')
             ->whereIn('Status', ['baru', 'pending', 'Diajukan-ke-koordinator'])
@@ -53,10 +56,7 @@ class ManajemenSuratController extends Controller
             ->has('suratKetAktif')
             ->whereIn('Status', ['proses', 'Dikerjakan-admin'])
             ->count();
-        $selesaiAktif = $baseQuery()
-            ->has('suratKetAktif')
-            ->whereIn('Status', ['selesai', 'Success', 'Disetujui'])
-            ->count();
+        $selesaiAktif = 0; // Selesai sudah pindah ke arsip
 
         // Hitung untuk Surat Magang - GUNAKAN RELASI (hanya yang belum ada nomor surat)
         $countMagang = $baseQuery()->has('suratMagang')->where(function($q) {
@@ -116,6 +116,7 @@ class ManajemenSuratController extends Controller
 
         $baseQuery = TugasSurat::query()
             ->has('suratKetAktif') // GUNAKAN RELASI BUKAN Id_Jenis_Surat
+            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'Telah ditandatangani Dekan']) // Filter surat yang sudah selesai
             ->where(function ($q) use ($fakultasId) {
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
@@ -331,10 +332,9 @@ class ManajemenSuratController extends Controller
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        // Ambil semua surat yang SUDAH ADA NOMOR SURAT (sudah diproses admin), tidak peduli statusnya
+        // Ambil semua surat yang SUDAH SELESAI (statusnya selesai), tidak peduli ada nomor atau tidak
         $arsipTugas = TugasSurat::query()
-            ->whereNotNull('Nomor_Surat')
-            ->where('Nomor_Surat', '!=', '')
+            ->whereIn('Status', ['selesai', 'Selesai', 'SELESAI', 'Telah ditandatangani Dekan'])
             ->where(function ($q) use ($fakultasId) {
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
@@ -404,11 +404,10 @@ class ManajemenSuratController extends Controller
                 ->orderBy('id_no', 'desc')
                 ->get();
         } else {
-            // Untuk surat lain, query Tugas_Surat seperti biasa
+            // Untuk surat lain, query Tugas_Surat berdasarkan status selesai
             $arsipTugas = TugasSurat::query()
                 ->where('Id_Jenis_Surat', $id)
-                ->whereNotNull('Nomor_Surat')
-                ->where('Nomor_Surat', '!=', '')
+                ->whereIn('Status', ['selesai', 'Selesai', 'SELESAI', 'Telah ditandatangani Dekan'])
                 ->where(function ($q) use ($fakultasId) {
                     $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                         $subQ->where('Id_Fakultas', $fakultasId);

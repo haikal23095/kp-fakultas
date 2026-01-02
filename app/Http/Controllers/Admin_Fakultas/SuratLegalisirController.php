@@ -34,9 +34,10 @@ class SuratLegalisirController extends Controller
         $this->checkAccess();
 
         // HANYA ambil data mahasiswa (bukan dekan/pegawai) dan yang belum selesai
-        $daftarSurat = SuratLegalisir::with(['user.mahasiswa', 'tugasSurat'])
+        $daftarSurat = SuratLegalisir::with(['user.mahasiswa.prodi', 'tugasSurat'])
             ->whereHas('user.mahasiswa') // FILTER: Hanya yang punya relasi mahasiswa
             ->where('Status', '!=', 'selesai') // EXCLUDE: Data yang sudah selesai
+            ->whereNotNull('File_Scan_Path') // FILTER: Hanya yang ada file scan (data baru)
             ->orderBy('id_no', 'desc')
             ->get();
 
@@ -44,61 +45,30 @@ class SuratLegalisirController extends Controller
     }
 
     /**
-     * Form untuk input pengajuan baru oleh admin
+     * Verifikasi file scan mahasiswa
      */
-    public function create()
-    {
-        $this->checkAccess();
-        
-        // Mengambil data mahasiswa beserta user dan prodi untuk dropdown pencarian
-        $daftarMahasiswa = Mahasiswa::with(['user', 'prodi'])->get();
-        
-        return view('admin_fakultas.surat_legalisir.create', compact('daftarMahasiswa'));
-    }
-
-    /**
-     * Menyimpan data pengajuan baru
-     */
-    public function store(Request $request)
+    public function verifikasiFile($id)
     {
         $this->checkAccess();
 
-        $request->validate([
-            'id_user_mahasiswa' => 'required|exists:Users,Id_User',
-            'jenis_dokumen'     => 'required|in:Ijazah,Transkrip',
-            'jumlah_salinan'    => 'required|integer|min:1',
-            'biaya'             => 'required|integer|min:0',
+        $surat = SuratLegalisir::findOrFail($id);
+
+        if ($surat->Status !== 'menunggu_pembayaran') {
+            return redirect()->back()->with('error', 'Status berkas tidak valid untuk verifikasi.');
+        }
+
+        if ($surat->Is_Verified) {
+            return redirect()->back()->with('info', 'File sudah terverifikasi sebelumnya.');
+        }
+
+        $surat->update([
+            'Is_Verified' => true,
         ]);
 
-        DB::beginTransaction();
-        try {
-            // 1. Membuat Parent (TugasSurat)
-            $tugasSurat = TugasSurat::create([
-                'Id_Pemberi_Tugas_Surat'        => Auth::id(),
-                'Id_Jenis_Surat'                => 3, // Sesuaikan ID Jenis Surat Legalisir di sistem Anda
-                'Tanggal_Diberikan_Tugas_Surat' => Carbon::now(),
-                'Judul_Tugas_Surat'             => 'Legalisir ' . $request->jenis_dokumen,
-                'Status_Tugas_Surat'            => 'diproses',
-            ]);
+        // Mengirim notifikasi ke mahasiswa
+        $this->sendNotification($surat->Id_User, 'File Terverifikasi', 'File scan legalisir Anda telah diverifikasi admin. Silakan lakukan pembayaran.', $surat->id_no);
 
-            // 2. Membuat Child (SuratLegalisir) dengan kolom underscore sesuai DB
-            SuratLegalisir::create([
-                'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
-                'Id_User'        => $request->id_user_mahasiswa,
-                'Jenis_Dokumen'  => $request->jenis_dokumen,
-                'Jumlah_Salinan' => $request->jumlah_salinan,
-                'Biaya'          => $request->biaya, // Biaya disimpan di sini
-                'Status'         => 'menunggu_pembayaran', // Status awal default
-            ]);
-
-            DB::commit();
-            return redirect()->route('admin_fakultas.surat_legalisir.index')
-                ->with('success', 'Data legalisir mahasiswa berhasil ditambahkan.');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()->with('error', 'Gagal menyimpan: ' . $e->getMessage());
-        }
+        return redirect()->back()->with('success', 'File scan berhasil diverifikasi!');
     }
 
     /**
@@ -128,43 +98,43 @@ class SuratLegalisirController extends Controller
     /**
      * Input Nomor Surat Legalisir dan kirim ke Dekan
      */
-    public function beriNomorSurat(Request $request, $id)
+    public function kirimKePimpinan($id)
     {
         $this->checkAccess();
 
-        $request->validate([
-            'nomor_surat' => 'required|string|max:100',
-        ]);
-
-        $surat = SuratLegalisir::findOrFail($id);
+        $surat = SuratLegalisir::with('tugasSurat')->findOrFail($id);
 
         if ($surat->Status !== 'pembayaran_lunas') {
-            return redirect()->back()->with('error', 'Status berkas tidak valid untuk pemberian nomor.');
+            return redirect()->back()->with('error', 'Status berkas tidak valid. Harus pembayaran_lunas.');
         }
 
-        // Set Pejabat Dekan otomatis
-        $pejabatDekan = Pejabat::where('Nama_Jabatan', 'LIKE', '%Dekan%')->first();
-        
         $surat->update([
-            'Nomor_Surat_Legalisir' => $request->nomor_surat,
-            'Status'                => 'menunggu_ttd_pimpinan',
-            'Id_Pejabat'            => $pejabatDekan ? $pejabatDekan->Id_Pejabat : null,
+            'Status' => 'menunggu_ttd_pimpinan',
         ]);
+
+        // Update TugasSurat
+        if ($surat->tugasSurat) {
+            $surat->tugasSurat->update([
+                'Status' => 'Menunggu TTD Pimpinan',
+            ]);
+        }
 
         // Notifikasi ke mahasiswa
         $this->sendNotification(
             $surat->Id_User, 
-            'Nomor Surat Legalisir', 
-            'Nomor surat legalisir Anda: ' . $request->nomor_surat . '. Sedang menunggu tanda tangan Dekan.', 
+            'Berkas Dikirim TTD', 
+            'Berkas legalisir Anda telah dikirim ke Dekan dan Wadek1 untuk ditandatangani.', 
             $surat->id_no
         );
 
-        return redirect()->back()->with('success', 'Nomor surat berhasil diberikan dan berkas dikirim ke Dekan.');
+        // TODO: Notifikasi ke Dekan dan Wadek1 (akan dibuat di step berikutnya)
+
+        return redirect()->back()->with('success', 'Berkas berhasil dikirim ke Dekan dan Wadek1 untuk ditandatangani!');
     }
 
     /**
      * Memperbarui Progres Berkas (Alur Kerja)
-     * ALUR: menunggu_ttd_pimpinan → siap_diambil → selesai
+     * ALUR: siap_diambil → selesai (mahasiswa konfirmasi ambil)
      */
     public function updateProgress(Request $request, $id)
     {
@@ -175,26 +145,20 @@ class SuratLegalisirController extends Controller
         $pesanNotif = '';
 
         switch ($statusSekarang) {
-            case 'menunggu_ttd_pimpinan':
-                // Dekan sudah TTD, admin kasih stampel manual offline
-                $surat->Status = 'siap_diambil';
-                $pesanNotif = 'Legalisir selesai. Silakan ambil berkas Anda di loket fakultas.';
-                break;
-
             case 'siap_diambil':
-                // Mahasiswa sudah ambil, proses selesai
+                // Mahasiswa sudah ambil hardfile, proses selesai
                 $surat->Status = 'selesai';
                 if ($surat->tugasSurat) {
                     $surat->tugasSurat->update([
-                        'Status_Tugas_Surat'    => 'selesai',
-                        'Tanggal_Diselesaikan'  => Carbon::now()
+                        'Status'               => 'Selesai',
+                        'Tanggal_Diselesaikan' => Carbon::now()
                     ]);
                 }
-                $pesanNotif = 'Proses legalisir telah selesai sepenuhnya.';
+                $pesanNotif = 'Proses legalisir telah selesai sepenuhnya. Terima kasih.';
                 break;
 
             default:
-                return redirect()->back()->with('error', 'Tidak ada progres lanjutan yang tersedia.');
+                return redirect()->back()->with('error', 'Tidak ada progres lanjutan yang tersedia untuk status ini.');
         }
 
         $surat->save();
@@ -203,7 +167,7 @@ class SuratLegalisirController extends Controller
             $this->sendNotification($surat->Id_User, 'Update Legalisir', $pesanNotif, $surat->id_no);
         }
 
-        return redirect()->back()->with('success', 'Status progres berkas berhasil diperbarui.');
+        return redirect()->back()->with('success', 'Status progres berkas berhasil diperbarui!');
     }
 
     /**

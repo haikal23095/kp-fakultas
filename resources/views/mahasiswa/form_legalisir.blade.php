@@ -22,7 +22,14 @@
             </div>
         @endif
 
-        <form action="{{ route('mahasiswa.pengajuan.legalisir.store') }}" method="POST">
+        @if(session('success'))
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        @endif
+
+        <form action="{{ route('mahasiswa.pengajuan.legalisir.store') }}" method="POST" enctype="multipart/form-data">
             @csrf
             
             <div class="mb-3">
@@ -38,6 +45,15 @@
                 <label for="jumlah_salinan" class="form-label">Jumlah Salinan (Lembar)</label>
                 <input type="number" class="form-control" id="jumlah_salinan" name="jumlah_salinan" min="1" max="10" required>
                 <div class="form-text">Maksimal 10 lembar per pengajuan. Biaya Rp 5.000 per lembar.</div>
+            </div>
+
+            <div class="mb-3">
+                <label for="file_scan" class="form-label">Upload File Scan Dokumen (PDF) <span class="text-danger">*</span></label>
+                <input type="file" class="form-control" id="file_scan" name="file_scan" accept="application/pdf" required>
+                <div class="form-text">
+                    <i class="fas fa-info-circle me-1"></i>
+                    Upload file scan <strong>Ijazah/Transkrip</strong> dalam format PDF. Pastikan scan jelas dan terbaca.
+                </div>
             </div>
 
             <div class="alert alert-info">

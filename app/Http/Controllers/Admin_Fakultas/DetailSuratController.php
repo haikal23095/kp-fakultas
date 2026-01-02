@@ -197,7 +197,7 @@ class DetailSuratController extends Controller
 
             // Kirim notifikasi ke Dekan
             Notifikasi::create([
-                'Tipe_Notifikasi' => 'Caution',
+                'Tipe_Notifikasi' => 'Invitation',
                 'Pesan' => '📝 Surat baru menunggu persetujuan dan tanda tangan Anda. Nomor: ' . $tugas->Nomor_Surat,
                 'Dest_user' => $dekan->Id_User,
                 'Source_User' => $user->Id_User,
