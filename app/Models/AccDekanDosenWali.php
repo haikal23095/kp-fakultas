@@ -22,6 +22,9 @@ class AccDekanDosenWali extends Model
         'Status',
         'Tanggal-Pengajuan',
         'Tanggal-Tenggat',
+        'Alasan-Tolak',
+        'QR_Code',
+        'Tanggal-Persetujuan-Dekan',
     ];
 
     protected $casts = [
@@ -36,5 +39,20 @@ class AccDekanDosenWali extends Model
     public function reqSKDosenWali()
     {
         return $this->hasMany(SKDosenWali::class, 'Id_Acc_SK_Dosen_Wali', 'No');
+    }
+
+    /**
+     * Get prodi from first dosen in Data_Dosen_Wali
+     * Since Acc_SK can contain multiple prodi, we extract from data
+     */
+    public function getProdiAttribute()
+    {
+        if (!empty($this->Data_Dosen_Wali) && is_array($this->Data_Dosen_Wali)) {
+            $firstDosen = $this->Data_Dosen_Wali[0] ?? null;
+            if ($firstDosen && isset($firstDosen['prodi'])) {
+                return (object) ['Nama_Prodi' => $firstDosen['prodi']];
+            }
+        }
+        return null;
     }
 }

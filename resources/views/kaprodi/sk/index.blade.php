@@ -159,9 +159,9 @@
                                     <h6 class="mb-1 fw-bold">SK Beban Mengajar</h6>
                                     <p class="mb-0 small text-muted">Lihat riwayat pengajuan SK beban mengajar</p>
                                 </div>
-                                <button class="btn btn-sm btn-outline-primary" onclick="alert('Fitur riwayat SK Beban Mengajar akan segera tersedia')">
+                                <a href="{{ route('kaprodi.sk.beban-mengajar.index') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-arrow-right"></i>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>

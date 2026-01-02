@@ -185,6 +185,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.index');
         Route::get('/sk/dosen-wali', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'dosenWali'])
             ->name('sk.dosen-wali');
+        Route::get('/sk/dosen-wali/history', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'dosenWaliHistory'])
+            ->name('sk.dosen-wali.history');
+        Route::get('/sk/dosen-wali/{id}/detail-history', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'dosenWaliDetailHistory'])
+            ->name('sk.dosen-wali.detail-history');
         Route::get('/sk/dosen-wali/preview-pdf', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'previewPDF'])
             ->name('sk.dosen-wali.preview-pdf');
         Route::post('/sk/dosen-wali/submit-wadek', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'submitToWadek'])
@@ -195,6 +199,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.dosen-wali.detail');
         Route::post('/sk/dosen-wali/{id}/process', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'dosenWaliProcess'])
             ->name('sk.dosen-wali.process');
+        Route::post('/sk/dosen-wali/reject', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'rejectDosenWali'])
+            ->name('sk.dosen-wali.reject');
+        Route::get('/sk/dosen-wali/{id}/download', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'downloadDosenWali'])
+            ->name('sk.dosen-wali.download');
 
         Route::get('/pengaturan', function () {
             return view('admin_fakultas.pengaturan');
@@ -226,6 +234,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/sk-dosen-wali/history', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'history'])->name('sk_dosen_wali.history');
         Route::get('/sk-dosen-wali/{id}', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'detail'])->name('sk_dosen_wali.detail');
         Route::post('/sk-dosen-wali/{id}/approve', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'approve'])->name('sk_dosen_wali.approve');
+        Route::post('/sk-dosen-wali/{id}/reject', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'reject'])->name('sk_dosen_wali.reject');
 
         Route::get('/surat/{id}/detail', [App\Http\Controllers\Dekan\DetailSuratController::class, 'show'])->name('surat.detail');
         Route::get('/surat/{id}/preview', [App\Http\Controllers\Dekan\DetailSuratController::class, 'previewDraft'])->name('surat.preview');
@@ -258,6 +267,9 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/sk-dosen-wali/{id}/approve', [\App\Http\Controllers\Wadek1\SKController::class, 'dosenWaliApprove'])
             ->name('sk.dosen-wali.approve');
+
+        Route::post('/sk-dosen-wali/{id}/reject', [\App\Http\Controllers\Wadek1\SKController::class, 'dosenWaliReject'])
+            ->name('sk.dosen-wali.reject');
     });
 
     // FITUR DOSEN
@@ -316,8 +328,16 @@ Route::middleware('auth')->group(function () {
         // SK Routes
         Route::get('/sk', [\App\Http\Controllers\Kaprodi\SKController::class, 'index'])
             ->name('sk.index');
+
+        // SK Beban Mengajar
+        Route::get('/sk/beban-mengajar', [\App\Http\Controllers\Kaprodi\SKController::class, 'indexBebanMengajar'])
+            ->name('sk.beban-mengajar.index');
         Route::get('/sk/beban-mengajar/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createBebanMengajar'])
             ->name('sk.beban-mengajar.create');
+        Route::post('/sk/beban-mengajar', [\App\Http\Controllers\Kaprodi\SKController::class, 'storeBebanMengajar'])
+            ->name('sk.beban-mengajar.store');
+
+        // SK Dosen Wali
         Route::get('/sk/dosen-wali', [\App\Http\Controllers\Kaprodi\SKController::class, 'indexDosenWali'])
             ->name('sk.dosen-wali.index');
         Route::get('/sk/dosen-wali/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createDosenWali'])
@@ -328,6 +348,8 @@ Route::middleware('auth')->group(function () {
             ->name('sk.dosen-wali.detail');
         Route::get('/sk/dosen-wali/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadDosenWali'])
             ->name('sk.dosen-wali.download');
+
+        // SK Pembimbing & Penguji Skripsi
         Route::get('/sk/pembimbing-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPembimbingSkripsi'])
             ->name('sk.pembimbing-skripsi.create');
         Route::get('/sk/penguji-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPengujiSkripsi'])
