@@ -52,9 +52,9 @@
             font-weight: bold;
         }
         
-        .header .title-1 { font-size: 14pt; }
-        .header .title-2 { font-size: 16pt; }
-        .header .title-3 { font-size: 14pt; }
+        .header .title-1 { font-size: 9pt; }
+        .header .title-2 { font-size: 11pt; }
+        .header .title-3 { font-size: 9pt; }
         
         .header .address {
             font-size: 10pt;
@@ -65,8 +65,8 @@
         .section-title {
             text-align: center;
             font-weight: bold;
-            font-size: 11pt;
-            margin: 20px 0;
+            font-size: 10pt;
+            margin: 15px 0;
         }
         
         .content {
@@ -221,7 +221,7 @@
             SEMESTER {{ strtoupper($sk->Semester) }} TAHUN AKADEMIK {{ $sk->Tahun_Akademik }}
         </div>
 
-        <div style="margin: 20px 0; font-weight: bold;">
+        <div style="margin: 20px 0; font-weight: bold; font-size: 10pt;">
             DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
         </div>
 
@@ -236,6 +236,46 @@
                 <tr>
                     <td>b.</td>
                     <td>bahwa untuk pelaksanaan butir a di atas, perlu menerbitkan Surat Keputusan Dekan Fakultas Teknik;</td>
+                </tr>
+            </table>
+
+            <p style="font-weight: bold;">Mengingat :</p>
+            <table>
+                <tr>
+                    <td width="5%">1.</td>
+                    <td>Undang-Undang Nomor 20 tahun 2003, tentang Sistem Pendidikan Nasional;</td>
+                </tr>
+                <tr>
+                    <td>2.</td>
+                    <td>Peraturan Pemerintah Nomor 60 tahun 1999, tentang Pendidikan Tinggi;</td>
+                </tr>
+                <tr>
+                    <td>3.</td>
+                    <td>Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunojoyo Madura;</td>
+                </tr>
+                <tr>
+                    <td>4.</td>
+                    <td>	Keputusan Menteri Pendidikan dan Kebudayaan RI Nomor 232/U/2000, tentang pedoman Penyusunan Kurikulum Pendidikan Tinggi dan Penilaian Hasil Belajar Mahasiswa;</td>
+                </tr>
+                <tr>
+                    <td>5.</td>
+                    <td>	Keputusan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 73649/MPK.A/KP.06.02/2022 tentang pengangkatan Rektor UTM periode 2022-2026;</td>
+                </tr>
+                <tr>
+                    <td>6.</td>
+                    <td>Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunojoyo Madura periode 2021-2025;</td>
+                </tr>
+            </table>
+
+            <p style="font-weight: bold;">Memperhatikan :</p>
+            <table>
+                <tr>
+                    <td width="5%">1.</td>
+                    <td>Keputusan Rektor Universitas Trunojoyo Madura Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunojoyo Madura Tahun Akademik 2016/2017;</td>
+                </tr>
+                <tr>
+                    <td>2.</td>
+                    <td>Surat dari masing-masing Ketua Jurusan Fakultas Teknik tentang permohonan SK Dosen Wali Genap 2025/2026;</td>
                 </tr>
             </table>
 
@@ -254,6 +294,19 @@
                     <td width="20%" style="font-weight: bold;">Kesatu</td>
                     <td width="3%">:</td>
                     <td>Menugaskan dosen tetap di Fakultas Teknik Universitas Trunojoyo Madura yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester {{ $sk->Semester }} Tahun Akademik {{ $sk->Tahun_Akademik }};</td>
+                </tr>
+                <tr>
+                    <td width="20%" style="font-weight: bold;">Kedua</td>
+                    <td width="3%">:</td>
+                    <td>Tugas dan fungsi dosen wali tersebut yaitu: <br> <ol type="a">
+                        <li>Membantu mengarahkan dan mengesahkan rencana studi;</li>
+                        <li>Memberi bimbingan dan nasehat mengenai berbagai masalah yang bersifat kurikuler akademik;</li>
+                    </ol> </td>
+                </tr>
+                <tr>
+                    <td width="20%" style="font-weight: bold;">Ketiga</td>
+                    <td width="3%">:</td>
+                    <td>Keputusan ini berlaku sejak tanggal ditetapkan.</td>
                 </tr>
             </table>
         </div>

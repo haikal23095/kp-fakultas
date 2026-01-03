@@ -21,6 +21,7 @@ class SKController extends Controller
         // For now, we only have SK Dosen Wali implemented
         $skDosenWaliCount = SKDosenWali::where('Status', '!=', 'Selesai')
             ->where('Status', '!=', 'Ditolak')
+            ->where('Status', '!=', 'Ditolak-Admin')
             ->count();
 
         $skDosenWaliTotal = SKDosenWali::count();
@@ -40,7 +41,7 @@ class SKController extends Controller
     }
 
     /**
-     * Display list of SK Dosen Wali requests
+     * Display list of SK Dosen Wali requests untuk diproses
      */
     public function dosenWali(Request $request)
     {
@@ -84,6 +85,59 @@ class SKController extends Controller
         $dekanNip = $dekan->NIP ?? '198301182008121001';
 
         return view('admin_fakultas.sk.dosen-wali.index', compact('skList', 'prodiList', 'dekanName', 'dekanNip'));
+    }
+
+    /**
+     * Display history of SK Dosen Wali from Acc_SK_Dosen_Wali
+     */
+    public function dosenWaliHistory(Request $request)
+    {
+        $query = AccDekanDosenWali::query();
+
+        // Apply filters
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        if ($request->filled('semester')) {
+            $query->where('Semester', $request->semester);
+        }
+
+        $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
+
+        return view('admin_fakultas.sk.dosen-wali.history', compact('skList'));
+    }
+
+    /**
+     * Get detail history SK for modal
+     */
+    public function dosenWaliDetailHistory($id)
+    {
+        try {
+            $sk = AccDekanDosenWali::findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'sk' => $sk
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'SK tidak ditemukan'
+            ], 404);
+        }
+    }
+
+    /**
+     * Download SK Dosen Wali
+     */
+    public function downloadDosenWali($id)
+    {
+        // TODO: Implement PDF download
+        return response()->json([
+            'success' => false,
+            'message' => 'Fitur download belum diimplementasikan'
+        ]);
     }
 
     /**
@@ -136,22 +190,30 @@ class SKController extends Controller
         try {
             DB::beginTransaction();
 
-            // Ambil semua SK yang akan diajukan
+            // Ambil semua SK yang akan diajukan (termasuk yang ditolak untuk resubmit)
             $skItems = SKDosenWali::whereIn('No', $request->sk_ids)
-                ->where('Status', 'Dikerjakan admin')
+                ->whereIn('Status', ['Dikerjakan admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])
                 ->get();
 
             if ($skItems->isEmpty()) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'Tidak ada SK yang dapat diproses. Pastikan SK memiliki status "Dikerjakan admin"'
+                    'message' => 'Tidak ada SK yang dapat diproses. Pastikan SK memiliki status "Dikerjakan admin", "Ditolak-Wadek1", atau "Ditolak-Dekan"'
                 ], 400);
             }
 
             // Gabungkan semua data dosen wali dari SK yang dipilih
             $mergedDosenWali = [];
             $tenggatTerdekat = null;
+
+            // Cek apakah ada SK yang ditolak Dekan (untuk langsung skip ke Dekan)
+            $hasDitolakDekan = $skItems->contains(function ($sk) {
+                return $sk->Status === 'Ditolak-Dekan';
+            });
+
+            // Tentukan status target berdasarkan kondisi
+            $targetStatus = $hasDitolakDekan ? 'Menunggu-Persetujuan-Dekan' : 'Menunggu-Persetujuan-Wadek-1';
 
             foreach ($skItems as $sk) {
                 // Ambil dan decode data dosen wali (antisipasi data lama yang double-encoded)
@@ -177,8 +239,8 @@ class SKController extends Controller
                     }
                 }
 
-                // Update status di tabel request
-                $sk->Status = 'Menunggu-Persetujuan-Wadek-1';
+                // Update status di tabel request sesuai kondisi
+                $sk->Status = $targetStatus;
                 $sk->Nomor_Surat = $request->nomor_surat;
                 $sk->save();
             }
@@ -186,31 +248,103 @@ class SKController extends Controller
             // Buat satu entri gabungan di ACC_Dekan_Dosen_Wali
             $firstSk = $skItems->first();
 
-            $accSK = AccDekanDosenWali::create([
-                'Semester' => $firstSk->Semester,
-                'Tahun_Akademik' => $firstSk->Tahun_Akademik,
-                'Data_Dosen_Wali' => $mergedDosenWali,
-                'Nomor_Surat' => $request->nomor_surat,
-                'Status' => 'Menunggu-Persetujuan-Wadek-1',
-                'Tanggal-Pengajuan' => now(),
-                'Tanggal-Tenggat' => $tenggatTerdekat ?? now()->addDays(3),
-            ]);
+            // Cek apakah SK yang ditolak Dekan sudah punya entry di Acc table
+            $existingAccId = null;
+            if ($hasDitolakDekan) {
+                // Cari Id_Acc_SK_Dosen_Wali dari SK yang ditolak Dekan
+                $ditolakDekanSk = $skItems->first(function ($sk) {
+                    return $sk->Status === 'Ditolak-Dekan' && $sk->Id_Acc_SK_Dosen_Wali;
+                });
+
+                if ($ditolakDekanSk && $ditolakDekanSk->Id_Acc_SK_Dosen_Wali) {
+                    $existingAccId = $ditolakDekanSk->Id_Acc_SK_Dosen_Wali;
+                }
+            }
+
+            if ($existingAccId) {
+                // Update existing Acc entry untuk SK yang ditolak Dekan
+                $accSK = AccDekanDosenWali::find($existingAccId);
+                $accSK->Data_Dosen_Wali = $mergedDosenWali;
+                $accSK->Nomor_Surat = $request->nomor_surat;
+                $accSK->Status = $targetStatus;
+                $accSK->{'Alasan-Tolak'} = null; // Clear rejection reason
+                $accSK->save();
+            } else {
+                // Create new Acc entry untuk SK baru atau yang ditolak Wadek1
+                $accSK = AccDekanDosenWali::create([
+                    'Semester' => $firstSk->Semester,
+                    'Tahun_Akademik' => $firstSk->Tahun_Akademik,
+                    'Data_Dosen_Wali' => $mergedDosenWali,
+                    'Nomor_Surat' => $request->nomor_surat,
+                    'Status' => $targetStatus,
+                    'Tanggal-Pengajuan' => now(),
+                    'Tanggal-Tenggat' => $tenggatTerdekat ?? now()->addDays(3),
+                ]);
+            }
 
             // Update Id_Acc_SK_Dosen_Wali di setiap record Req_SK_Dosen_Wali yang dipilih
             SKDosenWali::whereIn('No', $request->sk_ids)
-                ->where('Status', 'Menunggu-Persetujuan-Wadek-1')
+                ->whereIn('Status', ['Menunggu-Persetujuan-Wadek-1', 'Menunggu-Persetujuan-Dekan'])
                 ->update(['Id_Acc_SK_Dosen_Wali' => $accSK->No]);
+
+            // Kirim notifikasi sesuai target
+            if ($hasDitolakDekan) {
+                // Kirim notifikasi ke Dekan jika langsung ke Dekan
+                $dekanUser = \App\Models\User::whereHas('role', function ($q) {
+                    $q->where('Name_Role', 'Dekan');
+                })->first();
+
+                if ($dekanUser) {
+                    \App\Models\Notifikasi::create([
+                        'Dest_user' => $dekanUser->Id_User,
+                        'Source_User' => auth()->id(),
+                        'Tipe_Notifikasi' => 'Accepted',
+                        'Pesan' => "SK Dosen Wali No. {$accSK->Nomor_Surat} telah diperbaiki dan menunggu persetujuan Anda.",
+                        'Is_Read' => false,
+                        'Data_Tambahan' => [
+                            'judul' => 'SK Dosen Wali Menunggu Persetujuan (Resubmit)',
+                            'link' => route('dekan.persetujuan.sk_dosen_wali'),
+                            'sk_id' => $accSK->No,
+                            'nomor_surat' => $accSK->Nomor_Surat
+                        ]
+                    ]);
+                }
+            } else {
+                // Kirim notifikasi ke Wadek 1 untuk SK baru
+                $wadek1User = \App\Models\User::whereHas('role', function ($q) {
+                    $q->where('Name_Role', 'Wadek1');
+                })->first();
+
+                if ($wadek1User) {
+                    \App\Models\Notifikasi::create([
+                        'Dest_user' => $wadek1User->Id_User,
+                        'Source_User' => auth()->id(),
+                        'Tipe_Notifikasi' => 'Accepted',
+                        'Pesan' => "SK Dosen Wali No. {$accSK->Nomor_Surat} menunggu persetujuan Anda.",
+                        'Is_Read' => false,
+                        'Data_Tambahan' => [
+                            'judul' => 'SK Dosen Wali Menunggu Persetujuan',
+                            'link' => route('wadek1.sk.dosen-wali.index'),
+                            'sk_id' => $accSK->No,
+                            'nomor_surat' => $accSK->Nomor_Surat
+                        ]
+                    ]);
+                }
+            }
 
             DB::commit();
 
             $jumlah = $skItems->count();
 
+            // Pesan sukses berbeda tergantung target
+            $targetName = $hasDitolakDekan ? 'Dekan' : 'Wadek 1';
+
             // Flash pesan sukses untuk ditampilkan sebagai alert hijau setelah reload
-            session()->flash('success', "Berhasil mengajukan {$jumlah} SK Dosen Wali ke Wadek 1");
+            session()->flash('success', "Berhasil mengajukan {$jumlah} SK Dosen Wali ke {$targetName}");
 
             return response()->json([
                 'success' => true,
-                'message' => "Berhasil mengajukan {$jumlah} SK Dosen Wali ke Wadek 1"
+                'message' => "Berhasil mengajukan {$jumlah} SK Dosen Wali ke {$targetName}"
             ]);
 
         } catch (\Exception $e) {
@@ -281,6 +415,92 @@ class SKController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reject SK Dosen Wali request
+     */
+    public function rejectDosenWali(Request $request)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'sk_id' => 'required|exists:Req_SK_Dosen_Wali,No',
+                'alasan' => 'required|string|min:10'
+            ], [
+                'sk_id.required' => 'ID SK harus diisi',
+                'sk_id.exists' => 'SK tidak ditemukan',
+                'alasan.required' => 'Alasan penolakan harus diisi',
+                'alasan.min' => 'Alasan penolakan minimal 10 karakter'
+            ]);
+
+            // Get SK
+            $sk = SKDosenWali::findOrFail($request->sk_id);
+
+            // Check if SK can be rejected (only if status is 'Dikerjakan admin')
+            if ($sk->Status !== 'Dikerjakan admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SK tidak dapat ditolak karena sudah diproses'
+                ], 400);
+            }
+
+            // Get admin user
+            $adminUser = Auth::user();
+
+            // Get kaprodi user (the one who submitted the SK)
+            $kaprodiDosen = Dosen::find($sk->Id_Dosen_Kaprodi);
+            $kaprodiUser = $kaprodiDosen ? $kaprodiDosen->user : null;
+
+            if (!$kaprodiUser) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User Kaprodi tidak ditemukan'
+                ], 400);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Update SK status to 'Ditolak-Admin'
+                $sk->Status = 'Ditolak-Admin';
+                $sk->{'Alasan-Tolak'} = $request->alasan;
+                $sk->save();
+
+                // Create notification to Kaprodi
+                \App\Models\Notifikasi::create([
+                    'Source_User' => $adminUser->Id_User,
+                    'Dest_user' => $kaprodiUser->Id_User,
+                    'Tipe_Notifikasi' => 'Rejected',
+                    'Pesan' => 'SK Dosen Wali untuk ' .
+                        ($sk->prodi->Nama_Prodi ?? 'Prodi') .
+                        ' Semester ' . $sk->Semester .
+                        ' TA ' . $sk->Tahun_Akademik .
+                        ' telah ditolak. Alasan: ' . $request->alasan,
+                    'Data_Tambahan' => json_encode([
+                        'url' => route('kaprodi.sk.dosen-wali.index')
+                    ]),
+                    'Is_Read' => false
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'SK berhasil ditolak dan notifikasi telah dikirim ke Kaprodi'
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menolak SK: ' . $e->getMessage()
             ], 500);
         }
     }

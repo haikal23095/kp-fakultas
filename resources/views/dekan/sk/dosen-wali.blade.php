@@ -168,11 +168,25 @@
 @endif
 
 {{-- Info Box --}}
-<div class="info-box">
-    <div class="d-flex align-items-start">
-        <i class="fas fa-info-circle text-primary me-3 mt-1"></i>
-        <div>
-            <strong>Total SK Menunggu:</strong> {{ $daftarSK->count() }} SK Dosen Wali yang sudah disetujui Wadek 1 dan menunggu tanda tangan Anda.
+<div class="row mb-3">
+    <div class="col-md-6">
+        <div class="info-box">
+            <div class="d-flex align-items-start">
+                <i class="fas fa-info-circle text-primary me-3 mt-1"></i>
+                <div>
+                    <strong>Total SK:</strong> {{ $daftarSK->count() }} SK Dosen Wali
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="d-flex justify-content-end">
+            <select class="form-select" id="filterStatus" onchange="applyFilter()" style="max-width: 250px;">
+                <option value="">Semua Status</option>
+                <option value="Menunggu-Persetujuan-Dekan">Menunggu Persetujuan</option>
+                <option value="Selesai">Selesai</option>
+                <option value="Ditolak-Dekan">Ditolak</option>
+            </select>
         </div>
     </div>
 </div>
@@ -231,22 +245,39 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    @if($sk->Status == 'Menunggu-Persetujuan-Dekan')
-                                        <span class="badge bg-warning badge-status">
-                                            <i class="fas fa-clock me-1"></i>Menunggu TTD Dekan
-                                        </span>
-                                    @else
-                                        <span class="badge bg-secondary badge-status">{{ $sk->Status }}</span>
-                                    @endif
+                                    @switch($sk->Status)
+                                        @case('Menunggu-Persetujuan-Dekan')
+                                            <span class="badge bg-warning badge-status">
+                                                <i class="fas fa-clock me-1"></i>Menunggu TTD Dekan
+                                            </span>
+                                            @break
+                                        @case('Selesai')
+                                            <span class="badge bg-success badge-status">
+                                                <i class="fas fa-check-circle me-1"></i>Selesai
+                                            </span>
+                                            @break
+                                        @case('Ditolak-Dekan')
+                                            <span class="badge bg-danger badge-status">
+                                                <i class="fas fa-times-circle me-1"></i>Ditolak
+                                            </span>
+                                            @break
+                                        @default
+                                            <span class="badge bg-secondary badge-status">{{ $sk->Status }}</span>
+                                    @endswitch
                                 </td>
                                 <td class="text-center">
                                     <div class="d-flex gap-2 justify-content-center">
-                                        <button type="button" class="btn btn-info" title="Lihat Detail" onclick="showDetail({{ $sk->No }})">
-                                            <i class="fas fa-eye me-1"></i> Lihat Detail
+                                        <button type="button" class="btn btn-info btn-sm" title="Lihat Detail" onclick="showDetail({{ $sk->No }})">
+                                            <i class="fas fa-eye me-1"></i> Detail
                                         </button>
-                                        <button type="button" class="btn btn-success" title="Setujui & TTD" onclick="approveSK({{ $sk->No }})">
-                                            <i class="fas fa-check me-1"></i> Setujui & TTD
-                                        </button>
+                                        @if($sk->Status == 'Menunggu-Persetujuan-Dekan')
+                                            <button type="button" class="btn btn-success btn-sm" title="Setujui & TTD" onclick="approveSK({{ $sk->No }})">
+                                                <i class="fas fa-check me-1"></i> Setujui
+                                            </button>
+                                            <button type="button" class="btn btn-danger btn-sm" title="Tolak" onclick="rejectSK({{ $sk->No }})">
+                                                <i class="fas fa-times me-1"></i> Tolak
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                             </tr>
@@ -333,6 +364,59 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>Tutup
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Rejection -->
+<div class="modal fade" id="modalReject" tabindex="-1" aria-labelledby="modalRejectLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalRejectLabel">
+                    <i class="fas fa-times-circle me-2"></i>Tolak SK Dosen Wali
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    <strong>Perhatian!</strong> SK yang ditolak akan dikembalikan untuk diperbaiki.
+                </div>
+                
+                <!-- Pilih Target Penolakan -->
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Kembalikan SK ke: <span class="text-danger">*</span></label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="rejectTarget" id="targetAdmin" value="admin" checked>
+                        <label class="form-check-label" for="targetAdmin">
+                            <strong>Admin Fakultas</strong>
+                            <small class="d-block text-muted">SK akan dikembalikan ke Admin Fakultas untuk diperbaiki (misal: nomor surat salah, format tidak sesuai)</small>
+                        </label>
+                    </div>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input" type="radio" name="rejectTarget" id="targetKaprodi" value="kaprodi">
+                        <label class="form-check-label" for="targetKaprodi">
+                            <strong>Kaprodi</strong>
+                            <small class="d-block text-muted">SK akan dikembalikan ke Kaprodi untuk diperbaiki (misal: data dosen salah, prodi tidak sesuai)</small>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="alasanPenolakan" class="form-label fw-bold">Alasan Penolakan <span class="text-danger">*</span></label>
+                    <textarea class="form-control" id="alasanPenolakan" rows="4" placeholder="Tuliskan alasan penolakan (minimal 10 karakter)" required></textarea>
+                    <small class="text-muted">Minimal 10 karakter</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-danger" onclick="submitRejection()">
+                    <i class="fas fa-paper-plane me-1"></i>Kirim Penolakan
                 </button>
             </div>
         </div>
@@ -823,6 +907,93 @@
         approveSK(currentSKId, true);
     }
 
+    // Function untuk reject SK
+    let currentRejectSKId = null;
+
+    function rejectSK(skId) {
+        currentRejectSKId = skId;
+        document.getElementById('alasanPenolakan').value = '';
+        document.getElementById('targetAdmin').checked = true; // Default ke admin
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalReject'));
+        modal.show();
+    }
+
+    function submitRejection() {
+        const alasan = document.getElementById('alasanPenolakan').value.trim();
+        const targetAdmin = document.getElementById('targetAdmin').checked;
+        const targetKaprodi = document.getElementById('targetKaprodi').checked;
+        
+        // Validasi
+        if (alasan.length < 10) {
+            alert('Alasan penolakan harus minimal 10 karakter');
+            return;
+        }
+        
+        if (!targetAdmin && !targetKaprodi) {
+            alert('Silakan pilih target penolakan');
+            return;
+        }
+        
+        const target = targetAdmin ? 'admin' : 'kaprodi';
+        
+        // Konfirmasi
+        const targetText = target === 'admin' ? 'Admin Fakultas' : 'Kaprodi';
+        if (!confirm(`Yakin ingin menolak SK ini dan mengembalikan ke ${targetText}?`)) {
+            return;
+        }
+        
+        // Kirim request
+        fetch(`{{ url('/dekan/sk-dosen-wali') }}/${currentRejectSKId}/reject`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                alasan: alasan,
+                target: target
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat menolak SK: ' + error.message);
+        });
+    }
+
+    // Function untuk apply filter
+    function applyFilter() {
+        const status = document.getElementById('filterStatus').value;
+        const url = new URL(window.location.href);
+        
+        if (status) {
+            url.searchParams.set('status', status);
+        } else {
+            url.searchParams.delete('status');
+        }
+        
+        window.location.href = url.toString();
+    }
+
+    // Set filter value dari URL saat page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const status = urlParams.get('status');
+        if (status) {
+            document.getElementById('filterStatus').value = status;
+        }
+    });
+
     // Add hover effect
     document.querySelectorAll('.card-sk').forEach(card => {
         card.addEventListener('mouseenter', function() {
@@ -832,5 +1003,6 @@
             this.style.borderColor = '#e9ecef';
         });
     });
+
 </script>
 @endpush

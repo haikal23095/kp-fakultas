@@ -35,6 +35,8 @@ class NotifikasiController extends Controller
             4 => 'kaprodi',
             5 => 'dosen',
             6 => 'mahasiswa',
+            7 => 'admin_fakultas',
+            8 => 'wadek1',
             default => 'mahasiswa',
         };
 

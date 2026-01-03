@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin_Fakultas;
 use App\Http\Controllers\Controller;
 use App\Models\TugasSurat;
 use App\Models\Role;
+use App\Models\SKDosenWali;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,7 +18,7 @@ class ManajemenSuratController extends Controller
     {
         // Update status tugas yang terlambat
         TugasSurat::updateStatusTerlambat();
-        
+
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
@@ -28,18 +29,18 @@ class ManajemenSuratController extends Controller
                     $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                         $subQ->where('Id_Fakultas', $fakultasId);
                     })
-                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    })
-                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    });
+                        ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                            $subQ->where('Id_Fakultas', $fakultasId);
+                        })
+                        ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                            $subQ->where('Id_Fakultas', $fakultasId);
+                        });
                 });
         };
-        
+
         // Total semua surat
         $totalSemua = $baseQuery()->count();
-        
+
         // Total semua surat
         $totalSemua = $baseQuery()->count();
 
@@ -84,6 +85,23 @@ class ManajemenSuratController extends Controller
         $prosesLegalisir = \App\Models\SuratLegalisir::whereIn('Status', ['pembayaran_lunas', 'menunggu_ttd_pimpinan', 'siap_diambil'])->count();
         $selesaiLegalisir = 0; // Selesai pindah ke arsip
 
+        // Hitung untuk SK Dosen Wali - dari tabel Req_SK_Dosen_Wali
+        $countSKDosen = SKDosenWali::whereHas('prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })->count();
+
+        $pendingSKDosen = SKDosenWali::whereHas('prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })->whereIn('Status', ['Pending', 'Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])->count();
+
+        $prosesSKDosen = SKDosenWali::whereHas('prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })->whereIn('Status', ['Dikerjakan admin', 'Menunggu-Persetujuan-Wadek-1', 'Menunggu-Persetujuan-Dekan'])->count();
+
+        $selesaiSKDosen = SKDosenWali::whereHas('prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })->where('Status', 'Selesai')->count();
+
         // TODO: Counter untuk jenis surat baru (setelah database dibuat)
         $countMobilDinas = 0;
         $countCuti = 0;
@@ -95,11 +113,30 @@ class ManajemenSuratController extends Controller
         $countLembur = 0;
 
         return view('admin_fakultas.manajemen_surat_index', compact(
-            'countAktif', 'pendingAktif', 'prosesAktif', 'selesaiAktif',
-            'countMagang', 'pendingMagang', 'prosesMagang', 'selesaiMagang',
-            'countLegalisir', 'pendingLegalisir', 'prosesLegalisir', 'selesaiLegalisir',
-            'countMobilDinas', 'countCuti', 'countTidakBeasiswa', 'countDispensasi',
-            'countBerkelakuanBaik', 'countSKFakultas', 'countPeminjamanGedung', 'countLembur',
+            'countAktif',
+            'pendingAktif',
+            'prosesAktif',
+            'selesaiAktif',
+            'countMagang',
+            'pendingMagang',
+            'prosesMagang',
+            'selesaiMagang',
+            'countLegalisir',
+            'pendingLegalisir',
+            'prosesLegalisir',
+            'selesaiLegalisir',
+            'countSKDosen',
+            'pendingSKDosen',
+            'prosesSKDosen',
+            'selesaiSKDosen',
+            'countMobilDinas',
+            'countCuti',
+            'countTidakBeasiswa',
+            'countDispensasi',
+            'countBerkelakuanBaik',
+            'countSKFakultas',
+            'countPeminjamanGedung',
+            'countLembur',
             'totalSemua'
         ));
     }
@@ -121,12 +158,12 @@ class ManajemenSuratController extends Controller
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
                 })
-                ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                    $subQ->where('Id_Fakultas', $fakultasId);
-                })
-                ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                    $subQ->where('Id_Fakultas', $fakultasId);
-                });
+                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    })
+                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    });
             });
 
         $daftarTugas = $baseQuery->with([
@@ -135,8 +172,8 @@ class ManajemenSuratController extends Controller
             'jenisSurat',
             'suratKetAktif'
         ])
-        ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
-        ->paginate(15);
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->paginate(15);
 
         return view('admin_fakultas.list_aktif', compact('daftarTugas'));
     }
@@ -160,12 +197,12 @@ class ManajemenSuratController extends Controller
                 $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                     $subQ->where('Id_Fakultas', $fakultasId);
                 })
-                ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                    $subQ->where('Id_Fakultas', $fakultasId);
-                })
-                ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                    $subQ->where('Id_Fakultas', $fakultasId);
-                });
+                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    })
+                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    });
             });
 
         $daftarTugas = $baseQuery->with([
@@ -174,8 +211,8 @@ class ManajemenSuratController extends Controller
             'jenisSurat',
             'suratMagang'
         ])
-        ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
-        ->paginate(15);
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->paginate(15);
 
         return view('admin_fakultas.list_magang', compact('daftarTugas'));
     }
@@ -287,42 +324,50 @@ class ManajemenSuratController extends Controller
     }
 
     // TODO: Method placeholder untuk jenis surat baru
-    public function listMobilDinas() {
+    public function listMobilDinas()
+    {
         $daftarTugas = collect(); // Empty collection untuk sementara
         return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
 
-    public function listCuti() {
+    public function listCuti()
+    {
         $daftarTugas = collect();
         return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
 
-    public function listTidakBeasiswa() {
+    public function listTidakBeasiswa()
+    {
         $daftarTugas = collect();
         return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
 
-    public function listDispensasi() {
+    public function listDispensasi()
+    {
         $daftarTugas = collect();
         return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
 
-    public function listBerkelakuanBaik() {
+    public function listBerkelakuanBaik()
+    {
         $daftarTugas = collect();
         return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
 
-    public function listSKFakultas() {
+    public function listSKFakultas()
+    {
         $daftarTugas = collect();
         return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
 
-    public function listPeminjamanGedung() {
+    public function listPeminjamanGedung()
+    {
         $daftarTugas = collect();
         return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
 
-    public function listLembur() {
+    public function listLembur()
+    {
         $daftarTugas = collect();
         return view('admin_fakultas.list_surat_general', compact('daftarTugas'));
     }
@@ -365,7 +410,7 @@ class ManajemenSuratController extends Controller
 
         // Ambil semua jenis surat agar card tetap muncul meskipun kosong
         $allJenisSurat = \App\Models\JenisSurat::all();
-        
+
         // Grouping manual agar semua jenis surat masuk list
         $arsipByJenis = $allJenisSurat->map(function($jenis) use ($arsipTugas, $arsipLegalisir) {
             
