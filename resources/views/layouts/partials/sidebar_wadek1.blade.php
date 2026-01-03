@@ -2,11 +2,16 @@
     @php
         $user = auth()->user();
         $fakultasName = 'Fakultas';
+        $userName = 'Wadek 1';
         
         if ($user && $user->dosen && $user->dosen->prodi && $user->dosen->prodi->fakultas) {
             $fakultasName = $user->dosen->prodi->fakultas->Nama_Fakultas;
+            $userName = $user->dosen->Nama_Dosen ?? $user->Name_User;
         } elseif ($user && $user->pegawai && $user->pegawai->prodi && $user->pegawai->prodi->fakultas) {
             $fakultasName = $user->pegawai->prodi->fakultas->Nama_Fakultas;
+            $userName = $user->pegawai->Nama_Pegawai ?? $user->Name_User;
+        } elseif ($user) {
+            $userName = $user->Name_User ?? 'Wadek 1';
         }
     @endphp
     
@@ -50,7 +55,7 @@
     <div class="dropdown">
         <a href="#" class="user-dropdown d-flex align-items-center text-white text-decoration-none dropdown-toggle" id="dropdownUser1" data-bs-toggle="dropdown" aria-expanded="false">
             <i class="fas fa-user-circle fa-2x me-2" style="flex-shrink: 0;"></i>
-            <strong class="text-truncate-custom" style="flex: 1; min-width: 0;">{{ auth()->user()?->Name_User ?? 'Wadek 1' }}</strong>
+            <strong class="text-truncate-custom" style="flex: 1; min-width: 0;">{{ $userName }}</strong>
         </a>
         <ul class="dropdown-menu dropdown-menu-dark text-small shadow" aria-labelledby="dropdownUser1">
             <li><a class="dropdown-item" href="{{ route('profile.index') }}">Profil</a></li>

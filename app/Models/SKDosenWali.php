@@ -24,7 +24,8 @@ class SKDosenWali extends Model
         'Tanggal-Pengajuan',
         'Tanggal-Tenggat',
         'Id_Dosen_Kaprodi',
-        'Id_Acc_SK_Dosen_Wali'
+        'Id_Acc_SK_Dosen_Wali',
+        'Alasan-Tolak'
     ];
 
     protected $casts = [

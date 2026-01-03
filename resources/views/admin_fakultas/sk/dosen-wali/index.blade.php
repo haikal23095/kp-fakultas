@@ -1,6 +1,6 @@
 @extends('layouts.admin_fakultas')
 
-@section('title', 'Request SK Dosen Wali')
+@section('title', 'Riwayat SK Dosen Wali')
 
 @push('styles')
 <style>
@@ -141,34 +141,25 @@
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <select class="form-select" id="filterStatus">
                     <option value="">Semua Status</option>
                     <option value="Dikerjakan admin">Dikerjakan Admin</option>
                     <option value="Menunggu-Persetujuan-Wadek-1">Menunggu Wadek 1</option>
                     <option value="Menunggu-Persetujuan-Dekan">Menunggu Dekan</option>
                     <option value="Selesai">Selesai</option>
+                    <option value="Ditolak-Admin">Ditolak Admin</option>
                     <option value="Ditolak">Ditolak</option>
                 </select>
             </div>
-            <div class="col-md-3">
-                <select class="form-select" id="filterProdi">
-                    <option value="">Semua Prodi</option>
-                    @foreach($skList->pluck('prodi')->unique('Id_Prodi') as $prodi)
-                        @if($prodi)
-                            <option value="{{ $prodi->Id_Prodi }}">{{ $prodi->Nama_Prodi }}</option>
-                        @endif
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <select class="form-select" id="filterSemester">
                     <option value="">Semua Semester</option>
                     <option value="Ganjil">Ganjil</option>
                     <option value="Genap">Genap</option>
                 </select>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <button class="btn btn-primary w-100" onclick="applyFilters()">
                     <i class="fas fa-filter me-2"></i>Filter
                 </button>
@@ -180,14 +171,14 @@
 <!-- SK List -->
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3">
-        <h6 class="m-0 fw-bold text-success">Daftar Pengajuan SK Dosen Wali</h6>
+        <h6 class="m-0 fw-bold text-success">Riwayat SK Dosen Wali</h6>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th width="3%">
+                        <th width="50">
                             <input type="checkbox" id="selectAll" class="form-check-input">
                         </th>
                         <th>No</th>
@@ -196,13 +187,12 @@
                         <th>Tahun Akademik</th>
                         <th>Jumlah Dosen</th>
                         <th>Tanggal Pengajuan</th>
-                        <th>Tenggat</th>
                         <th>Status</th>
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @forelse($skList as $sk)
+                    @forelse($skList as $index => $sk)
                     <tr>
                         @php
                             $dosenData = $sk->Data_Dosen_Wali;
@@ -213,17 +203,18 @@
                             $jumlahDosen = is_array($dosenData) ? count($dosenData) : 0;
                         @endphp
                         <td>
-                            @if($sk->Status == 'Dikerjakan admin')
+                            @if($sk->Status == 'Dikerjakan admin' || $sk->Status == 'Ditolak-Wadek1' || $sk->Status == 'Ditolak-Dekan')
                             <input type="checkbox" class="form-check-input sk-checkbox" 
                                    data-id="{{ $sk->No }}"
-                                   data-prodi="{{ $sk->prodi->Nama_Prodi ?? 'N/A' }}"
+                                   data-prodi="{{ $sk->prodi->Nama_Prodi }}"
                                    data-semester="{{ $sk->Semester }}"
                                    data-tahun="{{ $sk->Tahun_Akademik }}"
-                                   data-jumlah="{{ $jumlahDosen }}">
+                                   data-status="{{ $sk->Status }}"
+                                   data-dosen="{{ htmlspecialchars(json_encode($dosenData)) }}">
                             @endif
                         </td>
-                        <td>{{ $sk->No }}</td>
-                        <td>{{ $sk->prodi->Nama_Prodi ?? 'N/A' }}</td>
+                        <td>{{ $skList->firstItem() + $index }}</td>
+                        <td>{{ $sk->prodi->Nama_Prodi ?? '-' }}</td>
                         <td>
                             <span class="badge bg-{{ $sk->Semester == 'Ganjil' ? 'primary' : 'info' }}">
                                 {{ $sk->Semester }}
@@ -243,18 +234,6 @@
                         </td>
                         <td>
                             @php
-                                $tanggalTenggat = $sk->{'Tanggal-Tenggat'};
-                                $isOverdue = $tanggalTenggat && $tanggalTenggat->isPast();
-                            @endphp
-                            <span class="text-{{ $isOverdue ? 'danger' : 'muted' }}">
-                                {{ $tanggalTenggat ? $tanggalTenggat->format('d M Y') : '-' }}
-                                @if($isOverdue)
-                                    <i class="fas fa-exclamation-triangle ms-1"></i>
-                                @endif
-                            </span>
-                        </td>
-                        <td>
-                            @php
                                 $badgeClass = 'secondary';
                                 switch($sk->Status) {
                                     case 'Dikerjakan admin':
@@ -269,6 +248,15 @@
                                     case 'Selesai':
                                         $badgeClass = 'success';
                                         break;
+                                    case 'Ditolak-Admin':
+                                        $badgeClass = 'danger';
+                                        break;
+                                    case 'Ditolak-Wadek1':
+                                        $badgeClass = 'danger';
+                                        break;
+                                    case 'Ditolak-Dekan':
+                                        $badgeClass = 'danger';
+                                        break;
                                     case 'Ditolak':
                                         $badgeClass = 'danger';
                                         break;
@@ -277,17 +265,30 @@
                             <span class="badge bg-{{ $badgeClass }}">{{ $sk->Status }}</span>
                         </td>
                         <td class="text-center">
-                            <a href="{{ route('admin_fakultas.sk.dosen-wali.detail', $sk->No) }}" 
-                               class="btn btn-primary btn-sm">
-                                <i class="fas fa-eye me-1"></i>Detail
-                            </a>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ route('admin_fakultas.sk.dosen-wali.detail', $sk->No) }}" 
+                                   class="btn btn-primary" title="Lihat Detail">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                @if($sk->Status == 'Dikerjakan admin')
+                                <button onclick="showRejectModal({{ $sk->No }}, '{{ $sk->prodi->Nama_Prodi }}', '{{ $sk->Semester }}', '{{ $sk->Tahun_Akademik }}')" 
+                                        class="btn btn-danger" title="Tolak Pengajuan">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                                @endif
+                                @if($sk->Status == 'Selesai')
+                                <a href="#" class="btn btn-success" title="Download SK">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                                @endif
+                            </div>
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="10" class="text-center text-muted py-4">
+                        <td colspan="9" class="text-center text-muted py-4">
                             <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                            Belum ada pengajuan SK Dosen Wali
+                            Belum ada riwayat SK Dosen Wali
                         </td>
                     </tr>
                     @endforelse
@@ -556,8 +557,73 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>Batal
                 </button>
-                <button type="button" class="btn btn-primary" onclick="submitToWadek()">
-                    <i class="fas fa-paper-plane me-1"></i>Ajukan ke Wadek 1
+                <button type="button" class="btn btn-primary" onclick="submitToWadek()" id="btnSubmitSK">
+                    <i class="fas fa-paper-plane me-1"></i><span id="submitText">Ajukan SK</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Tolak SK -->
+<div class="modal fade" id="modalTolakSK" tabindex="-1" aria-labelledby="modalTolakSKLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="modalTolakSKLabel">
+                    <i class="fas fa-times-circle me-2"></i>Tolak SK Dosen Wali
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>
+                    Anda akan menolak pengajuan SK berikut:
+                </div>
+                
+                <div class="mb-3">
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <th width="40%">Program Studi</th>
+                            <td>: <span id="reject-prodi">-</span></td>
+                        </tr>
+                        <tr>
+                            <th>Semester</th>
+                            <td>: <span id="reject-semester">-</span></td>
+                        </tr>
+                        <tr>
+                            <th>Tahun Akademik</th>
+                            <td>: <span id="reject-tahun">-</span></td>
+                        </tr>
+                    </table>
+                </div>
+
+                <form id="formTolakSK">
+                    <input type="hidden" id="reject-sk-id" name="sk_id">
+                    
+                    <div class="mb-3">
+                        <label for="reject-alasan" class="form-label fw-semibold">
+                            Alasan Penolakan <span class="text-danger">*</span>
+                        </label>
+                        <textarea class="form-control" 
+                                  id="reject-alasan" 
+                                  name="alasan" 
+                                  rows="4" 
+                                  placeholder="Masukkan alasan penolakan secara detail..."
+                                  required></textarea>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Alasan ini akan dikirimkan sebagai notifikasi ke Kaprodi
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i>Batal
+                </button>
+                <button type="button" class="btn btn-danger" onclick="submitRejection()">
+                    <i class="fas fa-ban me-1"></i>Tolak SK
                 </button>
             </div>
         </div>
@@ -598,7 +664,8 @@
             prodi: cb.dataset.prodi,
             semester: cb.dataset.semester,
             tahun: cb.dataset.tahun,
-            jumlah: cb.dataset.jumlah
+            jumlah: cb.dataset.jumlah,
+            status: cb.dataset.status
         }));
         
         // Update button state and counter
@@ -619,6 +686,17 @@
         if (selectedSK.length === 0) {
             alert('Pilih minimal satu SK terlebih dahulu');
             return;
+        }
+        
+        // Cek apakah ada SK yang ditolak Dekan
+        const hasDitolakDekan = selectedSK.some(sk => sk.status === 'Ditolak-Dekan');
+        
+        // Update teks tombol submit
+        const submitText = document.getElementById('submitText');
+        if (hasDitolakDekan) {
+            submitText.textContent = 'Ajukan ke Dekan';
+        } else {
+            submitText.textContent = 'Ajukan ke Wadek 1';
         }
         
         // Populate modal with selected data
@@ -879,7 +957,6 @@
 
     function applyFilters() {
         const status = document.getElementById('filterStatus').value;
-        const prodi = document.getElementById('filterProdi').value;
         const semester = document.getElementById('filterSemester').value;
         
         let url = new URL(window.location.href);
@@ -887,14 +964,67 @@
         if (status) url.searchParams.set('status', status);
         else url.searchParams.delete('status');
         
-        if (prodi) url.searchParams.set('prodi', prodi);
-        else url.searchParams.delete('prodi');
-        
         if (semester) url.searchParams.set('semester', semester);
         else url.searchParams.delete('semester');
         
         window.location.href = url.toString();
     }
+
+    // Show reject modal
+    function showRejectModal(skId, prodi, semester, tahun) {
+        document.getElementById('reject-sk-id').value = skId;
+        document.getElementById('reject-prodi').textContent = prodi;
+        document.getElementById('reject-semester').textContent = semester;
+        document.getElementById('reject-tahun').textContent = tahun;
+        document.getElementById('reject-alasan').value = '';
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalTolakSK'));
+        modal.show();
+    }
+
+    // Submit rejection
+    function submitRejection() {
+        const skId = document.getElementById('reject-sk-id').value;
+        const alasan = document.getElementById('reject-alasan').value.trim();
+        
+        if (!alasan) {
+            alert('Alasan penolakan harus diisi');
+            return;
+        }
+        
+        if (!confirm('Apakah Anda yakin ingin menolak SK ini? Tindakan ini tidak dapat dibatalkan.')) {
+            return;
+        }
+        
+        // Submit to server
+        fetch('{{ route("admin_fakultas.sk.dosen-wali.reject") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            },
+            body: JSON.stringify({
+                sk_id: skId,
+                alasan: alasan
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Close modal and reload page
+                const modal = bootstrap.Modal.getInstance(document.getElementById('modalTolakSK'));
+                modal.hide();
+                window.location.reload();
+            } else {
+                alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan saat mengirim data');
+        });
+    }
+
 </script>
 @endpush
 

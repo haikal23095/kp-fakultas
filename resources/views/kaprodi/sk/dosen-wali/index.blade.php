@@ -83,6 +83,7 @@
                                         'Menunggu-Persetujuan-Wadek-1' => 'bg-info',
                                         'Menunggu-Persetujuan-Dekan' => 'bg-primary',
                                         'Selesai' => 'bg-success',
+                                        'Ditolak-Admin' => 'bg-danger',
                                         'Ditolak' => 'bg-danger',
                                         default => 'bg-secondary',
                                     };
@@ -190,6 +191,11 @@
             `;
             return;
         }
+
+        // Debug: log SK data to console
+        console.log('SK Data:', sk);
+        console.log('Status:', sk.Status);
+        console.log('Alasan-Tolak:', sk['Alasan-Tolak']);
 
         // Render detail
         renderDetail(sk);
@@ -483,6 +489,7 @@
             'Menunggu-Persetujuan-Wadek-1': 'bg-info',
             'Menunggu-Persetujuan-Dekan': 'bg-primary',
             'Selesai': 'bg-success',
+            'Ditolak-Admin': 'bg-danger',
             'Ditolak': 'bg-danger'
         }[sk.Status] || 'bg-secondary';
 
@@ -528,6 +535,19 @@
             <div class="alert alert-info mb-4">
                 <i class="fas fa-info-circle me-2"></i>
                 <strong>Nomor Surat:</strong> ${sk.Nomor_Surat}
+            </div>
+            ` : ''}
+
+            ${(sk.Status === 'Ditolak-Admin' || sk.Status === 'Ditolak') && sk['Alasan-Tolak'] ? `
+            <div class="alert alert-danger mb-4">
+                <div class="d-flex align-items-start">
+                    <i class="fas fa-exclamation-circle fa-2x me-3"></i>
+                    <div>
+                        <h6 class="alert-heading fw-bold mb-2">SK Ditolak</h6>
+                        <p class="mb-0"><strong>Alasan Penolakan:</strong></p>
+                        <p class="mb-0">${sk['Alasan-Tolak']}</p>
+                    </div>
+                </div>
             </div>
             ` : ''}
 

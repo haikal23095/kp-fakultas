@@ -21,12 +21,77 @@ class SKController extends Controller
     }
 
     /**
+     * Display list of submitted SK Beban Mengajar
+     */
+    public function indexBebanMengajar()
+    {
+        // TODO: Get data from database when model is ready
+        return view('kaprodi.sk.beban-mengajar.index');
+    }
+
+    /**
      * Show the form for creating SK Beban Mengajar
      */
     public function createBebanMengajar()
     {
-        // TODO: Implement form for SK Beban Mengajar
-        return view('kaprodi.sk.beban-mengajar.create');
+        // Get user info
+        $user = Auth::user();
+
+        // Get prodi from logged in kaprodi
+        $prodi = null;
+        if ($user->dosen) {
+            $prodi = $user->dosen->prodi;
+        } elseif ($user->pegawai) {
+            $prodi = Prodi::find($user->pegawai->Id_Prodi);
+        }
+
+        // Get all prodi for dropdown
+        $prodis = Prodi::orderBy('Nama_Prodi', 'asc')->get();
+
+        // Get all dosen from the same prodi
+        $dosens = Dosen::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })
+            ->orderBy('Nama_Dosen', 'asc')
+            ->get();
+
+        return view('kaprodi.sk.beban-mengajar.create', compact('prodis', 'dosens', 'prodi'));
+    }
+
+    /**
+     * Store SK Beban Mengajar
+     */
+    public function storeBebanMengajar(Request $request)
+    {
+        // Validate request
+        $request->validate([
+            'prodi_id' => 'required|exists:Prodi,Id_Prodi',
+            'semester' => 'required|in:Ganjil,Genap',
+            'tahun_akademik' => 'required|string',
+            'beban' => 'required|array|min:1',
+            'beban.*.dosen_id' => 'required|exists:Dosen,Id_Dosen',
+            'beban.*.mata_kuliah' => 'required|string',
+            'beban.*.kelas' => 'required|string',
+            'beban.*.sks' => 'required|integer|min:1|max:6',
+        ], [
+            'prodi_id.required' => 'Program studi harus dipilih',
+            'semester.required' => 'Semester harus dipilih',
+            'tahun_akademik.required' => 'Tahun akademik harus diisi',
+            'beban.required' => 'Minimal harus ada 1 beban mengajar',
+            'beban.min' => 'Minimal harus ada 1 beban mengajar',
+        ]);
+
+        try {
+            // TODO: Save to database when model is ready
+            // For now, just redirect with success message
+
+            return redirect()->route('kaprodi.sk.index')
+                ->with('success', 'SK Beban Mengajar berhasil diajukan!');
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal mengajukan SK Beban Mengajar: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -147,7 +212,12 @@ class SKController extends Controller
                 return $query->where('Id_Prodi', $idProdi);
             })
             ->orderBy('Tanggal-Pengajuan', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($sk) {
+                // Ensure Alasan-Tolak is properly loaded
+                $sk->setAttribute('Alasan-Tolak', $sk->{'Alasan-Tolak'});
+                return $sk;
+            });
 
         return view('kaprodi.sk.dosen-wali.index', compact('skList'));
     }
