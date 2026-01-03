@@ -11,11 +11,11 @@ class QrCodeHelper
 {
     /**
      * Generate QR Code menggunakan Endroid library
-     * Simpan sebagai file PNG di storage dan return URL publik
+     * Simpan sebagai file PNG di storage dan return path relatif
      * 
      * @param string $data Data yang akan di-encode (URL verifikasi)
      * @param int $boxSize Ukuran pixel per box (default 10, untuk backward compat convert ke size)
-     * @return string|null URL publik file QR code, atau null jika gagal
+     * @return string|null Path relatif file QR code (e.g., 'qr-codes/qr_xxx.png'), atau null jika gagal
      */
     public static function generate($data, $boxSize = 10)
     {
@@ -23,49 +23,52 @@ class QrCodeHelper
             // Generate nama file unik
             $filename = 'qr_' . Str::random(16) . '.png';
             $relativePath = 'qr-codes/' . $filename;
-            
+
             // Path absolut untuk simpan file
             $absolutePath = storage_path('app/public/' . $relativePath);
-            
+
             // Pastikan direktori ada
             $directory = dirname($absolutePath);
             if (!file_exists($directory)) {
                 mkdir($directory, 0777, true);
             }
-            
+
             // Convert boxSize to pixel size (boxSize 10 = ~200px)
             $size = $boxSize * 20;
-            
+
             // Generate QR Code dengan Endroid v6.0 (readonly constructor)
             $qrCode = new QrCode(
                 data: $data,
                 size: $size,
                 margin: 10
             );
-            
+
             $writer = new PngWriter();
             $result = $writer->write($qrCode);
-            
+
             // Simpan file
             $result->saveToFile($absolutePath);
-            
+
             // Cek apakah berhasil
             if (file_exists($absolutePath)) {
-                // Return URL publik untuk akses file
-                return asset('storage/' . $relativePath);
+                // Return path relatif untuk disimpan ke database
+                return $relativePath;
             } else {
                 \Log::error('Failed to save QR Code file', [
                     'path' => $absolutePath
                 ]);
                 return null;
             }
-            
+
         } catch (\Exception $e) {
-            \Log::error('QR Code generation exception: ' . $e->getMessage());
+            \Log::error('QR Code generation exception: ' . $e->getMessage(), [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return null;
         }
     }
-    
+
     /**
      * Generate QR Code dan return URL publik
      * 
@@ -113,30 +116,30 @@ class QrCodeHelper
             // Generate nama file unik
             $filename = $prefix . '_' . Str::random(16) . '.png';
             $relativePath = 'qr-codes/' . $filename;
-            
+
             // Path absolut untuk simpan file
             $absolutePath = storage_path('app/public/' . $relativePath);
-            
+
             // Pastikan direktori ada
             $directory = dirname($absolutePath);
             if (!file_exists($directory)) {
                 mkdir($directory, 0777, true);
             }
-            
+
             // Convert boxSize to pixel size
             $size = $boxSize * 20;
-            
+
             // Generate QR Code
             $qrCode = new QrCode(
                 data: $data,
                 size: $size,
                 margin: 10
             );
-            
+
             $writer = new PngWriter();
             $result = $writer->write($qrCode);
             $result->saveToFile($absolutePath);
-            
+
             // Cek berhasil
             if (file_exists($absolutePath)) {
                 return $absolutePath; // Return absolute path untuk FPDI/FPDF
@@ -146,7 +149,7 @@ class QrCodeHelper
                 ]);
                 throw new \Exception('Failed to save QR Code file');
             }
-            
+
         } catch (\Exception $e) {
             \Log::error('QR Code generation exception: ' . $e->getMessage());
             throw $e;

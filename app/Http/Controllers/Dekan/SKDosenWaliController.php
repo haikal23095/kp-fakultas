@@ -94,26 +94,28 @@ class SKDosenWaliController extends Controller
                 'status' => $sk->Status
             ]);
 
+            // Validasi status - hanya bisa approve jika statusnya Menunggu-Persetujuan-Dekan
+            if ($sk->Status !== 'Menunggu-Persetujuan-Dekan') {
+                throw new \Exception('SK tidak dapat disetujui. Status saat ini: ' . $sk->Status);
+            }
+
             // Generate QR Code untuk verifikasi
             $qrContent = url("/verify-sk-dosen-wali/{$sk->No}");
             Log::info('Generating QR Code', ['content' => $qrContent]);
 
-            $qrPath = QrCodeHelper::generate($qrContent, 200);
+            // QrCodeHelper::generate() sekarang return path relatif (e.g., 'qr-codes/qr_xxx.png')
+            $qrPath = QrCodeHelper::generate($qrContent, 10);
 
             if (!$qrPath) {
                 Log::error('QR Code generation failed - empty path returned');
                 throw new \Exception('Gagal generate QR Code - path kosong');
             }
 
-            Log::info('QR Code generated', ['path' => $qrPath]);
+            Log::info('QR Code generated', ['relative_path' => $qrPath]);
 
-            // Get URL untuk ditampilkan di preview
-            $qrUrl = asset('storage/' . $qrPath);
-            Log::info('QR Code URL', ['url' => $qrUrl]);
-
-            // Update status dan simpan QR code path
-            $sk->Status = 'Selesai'; // Status ENUM: Menunggu-Persetujuan-Wadek-1, Menunggu-Persetujuan-Dekan, Selesai, Ditolak
-            $sk->QR_Code = $qrPath; // Simpan path relatif ke database
+            // Update status dan simpan QR code path relatif
+            $sk->Status = 'Selesai';
+            $sk->QR_Code = $qrPath; // Simpan path relatif ke database (e.g., 'qr-codes/qr_xxx.png')
             $sk->{'Tanggal-Persetujuan-Dekan'} = now();
             $sk->Id_Dekan = Auth::user()->Id_User;
             $sk->save();
@@ -132,9 +134,54 @@ class SKDosenWaliController extends Controller
                 'updated_count' => $updatedCount
             ]);
 
+            // Kirim notifikasi ke Kaprodi yang mengajukan
+            $reqSKList = $sk->reqSKDosenWali()->with('kaprodi.user')->get();
+            $notifiedKaprodi = [];
+
+            foreach ($reqSKList as $reqSK) {
+                if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
+                    $kaprodiUserId = $reqSK->kaprodi->user->Id_User;
+
+                    // Hindari duplikasi notifikasi untuk Kaprodi yang sama
+                    if (!in_array($kaprodiUserId, $notifiedKaprodi)) {
+                        \App\Models\Notifikasi::create([
+                            'Dest_user' => $kaprodiUserId,
+                            'Source_User' => Auth::user()->Id_User, // Id_User Dekan
+                            'Tipe_Notifikasi' => 'Accepted',
+                            'Pesan' => "SK Dosen Wali No. {$sk->Nomor_Surat} telah disetujui dan ditandatangani oleh Dekan",
+                            'Is_Read' => false,
+                            'Data_Tambahan' => [
+                                'judul' => 'SK Dosen Wali Disetujui Dekan',
+                                'link' => route('kaprodi.sk.dosen-wali.index'),
+                                'sk_id' => $sk->No,
+                                'nomor_surat' => $sk->Nomor_Surat,
+                                'semester' => $sk->Semester,
+                                'tahun_akademik' => $sk->Tahun_Akademik
+                            ]
+                        ]);
+
+                        $notifiedKaprodi[] = $kaprodiUserId;
+
+                        Log::info('Notification sent to Kaprodi', [
+                            'kaprodi_id' => $kaprodiUserId,
+                            'kaprodi_name' => $reqSK->kaprodi->user->name,
+                            'sk_no' => $sk->No
+                        ]);
+                    }
+                }
+            }
+
+            Log::info('Total Kaprodi notified', [
+                'count' => count($notifiedKaprodi),
+                'kaprodi_ids' => $notifiedKaprodi
+            ]);
+
+            // Build URL untuk ditampilkan di preview
+            $qrUrl = asset('storage/' . $qrPath);
+
             return response()->json([
                 'success' => true,
-                'message' => 'SK Dosen Wali berhasil disetujui dan ditandatangani',
+                'message' => 'SK Dosen Wali berhasil disetujui dan ditandatangani. Notifikasi telah dikirim ke Kaprodi.',
                 'qr_code' => $qrUrl  // Return URL untuk ditampilkan di HTML
             ]);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
