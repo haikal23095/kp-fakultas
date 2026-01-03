@@ -254,24 +254,6 @@
         </a>
     </div>
 
-    {{-- Card Berkelakuan Baik --}}
-    <div class="col-md-6 col-lg-4 mb-4">
-        <a href="{{ route('dekan.persetujuan.berkelakuan_baik') }}" class="text-decoration-none">
-            <div class="card card-jenis-surat position-relative">
-                <span class="badge bg-success badge-count">
-                    {{ $countBerkelakuanBaik ?? 0 }}
-                </span>
-                <div class="card-body">
-                    <div class="card-icon purple">
-                        <i class="fas fa-user-check"></i>
-                    </div>
-                    <h5>Berkelakuan Baik</h5>
-                    <p>Verifikasi dan tandatangani surat keterangan berkelakuan baik</p>
-                </div>
-            </div>
-        </a>
-    </div>
-
     {{-- Card SK Fakultas --}}
     <div class="col-md-6 col-lg-4 mb-4">
         <a href="{{ route('dekan.persetujuan.sk_fakultas') }}" class="text-decoration-none">
@@ -321,6 +303,24 @@
                     </div>
                     <h5>Rekomendasi MBKM</h5>
                     <p>Tandatangani surat rekomendasi program MBKM mahasiswa</p>
+                </div>
+            </div>
+        </a>
+    </div>
+
+    {{-- Card SK Dosen --}}
+    <div class="col-md-6 col-lg-4 mb-4">
+        <a href="{{ route('dekan.persetujuan.sk_dosen') }}" class="text-decoration-none">
+            <div class="card card-jenis-surat position-relative">
+                <span class="badge bg-success badge-count">
+                    {{ $countSKDosen ?? 0 }}
+                </span>
+                <div class="card-body">
+                    <div class="card-icon green">
+                        <i class="fas fa-file-contract"></i>
+                    </div>
+                    <h5>SK Dosen</h5>
+                    <p>Tandatangani Surat Keputusan (SK) untuk dosen</p>
                 </div>
             </div>
         </a>

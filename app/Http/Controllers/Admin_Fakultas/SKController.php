@@ -186,7 +186,7 @@ class SKController extends Controller
             // Buat satu entri gabungan di ACC_Dekan_Dosen_Wali
             $firstSk = $skItems->first();
 
-            AccDekanDosenWali::create([
+            $accSK = AccDekanDosenWali::create([
                 'Semester' => $firstSk->Semester,
                 'Tahun_Akademik' => $firstSk->Tahun_Akademik,
                 'Data_Dosen_Wali' => $mergedDosenWali,
@@ -195,6 +195,11 @@ class SKController extends Controller
                 'Tanggal-Pengajuan' => now(),
                 'Tanggal-Tenggat' => $tenggatTerdekat ?? now()->addDays(3),
             ]);
+
+            // Update Id_Acc_SK_Dosen_Wali di setiap record Req_SK_Dosen_Wali yang dipilih
+            SKDosenWali::whereIn('No', $request->sk_ids)
+                ->where('Status', 'Menunggu-Persetujuan-Wadek-1')
+                ->update(['Id_Acc_SK_Dosen_Wali' => $accSK->No]);
 
             DB::commit();
 

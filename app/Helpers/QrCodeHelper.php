@@ -67,69 +67,32 @@ class QrCodeHelper
     }
     
     /**
-     * Generate QR Code dan return path file relatif (untuk disimpan di database)
+     * Generate QR Code dan return URL publik
      * 
      * @param string $data Data yang akan di-encode
-     * @param int $boxSize Ukuran pixel per box
-     * @return string|null Path relatif file QR code (qr-codes/xxx.png)
+     * @param int $size Ukuran QR code dalam pixel (default 200)
+     * @return string|null URL publik file QR code, atau null jika gagal
      */
-    public static function generateAndGetPath($data, $boxSize = 10)
+    public static function generateUrl($data, $size = 200)
     {
-        try {
-            // Generate nama file unik
-            $filename = 'qr_' . Str::random(16) . '.png';
-            $relativePath = 'qr-codes/' . $filename;
-            
-            // Path absolut untuk simpan file
-            $absolutePath = storage_path('app/public/' . $relativePath);
-            
-            // Pastikan direktori ada
-            $directory = dirname($absolutePath);
-            if (!file_exists($directory)) {
-                mkdir($directory, 0777, true);
-            }
-            
-            // Convert boxSize to pixel size
-            $size = $boxSize * 20;
-            
-            // Generate QR Code
-            $qrCode = new QrCode(
-                data: $data,
-                size: $size,
-                margin: 10
-            );
-            
-            $writer = new PngWriter();
-            $result = $writer->write($qrCode);
-            $result->saveToFile($absolutePath);
-            
-            // Cek berhasil
-            if (file_exists($absolutePath)) {
-                return $relativePath; // Return path relatif untuk DB
-            } else {
-                \Log::error('Failed to save QR Code file', [
-                    'path' => $absolutePath
-                ]);
-                return null;
-            }
-            
-        } catch (\Exception $e) {
-            \Log::error('QR Code generation exception: ' . $e->getMessage());
-            return null;
+        $path = self::generate($data, $size);
+        if ($path) {
+            return asset('storage/' . $path);
         }
+        return null;
     }
-    
+
     /**
-     * Generate QR Code sebagai HTML img tag
+     * Generate QR Code sebagai HTML img tag dengan src URL
      * 
      * @param string $data Data yang akan di-encode
      * @param int $size Ukuran QR code
      * @param string $alt Alt text
      * @return string HTML img tag
      */
-    public static function html($data, $size = 300, $alt = 'QR Code')
+    public static function html($data, $size = 200, $alt = 'QR Code')
     {
-        $url = self::generate($data, 10);
+        $url = self::generateUrl($data, $size);
         if ($url) {
             return "<img src=\"{$url}\" alt=\"{$alt}\" width=\"{$size}\" height=\"{$size}\" />";
         }

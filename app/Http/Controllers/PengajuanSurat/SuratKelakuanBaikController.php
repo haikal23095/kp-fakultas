@@ -144,6 +144,81 @@ class SuratKelakuanBaikController extends Controller
     }
 
     /**
+     * Beri nomor surat oleh Admin Fakultas
+     */
+    public function beriNomor(Request $request, $id)
+    {
+        $request->validate([
+            'nomor_surat' => 'required|string|max:100'
+        ]);
+
+        DB::beginTransaction();
+        try {
+            $tugasSurat = TugasSurat::with('suratKelakuanBaik')->findOrFail($id);
+            
+            if (!$tugasSurat->suratKelakuanBaik) {
+                throw new \Exception('Data surat kelakuan baik tidak ditemukan.');
+            }
+
+            // Update nomor surat
+            $tugasSurat->suratKelakuanBaik->update([
+                'Nomor_Surat' => $request->nomor_surat
+            ]);
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Nomor surat berhasil diberikan. Silakan kirim ke Wadek3.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal memberikan nomor surat: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Kirim surat ke Wadek3 untuk ditandatangani
+     */
+    public function kirimKeWadek3($id)
+    {
+        DB::beginTransaction();
+        try {
+            $tugasSurat = TugasSurat::with('suratKelakuanBaik')->findOrFail($id);
+            
+            if (!$tugasSurat->suratKelakuanBaik) {
+                throw new \Exception('Data surat kelakuan baik tidak ditemukan.');
+            }
+
+            if (!$tugasSurat->suratKelakuanBaik->Nomor_Surat) {
+                throw new \Exception('Nomor surat belum diberikan.');
+            }
+
+            // Update status
+            $tugasSurat->update([
+                'Status' => 'menunggu-ttd'
+            ]);
+
+            // Notifikasi ke Wadek3 (Role 10)
+            $wadek3 = \App\Models\User::where('Id_Role', 10)->first();
+            if ($wadek3) {
+                \App\Models\Notifikasi::create([
+                    'Tipe_Notifikasi' => 'New',
+                    'Pesan' => 'Surat Berkelakuan Baik dari mahasiswa ' . ($tugasSurat->pemberiTugas->Name_User ?? '-') . ' siap untuk ditandatangani.',
+                    'Dest_user' => $wadek3->Id_User,
+                    'Source_User' => auth()->user()->Id_User,
+                    'Is_Read' => false,
+                    'Data_Tambahan' => json_encode(['entity' => 'kelakuan_baik', 'id' => $tugasSurat->Id_Tugas_Surat]),
+                ]);
+            }
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Surat berhasil dikirim ke Wadek3 untuk ditandatangani.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->with('error', 'Gagal mengirim ke Wadek3: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Download surat yang sudah ditandatangani (untuk Mahasiswa)
      */
     public function downloadSurat($id)

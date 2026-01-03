@@ -326,7 +326,7 @@
         {{-- NOMOR SURAT --}}
         <div class="nomor-surat">
             <h3>SURAT KETERANGAN BERKELAKUAN BAIK</h3>
-            <p>Nomor: {{ $surat->Nomor_Surat ?? '......................../UN46.2/KM/'.date('Y') }}</p>
+            <p>Nomor: {{ $suratKelakuanBaik->Nomor_Surat ?? '......................../UN46.2/KM/'.date('Y') }}</p>
         </div>
 
         {{-- ISI SURAT --}}
@@ -345,12 +345,10 @@
                                 @elseif($verification->penandatangan->pegawai)
                                     {{ $verification->penandatangan->pegawai->Nama_Pegawai }}
                                 @else
-                                    {{ $verification->signed_by }}
+                                    {{ $verification->penandatangan->Name_User }}
                                 @endif
-                            @elseif($suratKelakuanBaik && $suratKelakuanBaik->Nama_Pejabat)
-                                {{ $suratKelakuanBaik->Nama_Pejabat }}
                             @else
-                                [Nama Wakil Dekan III]
+                                {{ auth()->user()->Name_User ?? '[Nama Wakil Dekan III]' }}
                             @endif
                         </td>
                     </tr>
@@ -361,15 +359,15 @@
                             @if($verification && $verification->penandatangan)
                                 @if($verification->penandatangan->dosen)
                                     {{ $verification->penandatangan->dosen->NIP }}
+                                @elseif($verification->penandatangan->pegawaiFakultas)
+                                    {{ $verification->penandatangan->pegawaiFakultas->NIP }}
                                 @elseif($verification->penandatangan->pegawai)
                                     {{ $verification->penandatangan->pegawai->Nip_Pegawai }}
                                 @else
                                     -
                                 @endif
-                            @elseif($suratKelakuanBaik && $suratKelakuanBaik->NIP_Pejabat)
-                                {{ $suratKelakuanBaik->NIP_Pejabat }}
                             @else
-                                [NIP Wakil Dekan III]
+                                {{ auth()->user()->dosen->NIP ?? auth()->user()->pegawaiFakultas->NIP ?? '[NIP Wakil Dekan III]' }}
                             @endif
                         </td>
                     </tr>
@@ -440,8 +438,6 @@
                     Bangkalan, 
                     @if($verification && $verification->signed_at)
                         {{ \Carbon\Carbon::parse($verification->signed_at)->translatedFormat('d F Y') }}
-                    @elseif($suratKelakuanBaik && $suratKelakuanBaik->Tanggal_TTD)
-                        {{ \Carbon\Carbon::parse($suratKelakuanBaik->Tanggal_TTD)->translatedFormat('d F Y') }}
                     @else
                         {{ \Carbon\Carbon::now()->translatedFormat('d F Y') }}
                     @endif
@@ -452,14 +448,6 @@
                 @if($verification && $verification->qr_path)
                     <div class="qr-code-box">
                         <img src="{{ asset($verification->qr_path) }}" alt="QR Code Verifikasi">
-                        <div class="qr-info">
-                            <small>Dokumen ditandatangani secara elektronik</small><br>
-                            <small>Scan QR code untuk verifikasi keaslian</small>
-                        </div>
-                    </div>
-                @elseif($suratKelakuanBaik && $suratKelakuanBaik->Qr_Code)
-                    <div class="qr-code-box">
-                        <img src="{{ asset('storage/' . $suratKelakuanBaik->Qr_Code) }}" alt="QR Code Verifikasi">
                         <div class="qr-info">
                             <small>Dokumen ditandatangani secara elektronik</small><br>
                             <small>Scan QR code untuk verifikasi keaslian</small>
@@ -480,12 +468,10 @@
                         @elseif($verification->penandatangan->pegawai)
                             {{ $verification->penandatangan->pegawai->Nama_Pegawai }}
                         @else
-                            {{ $verification->signed_by }}
+                            {{ $verification->penandatangan->Name_User }}
                         @endif
-                    @elseif($suratKelakuanBaik && $suratKelakuanBaik->Nama_Pejabat)
-                        {{ $suratKelakuanBaik->Nama_Pejabat }}
                     @else
-                        [Nama Wakil Dekan III]
+                        {{ auth()->user()->Name_User ?? '[Nama Wakil Dekan III]' }}
                     @endif
                 </div>
                 
@@ -494,15 +480,15 @@
                     @if($verification && $verification->penandatangan)
                         @if($verification->penandatangan->dosen)
                             {{ $verification->penandatangan->dosen->NIP }}
+                        @elseif($verification->penandatangan->pegawaiFakultas)
+                            {{ $verification->penandatangan->pegawaiFakultas->NIP }}
                         @elseif($verification->penandatangan->pegawai)
                             {{ $verification->penandatangan->pegawai->Nip_Pegawai }}
                         @else
                             -
                         @endif
-                    @elseif($suratKelakuanBaik && $suratKelakuanBaik->NIP_Pejabat)
-                        {{ $suratKelakuanBaik->NIP_Pejabat }}
                     @else
-                        [NIP Wakil Dekan III]
+                        {{ auth()->user()->dosen->NIP ?? auth()->user()->pegawaiFakultas->NIP ?? '[NIP Wakil Dekan III]' }}
                     @endif
                 </div>
             </div>
