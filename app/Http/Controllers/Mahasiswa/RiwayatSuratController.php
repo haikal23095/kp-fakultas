@@ -297,7 +297,22 @@ class RiwayatSuratController extends Controller
     }
     
     // public function riwayatCekPlagiasi() { return $this->getGenericRiwayat(0, 'Riwayat Cek Plagiasi'); } // Belum ada di seeder
-    public function riwayatDispensasi() { return $this->getGenericRiwayat(7, 'Riwayat Surat Dispensasi'); }
+    public function riwayatDispensasi()
+    {
+        $user = Auth::user();
+        
+        // Query dengan relasi suratDispensasi dan verification
+        $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratDispensasi', 'verification'])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->whereHas('suratDispensasi')
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('mahasiswa.riwayat_dispensasi', [
+            'riwayatSurat' => $riwayatSurat,
+            'title' => 'Riwayat Surat Dispensasi'
+        ]);
+    }
     
     public function riwayatBerkelakuanBaik() { 
         $user = Auth::user();
@@ -348,4 +363,31 @@ class RiwayatSuratController extends Controller
     
     public function riwayatPeminjamanGedung() { return $this->getGenericRiwayat(10, 'Riwayat Peminjaman Gedung'); }
     public function riwayatLembur() { return $this->getGenericRiwayat(11, 'Riwayat Surat Perintah Lembur'); }
+
+    /**
+     * Download PDF Surat Dispensasi yang sudah di-ACC Wadek3
+     */
+    public function downloadDispensasi($id)
+    {
+        $tugasSurat = TugasSurat::with(['suratDispensasi'])->findOrFail($id);
+        $surat = $tugasSurat->suratDispensasi;
+
+        // Validasi ownership
+        if ($tugasSurat->Id_Pemberi_Tugas_Surat !== Auth::id()) {
+            abort(403, 'Anda tidak memiliki akses untuk mengunduh surat ini.');
+        }
+
+        // Cek apakah surat sudah selesai (sudah di-ACC Wadek3)
+        if (!$surat || !$surat->file_surat_selesai) {
+            return redirect()->back()->with('error', 'Surat belum selesai diproses atau belum di-ACC oleh Wadek 3.');
+        }
+
+        $filePath = storage_path('app/public/' . $surat->file_surat_selesai);
+
+        if (!file_exists($filePath)) {
+            return redirect()->back()->with('error', 'File PDF tidak ditemukan di server.');
+        }
+
+        return response()->download($filePath, 'Surat_Dispensasi_' . $surat->nomor_surat . '.pdf');
+    }
 }

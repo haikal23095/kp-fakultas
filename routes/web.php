@@ -21,6 +21,7 @@ use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
 use App\Http\Controllers\PengajuanSurat\SuratPengantarMagangController;
 use App\Http\Controllers\PengajuanSurat\SuratLegalisirController;
 use App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController;
+use App\Http\Controllers\PengajuanSurat\SuratDispensasiController;
 use App\Http\Controllers\Admin_Fakultas\SuratLegalisirController as FakultasSuratLegalisirController;
 
 // Impor Model untuk route pengajuan
@@ -149,7 +150,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat-mobil-dinas', [FakultasManajemenSuratController::class, 'listMobilDinas'])->name('surat.mobil_dinas');
         Route::get('/surat-cuti', [FakultasManajemenSuratController::class, 'listCuti'])->name('surat.cuti');
         Route::get('/surat-tidak-beasiswa', [\App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController::class, 'indexAdmin'])->name('surat.tidak_beasiswa');
-        Route::get('/surat-dispensasi', [FakultasManajemenSuratController::class, 'listDispensasi'])->name('surat.dispensasi');
+        
+        // Routes untuk Surat Dispensasi (menggunakan SuratDispensasiController khusus)
+        Route::get('/surat-dispensasi', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'index'])->name('surat.dispensasi');
+        Route::get('/surat-dispensasi/{id}', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'show'])->name('surat.dispensasi.detail');
+        Route::get('/surat-dispensasi/{id}/download-permohonan', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'downloadPermohonan'])->name('surat.dispensasi.download_permohonan');
+        Route::get('/surat-dispensasi/{id}/download-lampiran', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'downloadLampiran'])->name('surat.dispensasi.download_lampiran');
+        Route::post('/surat-dispensasi/{id}/assign-nomor', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'assignNomorSurat'])->name('surat.dispensasi.assign_nomor');
+        Route::get('/surat-dispensasi/{id}/download-pdf', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'downloadPDF'])->name('surat.dispensasi.download_pdf');
+        
         Route::get('/surat-berkelakuan-baik', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'indexAdmin'])->name('surat.berkelakuan_baik');
         Route::post('/surat-berkelakuan-baik/{id}/beri-nomor', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'beriNomor'])->name('surat.kelakuan_baik.beri_nomor');
         Route::post('/surat-berkelakuan-baik/{id}/kirim-wadek3', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'kirimKeWadek3'])->name('surat.kelakuan_baik.kirim_wadek3');
@@ -305,6 +314,14 @@ Route::middleware('auth')->group(function () {
         // Kemahasiswaan - Dispensasi
         Route::get('/kemahasiswaan/validasi-dispensasi', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'validasiDispensasi'])
             ->name('kemahasiswaan.validasi-dispensasi');
+        Route::get('/kemahasiswaan/dispensasi/{id}', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'detailDispensasi'])
+            ->name('kemahasiswaan.detail-dispensasi');
+        Route::post('/kemahasiswaan/dispensasi/{id}/approve', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'approveDispensasi'])
+            ->name('kemahasiswaan.approve-dispensasi');
+        Route::get('/kemahasiswaan/dispensasi/{id}/download-permohonan', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'downloadPermohonan'])
+            ->name('kemahasiswaan.download-permohonan');
+        Route::get('/kemahasiswaan/dispensasi/{id}/download-lampiran', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'downloadLampiran'])
+            ->name('kemahasiswaan.download-lampiran');
         
         // Persetujuan Surat Berkelakuan Baik (redirect ke controller utama)
         Route::get('/kemahasiswaan/validasi-kelakuan-baik', [\App\Http\Controllers\Wadek3\KelakuanBaikController::class, 'index'])
@@ -596,6 +613,10 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat/download-berkelakuan-baik/{id}', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'downloadSurat'])
             ->name('surat.download_berkelakuan_baik');
 
+        // Download Surat Dispensasi (Signed by Wadek3)
+        Route::get('/surat/download-dispensasi/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadDispensasi'])
+            ->name('download.dispensasi');
+
         // Preview Form Pengantar (TTD Mahasiswa & QR Kaprodi)
         Route::get('/surat/preview-form-pengantar/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'previewFormPengantar'])
             ->name('surat.preview_form_pengantar');
@@ -619,6 +640,10 @@ Route::middleware('auth')->group(function () {
         // --- ROUTE SURAT KETERANGAN BERKELAKUAN BAIK ---
         Route::get('/pengajuan-surat/berkelakuan-baik', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'create'])->name('pengajuan.kelakuan_baik.create');
         Route::post('/pengajuan-surat/berkelakuan-baik', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'store'])->name('pengajuan.kelakuan_baik.store');
+
+        // --- ROUTE SURAT DISPENSASI ---
+        Route::get('/pengajuan-surat/dispen', [\App\Http\Controllers\PengajuanSurat\SuratDispensasiController::class, 'create'])->name('pengajuan.dispen.create');
+        Route::post('/pengajuan-surat/dispen', [\App\Http\Controllers\PengajuanSurat\SuratDispensasiController::class, 'store'])->name('pengajuan.dispen.store');
 
         // Rute lainnya
         // Route::get('/legalisir', function () {
