@@ -33,10 +33,10 @@ class SuratLegalisirController extends Controller
     {
         $this->checkAccess();
 
-        // HANYA ambil data mahasiswa (bukan dekan/pegawai) dan yang belum selesai
+        // HANYA ambil data mahasiswa (bukan dekan/pegawai) dan yang belum selesai/ditolak
         $daftarSurat = SuratLegalisir::with(['user.mahasiswa.prodi', 'tugasSurat'])
             ->whereHas('user.mahasiswa') // FILTER: Hanya yang punya relasi mahasiswa
-            ->where('Status', '!=', 'selesai') // EXCLUDE: Data yang sudah selesai
+            ->whereNotIn('Status', ['selesai', 'ditolak']) // EXCLUDE: Data yang sudah selesai atau ditolak
             ->whereNotNull('File_Scan_Path') // FILTER: Hanya yang ada file scan (data baru)
             ->orderBy('id_no', 'desc')
             ->get();
@@ -133,7 +133,38 @@ class SuratLegalisirController extends Controller
     }
 
     /**
-     * Memperbarui Progres Berkas (Alur Kerja)
+     * Menolak pengajuan legalisir
+     */
+    public function tolakPengajuan(Request $request, $id)
+    {
+        $this->checkAccess();
+
+        $surat = SuratLegalisir::with('tugasSurat')->findOrFail($id);
+
+        // Update status saja
+        $surat->Status = 'ditolak';
+        $surat->save();
+
+        // Update Tugas Surat jika ada
+        if ($surat->tugasSurat) {
+            $surat->tugasSurat->update([
+                'Status'               => 'Ditolak',
+                'Tanggal_Diselesaikan' => Carbon::now()
+            ]);
+        }
+
+        // Kirim notifikasi ke mahasiswa
+        $this->sendNotification(
+            $surat->Id_User,
+            'Pengajuan Legalisir Ditolak',
+            'Pengajuan legalisir Anda ditolak. Silakan cek kembali dokumen Anda.',
+            $surat->id_no
+        );
+
+        return redirect()->back()->with('success', 'Pengajuan legalisir berhasil ditolak.');
+    }
+
+    /**     * Memperbarui Progres Berkas (Alur Kerja)
      * ALUR: siap_diambil → selesai (mahasiswa konfirmasi ambil)
      */
     public function updateProgress(Request $request, $id)
@@ -178,10 +209,14 @@ class SuratLegalisirController extends Controller
  */
     private function sendNotification($destUser, $title, $message, $idNo)
     {
-        // Pastikan 'Tipe_Notifikasi' sesuai dengan pilihan ENUM di database
-        // Jika di database adalah 'info', maka jangan gunakan 'Info' (kapital)
+        // Tentukan tipe notifikasi berdasarkan pesan
+        $tipeNotif = 'Accepted'; // Default
+        if (str_contains($message, 'ditolak') || str_contains($message, 'Ditolak')) {
+            $tipeNotif = 'Rejected';
+        }
+
         Notifikasi::create([
-            'Tipe_Notifikasi' => 'Accepted', // <--- UBAH DARI 'Info' MENJADI 'info'
+            'Tipe_Notifikasi' => $tipeNotif,
             'Pesan'           => $message,
             'Dest_user'       => $destUser,
             'Source_User'     => Auth::id(),
