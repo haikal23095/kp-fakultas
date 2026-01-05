@@ -318,6 +318,8 @@ Route::middleware('auth')->group(function () {
             ->name('kemahasiswaan.detail-dispensasi');
         Route::post('/kemahasiswaan/dispensasi/{id}/approve', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'approveDispensasi'])
             ->name('kemahasiswaan.approve-dispensasi');
+        Route::post('/kemahasiswaan/dispensasi/{id}/regenerate-pdf', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'regeneratePdfDispensasi'])
+            ->name('kemahasiswaan.regenerate-pdf-dispensasi');
         Route::get('/kemahasiswaan/dispensasi/{id}/download-permohonan', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'downloadPermohonan'])
             ->name('kemahasiswaan.download-permohonan');
         Route::get('/kemahasiswaan/dispensasi/{id}/download-lampiran', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'downloadLampiran'])

@@ -200,6 +200,72 @@ class KemahasiswaanController extends Controller
     }
 
     /**
+     * Regenerate PDF untuk dispensasi yang sudah di-ACC (untuk fix file missing)
+     */
+    public function regeneratePdfDispensasi($id)
+    {
+        DB::beginTransaction();
+        try {
+            $tugasSurat = TugasSurat::with(['suratDispensasi.user.mahasiswa.prodi', 'verification'])
+                ->findOrFail($id);
+
+            $surat = $tugasSurat->suratDispensasi;
+
+            if (!$surat) {
+                throw new \Exception('Data dispensasi tidak ditemukan.');
+            }
+
+            // Cek apakah sudah pernah di-ACC
+            if (!$surat->acc_wadek3_by) {
+                throw new \Exception('Surat belum di-ACC. Tidak bisa regenerate PDF.');
+            }
+
+            // Cek apakah ada verification record (QR code)
+            $verification = $tugasSurat->verification;
+            if (!$verification || !$verification->qr_path) {
+                throw new \Exception('QR Code tidak ditemukan. Harap ACC ulang surat ini.');
+            }
+
+            // Get penandatangan dari verification record
+            $penandatangan = User::find($verification->signed_by_user_id);
+            if (!$penandatangan) {
+                throw new \Exception('Data penandatangan tidak ditemukan.');
+            }
+
+            \Log::info('Regenerating PDF for dispensasi', [
+                'id' => $id,
+                'qr_path' => $verification->qr_path
+            ]);
+
+            // Generate PDF dengan QR code yang sudah ada
+            $pdfFileName = $this->generatePDFDispensasi(
+                $surat, 
+                $surat->user->mahasiswa, 
+                $verification->qr_path, 
+                $penandatangan
+            );
+
+            \Log::info('PDF regenerated successfully', ['pdf_path' => $pdfFileName]);
+
+            // Update file_surat_selesai
+            $surat->file_surat_selesai = $pdfFileName;
+            $surat->save();
+
+            DB::commit();
+
+            return redirect()->back()
+                ->with('success', 'PDF berhasil di-generate ulang! Silakan download untuk melihat hasilnya.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error regenerating PDF dispensasi', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return redirect()->back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
+    }
+
+    /**
      * Generate PDF Surat Dispensasi dengan QR Code
      */
     private function generatePDFDispensasi($surat, $mahasiswa, $qrPath, $penandatangan)
@@ -240,18 +306,56 @@ class KemahasiswaanController extends Controller
             'chroot' => public_path(),
         ]);
         
-        // Generate filename
+        // Generate filename (relative to public disk)
         $fileName = 'surat_dispensasi/dispensasi_' . $mahasiswa->NIM . '_' . time() . '.pdf';
         
         // Pastikan folder ada
         $folderPath = storage_path('app/public/surat_dispensasi');
         if (!file_exists($folderPath)) {
             mkdir($folderPath, 0755, true);
+            \Log::info('Created surat_dispensasi folder', ['path' => $folderPath]);
         }
         
-        // Save PDF ke storage
-        $pdfOutput = $pdf->output();
-        Storage::put('public/' . $fileName, $pdfOutput);
+        try {
+            // Save PDF ke storage using public disk
+            $pdfOutput = $pdf->output();
+            
+            \Log::info('PDF output generated', [
+                'filename' => $fileName,
+                'output_size' => strlen($pdfOutput)
+            ]);
+            
+            $result = Storage::disk('public')->put($fileName, $pdfOutput);
+            
+            \Log::info('Storage::put result', [
+                'result' => $result,
+                'filename' => $fileName
+            ]);
+            
+            // Verify file exists
+            if (!Storage::disk('public')->exists($fileName)) {
+                \Log::error('PDF generation failed - file not saved', [
+                    'filename' => $fileName,
+                    'expected_path' => storage_path('app/public/' . $fileName),
+                    'put_result' => $result
+                ]);
+                throw new \Exception('Gagal menyimpan PDF ke storage.');
+            }
+            
+            \Log::info('PDF saved successfully', [
+                'filename' => $fileName,
+                'size' => Storage::disk('public')->size($fileName),
+                'full_path' => storage_path('app/public/' . $fileName)
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Exception while saving PDF', [
+                'filename' => $fileName,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
         
         return $fileName;
     }

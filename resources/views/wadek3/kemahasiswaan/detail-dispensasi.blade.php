@@ -240,6 +240,30 @@
                         <i class="fas fa-check-circle me-2"></i>
                         <strong>Surat telah disetujui</strong> pada {{ \Carbon\Carbon::parse($surat->acc_wadek3_at)->format('d M Y H:i') }}
                     </div>
+                    
+                    {{-- Tombol Regenerate PDF jika file tidak ada --}}
+                    @if(!$surat->file_surat_selesai || !Storage::disk('public')->exists($surat->file_surat_selesai))
+                        <div class="alert alert-warning">
+                            <i class="fas fa-exclamation-triangle me-2"></i>
+                            <strong>File PDF tidak ditemukan!</strong> Klik tombol di bawah untuk generate ulang PDF dari data yang sudah di-ACC.
+                        </div>
+                        
+                        <form action="{{ route('wadek3.kemahasiswaan.regenerate-pdf-dispensasi', $tugasSurat->Id_Tugas_Surat) }}" 
+                              method="POST" 
+                              onsubmit="return confirm('Generate ulang PDF dari layouting yang sudah ada?')">
+                            @csrf
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    <i class="fas fa-file-pdf me-2"></i>Generate PDF dari Layouting
+                                </button>
+                            </div>
+                        </form>
+                    @else
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle me-2"></i>
+                            PDF sudah tersedia. Mahasiswa dapat mendownload surat.
+                        </div>
+                    @endif
                 @endif
             </div>
         </div>
