@@ -98,21 +98,6 @@
             </div>
 
             <div class="mb-3">
-                <label for="file_permohonan" class="form-label">Upload Surat Permohonan (PDF) <span class="text-danger">*</span></label>
-                <input type="file" class="form-control @error('file_permohonan') is-invalid @enderror" 
-                       id="file_permohonan" name="file_permohonan" 
-                       accept="application/pdf" 
-                       required>
-                <div class="form-text">
-                    <i class="fas fa-info-circle me-1"></i>
-                    Upload <strong>Surat Permohonan Resmi</strong> dalam format PDF (Max: 2MB)
-                </div>
-                @error('file_permohonan')
-                    <div class="invalid-feedback">{{ $message }}</div>
-                @enderror
-            </div>
-
-            <div class="mb-3">
                 <label for="file_lampiran" class="form-label">Upload Bukti Pendukung (PDF/Gambar)</label>
                 <input type="file" class="form-control @error('file_lampiran') is-invalid @enderror" 
                        id="file_lampiran" name="file_lampiran" 

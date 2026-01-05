@@ -37,16 +37,12 @@ class SuratDispensasiController extends Controller
             'tempat_pelaksanaan' => 'nullable|string|max:255',
             'tanggal_mulai' => 'required|date',
             'tanggal_selesai' => 'required|date|after_or_equal:tanggal_mulai',
-            'file_permohonan' => 'required|mimes:pdf|max:2048',
             'file_lampiran' => 'nullable|mimes:pdf,jpg,jpeg,png|max:2048',
         ], [
             'nama_kegiatan.required' => 'Nama kegiatan/alasan wajib diisi.',
             'tanggal_mulai.required' => 'Tanggal mulai wajib diisi.',
             'tanggal_selesai.required' => 'Tanggal selesai wajib diisi.',
             'tanggal_selesai.after_or_equal' => 'Tanggal selesai tidak boleh lebih awal dari tanggal mulai.',
-            'file_permohonan.required' => 'File surat permohonan wajib diunggah.',
-            'file_permohonan.mimes' => 'File permohonan harus berformat PDF.',
-            'file_permohonan.max' => 'File permohonan maksimal 2MB.',
             'file_lampiran.mimes' => 'File lampiran harus berformat PDF, JPG, JPEG, atau PNG.',
             'file_lampiran.max' => 'File lampiran maksimal 2MB.',
         ]);
@@ -82,23 +78,47 @@ class SuratDispensasiController extends Controller
 
             $idPejabat = $pejabat ? $pejabat->Id_Pejabat : null;
 
-            // Upload file permohonan
-            $filePermohonanPath = null;
-            if ($request->hasFile('file_permohonan')) {
-                $filePermohonan = $request->file('file_permohonan');
-                $filePermohonanName = 'permohonan_dispen_' . $mahasiswa->NIM . '_' . time() . '.pdf';
-                $filePermohonan->storeAs('public/surat_dispensasi', $filePermohonanName);
-                $filePermohonanPath = 'surat_dispensasi/' . $filePermohonanName;
-            }
-
-            // Upload file lampiran (opsional)
+            // Upload file lampiran/bukti pendukung (opsional)
             $fileLampiranPath = null;
             if ($request->hasFile('file_lampiran')) {
                 $fileLampiran = $request->file('file_lampiran');
+                
+                // Validate file
+                if (!$fileLampiran->isValid()) {
+                    throw new \Exception('File upload gagal. File tidak valid.');
+                }
+                
                 $extension = $fileLampiran->getClientOriginalExtension();
                 $fileLampiranName = 'lampiran_dispen_' . $mahasiswa->NIM . '_' . time() . '.' . $extension;
-                $fileLampiran->storeAs('public/surat_dispensasi', $fileLampiranName);
-                $fileLampiranPath = 'surat_dispensasi/' . $fileLampiranName;
+                
+                // Store file to public disk (storage/app/public/surat_dispensasi/)
+                $storedPath = Storage::disk('public')->putFileAs(
+                    'surat_dispensasi',
+                    $fileLampiran,
+                    $fileLampiranName
+                );
+                
+                if (!$storedPath) {
+                    throw new \Exception('File upload gagal. Tidak bisa menyimpan ke storage.');
+                }
+                
+                // Verify file exists using Storage facade
+                if (!Storage::disk('public')->exists($storedPath)) {
+                    \Log::error('File upload dispensasi: File tidak ditemukan setelah upload', [
+                        'expected_path' => $storedPath,
+                        'full_path' => storage_path('app/public/' . $storedPath)
+                    ]);
+                    throw new \Exception('File upload gagal. File tidak ditemukan setelah disimpan.');
+                }
+                
+                \Log::info('File upload dispensasi berhasil', [
+                    'filename' => $fileLampiranName,
+                    'stored_path' => $storedPath,
+                    'full_path' => storage_path('app/public/' . $storedPath),
+                    'size' => Storage::disk('public')->size($storedPath)
+                ]);
+                
+                $fileLampiranPath = $storedPath; // Will be 'surat_dispensasi/filename.ext'
             }
 
             // Insert ke Tabel Tugas_Surat
@@ -120,7 +140,6 @@ class SuratDispensasiController extends Controller
                 'tempat_pelaksanaan' => $request->tempat_pelaksanaan,
                 'tanggal_mulai' => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
-                'file_permohonan' => $filePermohonanPath,
                 'file_lampiran' => $fileLampiranPath,
             ]);
 

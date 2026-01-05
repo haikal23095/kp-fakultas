@@ -96,10 +96,10 @@ class KemahasiswaanController extends Controller
                 throw new \Exception('Surat belum memiliki nomor. Harap hubungi Admin untuk memberikan nomor surat terlebih dahulu.');
             }
 
-            // Generate QR Code dengan informasi penandatangan
+            // Generate QR Code dengan informasi penandatangan (ikuti pola Dekan)
             $qrData = [
                 'jenis_surat' => 'Surat Dispensasi Kegiatan',
-                'nomor_surat' => $surat->nomor_surat ?? 'Belum ada nomor',
+                'nomor_surat' => $surat->nomor_surat,
                 'mahasiswa' => $surat->user->Name_User ?? 'N/A',
                 'nim' => $surat->user->mahasiswa->NIM ?? 'N/A',
                 'kegiatan' => $surat->nama_kegiatan,
@@ -110,15 +110,24 @@ class KemahasiswaanController extends Controller
                 'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
             ];
 
-            // Generate QR Code dan simpan (return URL publik)
-            $qrUrl = QrCodeHelper::generate(json_encode($qrData), 10);
+            \Log::info('Wadek3 generating QR Code for Dispensasi', ['data' => $qrData]);
+
+            // Generate QR Code - returns URL like: http://domain/storage/qr-codes/qr_xxx.png
+            $qrUrl = QrCodeHelper::generate(json_encode($qrData), 200);
 
             if (!$qrUrl) {
+                \Log::error('QR Code generation failed - empty URL returned');
                 throw new \Exception('Gagal generate QR Code.');
             }
 
-            // Extract relative path from URL for database storage
-            $qrPath = str_replace(asset('storage/'), '', $qrUrl);
+            // Extract relative path from URL: qr-codes/qr_xxx.png
+            // Parse URL dan ambil path setelah /storage/
+            $qrPath = str_replace('/storage/', '', parse_url($qrUrl, PHP_URL_PATH));
+
+            \Log::info('QR Code generated successfully', [
+                'url' => $qrUrl,
+                'extracted_path' => $qrPath
+            ]);
 
             // Buat record verifikasi
             $verification = SuratVerification::create([
@@ -130,8 +139,12 @@ class KemahasiswaanController extends Controller
                 'token' => \Illuminate\Support\Str::random(32),
             ]);
 
+            \Log::info('Verification record created', ['verification_id' => $verification->id]);
+
             // Generate PDF dengan QR code
             $pdfFileName = $this->generatePDFDispensasi($surat, $surat->user->mahasiswa, $qrPath, $user);
+
+            \Log::info('PDF generated', ['pdf_path' => $pdfFileName]);
 
             // Update Surat Dispensasi
             $surat->acc_wadek3_by = $user->Id_User;
@@ -171,11 +184,84 @@ class KemahasiswaanController extends Controller
 
             DB::commit();
 
+            \Log::info('Dispensasi approval completed successfully', ['id' => $id]);
+
             return redirect()->route('wadek3.kemahasiswaan.validasi-dispensasi')
                 ->with('success', 'Surat Dispensasi berhasil disetujui! QR Code dan PDF telah digenerate.');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error approving dispensasi', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()->with('error', 'Gagal menyetujui surat: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Regenerate PDF untuk dispensasi yang sudah di-ACC (untuk fix file missing)
+     */
+    public function regeneratePdfDispensasi($id)
+    {
+        DB::beginTransaction();
+        try {
+            $tugasSurat = TugasSurat::with(['suratDispensasi.user.mahasiswa.prodi', 'verification'])
+                ->findOrFail($id);
+
+            $surat = $tugasSurat->suratDispensasi;
+
+            if (!$surat) {
+                throw new \Exception('Data dispensasi tidak ditemukan.');
+            }
+
+            // Cek apakah sudah pernah di-ACC
+            if (!$surat->acc_wadek3_by) {
+                throw new \Exception('Surat belum di-ACC. Tidak bisa regenerate PDF.');
+            }
+
+            // Cek apakah ada verification record (QR code)
+            $verification = $tugasSurat->verification;
+            if (!$verification || !$verification->qr_path) {
+                throw new \Exception('QR Code tidak ditemukan. Harap ACC ulang surat ini.');
+            }
+
+            // Get penandatangan dari verification record
+            $penandatangan = User::find($verification->signed_by_user_id);
+            if (!$penandatangan) {
+                throw new \Exception('Data penandatangan tidak ditemukan.');
+            }
+
+            \Log::info('Regenerating PDF for dispensasi', [
+                'id' => $id,
+                'qr_path' => $verification->qr_path
+            ]);
+
+            // Generate PDF dengan QR code yang sudah ada
+            $pdfFileName = $this->generatePDFDispensasi(
+                $surat, 
+                $surat->user->mahasiswa, 
+                $verification->qr_path, 
+                $penandatangan
+            );
+
+            \Log::info('PDF regenerated successfully', ['pdf_path' => $pdfFileName]);
+
+            // Update file_surat_selesai
+            $surat->file_surat_selesai = $pdfFileName;
+            $surat->save();
+
+            DB::commit();
+
+            return redirect()->back()
+                ->with('success', 'PDF berhasil di-generate ulang! Silakan download untuk melihat hasilnya.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error regenerating PDF dispensasi', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return redirect()->back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
         }
     }
 
@@ -220,12 +306,56 @@ class KemahasiswaanController extends Controller
             'chroot' => public_path(),
         ]);
         
-        // Generate filename
+        // Generate filename (relative to public disk)
         $fileName = 'surat_dispensasi/dispensasi_' . $mahasiswa->NIM . '_' . time() . '.pdf';
         
-        // Save PDF ke storage
-        $pdfOutput = $pdf->output();
-        Storage::put('public/' . $fileName, $pdfOutput);
+        // Pastikan folder ada
+        $folderPath = storage_path('app/public/surat_dispensasi');
+        if (!file_exists($folderPath)) {
+            mkdir($folderPath, 0755, true);
+            \Log::info('Created surat_dispensasi folder', ['path' => $folderPath]);
+        }
+        
+        try {
+            // Save PDF ke storage using public disk
+            $pdfOutput = $pdf->output();
+            
+            \Log::info('PDF output generated', [
+                'filename' => $fileName,
+                'output_size' => strlen($pdfOutput)
+            ]);
+            
+            $result = Storage::disk('public')->put($fileName, $pdfOutput);
+            
+            \Log::info('Storage::put result', [
+                'result' => $result,
+                'filename' => $fileName
+            ]);
+            
+            // Verify file exists
+            if (!Storage::disk('public')->exists($fileName)) {
+                \Log::error('PDF generation failed - file not saved', [
+                    'filename' => $fileName,
+                    'expected_path' => storage_path('app/public/' . $fileName),
+                    'put_result' => $result
+                ]);
+                throw new \Exception('Gagal menyimpan PDF ke storage.');
+            }
+            
+            \Log::info('PDF saved successfully', [
+                'filename' => $fileName,
+                'size' => Storage::disk('public')->size($fileName),
+                'full_path' => storage_path('app/public/' . $fileName)
+            ]);
+            
+        } catch (\Exception $e) {
+            \Log::error('Exception while saving PDF', [
+                'filename' => $fileName,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            throw $e;
+        }
         
         return $fileName;
     }

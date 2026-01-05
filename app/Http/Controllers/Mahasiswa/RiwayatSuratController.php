@@ -5,12 +5,15 @@ namespace App\Http\Controllers\Mahasiswa;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use App\Models\TugasSurat;
 use App\Models\SuratVerification;
 use App\Models\SuratKetAktif;
 use App\Models\SuratMagang;
 use App\Models\SuratLegalisir;
 use App\Models\SuratTidakBeasiswa;
+use App\Models\User;
+use Carbon\Carbon;
 
 class RiwayatSuratController extends Controller
 {
@@ -301,8 +304,13 @@ class RiwayatSuratController extends Controller
     {
         $user = Auth::user();
         
-        // Query dengan relasi suratDispensasi dan verification
-        $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratDispensasi', 'verification'])
+        // Query dengan relasi suratDispensasi, verification, dan accWadek3
+        $riwayatSurat = TugasSurat::with([
+            'jenisSurat', 
+            'suratDispensasi.accWadek3.dosen',
+            'suratDispensasi.accWadek3.pegawaiFakultas',
+            'verification'
+        ])
             ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
             ->whereHas('suratDispensasi')
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
@@ -369,7 +377,7 @@ class RiwayatSuratController extends Controller
      */
     public function downloadDispensasi($id)
     {
-        $tugasSurat = TugasSurat::with(['suratDispensasi'])->findOrFail($id);
+        $tugasSurat = TugasSurat::with(['suratDispensasi', 'verification'])->findOrFail($id);
         $surat = $tugasSurat->suratDispensasi;
 
         // Validasi ownership
@@ -377,17 +385,79 @@ class RiwayatSuratController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk mengunduh surat ini.');
         }
 
+        // Cek apakah data dispensasi ada
+        if (!$surat) {
+            return redirect()->back()->with('error', 'Data surat dispensasi tidak ditemukan.');
+        }
+
         // Cek apakah surat sudah selesai (sudah di-ACC Wadek3)
-        if (!$surat || !$surat->file_surat_selesai) {
-            return redirect()->back()->with('error', 'Surat belum selesai diproses atau belum di-ACC oleh Wadek 3.');
+        if (!$surat->acc_wadek3_by) {
+            return redirect()->back()->with('error', 'Surat belum disetujui oleh Wadek 3.');
         }
 
-        $filePath = storage_path('app/public/' . $surat->file_surat_selesai);
-
-        if (!file_exists($filePath)) {
-            return redirect()->back()->with('error', 'File PDF tidak ditemukan di server.');
+        // Cek apakah file PDF sudah ada di storage
+        if ($surat->file_surat_selesai && Storage::disk('public')->exists($surat->file_surat_selesai)) {
+            $filePath = storage_path('app/public/' . $surat->file_surat_selesai);
+            return response()->download($filePath, 'Surat_Dispensasi_' . ($surat->nomor_surat ?? 'draft') . '.pdf');
         }
 
-        return response()->download($filePath, 'Surat_Dispensasi_' . $surat->nomor_surat . '.pdf');
+        // Jika file tidak ada, generate PDF on-the-fly dari data yang ada
+        try {
+            \Log::info('Generating PDF on-the-fly for dispensasi', ['id' => $id]);
+            
+            // Get data untuk PDF
+            $mahasiswa = Auth::user()->mahasiswa;
+            $verification = $tugasSurat->verification;
+            
+            if (!$verification || !$verification->qr_path) {
+                return redirect()->back()->with('error', 'Data QR Code tidak ditemukan. Harap hubungi admin.');
+            }
+            
+            $penandatangan = User::find($verification->signed_by_user_id);
+            if (!$penandatangan) {
+                return redirect()->back()->with('error', 'Data penandatangan tidak ditemukan.');
+            }
+            
+            // QR Code path
+            $qrAbsolutePath = storage_path('app/public/' . $verification->qr_path);
+            
+            // Data untuk PDF
+            $data = [
+                'nomor_surat' => $surat->nomor_surat,
+                'tanggal_surat' => Carbon::parse($surat->acc_wadek3_at ?? now())->translatedFormat('d F Y'),
+                'nama_mahasiswa' => $mahasiswa->Nama_Mahasiswa,
+                'nim' => $mahasiswa->NIM,
+                'prodi' => $mahasiswa->prodi->Nama_Prodi ?? '-',
+                'angkatan' => $mahasiswa->Angkatan ?? '-',
+                'nama_kegiatan' => $surat->nama_kegiatan,
+                'instansi_penyelenggara' => $surat->instansi_penyelenggara ?? '-',
+                'tempat_pelaksanaan' => $surat->tempat_pelaksanaan ?? '-',
+                'tanggal_mulai' => Carbon::parse($surat->tanggal_mulai)->translatedFormat('d F Y'),
+                'tanggal_selesai' => Carbon::parse($surat->tanggal_selesai)->translatedFormat('d F Y'),
+                'logo_path' => public_path('images/logo_unijoyo.png'),
+                'qr_code_path' => $qrAbsolutePath,
+                'penandatangan_nama' => $penandatangan->Name_User,
+                'penandatangan_nip' => $penandatangan->dosen->NIP ?? $penandatangan->pegawaiFakultas->NIP ?? '-',
+            ];
+            
+            // Generate PDF
+            $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('wadek3.kemahasiswaan.pdf-dispensasi', $data);
+            $pdf->setPaper('A4', 'portrait');
+            $pdf->setOptions([
+                'isHtml5ParserEnabled' => true,
+                'isRemoteEnabled' => true,
+                'chroot' => public_path(),
+            ]);
+            
+            // Stream PDF langsung ke browser (seperti print/Ctrl+P)
+            return $pdf->stream('Surat_Dispensasi_' . $mahasiswa->NIM . '.pdf');
+            
+        } catch (\Exception $e) {
+            \Log::error('Error generating PDF on-the-fly', [
+                'id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return redirect()->back()->with('error', 'Gagal generate PDF: ' . $e->getMessage());
+        }
     }
 }
