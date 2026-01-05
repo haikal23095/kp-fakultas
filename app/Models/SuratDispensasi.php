@@ -22,7 +22,6 @@ class SuratDispensasi extends Model
         'tempat_pelaksanaan',
         'tanggal_mulai',
         'tanggal_selesai',
-        'file_permohonan',
         'file_lampiran',
         'nomor_surat',
         'verifikasi_admin_by',

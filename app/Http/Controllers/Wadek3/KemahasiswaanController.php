@@ -96,10 +96,10 @@ class KemahasiswaanController extends Controller
                 throw new \Exception('Surat belum memiliki nomor. Harap hubungi Admin untuk memberikan nomor surat terlebih dahulu.');
             }
 
-            // Generate QR Code dengan informasi penandatangan
+            // Generate QR Code dengan informasi penandatangan (ikuti pola Dekan)
             $qrData = [
                 'jenis_surat' => 'Surat Dispensasi Kegiatan',
-                'nomor_surat' => $surat->nomor_surat ?? 'Belum ada nomor',
+                'nomor_surat' => $surat->nomor_surat,
                 'mahasiswa' => $surat->user->Name_User ?? 'N/A',
                 'nim' => $surat->user->mahasiswa->NIM ?? 'N/A',
                 'kegiatan' => $surat->nama_kegiatan,
@@ -110,15 +110,24 @@ class KemahasiswaanController extends Controller
                 'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
             ];
 
-            // Generate QR Code dan simpan (return URL publik)
-            $qrUrl = QrCodeHelper::generate(json_encode($qrData), 10);
+            \Log::info('Wadek3 generating QR Code for Dispensasi', ['data' => $qrData]);
+
+            // Generate QR Code - returns URL like: http://domain/storage/qr-codes/qr_xxx.png
+            $qrUrl = QrCodeHelper::generate(json_encode($qrData), 200);
 
             if (!$qrUrl) {
+                \Log::error('QR Code generation failed - empty URL returned');
                 throw new \Exception('Gagal generate QR Code.');
             }
 
-            // Extract relative path from URL for database storage
-            $qrPath = str_replace(asset('storage/'), '', $qrUrl);
+            // Extract relative path from URL: qr-codes/qr_xxx.png
+            // Parse URL dan ambil path setelah /storage/
+            $qrPath = str_replace('/storage/', '', parse_url($qrUrl, PHP_URL_PATH));
+
+            \Log::info('QR Code generated successfully', [
+                'url' => $qrUrl,
+                'extracted_path' => $qrPath
+            ]);
 
             // Buat record verifikasi
             $verification = SuratVerification::create([
@@ -130,8 +139,12 @@ class KemahasiswaanController extends Controller
                 'token' => \Illuminate\Support\Str::random(32),
             ]);
 
+            \Log::info('Verification record created', ['verification_id' => $verification->id]);
+
             // Generate PDF dengan QR code
             $pdfFileName = $this->generatePDFDispensasi($surat, $surat->user->mahasiswa, $qrPath, $user);
+
+            \Log::info('PDF generated', ['pdf_path' => $pdfFileName]);
 
             // Update Surat Dispensasi
             $surat->acc_wadek3_by = $user->Id_User;
@@ -171,10 +184,17 @@ class KemahasiswaanController extends Controller
 
             DB::commit();
 
+            \Log::info('Dispensasi approval completed successfully', ['id' => $id]);
+
             return redirect()->route('wadek3.kemahasiswaan.validasi-dispensasi')
                 ->with('success', 'Surat Dispensasi berhasil disetujui! QR Code dan PDF telah digenerate.');
         } catch (\Exception $e) {
             DB::rollBack();
+            \Log::error('Error approving dispensasi', [
+                'id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
             return redirect()->back()->with('error', 'Gagal menyetujui surat: ' . $e->getMessage());
         }
     }
@@ -222,6 +242,12 @@ class KemahasiswaanController extends Controller
         
         // Generate filename
         $fileName = 'surat_dispensasi/dispensasi_' . $mahasiswa->NIM . '_' . time() . '.pdf';
+        
+        // Pastikan folder ada
+        $folderPath = storage_path('app/public/surat_dispensasi');
+        if (!file_exists($folderPath)) {
+            mkdir($folderPath, 0755, true);
+        }
         
         // Save PDF ke storage
         $pdfOutput = $pdf->output();

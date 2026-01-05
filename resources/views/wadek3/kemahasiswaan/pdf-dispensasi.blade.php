@@ -112,6 +112,16 @@
             text-decoration: underline;
         }
         
+        .stempel {
+            position: absolute;
+            right: 30px;
+            top: 80px;
+            width: 140px;
+            height: auto;
+            opacity: 0.8;
+            z-index: 10;
+        }
+        
         .clearfix::after {
             content: "";
             display: table;
@@ -208,14 +218,22 @@
 
     {{-- Signature with QR Code --}}
     <div class="clearfix">
-        <div class="signature">
+        <div class="signature" style="position: relative;">
             <p>Bangkalan, {{ $tanggal_surat }}</p>
             <p><strong>Wakil Dekan III</strong></p>
             <p><strong>Bidang Kemahasiswaan</strong></p>
             
+            {{-- Stempel --}}
+            @php
+                $stempel_path = public_path('images/stempel.png');
+            @endphp
+            @if(file_exists($stempel_path))
+                <img src="{{ $stempel_path }}" alt="Stempel" class="stempel">
+            @endif
+            
             {{-- QR Code --}}
             @if(file_exists($qr_code_path))
-                <img src="{{ $qr_code_path }}" alt="QR Code" class="qr-code">
+                <img src="{{ $qr_code_path }}" alt="QR Code" class="qr-code" style="position: relative; z-index: 20;">
                 <p style="font-size: 8pt; color: #666; margin: 5px 0;">
                     <em>Tanda Tangan Digital</em>
                 </p>

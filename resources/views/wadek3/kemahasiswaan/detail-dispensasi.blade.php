@@ -94,21 +94,38 @@
         {{-- Berkas --}}
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-secondary text-white">
-                <h6 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Berkas</h6>
+                <h6 class="mb-0"><i class="fas fa-file-pdf me-2"></i>Berkas Pendukung</h6>
             </div>
             <div class="card-body">
-                <div class="d-grid gap-2">
-                    <a href="{{ route('wadek3.kemahasiswaan.download-permohonan', $surat->id) }}" 
-                       class="btn btn-outline-danger btn-sm" target="_blank">
-                        <i class="fas fa-file-pdf me-1"></i>Surat Permohonan
-                    </a>
-                    @if($surat->file_lampiran)
-                        <a href="{{ route('wadek3.kemahasiswaan.download-lampiran', $surat->id) }}" 
-                           class="btn btn-outline-primary btn-sm" target="_blank">
-                            <i class="fas fa-file me-1"></i>Lampiran
-                        </a>
+                @if($surat->file_lampiran)
+                    @php
+                        $fileExists = Storage::disk('public')->exists($surat->file_lampiran);
+                    @endphp
+                    
+                    @if($fileExists)
+                        <div class="d-grid gap-2">
+                            <button type="button" class="btn btn-info btn-sm" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#previewLampiranModal">
+                                <i class="fas fa-eye me-1"></i>Preview Bukti Pendukung
+                            </button>
+                            <a href="{{ route('wadek3.kemahasiswaan.download-lampiran', $surat->id) }}" 
+                               class="btn btn-outline-primary btn-sm" target="_blank">
+                                <i class="fas fa-download me-1"></i>Download
+                            </a>
+                        </div>
+                    @else
+                        <div class="alert alert-danger small mb-0">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            <strong>File hilang!</strong> Data tercatat tapi file tidak ada di server.
+                            <br><small class="text-muted">Path: {{ $surat->file_lampiran }}</small>
+                        </div>
                     @endif
-                </div>
+                @else
+                    <p class="text-muted mb-0 text-center">
+                        <i class="fas fa-info-circle me-2"></i>Tidak ada lampiran
+                    </p>
+                @endif
             </div>
         </div>
     </div>
@@ -228,4 +245,47 @@
         </div>
     </div>
 </div>
+
+{{-- Modal Preview Lampiran --}}
+@if($surat->file_lampiran && Storage::disk('public')->exists($surat->file_lampiran))
+<div class="modal fade" id="previewLampiranModal" tabindex="-1" aria-labelledby="previewLampiranModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="previewLampiranModalLabel">
+                    <i class="fas fa-file me-2"></i>Preview Bukti Pendukung
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4 text-center" style="background: #f8f9fc;">
+                @php
+                    $extension = pathinfo($surat->file_lampiran, PATHINFO_EXTENSION);
+                    $fileUrl = asset('storage/' . $surat->file_lampiran);
+                @endphp
+                
+                @if(in_array(strtolower($extension), ['jpg', 'jpeg', 'png', 'gif']))
+                    <img src="{{ $fileUrl }}" alt="Bukti Pendukung" class="img-fluid" style="max-height: 70vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                @elseif(strtolower($extension) === 'pdf')
+                    <embed src="{{ $fileUrl }}" type="application/pdf" width="100%" height="600px" style="border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+                @else
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Preview tidak tersedia untuk tipe file ini. Silakan download untuk melihat.
+                    </div>
+                @endif
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Tutup
+                </button>
+                <a href="{{ route('wadek3.kemahasiswaan.download-lampiran', $surat->id) }}" 
+                   class="btn btn-primary" target="_blank">
+                    <i class="fas fa-download me-2"></i>Download File
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 @endsection

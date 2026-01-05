@@ -301,8 +301,13 @@ class RiwayatSuratController extends Controller
     {
         $user = Auth::user();
         
-        // Query dengan relasi suratDispensasi dan verification
-        $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratDispensasi', 'verification'])
+        // Query dengan relasi suratDispensasi, verification, dan accWadek3
+        $riwayatSurat = TugasSurat::with([
+            'jenisSurat', 
+            'suratDispensasi.accWadek3.dosen',
+            'suratDispensasi.accWadek3.pegawaiFakultas',
+            'verification'
+        ])
             ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
             ->whereHas('suratDispensasi')
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
@@ -377,17 +382,36 @@ class RiwayatSuratController extends Controller
             abort(403, 'Anda tidak memiliki akses untuk mengunduh surat ini.');
         }
 
+        // Cek apakah data dispensasi ada
+        if (!$surat) {
+            return redirect()->back()->with('error', 'Data surat dispensasi tidak ditemukan.');
+        }
+
         // Cek apakah surat sudah selesai (sudah di-ACC Wadek3)
-        if (!$surat || !$surat->file_surat_selesai) {
-            return redirect()->back()->with('error', 'Surat belum selesai diproses atau belum di-ACC oleh Wadek 3.');
+        if (!$surat->acc_wadek3_by) {
+            return redirect()->back()->with('error', 'Surat belum disetujui oleh Wadek 3.');
+        }
+
+        // Cek apakah file PDF sudah ada
+        if (!$surat->file_surat_selesai) {
+            return redirect()->back()->with('error', 'File PDF belum di-generate. Harap hubungi admin.');
         }
 
         $filePath = storage_path('app/public/' . $surat->file_surat_selesai);
 
         if (!file_exists($filePath)) {
-            return redirect()->back()->with('error', 'File PDF tidak ditemukan di server.');
+            // Tambahkan info lebih detail untuk debugging
+            \Log::error('File PDF dispensasi tidak ditemukan', [
+                'id_tugas_surat' => $id,
+                'file_path_db' => $surat->file_surat_selesai,
+                'file_path_full' => $filePath,
+                'file_exists' => file_exists($filePath),
+                'storage_exists' => file_exists(storage_path('app/public')),
+            ]);
+            
+            return redirect()->back()->with('error', 'File PDF tidak ditemukan di server. Path: ' . $surat->file_surat_selesai);
         }
 
-        return response()->download($filePath, 'Surat_Dispensasi_' . $surat->nomor_surat . '.pdf');
+        return response()->download($filePath, 'Surat_Dispensasi_' . ($surat->nomor_surat ?? 'draft') . '.pdf');
     }
 }
