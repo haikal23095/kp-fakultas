@@ -146,22 +146,47 @@
         $tahunAkademik = $sk->Tahun_Akademik;
         $nomorSurat = $sk->Nomor_Surat;
         
+        // Convert Logo UTM ke base64
+        $logoImageSrc = null;
+        $logoPath = public_path('images/logo_unijoyo.png');
+        if (file_exists($logoPath)) {
+            $logoData = base64_encode(file_get_contents($logoPath));
+            $logoImageSrc = 'data:image/png;base64,' . $logoData;
+        }
+        
         // Ambil QR Code dari Acc_SK_Beban_Mengajar
         $qrCodePath = $sk->accSKBebanMengajar->QR_Code ?? null;
         $qrImageSrc = null;
         
         if ($qrCodePath) {
+            // Ekstrak nama file saja dari path (karena bisa berupa absolute path dari sistem lain)
+            $filename = basename($qrCodePath);
+            
+            // Bersihkan path jika berupa relative path
+            $cleanPath = $qrCodePath;
+            $cleanPath = str_replace('\\', '/', $cleanPath); // Normalize separator
+            $cleanPath = preg_replace('#^[A-Z]:#i', '', $cleanPath); // Remove drive letter
+            $cleanPath = str_replace('public/', '', $cleanPath);
+            $cleanPath = str_replace('storage/', '', $cleanPath);
+            $cleanPath = ltrim($cleanPath, '/');
+            
+            // Coba berbagai kemungkinan lokasi file
             $possiblePaths = [
-                $qrCodePath,
-                storage_path('app/public/' . $qrCodePath),
-                public_path('storage/' . $qrCodePath),
-                public_path($qrCodePath),
+                storage_path('app/public/qr-codes/' . $filename),
+                storage_path('app/public/qr_codes/' . $filename),
+                storage_path('app/public/' . $filename),
+                storage_path('app/public/' . $cleanPath),
+                storage_path('app/' . $cleanPath),
+                public_path('storage/qr-codes/' . $filename),
+                public_path('storage/qr_codes/' . $filename),
+                public_path('storage/' . $cleanPath),
             ];
             
             foreach ($possiblePaths as $path) {
-                if (file_exists($path)) {
+                if (file_exists($path) && is_file($path)) {
                     $imageData = base64_encode(file_get_contents($path));
-                    $qrImageSrc = 'data:image/png;base64,' . $imageData;
+                    $mimeType = mime_content_type($path);
+                    $qrImageSrc = 'data:' . $mimeType . ';base64,' . $imageData;
                     break;
                 }
             }
@@ -172,7 +197,9 @@
 
     {{-- Halaman Utama SK --}}
     <div class="header">
-        <img src="{{ public_path('images/logo_unijoyo.png') }}" alt="Logo UTM">
+        @if($logoImageSrc)
+            <img src="{{ $logoImageSrc }}" alt="Logo UTM">
+        @endif
         <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</strong>
         <strong class="line-2">UNIVERSITAS TRUNOJOYO MADURA</strong>
         <strong class="line-3">FAKULTAS TEKNIK</strong>
