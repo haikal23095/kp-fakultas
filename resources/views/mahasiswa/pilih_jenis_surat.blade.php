@@ -93,11 +93,6 @@
         color: white;
     }
 
-    .card-surat-tugas .surat-icon {
-        background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%);
-        color: white;
-    }
-
     .card-mbkm .surat-icon {
         background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
         color: white;
@@ -105,11 +100,6 @@
 
     .card-peminjaman-gedung .surat-icon {
         background: linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%);
-        color: white;
-    }
-
-    .card-lembur .surat-icon {
-        background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
         color: white;
     }
 
@@ -262,20 +252,7 @@
         </a>
     </div>
 
-    {{-- Card Surat Tugas --}}
-    <div class="col-lg-4 col-md-6 mb-4">
-        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
-            <div class="card surat-card shadow-sm card-surat-tugas">
-                <div class="card-body">
-                    <div class="surat-icon">
-                        <i class="fas fa-tasks"></i>
-                    </div>
-                    <h5>Surat Tugas Kegiatan</h5>
-                    <p>Permohonan surat tugas untuk kegiatan</p>
-                </div>
-            </div>
-        </a>
-    </div>
+
 
     {{-- Card MBKM --}}
     <div class="col-lg-4 col-md-6 mb-4">
@@ -307,20 +284,7 @@
         </a>
     </div>
 
-    {{-- Card Lembur --}}
-    <div class="col-lg-4 col-md-6 mb-4">
-        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
-            <div class="card surat-card shadow-sm card-lembur">
-                <div class="card-body">
-                    <div class="surat-icon">
-                        <i class="fas fa-clock"></i>
-                    </div>
-                    <h5>Surat Perintah Lembur</h5>
-                    <p>Permohonan surat perintah lembur</p>
-                </div>
-            </div>
-        </a>
-    </div>
+
 
     {{-- Card Peminjaman Ruang --}}
     <div class="col-lg-4 col-md-6 mb-4">

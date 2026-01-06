@@ -136,6 +136,7 @@
                                     if($status == 'menunggu_pembayaran') $bg = 'warning text-dark';
                                     elseif($status == 'pembayaran_lunas') $bg = 'info';
                                     elseif($status == 'siap_diambil' || $status == 'selesai') $bg = 'success';
+                                    elseif($status == 'ditolak') $bg = 'danger';
                                 @endphp
                                 <span class="badge badge-status bg-{{ $bg }}">
                                     {{ strtoupper(str_replace('_', ' ', $status)) }}
@@ -145,10 +146,15 @@
                                 @if($surat->Status == 'menunggu_pembayaran' && !$surat->Is_Verified)
                                     {{-- Tombol Lihat & Verifikasi File --}}
                                     @if($surat->File_Scan_Path)
-                                        <button type="button" class="btn btn-sm btn-info btn-action" 
+                                        <button type="button" class="btn btn-sm btn-info btn-action me-1" 
                                                 data-bs-toggle="modal" 
                                                 data-bs-target="#modalVerifikasi_{{ $surat->id_no }}">
                                             <i class="fas fa-eye me-1"></i>Lihat & Verifikasi
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger btn-action" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalTolak_{{ $surat->id_no }}">
+                                            <i class="fas fa-times me-1"></i>Tolak
                                         </button>
                                     @else
                                         <span class="text-muted small">File tidak tersedia</span>
@@ -179,6 +185,8 @@
                                     </form>
                                 @elseif($surat->Status == 'selesai')
                                     <i class="fas fa-check-double text-success"></i> <small class="text-muted">Selesai</small>
+                                @elseif($surat->Status == 'ditolak')
+                                    <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Ditolak</span>
                                 @endif
                             </td>
                         </tr>
@@ -214,6 +222,37 @@
                         </div>
                         @endif
                         {{-- END MODAL PEMBAYARAN --}}
+
+                        {{-- MODAL PENOLAKAN --}}
+                        @if($surat->Status == 'menunggu_pembayaran' && !$surat->Is_Verified)
+                        <div class="modal fade" id="modalTolak_{{ $surat->id_no }}" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content" style="border-radius: 15px;">
+                                    <form action="{{ route('admin_fakultas.surat_legalisir.tolak', $surat->id_no) }}" method="POST">
+                                        @csrf
+                                        <div class="modal-header bg-danger text-white" style="border-radius: 15px 15px 0 0;">
+                                            <h5 class="modal-title fw-bold"><i class="fas fa-times-circle me-2"></i>Tolak Pengajuan Legalisir</h5>
+                                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                        </div>
+                                        <div class="modal-body p-4 text-center">
+                                            <div class="alert alert-warning">
+                                                <i class="fas fa-exclamation-triangle me-2"></i>
+                                                Pengajuan dari <strong>{{ $surat->user->Name_User }}</strong> akan ditolak.
+                                            </div>
+                                            <p class="text-muted mb-0">Mahasiswa akan mendapat notifikasi bahwa pengajuannya ditolak.</p>
+                                        </div>
+                                        <div class="modal-footer border-0">
+                                            <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Batal</button>
+                                            <button type="submit" class="btn btn-danger rounded-pill px-4 fw-bold shadow-sm">
+                                                <i class="fas fa-times me-1"></i>Ya, Tolak
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+                        {{-- END MODAL PENOLAKAN --}}
 
                         {{-- MODAL VERIFIKASI FILE (Untuk yang belum terverifikasi) --}}
                         @if($surat->Status == 'menunggu_pembayaran' && !$surat->Is_Verified && $surat->File_Scan_Path)

@@ -75,11 +75,13 @@
                     <thead>
                         <tr>
                             <th><i class="fas fa-calendar me-2"></i>Tanggal</th>
-                            <th><i class="fas fa-file-alt me-2"></i>No. Surat</th>
+                            @if($jenisSurat->Id_Jenis_Surat != 3)
+                                <th><i class="fas fa-file-alt me-2"></i>No. Surat</th>
+                            @endif
                             <th><i class="fas fa-user me-2"></i>Pengaju</th>
                             @if($jenisSurat->Id_Jenis_Surat == 3)
                                 <th class="text-center"><i class="fas fa-print me-2"></i>Jumlah Cetak</th>
-                                <th class="text-center"><i class="fas fa-money-bill me-2"></i>Harga</th>
+                                <th class="text-center"><i class="fas fa-money-bill me-2"></i>Biaya</th>
                             @endif
                             <th class="text-center"><i class="fas fa-check-circle me-2"></i>Status</th>
                             @if($jenisSurat->Id_Jenis_Surat != 3)
@@ -90,10 +92,14 @@
                     <tbody>
                         {{-- Gabungkan Tugas_Surat dan Surat_Legalisir --}}
                         @php
-                            $allArsip = $arsipTugas;
-                            if(isset($arsipLegalisir) && $arsipLegalisir->count() > 0) {
-                                $allArsip = $allArsip->concat($arsipLegalisir);
+                            // Untuk legalisir (ID=3): HANYA gunakan $arsipLegalisir
+                            // Untuk surat lain: HANYA gunakan $arsipTugas
+                            if($jenisSurat->Id_Jenis_Surat == 3) {
+                                $allArsip = isset($arsipLegalisir) ? $arsipLegalisir : collect();
+                            } else {
+                                $allArsip = $arsipTugas;
                             }
+                            
                             $allArsip = $allArsip->sortByDesc(function($item) {
                                 // Untuk legalisir, ambil dari tugasSurat atau created_at
                                 if(isset($item->tugasSurat)) {
@@ -106,12 +112,12 @@
                         @foreach($allArsip as $t)
                         @php
                             // Deteksi apakah ini legalisir atau tugas surat biasa
-                            $isLegalisir = isset($t->Nomor_Surat_Legalisir);
+                            // Cek apakah ada kolom Jenis_Dokumen (hanya ada di Surat_Legalisir)
+                            $isLegalisir = isset($t->Jenis_Dokumen);
                             
                             if($isLegalisir) {
                                 // Data dari Surat_Legalisir
                                 $tanggal = $t->tugasSurat ? $t->tugasSurat->Tanggal_Diselesaikan : ($t->Tanggal_Bayar ?? $t->created_at);
-                                $nomorSurat = $t->Nomor_Surat_Legalisir;
                                 $namaPengaju = $t->user->Name_User ?? 'N/A';
                                 $roleJabatan = $t->user->role->Name_Role ?? 'N/A';
                                 $namaProdi = $t->user->mahasiswa->prodi->Nama_Prodi ?? 'N/A';
@@ -130,19 +136,20 @@
                         @endphp
                         <tr data-tanggal="{{ optional($tanggal)->format('Y-m-d') ?? '' }}"
                             data-bulan="{{ optional($tanggal)->format('m') ?? '' }}"
-                            data-tahun="{{ optional($tanggal)->format('Y') ?? '' }}"
-                            data-nomor="{{ strtolower($nomorSurat ?? '') }}">
+                            data-tahun="{{ optional($tanggal)->format('Y') ?? '' }}">
                             <td>
                                 <div class="fw-bold">{{ optional($tanggal)->format('d M Y') ?? '-' }}</div>
                                 <small class="text-muted"><i class="far fa-clock me-1"></i>{{ optional($tanggal)->format('H:i') ?? '' }}</small>
                             </td>
+                            @if(!$isLegalisir)
                             <td>
-                                @if($nomorSurat)
+                                @if(isset($nomorSurat) && $nomorSurat)
                                     <span class="badge bg-light text-dark fw-bold">{{ $nomorSurat }}</span>
                                 @else
                                     <span class="text-muted fst-italic small">Belum ada nomor</span>
                                 @endif
                             </td>
+                            @endif
                             <td>
                                 <div class="fw-bold">{{ $namaPengaju }}</div>
                                 <small class="text-muted">

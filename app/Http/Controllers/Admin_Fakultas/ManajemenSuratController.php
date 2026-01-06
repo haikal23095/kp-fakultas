@@ -398,8 +398,6 @@ class ManajemenSuratController extends Controller
         // TAMBAHAN: Ambil legalisir yang sudah selesai (status = selesai) untuk ditambahkan ke arsip
         $arsipLegalisir = \App\Models\SuratLegalisir::with(['user.mahasiswa.prodi', 'tugasSurat.jenisSurat'])
             ->where('Status', 'selesai')
-            ->whereNotNull('Nomor_Surat_Legalisir')
-            ->where('Nomor_Surat_Legalisir', '!=', '')
             ->whereHas('user.mahasiswa.prodi.fakultas', function($q) use ($fakultasId) {
                 $q->where('Id_Fakultas', $fakultasId);
             })
@@ -441,8 +439,6 @@ class ManajemenSuratController extends Controller
             $arsipTugas = collect(); // Kosongkan Tugas_Surat untuk legalisir
             $arsipLegalisir = \App\Models\SuratLegalisir::with(['user.mahasiswa.prodi', 'user.role', 'tugasSurat.jenisSurat'])
                 ->where('Status', 'selesai')
-                ->whereNotNull('Nomor_Surat_Legalisir')
-                ->where('Nomor_Surat_Legalisir', '!=', '')
                 ->whereHas('user.mahasiswa.prodi.fakultas', function($q) use ($fakultasId) {
                     $q->where('Id_Fakultas', $fakultasId);
                 })

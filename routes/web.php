@@ -183,6 +183,7 @@ Route::middleware('auth')->group(function () {
         // Route: Legalisir - Verifikasi File, Bayar, Kirim TTD
         Route::get('/surat-legalisir', [FakultasSuratLegalisirController::class, 'index'])->name('surat_legalisir.index');
         Route::post('/surat-legalisir/{id}/verifikasi', [FakultasSuratLegalisirController::class, 'verifikasiFile'])->name('surat_legalisir.verifikasi');
+        Route::post('/surat-legalisir/{id}/tolak', [FakultasSuratLegalisirController::class, 'tolakPengajuan'])->name('surat_legalisir.tolak');
         Route::post('/surat-legalisir/{id}/bayar', [FakultasSuratLegalisirController::class, 'konfirmasiPembayaran'])->name('surat_legalisir.bayar');
         Route::post('/surat-legalisir/{id}/kirim-pimpinan', [FakultasSuratLegalisirController::class, 'kirimKePimpinan'])->name('surat_legalisir.kirim_pimpinan');
         Route::post('/surat-legalisir/{id}/progress', [FakultasSuratLegalisirController::class, 'updateProgress'])->name('surat_legalisir.progress');
