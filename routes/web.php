@@ -445,6 +445,8 @@ Route::middleware('auth')->group(function () {
         // SK Pembimbing & Penguji Skripsi
         Route::get('/sk/pembimbing-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPembimbingSkripsi'])
             ->name('sk.pembimbing-skripsi.create');
+        Route::post('/sk/pembimbing-skripsi', [\App\Http\Controllers\Kaprodi\SKController::class, 'storePembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.store');
         Route::get('/sk/penguji-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPengujiSkripsi'])
             ->name('sk.penguji-skripsi.create');
 

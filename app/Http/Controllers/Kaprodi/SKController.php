@@ -7,8 +7,10 @@ use Illuminate\Http\Request;
 use App\Models\Prodi;
 use App\Models\Dosen;
 use App\Models\MataKuliah;
+use App\Models\Mahasiswa;
 use App\Models\SKDosenWali;
 use App\Models\SKBebanMengajar;
+use App\Models\SKPembimbingSkripsi;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -526,8 +528,126 @@ class SKController extends Controller
      */
     public function createPembimbingSkripsi()
     {
-        // TODO: Implement form for SK Pembimbing Skripsi
-        return view('kaprodi.sk.pembimbing-skripsi.create');
+        // Get user info
+        $user = Auth::user();
+
+        // Get prodi from logged in kaprodi
+        $prodi = null;
+        if ($user->dosen) {
+            $prodi = $user->dosen->prodi;
+        } elseif ($user->pegawai) {
+            $prodi = Prodi::find($user->pegawai->Id_Prodi);
+        }
+
+        // Get all prodi for dropdown
+        $prodis = Prodi::orderBy('Nama_Prodi', 'asc')->get();
+
+        // Get all dosen from the same prodi
+        $dosens = Dosen::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })
+            ->orderBy('Nama_Dosen', 'asc')
+            ->get();
+
+        // Get all mahasiswa from the same prodi
+        $mahasiswas = Mahasiswa::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })
+            ->orderBy('Nama_Mahasiswa', 'asc')
+            ->get();
+
+        return view('kaprodi.sk.pembimbing-skripsi.create', compact('prodis', 'dosens', 'mahasiswas', 'prodi'));
+    }
+
+    /**
+     * Store SK Pembimbing Skripsi
+     */
+    public function storePembimbingSkripsi(Request $request)
+    {
+        // Validate request
+        $request->validate([
+            'prodi_id' => 'required|exists:Prodi,Id_Prodi',
+            'semester' => 'required|in:Ganjil,Genap',
+            'tahun_akademik' => 'required|string',
+            'pembimbing' => 'required|array|min:1',
+            'pembimbing.*.mahasiswa_id' => 'required|exists:Mahasiswa,Id_Mahasiswa',
+            'pembimbing.*.judul_skripsi' => 'required|string|max:500',
+            'pembimbing.*.pembimbing_1' => 'required|exists:Dosen,Id_Dosen',
+            'pembimbing.*.pembimbing_2' => 'required|exists:Dosen,Id_Dosen',
+        ], [
+            'prodi_id.required' => 'Program studi harus dipilih',
+            'semester.required' => 'Semester harus dipilih',
+            'tahun_akademik.required' => 'Tahun akademik harus diisi',
+            'pembimbing.required' => 'Minimal harus ada 1 mahasiswa',
+            'pembimbing.min' => 'Minimal harus ada 1 mahasiswa',
+            'pembimbing.*.judul_skripsi.required' => 'Judul skripsi harus diisi',
+            'pembimbing.*.judul_skripsi.max' => 'Judul skripsi maksimal 500 karakter',
+        ]);
+
+        try {
+            // Get kaprodi's Id_Dosen
+            $user = Auth::user();
+            $idDosenKaprodi = null;
+
+            if ($user->dosen) {
+                $idDosenKaprodi = $user->dosen->Id_Dosen;
+            }
+
+            // Prepare data pembimbing untuk disimpan ke JSON
+            $dataPembimbing = [];
+            foreach ($request->pembimbing as $pembimbing) {
+                // Get data mahasiswa
+                $mahasiswaInfo = Mahasiswa::find($pembimbing['mahasiswa_id']);
+
+                // Get data dosen pembimbing 1
+                $dosen1Info = Dosen::find($pembimbing['pembimbing_1']);
+
+                // Get data dosen pembimbing 2
+                $dosen2Info = Dosen::find($pembimbing['pembimbing_2']);
+
+                $dataPembimbing[] = [
+                    'id_mahasiswa' => $pembimbing['mahasiswa_id'],
+                    'nama_mahasiswa' => $mahasiswaInfo->Nama_Mahasiswa,
+                    'npm' => $mahasiswaInfo->NIM,
+                    'judul_skripsi' => $pembimbing['judul_skripsi'],
+                    'pembimbing_1' => [
+                        'id_dosen' => $pembimbing['pembimbing_1'],
+                        'nama_dosen' => $dosen1Info->Nama_Dosen,
+                        'nip' => $dosen1Info->NIP,
+                    ],
+                    'pembimbing_2' => [
+                        'id_dosen' => $pembimbing['pembimbing_2'],
+                        'nama_dosen' => $dosen2Info->Nama_Dosen,
+                        'nip' => $dosen2Info->NIP,
+                    ],
+                ];
+            }
+
+            // Hitung tanggal tenggat (3 hari dari sekarang)
+            $tanggalPengajuan = Carbon::now();
+            $tanggalTenggat = Carbon::now()->addDays(3);
+
+            // Simpan ke database
+            SKPembimbingSkripsi::create([
+                'Id_Prodi' => $request->prodi_id,
+                'Semester' => $request->semester,
+                'Tahun_Akademik' => $request->tahun_akademik,
+                'Data_Pembimbing' => $dataPembimbing,
+                'Nomor_Surat' => null, // Will be filled by admin
+                'Id_Acc_SK_Pembimbing_Skripsi' => null, // Will be filled when approved by admin
+                'Tanggal-Pengajuan' => $tanggalPengajuan,
+                'Tanggal-Tenggat' => $tanggalTenggat,
+                'Id_Dosen_Kaprodi' => $idDosenKaprodi,
+                'Status' => 'Dikerjakan admin'
+            ]);
+
+            return redirect()->route('kaprodi.sk.index')
+                ->with('success', 'SK Pembimbing Skripsi berhasil diajukan! Tanggal tenggat: ' . $tanggalTenggat->format('d M Y H:i'));
+        } catch (\Exception $e) {
+            return redirect()->back()
+                ->withInput()
+                ->with('error', 'Gagal mengajukan SK Pembimbing Skripsi: ' . $e->getMessage());
+        }
     }
 
     /**
