@@ -263,7 +263,7 @@
                     <div class="card-icon blue">
                         <i class="fas fa-file-signature"></i>
                     </div>
-                    <h5>SK Dosen Wali</h5>
+                    <h5>SK Dosen</h5>
                     <p>Kelola pengajuan Surat Keputusan Dosen Wali Mahasiswa</p>
                     
                     <div class="stats-row">

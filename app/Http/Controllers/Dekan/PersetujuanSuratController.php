@@ -11,6 +11,7 @@ use App\Models\Mahasiswa;
 use App\Models\Pegawai;
 use App\Models\Prodi;
 use App\Models\Pejabat;
+use App\Models\AccSKBebanMengajar;
 use App\Helpers\QrCodeHelper;
 
 class PersetujuanSuratController extends Controller
@@ -125,14 +126,14 @@ class PersetujuanSuratController extends Controller
     public function listLegalisir()
     {
         $user = Auth::user();
-        
+
         // Ambil data legalisir langsung dari tabel Surat_Legalisir dengan status menunggu_ttd_pimpinan
         $daftarLegalisir = \App\Models\SuratLegalisir::with([
-                'user.mahasiswa.prodi',
-                'user.role',
-                'tugasSurat.jenisSurat',
-                'pejabat'
-            ])
+            'user.mahasiswa.prodi',
+            'user.role',
+            'tugasSurat.jenisSurat',
+            'pejabat'
+        ])
             ->where('Status', 'menunggu_ttd_pimpinan')
             ->orderBy('id_no', 'desc')
             ->get();
@@ -169,14 +170,14 @@ class PersetujuanSuratController extends Controller
     public function listTidakBeasiswa()
     {
         $user = Auth::user();
-        
+
         $daftarSurat = TugasSurat::with([
-                'jenisSurat', 
-                'pemberiTugas.role', 
-                'pemberiTugas.mahasiswa.prodi',
-                'penerimaTugas',
-                'suratTidakBeasiswa'
-            ])
+            'jenisSurat',
+            'pemberiTugas.role',
+            'pemberiTugas.mahasiswa.prodi',
+            'penerimaTugas',
+            'suratTidakBeasiswa'
+        ])
             ->where('Id_Jenis_Surat', 6)
             ->whereHas('suratTidakBeasiswa')
             ->where('Status', 'menunggu-ttd')
@@ -268,8 +269,13 @@ class PersetujuanSuratController extends Controller
 
         $skDosenWaliTotal = \App\Models\AccDekanDosenWali::count();
 
+        // Hitung SK Beban Mengajar
+        $skBebanMengajarCount = \App\Models\AccSKBebanMengajar::where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->count();
+
+        $skBebanMengajarTotal = \App\Models\AccSKBebanMengajar::count();
+
         // TODO: Implementasi counting untuk jenis SK lainnya
-        $skBebanMengajarCount = 0;
         $skPembimbingSkripsiCount = 0;
         $skPengujiSkripsiCount = 0;
 
@@ -280,6 +286,7 @@ class PersetujuanSuratController extends Controller
             'skDosenWaliCount',
             'skDosenWaliTotal',
             'skBebanMengajarCount',
+            'skBebanMengajarTotal',
             'skPembimbingSkripsiCount',
             'skPengujiSkripsiCount'
         ));
@@ -301,7 +308,7 @@ class PersetujuanSuratController extends Controller
             ->orderBy('Tanggal-Pengajuan', 'desc')
             ->get();
 
-        return view('dekan.sk.dosen-wali', compact('daftarSK'));
+        return view('dekan.sk.dosen-wali.index', compact('daftarSK'));
     }
 
     /**

@@ -13,7 +13,14 @@ return new class extends Migration {
         Schema::table('Acc_SK_Dosen_Wali', function (Blueprint $table) {
             $table->string('QR_Code', 255)->nullable()->after('Status');
             $table->timestamp('Tanggal-Persetujuan-Dekan')->nullable()->after('QR_Code');
-            $table->unsignedBigInteger('Id_Dekan')->nullable()->after('Tanggal-Persetujuan-Dekan');
+            $table->integer('Id_Dekan')->nullable()->after('Tanggal-Persetujuan-Dekan');
+
+            // Add foreign key constraint
+            $table->foreign('Id_Dekan')
+                ->references('Id_Dosen')
+                ->on('Dosen')
+                ->onDelete('set null')
+                ->onUpdate('cascade');
         });
     }
 

@@ -25,13 +25,23 @@ class AccDekanDosenWali extends Model
         'Alasan-Tolak',
         'QR_Code',
         'Tanggal-Persetujuan-Dekan',
+        'Id_Dekan',
     ];
 
     protected $casts = [
         'Data_Dosen_Wali' => 'array',
         'Tanggal-Pengajuan' => 'datetime',
         'Tanggal-Tenggat' => 'datetime',
+        'Tanggal-Persetujuan-Dekan' => 'datetime',
     ];
+
+    /**
+     * Relasi ke Dosen (Dekan yang menyetujui)
+     */
+    public function dekan()
+    {
+        return $this->belongsTo(Dosen::class, 'Id_Dekan', 'Id_Dosen');
+    }
 
     /**
      * Relasi ke Req_SK_Dosen_Wali (Request SK yang sudah digabungkan)

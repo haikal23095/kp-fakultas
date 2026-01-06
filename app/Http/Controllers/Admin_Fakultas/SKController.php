@@ -5,7 +5,9 @@ namespace App\Http\Controllers\Admin_Fakultas;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SKDosenWali;
+use App\Models\SKBebanMengajar;
 use App\Models\AccDekanDosenWali;
+use App\Models\AccSKBebanMengajar;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\Dosen;
@@ -26,8 +28,15 @@ class SKController extends Controller
 
         $skDosenWaliTotal = SKDosenWali::count();
 
+        // Get SK Beban Mengajar count
+        $skBebanMengajarCount = SKBebanMengajar::where('Status', '!=', 'Selesai')
+            ->where('Status', '!=', 'Ditolak')
+            ->where('Status', '!=', 'Ditolak-Admin')
+            ->count();
+
+        $skBebanMengajarTotal = SKBebanMengajar::count();
+
         // TODO: Add counts for other SK types when implemented
-        $skBebanMengajarCount = 0;
         $skPembimbingSkripsiCount = 0;
         $skPengujiSkripsiCount = 0;
 
@@ -35,6 +44,7 @@ class SKController extends Controller
             'skDosenWaliCount',
             'skDosenWaliTotal',
             'skBebanMengajarCount',
+            'skBebanMengajarTotal',
             'skPembimbingSkripsiCount',
             'skPengujiSkripsiCount'
         ));
@@ -481,6 +491,443 @@ class SKController extends Controller
                         ' telah ditolak. Alasan: ' . $request->alasan,
                     'Data_Tambahan' => json_encode([
                         'url' => route('kaprodi.sk.dosen-wali.index')
+                    ]),
+                    'Is_Read' => false
+                ]);
+
+                DB::commit();
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'SK berhasil ditolak dan notifikasi telah dikirim ke Kaprodi'
+                ]);
+
+            } catch (\Exception $e) {
+                DB::rollBack();
+                throw $e;
+            }
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menolak SK: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // ==================== SK BEBAN MENGAJAR METHODS ====================
+
+    /**
+     * Display list of SK Beban Mengajar requests untuk diproses
+     */
+    public function bebanMengajar(Request $request)
+    {
+        $query = SKBebanMengajar::with('prodi');
+
+        // Apply filters
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        if ($request->filled('prodi')) {
+            $query->where('Id_Prodi', $request->prodi);
+        }
+
+        if ($request->filled('semester')) {
+            $query->where('Semester', $request->semester);
+        }
+
+        $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
+
+        // Get prodi list for filter
+        $prodiList = \App\Models\Prodi::orderBy('Nama_Prodi')->get();
+
+        // Ambil data dekan berdasarkan fakultas admin yang login
+        $user = Auth::user()->load('pegawaiFakultas.fakultas');
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
+
+        $dekan = null;
+        if ($fakultasId) {
+            $dekan = Dosen::with(['pejabat', 'prodi.fakultas'])
+                ->whereHas('prodi.fakultas', function ($q) use ($fakultasId) {
+                    $q->where('Id_Fakultas', $fakultasId);
+                })
+                ->whereHas('pejabat', function ($q) {
+                    $q->where('Nama_Jabatan', 'like', 'DEKAN%');
+                })
+                ->first();
+        }
+
+        $dekanName = $dekan->Nama_Dosen ?? 'FAIKUL UMAM';
+        $dekanNip = $dekan->NIP ?? '198301182008121001';
+
+        return view('admin_fakultas.sk.beban-mengajar.index', compact('skList', 'prodiList', 'dekanName', 'dekanNip'));
+    }
+
+    /**
+     * Display history of SK Beban Mengajar
+     */
+    public function bebanMengajarHistory(Request $request)
+    {
+        $query = SKBebanMengajar::with('prodi');
+
+        // Apply filters
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        if ($request->filled('semester')) {
+            $query->where('Semester', $request->semester);
+        }
+
+        // Exclude only 'Dikerjakan admin' status from history
+        $query->where('Status', '!=', 'Dikerjakan admin');
+
+        $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
+
+        return view('admin_fakultas.sk.beban-mengajar.history', compact('skList'));
+    }
+
+    /**
+     * Get detail history SK Beban Mengajar for modal
+     */
+    public function bebanMengajarDetailHistory($id)
+    {
+        try {
+            $sk = SKBebanMengajar::with('prodi')->findOrFail($id);
+
+            return response()->json([
+                'success' => true,
+                'sk' => $sk
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'SK tidak ditemukan'
+            ], 404);
+        }
+    }
+
+    /**
+     * Download SK Beban Mengajar
+     */
+    public function downloadBebanMengajar($id)
+    {
+        // TODO: Implement PDF download
+        return response()->json([
+            'success' => false,
+            'message' => 'Fitur download belum diimplementasikan'
+        ]);
+    }
+
+    /**
+     * Show detail of SK Beban Mengajar
+     */
+    public function bebanMengajarDetail($id)
+    {
+        $sk = SKBebanMengajar::with('prodi')->findOrFail($id);
+
+        return view('admin_fakultas.sk.beban-mengajar.detail', compact('sk'));
+    }
+
+    /**
+     * Process SK Beban Mengajar (approve or reject)
+     */
+    public function bebanMengajarProcess(Request $request, $id)
+    {
+        $request->validate([
+            'action' => 'required|in:approve,reject',
+            'notes' => 'nullable|string'
+        ]);
+
+        $sk = SKBebanMengajar::findOrFail($id);
+
+        if ($request->action === 'approve') {
+            $sk->Status = 'Menunggu-Persetujuan-Dekan';
+            $message = 'SK Beban Mengajar berhasil disetujui dan diteruskan ke Dekan!';
+        } else {
+            $sk->Status = 'Ditolak';
+            $message = 'SK Beban Mengajar ditolak!';
+        }
+
+        $sk->save();
+
+        return redirect()->route('admin_fakultas.sk.beban-mengajar')
+            ->with('success', $message);
+    }
+
+    /**
+     * Submit multiple SK Beban Mengajar to Wadek 1
+     */
+    public function submitToWadekBebanMengajar(Request $request)
+    {
+        $request->validate([
+            'sk_ids' => 'required|array|min:1',
+            'sk_ids.*' => 'exists:Req_SK_Beban_Mengajar,No',
+            'nomor_surat' => 'required|string|max:100'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Ambil semua SK yang akan diajukan
+            $skItems = SKBebanMengajar::whereIn('No', $request->sk_ids)
+                ->whereIn('Status', ['Dikerjakan admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])
+                ->get();
+
+            if ($skItems->isEmpty()) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak ada SK yang dapat diproses. Pastikan SK memiliki status "Dikerjakan admin", "Ditolak-Wadek1", atau "Ditolak-Dekan"'
+                ], 400);
+            }
+
+            // Cek apakah ada SK yang ditolak Dekan (untuk langsung skip ke Dekan)
+            $hasDitolakDekan = $skItems->contains(function ($sk) {
+                return $sk->Status === 'Ditolak-Dekan';
+            });
+
+            // Tentukan status target berdasarkan kondisi
+            $targetStatus = $hasDitolakDekan ? 'Menunggu-Persetujuan-Dekan' : 'Menunggu-Persetujuan-Wadek-1';
+
+            // Gabungkan semua data beban mengajar dari SK yang dipilih
+            $gabunganBebanMengajar = [];
+            $semester = $skItems->first()->Semester;
+            $tahunAkademik = $skItems->first()->Tahun_Akademik;
+            $tanggalPengajuan = $skItems->first()->{'Tanggal-Pengajuan'};
+            $tanggalTenggat = $skItems->first()->{'Tanggal-Tenggat'};
+
+            foreach ($skItems as $sk) {
+                $bebanData = $sk->Data_Beban_Mengajar;
+
+                // Handle double-encoded JSON
+                if (is_string($bebanData)) {
+                    $bebanData = json_decode($bebanData, true);
+                }
+
+                if (is_array($bebanData)) {
+                    // Tambahkan info prodi ke setiap item
+                    foreach ($bebanData as $item) {
+                        $item['Id_Prodi'] = $sk->Id_Prodi;
+                        $item['Nama_Prodi'] = $sk->prodi->Nama_Prodi ?? '-';
+                        $gabunganBebanMengajar[] = $item;
+                    }
+                }
+            }
+
+            // Buat entry baru di tabel Acc_SK_Beban_Mengajar
+            $accSK = AccSKBebanMengajar::create([
+                'Semester' => $semester,
+                'Tahun_Akademik' => $tahunAkademik,
+                'Data_Beban_Mengajar' => $gabunganBebanMengajar,
+                'Nomor_Surat' => $request->nomor_surat,
+                'Status' => $targetStatus,
+                'Tanggal-Pengajuan' => $tanggalPengajuan,
+                'Tanggal-Tenggat' => $tanggalTenggat,
+            ]);
+
+            // Update status dan link ke Acc_SK di tabel Req_SK_Beban_Mengajar
+            foreach ($skItems as $sk) {
+                $sk->Status = $targetStatus;
+                $sk->Nomor_Surat = $request->nomor_surat;
+                $sk->Id_Acc_SK_Beban_Mengajar = $accSK->No;
+                $sk->save();
+            }
+
+            // Kirim notifikasi sesuai target
+            if ($hasDitolakDekan) {
+                // Kirim notifikasi ke Dekan jika langsung ke Dekan
+                $dekanUser = \App\Models\User::whereHas('role', function ($q) {
+                    $q->where('Name_Role', 'Dekan');
+                })->first();
+
+                if ($dekanUser) {
+                    \App\Models\Notifikasi::create([
+                        'Dest_user' => $dekanUser->Id_User,
+                        'Source_User' => auth()->id(),
+                        'Tipe_Notifikasi' => 'Accepted',
+                        'Pesan' => "SK Beban Mengajar No. {$request->nomor_surat} telah diperbaiki dan menunggu persetujuan Anda.",
+                        'Is_Read' => false,
+                        'Data_Tambahan' => [
+                            'judul' => 'SK Beban Mengajar Menunggu Persetujuan (Resubmit)',
+                            'link' => route('admin_fakultas.sk.beban-mengajar'),
+                            'nomor_surat' => $request->nomor_surat
+                        ]
+                    ]);
+                }
+            } else {
+                // Kirim notifikasi ke Wadek 1 untuk SK baru
+                $wadek1User = \App\Models\User::whereHas('role', function ($q) {
+                    $q->where('Name_Role', 'Wadek1');
+                })->first();
+
+                if ($wadek1User) {
+                    \App\Models\Notifikasi::create([
+                        'Dest_user' => $wadek1User->Id_User,
+                        'Source_User' => auth()->id(),
+                        'Tipe_Notifikasi' => 'Accepted',
+                        'Pesan' => "SK Beban Mengajar No. {$request->nomor_surat} menunggu persetujuan Anda.",
+                        'Is_Read' => false,
+                        'Data_Tambahan' => [
+                            'judul' => 'SK Beban Mengajar Menunggu Persetujuan',
+                            'link' => route('admin_fakultas.sk.beban-mengajar'),
+                            'nomor_surat' => $request->nomor_surat
+                        ]
+                    ]);
+                }
+            }
+
+            DB::commit();
+
+            $jumlah = $skItems->count();
+            $targetName = $hasDitolakDekan ? 'Dekan' : 'Wadek 1';
+
+            session()->flash('success', "Berhasil mengajukan {$jumlah} SK Beban Mengajar ke {$targetName}");
+
+            return response()->json([
+                'success' => true,
+                'message' => "Berhasil mengajukan {$jumlah} SK Beban Mengajar ke {$targetName}"
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Preview PDF template for SK Beban Mengajar
+     */
+    public function previewPDFBebanMengajar(Request $request)
+    {
+        // TODO: Update path to actual SK Beban Mengajar PDF template
+        $pdfPath = resource_path('views/admin_fakultas/sk/beban-mengajar/template.pdf');
+
+        if (!file_exists($pdfPath)) {
+            return response()->json(['error' => 'PDF template tidak ditemukan'], 404);
+        }
+
+        return response()->file($pdfPath);
+    }
+
+    /**
+     * Get details of selected SK Beban Mengajar for preview
+     */
+    public function getDetailsBebanMengajar(Request $request)
+    {
+        $request->validate([
+            'sk_ids' => 'required|array'
+        ]);
+
+        try {
+            $skList = SKBebanMengajar::with('prodi')
+                ->whereIn('No', $request->sk_ids)
+                ->get();
+
+            $bebanMengajarList = [];
+
+            foreach ($skList as $sk) {
+                $bebanData = $sk->Data_Beban_Mengajar;
+
+                // Handle double-encoded JSON
+                if (is_string($bebanData)) {
+                    $bebanData = json_decode($bebanData, true);
+                }
+
+                if (is_array($bebanData)) {
+                    foreach ($bebanData as $item) {
+                        $bebanMengajarList[] = [
+                            'nama_dosen' => $item['nama_dosen'] ?? '-',
+                            'nip' => $item['nip'] ?? '-',
+                            'prodi' => $sk->prodi->Nama_Prodi ?? '-',
+                            'mata_kuliah' => $item['nama_mata_kuliah'] ?? $item['mata_kuliah'] ?? '-',
+                            'nama_mata_kuliah' => $item['nama_mata_kuliah'] ?? $item['mata_kuliah'] ?? '-',
+                            'kelas' => $item['kelas'] ?? '',
+                            'sks' => $item['sks'] ?? 0
+                        ];
+                    }
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'beban_mengajar_list' => $bebanMengajarList
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reject SK Beban Mengajar request
+     */
+    public function rejectBebanMengajar(Request $request)
+    {
+        try {
+            // Validate request
+            $request->validate([
+                'sk_id' => 'required|exists:Req_SK_Beban_Mengajar,No',
+                'alasan' => 'required|string|min:10'
+            ], [
+                'sk_id.required' => 'ID SK harus diisi',
+                'sk_id.exists' => 'SK tidak ditemukan',
+                'alasan.required' => 'Alasan penolakan harus diisi',
+                'alasan.min' => 'Alasan penolakan minimal 10 karakter'
+            ]);
+
+            // Get SK
+            $sk = SKBebanMengajar::findOrFail($request->sk_id);
+
+            // Check if SK can be rejected (only if status is 'Dikerjakan admin')
+            if ($sk->Status !== 'Dikerjakan admin') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SK tidak dapat ditolak karena sudah diproses'
+                ], 400);
+            }
+
+            // Get admin user
+            $adminUser = Auth::user();
+
+            // Get kaprodi user (the one who submitted the SK)
+            $kaprodiDosen = Dosen::find($sk->Id_Dosen_Kaprodi);
+            $kaprodiUser = $kaprodiDosen ? $kaprodiDosen->user : null;
+
+            if (!$kaprodiUser) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User Kaprodi tidak ditemukan'
+                ], 400);
+            }
+
+            DB::beginTransaction();
+
+            try {
+                // Update SK status to 'Ditolak-Admin'
+                $sk->Status = 'Ditolak-Admin';
+                $sk->{'Alasan-Tolak'} = $request->alasan;
+                $sk->save();
+
+                // Create notification to Kaprodi
+                \App\Models\Notifikasi::create([
+                    'Source_User' => $adminUser->Id_User,
+                    'Dest_user' => $kaprodiUser->Id_User,
+                    'Tipe_Notifikasi' => 'Rejected',
+                    'Pesan' => 'SK Beban Mengajar untuk ' .
+                        ($sk->prodi->Nama_Prodi ?? 'Prodi') .
+                        ' Semester ' . $sk->Semester .
+                        ' TA ' . $sk->Tahun_Akademik .
+                        ' telah ditolak. Alasan: ' . $request->alasan,
+                    'Data_Tambahan' => json_encode([
+                        'url' => route('kaprodi.sk.beban-mengajar.index')
                     ]),
                     'Is_Read' => false
                 ]);

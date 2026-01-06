@@ -29,10 +29,10 @@
                     <small class="text-muted">Request Baru</small>
                     <span class="badge bg-primary">{{ $skBebanMengajarCount ?? 0 }}</span>
                 </div>
-                <a href="#" class="btn btn-primary btn-sm w-100 disabled">
+                <a href="{{ route('wadek1.sk.beban-mengajar.index') }}" class="btn btn-primary btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                <small class="text-primary d-block mt-2" style="font-size: 0.7rem;">Tersedia</small>
             </div>
         </div>
     </div>

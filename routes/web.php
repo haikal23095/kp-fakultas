@@ -208,6 +208,28 @@ Route::middleware('auth')->group(function () {
         Route::get('/sk/dosen-wali/{id}/download', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'downloadDosenWali'])
             ->name('sk.dosen-wali.download');
 
+        // SK Beban Mengajar Routes
+        Route::get('/sk/beban-mengajar', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'bebanMengajar'])
+            ->name('sk.beban-mengajar');
+        Route::get('/sk/beban-mengajar/history', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'bebanMengajarHistory'])
+            ->name('sk.beban-mengajar.history');
+        Route::get('/sk/beban-mengajar/{id}/detail-history', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'bebanMengajarDetailHistory'])
+            ->name('sk.beban-mengajar.detail-history');
+        Route::get('/sk/beban-mengajar/preview-pdf', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'previewPDFBebanMengajar'])
+            ->name('sk.beban-mengajar.preview-pdf');
+        Route::post('/sk/beban-mengajar/submit-wadek', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'submitToWadekBebanMengajar'])
+            ->name('sk.beban-mengajar.submit-wadek');
+        Route::post('/sk/beban-mengajar/get-details', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'getDetailsBebanMengajar'])
+            ->name('sk.beban-mengajar.get-details');
+        Route::get('/sk/beban-mengajar/{id}', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'bebanMengajarDetail'])
+            ->name('sk.beban-mengajar.detail');
+        Route::post('/sk/beban-mengajar/{id}/process', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'bebanMengajarProcess'])
+            ->name('sk.beban-mengajar.process');
+        Route::post('/sk/beban-mengajar/reject', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'rejectBebanMengajar'])
+            ->name('sk.beban-mengajar.reject');
+        Route::get('/sk/beban-mengajar/{id}/download', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'downloadBebanMengajar'])
+            ->name('sk.beban-mengajar.download');
+
         Route::get('/pengaturan', function () {
             return view('admin_fakultas.pengaturan');
         })->name('settings.index');
@@ -241,6 +263,13 @@ Route::middleware('auth')->group(function () {
         Route::post('/sk-dosen-wali/{id}/approve', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'approve'])->name('sk_dosen_wali.approve');
         Route::post('/sk-dosen-wali/{id}/reject', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'reject'])->name('sk_dosen_wali.reject');
 
+        // Route untuk SK Beban Mengajar - menggunakan controller terpisah
+        Route::get('/persetujuan-surat/sk-beban-mengajar', [App\Http\Controllers\Dekan\SKBebanMengajarController::class, 'index'])->name('sk.beban-mengajar.index');
+        Route::get('/sk-beban-mengajar/history', [App\Http\Controllers\Dekan\SKBebanMengajarController::class, 'history'])->name('sk.beban-mengajar.history');
+        Route::get('/sk-beban-mengajar/{id}', [App\Http\Controllers\Dekan\SKBebanMengajarController::class, 'detail'])->name('sk.beban-mengajar.detail');
+        Route::post('/sk-beban-mengajar/{id}/approve', [App\Http\Controllers\Dekan\SKBebanMengajarController::class, 'approve'])->name('sk.beban-mengajar.approve');
+        Route::post('/sk-beban-mengajar/{id}/reject', [App\Http\Controllers\Dekan\SKBebanMengajarController::class, 'reject'])->name('sk.beban-mengajar.reject');
+
         Route::get('/surat/{id}/detail', [App\Http\Controllers\Dekan\DetailSuratController::class, 'show'])->name('surat.detail');
         Route::get('/surat/{id}/preview', [App\Http\Controllers\Dekan\DetailSuratController::class, 'previewDraft'])->name('surat.preview');
         Route::get('/surat/{id}/download', [App\Http\Controllers\Dekan\DetailSuratController::class, 'downloadPendukung'])->name('surat.download');
@@ -264,7 +293,7 @@ Route::middleware('auth')->group(function () {
         // Persetujuan Legalisir
         Route::get('/persetujuan-surat/legalisir', [\App\Http\Controllers\Wadek1\PersetujuanSuratController::class, 'listLegalisir'])->name('persetujuan.legalisir');
         Route::post('/legalisir/{id}/approve', [\App\Http\Controllers\Wadek1\LegalisirController::class, 'approve'])->name('legalisir.approve');
-        
+
         Route::get('/sk-dosen', [\App\Http\Controllers\Wadek1\SKController::class, 'index'])
             ->name('sk.index');
 
@@ -279,6 +308,19 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/sk-dosen-wali/{id}/reject', [\App\Http\Controllers\Wadek1\SKController::class, 'dosenWaliReject'])
             ->name('sk.dosen-wali.reject');
+
+        // SK Beban Mengajar routes
+        Route::get('/sk-beban-mengajar', [\App\Http\Controllers\Wadek1\SKController::class, 'bebanMengajarIndex'])
+            ->name('sk.beban-mengajar.index');
+
+        Route::get('/sk-beban-mengajar/{id}', [\App\Http\Controllers\Wadek1\SKController::class, 'bebanMengajarDetail'])
+            ->name('sk.beban-mengajar.detail');
+
+        Route::post('/sk-beban-mengajar/{id}/approve', [\App\Http\Controllers\Wadek1\SKController::class, 'bebanMengajarApprove'])
+            ->name('sk.beban-mengajar.approve');
+
+        Route::post('/sk-beban-mengajar/{id}/reject', [\App\Http\Controllers\Wadek1\SKController::class, 'bebanMengajarReject'])
+            ->name('sk.beban-mengajar.reject');
     });
 
     // FITUR WADEK 2
@@ -305,11 +347,11 @@ Route::middleware('auth')->group(function () {
         // Kemahasiswaan - Dispensasi
         Route::get('/kemahasiswaan/validasi-dispensasi', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'validasiDispensasi'])
             ->name('kemahasiswaan.validasi-dispensasi');
-        
+
         // Persetujuan Surat Berkelakuan Baik (redirect ke controller utama)
         Route::get('/kemahasiswaan/validasi-kelakuan-baik', [\App\Http\Controllers\Wadek3\KelakuanBaikController::class, 'index'])
             ->name('kemahasiswaan.validasi-kelakuan-baik');
-        
+
         // Persetujuan Surat Berkelakuan Baik (route utama)
         Route::get('/persetujuan-surat/kelakuan-baik', [\App\Http\Controllers\Wadek3\KelakuanBaikController::class, 'index'])
             ->name('persetujuan.kelakuan_baik');
@@ -377,12 +419,16 @@ Route::middleware('auth')->group(function () {
             ->name('sk.index');
 
         // SK Beban Mengajar
-        Route::get('/sk/beban-mengajar', [\App\Http\Controllers\Kaprodi\SKController::class, 'indexBebanMengajar'])
+        Route::get('/sk/beban-mengajar', [\App\Http\Controllers\Kaprodi\SKController::class, 'historyBebanMengajar'])
             ->name('sk.beban-mengajar.index');
         Route::get('/sk/beban-mengajar/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createBebanMengajar'])
             ->name('sk.beban-mengajar.create');
         Route::post('/sk/beban-mengajar', [\App\Http\Controllers\Kaprodi\SKController::class, 'storeBebanMengajar'])
             ->name('sk.beban-mengajar.store');
+        Route::get('/sk/beban-mengajar/{id}/detail', [\App\Http\Controllers\Kaprodi\SKController::class, 'detailBebanMengajar'])
+            ->name('sk.beban-mengajar.detail');
+        Route::get('/sk/beban-mengajar/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadBebanMengajar'])
+            ->name('sk.beban-mengajar.download');
 
         // SK Dosen Wali
         Route::get('/sk/dosen-wali', [\App\Http\Controllers\Kaprodi\SKController::class, 'indexDosenWali'])
@@ -587,11 +633,11 @@ Route::middleware('auth')->group(function () {
         // Download Surat Pengantar (Signed by Kaprodi)
         Route::get('/surat/download-pengantar/{id}', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'downloadPengantar'])
             ->name('surat.download_pengantar');
-        
+
         // Download Surat Tidak Beasiswa (Signed by Dekan)
         Route::get('/surat/download-tidak-beasiswa/{id}', [SuratTidakBeasiswaController::class, 'downloadSurat'])
             ->name('surat.download_tidak_beasiswa');
-        
+
         // Download Surat Berkelakuan Baik (Signed by Dekan)
         Route::get('/surat/download-berkelakuan-baik/{id}', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'downloadSurat'])
             ->name('surat.download_berkelakuan_baik');

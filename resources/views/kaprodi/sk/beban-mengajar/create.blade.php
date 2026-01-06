@@ -53,10 +53,11 @@
                                         name="prodi_id" 
                                         required>
                                     <option value="">-- Pilih Program Studi --</option>
-                                    <option value="1">S1 Teknik Informatika</option>
-                                    <option value="2">S1 Teknik Industri</option>
-                                    <option value="3">S1 Teknik Elektro</option>
-                                    <option value="4">S1 Teknik Sipil</option>
+                                    @foreach($prodis as $p)
+                                        <option value="{{ $p->Id_Prodi }}" {{ (old('prodi_id', $prodi->Id_Prodi ?? '') == $p->Id_Prodi) ? 'selected' : '' }}>
+                                            {{ $p->Nama_Prodi }}
+                                        </option>
+                                    @endforeach
                                 </select>
                                 @error('prodi_id')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -194,6 +195,21 @@
 <script>
     let counter = 0;
     
+    // Data dari server
+    const dosens = @json($dosens);
+    const mataKuliahList = @json($mataKuliahList);
+    const allMataKuliah = @json($allMataKuliah);
+    
+    // Debug: Tampilkan data di console
+    console.log('Dosens:', dosens);
+    console.log('Mata Kuliah List:', mataKuliahList);
+    console.log('All Mata Kuliah:', allMataKuliah);
+    
+    // Fungsi untuk mendapatkan kelas berdasarkan nama mata kuliah
+    function getKelasByMataKuliah(namaMataKuliah) {
+        return allMataKuliah.filter(mk => mk.Nama_Matakuliah === namaMataKuliah);
+    }
+    
     // Tambah baris beban mengajar
     document.getElementById('tambahBeban').addEventListener('click', function() {
         counter++;
@@ -201,31 +217,41 @@
         
         const row = document.createElement('tr');
         row.id = `row-${counter}`;
+        
+        // Build dosen options
+        let dosenOptions = '<option value="">-- Pilih Dosen --</option>';
+        dosens.forEach(dosen => {
+            dosenOptions += `<option value="${dosen.Id_Dosen}">${dosen.Nama_Dosen}</option>`;
+        });
+        
+        // Build mata kuliah options
+        let mataKuliahOptions = '<option value="">-- Pilih Mata Kuliah --</option>';
+        mataKuliahList.forEach(mk => {
+            mataKuliahOptions += `<option value="${mk.Nama_Matakuliah}" data-sks="${mk.SKS}">${mk.Nama_Matakuliah}</option>`;
+        });
+        
         row.innerHTML = `
             <td class="text-center align-middle">${counter}</td>
             <td>
                 <select class="form-select form-select-sm" name="beban[${counter}][dosen_id]" required>
-                    <option value="">-- Pilih Dosen --</option>
-                    <option value="1">Dr. Ahmad Fauzi, M.Kom</option>
-                    <option value="2">Dr. Siti Nurhaliza, M.T</option>
-                    <option value="3">Prof. Budi Santoso, M.Eng</option>
-                    <option value="4">Dr. Indah Permata, M.Kom</option>
-                    <option value="5">Ir. Joko Widodo, M.T</option>
+                    ${dosenOptions}
                 </select>
             </td>
             <td>
-                <input type="text" 
-                       class="form-control form-control-sm" 
-                       name="beban[${counter}][mata_kuliah]" 
-                       placeholder="Contoh: Pemrograman Web"
-                       required>
+                <select class="form-select form-select-sm mata-kuliah-select" 
+                        data-row="${counter}" 
+                        required>
+                    ${mataKuliahOptions}
+                </select>
             </td>
             <td>
-                <input type="text" 
-                       class="form-control form-control-sm" 
-                       name="beban[${counter}][kelas]" 
-                       placeholder="Contoh: IF 5A"
-                       required>
+                <select class="form-select form-select-sm kelas-select" 
+                        name="beban[${counter}][mata_kuliah_id]" 
+                        data-row="${counter}" 
+                        required 
+                        disabled>
+                    <option value="">-- Pilih MK dulu --</option>
+                </select>
             </td>
             <td>
                 <input type="number" 
@@ -234,6 +260,7 @@
                        min="1" 
                        max="6" 
                        value="3"
+                       readonly
                        required>
             </td>
             <td class="text-center">
@@ -247,8 +274,50 @@
         
         tbody.appendChild(row);
         
+        // Add event listener untuk mata kuliah change
+        const mataKuliahSelect = row.querySelector('.mata-kuliah-select');
+        const kelasSelect = row.querySelector('.kelas-select');
+        const sksInput = row.querySelector('.sks-input');
+        
+        mataKuliahSelect.addEventListener('change', function() {
+            const namaMataKuliah = this.value;
+            kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+            
+            if (namaMataKuliah) {
+                const kelasList = getKelasByMataKuliah(namaMataKuliah);
+                
+                kelasList.forEach(kelas => {
+                    const option = document.createElement('option');
+                    option.value = kelas.Nomor;
+                    option.textContent = kelas.Kelas;
+                    option.dataset.sks = kelas.SKS;
+                    kelasSelect.appendChild(option);
+                });
+                
+                kelasSelect.disabled = false;
+                
+                // Set SKS dari mata kuliah yang dipilih
+                const selectedOption = this.options[this.selectedIndex];
+                sksInput.value = selectedOption.dataset.sks || 3;
+            } else {
+                kelasSelect.disabled = true;
+                sksInput.value = 3;
+            }
+            
+            updateTotalSKS();
+        });
+        
+        // Add event listener untuk kelas change (update SKS jika berbeda)
+        kelasSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.dataset.sks) {
+                sksInput.value = selectedOption.dataset.sks;
+                updateTotalSKS();
+            }
+        });
+        
         // Add event listener untuk update total SKS
-        row.querySelector('.sks-input').addEventListener('input', updateTotalSKS);
+        sksInput.addEventListener('input', updateTotalSKS);
         
         updateNomor();
         updateTotalSKS();

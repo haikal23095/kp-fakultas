@@ -17,9 +17,9 @@ class SKDosenWaliController extends Controller
      */
     public function index(Request $request)
     {
-        // Show all SK dengan optional filter, kecuali yang Ditolak-Wadek1
+        // Show all SK dengan optional filter, kecuali yang Ditolak-Wadek1 dan Menunggu-Persetujuan-Wadek-1
         $query = AccDekanDosenWali::with(['reqSKDosenWali.prodi', 'reqSKDosenWali.kaprodi.user'])
-            ->where('Status', '!=', 'Ditolak-Wadek1');
+            ->whereNotIn('Status', ['Ditolak-Wadek1', 'Menunggu-Persetujuan-Wadek-1']);
 
         // Filter berdasarkan status jika ada
         if ($request->filled('status')) {
@@ -28,7 +28,7 @@ class SKDosenWaliController extends Controller
 
         $daftarSK = $query->orderBy('Tanggal-Pengajuan', 'desc')->get();
 
-        return view('dekan.sk.dosen-wali', compact('daftarSK'));
+        return view('dekan.sk.dosen-wali.index', compact('daftarSK'));
     }
 
     /**
