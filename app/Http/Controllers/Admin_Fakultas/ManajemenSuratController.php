@@ -102,8 +102,10 @@ class ManajemenSuratController extends Controller
             $q->where('Id_Fakultas', $fakultasId);
         })->where('Status', 'Selesai')->count();
 
+        // Hitung untuk Peminjaman Mobil Dinas
+        $countMobilDinas = \App\Models\SuratPeminjamanMobil::where('status_pengajuan', 'Diajukan')->count();
+
         // TODO: Counter untuk jenis surat baru (setelah database dibuat)
-        $countMobilDinas = 0;
         $countCuti = 0;
         $countTidakBeasiswa = 0;
         $countDispensasi = 0;
@@ -444,7 +446,20 @@ class ManajemenSuratController extends Controller
                 })
                 ->orderBy('id_no', 'desc')
                 ->get();
-        } else {
+        } 
+        // KHUSUS PEMINJAMAN MOBIL DINAS (ID=13): Query dari Surat_Peminjaman_Mobil
+        elseif($id == 13) {
+            $arsipTugas = \App\Models\SuratPeminjamanMobil::with(['user', 'tugasSurat', 'kendaraan', 'pejabat'])
+                ->where('status_pengajuan', 'Selesai')
+                ->whereHas('tugasSurat', function($q) {
+                    $q->whereNotNull('Nomor_Surat')
+                      ->where('Nomor_Surat', '!=', '');
+                })
+                ->orderBy('updated_at', 'desc')
+                ->get();
+            $arsipLegalisir = collect();
+        }
+        else {
             // Untuk surat lain, query Tugas_Surat berdasarkan status selesai
             $arsipTugas = TugasSurat::query()
                 ->where('Id_Jenis_Surat', $id)

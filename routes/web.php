@@ -23,6 +23,8 @@ use App\Http\Controllers\PengajuanSurat\SuratLegalisirController;
 use App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController;
 use App\Http\Controllers\PengajuanSurat\SuratDispensasiController;
 use App\Http\Controllers\Admin_Fakultas\SuratLegalisirController as FakultasSuratLegalisirController;
+use App\Http\Controllers\PeminjamanMobilMahasiswaController;
+use App\Http\Controllers\PeminjamanMobilAdminController;
 
 // Impor Model untuk route pengajuan
 use App\Models\Mahasiswa;
@@ -147,7 +149,20 @@ Route::middleware('auth')->group(function () {
             ->name('surat.magang.assign_nomor');
 
         // TODO: Routes untuk jenis surat baru (setelah implementasi database)
-        Route::get('/surat-mobil-dinas', [FakultasManajemenSuratController::class, 'listMobilDinas'])->name('surat.mobil_dinas');
+        Route::get('/surat-mobil-dinas', [PeminjamanMobilAdminController::class, 'index'])->name('surat.mobil_dinas');
+        Route::put('/peminjaman-mobil/{id}/verifikasi', [PeminjamanMobilAdminController::class, 'verifikasi'])->name('peminjaman_mobil.verifikasi');
+        Route::put('/peminjaman-mobil/{id}/tolak', [PeminjamanMobilAdminController::class, 'tolak'])->name('peminjaman_mobil.tolak');
+        Route::get('/peminjaman-mobil/{id}/preview-draft', [PeminjamanMobilAdminController::class, 'previewDraft'])->name('peminjaman_mobil.preview_draft');
+        Route::get('/peminjaman-mobil/{id}/download-surat', [PeminjamanMobilAdminController::class, 'downloadSurat'])->name('peminjaman_mobil.download_surat');
+        Route::get('/peminjaman-mobil/arsip', [PeminjamanMobilAdminController::class, 'arsip'])->name('peminjaman_mobil.arsip');
+        Route::get('/peminjaman-mobil/ditolak', [PeminjamanMobilAdminController::class, 'ditolak'])->name('peminjaman_mobil.ditolak');
+        
+        // Management Kendaraan
+        Route::get('/kendaraan', [PeminjamanMobilAdminController::class, 'kendaraanIndex'])->name('kendaraan.index');
+        Route::post('/kendaraan', [PeminjamanMobilAdminController::class, 'kendaraanStore'])->name('kendaraan.store');
+        Route::put('/kendaraan/{id}', [PeminjamanMobilAdminController::class, 'kendaraanUpdate'])->name('kendaraan.update');
+        Route::delete('/kendaraan/{id}', [PeminjamanMobilAdminController::class, 'kendaraanDestroy'])->name('kendaraan.destroy');
+        
         Route::get('/surat-cuti', [FakultasManajemenSuratController::class, 'listCuti'])->name('surat.cuti');
         Route::get('/surat-tidak-beasiswa', [\App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController::class, 'indexAdmin'])->name('surat.tidak_beasiswa');
         
@@ -293,9 +308,24 @@ Route::middleware('auth')->group(function () {
 
     // FITUR WADEK 2
     Route::prefix('wadek2')->name('wadek2.')->group(function () {
-        // Sarana Prasarana
-        Route::get('/sarpras/persetujuan-mobil', [\App\Http\Controllers\Wadek2\PeminjamanController::class, 'persetujuanMobil'])
+        // Sarana Prasarana - Peminjaman Mobil
+        Route::get('/sarpras/peminjaman-mobil', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'index'])
+            ->name('sarpras.peminjaman_mobil.index');
+        Route::get('/sarpras/peminjaman-mobil/{id}/preview-draft', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'previewDraft'])
+            ->name('sarpras.peminjaman_mobil.preview_draft');
+        Route::put('/sarpras/peminjaman-mobil/{id}/setujui', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'setujui'])
+            ->name('sarpras.peminjaman_mobil.setujui');
+        Route::put('/sarpras/peminjaman-mobil/{id}/tolak', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'tolak'])
+            ->name('sarpras.peminjaman_mobil.tolak');
+        Route::get('/sarpras/peminjaman-mobil/arsip', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'arsip'])
+            ->name('sarpras.peminjaman_mobil.arsip');
+        Route::get('/sarpras/peminjaman-mobil/{id}/download', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'downloadSurat'])
+            ->name('sarpras.peminjaman_mobil.download');
+        
+        // Legacy route (keep for compatibility)
+        Route::get('/sarpras/persetujuan-mobil', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'index'])
             ->name('sarpras.persetujuan-mobil');
+        
         Route::get('/sarpras/persetujuan-ruang', [\App\Http\Controllers\Wadek2\PeminjamanController::class, 'persetujuanRuang'])
             ->name('sarpras.persetujuan-ruang');
 
@@ -647,6 +677,14 @@ Route::middleware('auth')->group(function () {
         // --- ROUTE SURAT DISPENSASI ---
         Route::get('/pengajuan-surat/dispen', [\App\Http\Controllers\PengajuanSurat\SuratDispensasiController::class, 'create'])->name('pengajuan.dispen.create');
         Route::post('/pengajuan-surat/dispen', [\App\Http\Controllers\PengajuanSurat\SuratDispensasiController::class, 'store'])->name('pengajuan.dispen.store');
+
+        // Rute untuk Peminjaman Mobil Dinas
+        Route::get('/pengajuan-surat/mobil-dinas', [PeminjamanMobilMahasiswaController::class, 'create'])->name('pengajuan.mobil.create');
+        Route::post('/pengajuan-surat/mobil-dinas', [PeminjamanMobilMahasiswaController::class, 'store'])->name('pengajuan.mobil.store');
+        Route::get('/riwayat/mobil-dinas', [PeminjamanMobilMahasiswaController::class, 'riwayat'])->name('riwayat.mobil_dinas');
+        Route::get('/peminjaman-mobil/{id}', [PeminjamanMobilMahasiswaController::class, 'show'])->name('peminjaman.mobil.show');
+        Route::get('/peminjaman-mobil/{id}/preview', [PeminjamanMobilMahasiswaController::class, 'previewSurat'])->name('peminjaman.mobil.preview');
+        Route::get('/peminjaman-mobil/{id}/download', [PeminjamanMobilMahasiswaController::class, 'downloadSurat'])->name('peminjaman.mobil.download');
 
         // Rute lainnya
         // Route::get('/legalisir', function () {
