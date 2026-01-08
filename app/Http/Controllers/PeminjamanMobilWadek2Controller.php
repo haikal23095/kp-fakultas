@@ -35,8 +35,9 @@ class PeminjamanMobilWadek2Controller extends Controller
         $peminjaman = SuratPeminjamanMobil::with(['user', 'kendaraan', 'tugasSurat'])
             ->findOrFail($id);
 
-        // Ambil pejabat Wadek 2 yang sedang login
-        $pejabat = Pejabat::where('Id_User', Auth::id())->first();
+        // Ambil pejabat Wadek 2 yang sedang login melalui Dosen
+        $dosen = \App\Models\Dosen::where('Id_User', Auth::id())->first();
+        $pejabat = $dosen ? $dosen->pejabat : null;
 
         return view('wadek2.sarpras.peminjaman_mobil.show', compact('peminjaman', 'pejabat'));
     }
@@ -60,8 +61,9 @@ class PeminjamanMobilWadek2Controller extends Controller
                 throw new \Exception('Nomor surat belum diberikan oleh admin. Hubungi admin fakultas.');
             }
 
-            // Ambil pejabat yang sedang login
-            $pejabat = Pejabat::where('Id_User', Auth::id())->first();
+            // Ambil pejabat yang sedang login melalui Dosen
+            $dosen = \App\Models\Dosen::where('Id_User', Auth::id())->first();
+            $pejabat = $dosen ? $dosen->pejabat : null;
 
             // Generate QR Code dengan informasi penandatangan
             $qrData = [
@@ -86,11 +88,12 @@ class PeminjamanMobilWadek2Controller extends Controller
             // Buat record verifikasi jika ada tugas surat
             if ($peminjaman->tugasSurat) {
                 SuratVerification::create([
-                    'Id_Tugas_Surat' => $peminjaman->tugasSurat->Id_Tugas_Surat,
-                    'Penandatangan' => $user->Id_User,
-                    'Tanggal_Tanda_Tangan' => now(),
-                    'QrCode_Path' => $qrPath,
-                    'Verification_Token' => \Illuminate\Support\Str::random(32),
+                    'id_tugas_surat' => $peminjaman->tugasSurat->Id_Tugas_Surat,
+                    'signed_by' => $user->Name_User,
+                    'signed_by_user_id' => $user->Id_User,
+                    'signed_at' => now(),
+                    'qr_path' => $qrPath,
+                    'token' => \Illuminate\Support\Str::random(32),
                 ]);
             }
 

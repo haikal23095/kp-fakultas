@@ -117,7 +117,7 @@ class PeminjamanMobilMahasiswaController extends Controller
      */
     public function previewSurat($id)
     {
-        $peminjaman = SuratPeminjamanMobil::with(['tugasSurat', 'kendaraan', 'pejabat', 'user'])
+        $peminjaman = SuratPeminjamanMobil::with(['tugasSurat', 'kendaraan', 'pejabat', 'user', 'verification'])
             ->where('Id_User', Auth::id())
             ->findOrFail($id);
 
@@ -133,7 +133,7 @@ class PeminjamanMobilMahasiswaController extends Controller
      */
     public function downloadSurat($id)
     {
-        $peminjaman = SuratPeminjamanMobil::with(['tugasSurat', 'kendaraan', 'pejabat', 'user'])
+        $peminjaman = SuratPeminjamanMobil::with(['tugasSurat', 'kendaraan', 'pejabat', 'user', 'verification'])
             ->where('Id_User', Auth::id())
             ->findOrFail($id);
 
