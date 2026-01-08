@@ -252,6 +252,14 @@ class TugasSurat extends Model
     }
 
     /**
+     * Relasi ke SuratPeminjamanRuang (one-to-one)
+     */
+    public function suratPeminjamanRuang()
+    {
+        return $this->hasOne(\App\Models\SuratPeminjamanRuang::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
      * Relasi ke SuratVerification (one-to-one)
      * Untuk mengambil data QR Code dan tanda tangan digital
      */

@@ -25,6 +25,7 @@ use App\Http\Controllers\PengajuanSurat\SuratDispensasiController;
 use App\Http\Controllers\Admin_Fakultas\SuratLegalisirController as FakultasSuratLegalisirController;
 use App\Http\Controllers\PeminjamanMobilMahasiswaController;
 use App\Http\Controllers\PeminjamanMobilAdminController;
+use App\Http\Controllers\SuratPeminjamanRuangController;
 
 // Impor Model untuk route pengajuan
 use App\Models\Mahasiswa;
@@ -685,6 +686,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/peminjaman-mobil/{id}', [PeminjamanMobilMahasiswaController::class, 'show'])->name('peminjaman.mobil.show');
         Route::get('/peminjaman-mobil/{id}/preview', [PeminjamanMobilMahasiswaController::class, 'previewSurat'])->name('peminjaman.mobil.preview');
         Route::get('/peminjaman-mobil/{id}/download', [PeminjamanMobilMahasiswaController::class, 'downloadSurat'])->name('peminjaman.mobil.download');
+
+        // Rute untuk Peminjaman Ruang
+        Route::get('/pengajuan-surat/peminjaman-ruang', [SuratPeminjamanRuangController::class, 'create'])->name('pengajuan.ruang.create');
+        Route::post('/pengajuan-surat/peminjaman-ruang', [SuratPeminjamanRuangController::class, 'store'])->name('pengajuan.ruang.store');
+        Route::get('/riwayat/peminjaman-ruang', [\App\Http\Controllers\Mahasiswa\RiwayatSuratController::class, 'riwayatPeminjamanRuang'])->name('riwayat.peminjaman_ruang');
 
         // Rute lainnya
         // Route::get('/legalisir', function () {

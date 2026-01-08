@@ -363,10 +363,19 @@ class RiwayatSuratController extends Controller
     }
     
     public function riwayatPeminjamanRuang() { 
-        return view('mahasiswa.riwayat_generic', [
-            'riwayatSurat' => collect([]),
+        $user = Auth::user();
+        
+        // Query dengan relasi suratPeminjamanRuang dan verification
+        $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratPeminjamanRuang.ruangan', 'verification'])
+            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 14) // ID untuk Peminjaman Ruang
+            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->get();
+
+        return view('mahasiswa.riwayat_peminjaman_ruang', [
+            'riwayatSurat' => $riwayatSurat,
             'title' => 'Riwayat Peminjaman Ruang'
-        ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
+        ]);
     }
     
     public function riwayatPeminjamanGedung() { return $this->getGenericRiwayat(10, 'Riwayat Peminjaman Gedung'); }

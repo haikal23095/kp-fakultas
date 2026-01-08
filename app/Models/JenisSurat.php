@@ -15,6 +15,12 @@ class JenisSurat extends Model
     // WAJIB: Tentukan Primary Key yang benar
     protected $primaryKey = 'Id_Jenis_Surat';
 
+    // Fillable untuk mass assignment
+    protected $fillable = [
+        'Id_Jenis_Surat',
+        'Nama_Surat',
+    ];
+
     // Matikan auto-increment jika PK Anda bukan integer
     // public $incrementing = false;
     
