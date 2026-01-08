@@ -68,6 +68,14 @@ class SuratPeminjamanMobil extends Model
     }
 
     /**
+     * Relasi ke SuratVerification (untuk QR Code)
+     */
+    public function verification()
+    {
+        return $this->hasOne(SuratVerification::class, 'id_tugas_surat', 'Id_Tugas_Surat');
+    }
+
+    /**
      * Scope untuk status Diajukan (untuk Admin)
      */
     public function scopeDiajukan($query)

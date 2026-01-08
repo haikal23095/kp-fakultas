@@ -120,11 +120,18 @@
                                     <span class="badge bg-info">{{ $item->nomor_surat ?? 'Belum ada' }}</span>
                                 </td>
                                 <td>
-                                    <button type="button" class="btn btn-sm btn-info me-1" 
-                                            data-bs-toggle="modal" 
-                                            data-bs-target="#detailModal{{ $item->id }}">
-                                        <i class="fas fa-eye me-1"></i>Detail
-                                    </button>
+                                    <div class="btn-group" role="group">
+                                        <button type="button" class="btn btn-sm btn-info" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#detailModal{{ $item->id }}">
+                                            <i class="fas fa-eye me-1"></i>Detail
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-danger" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#rejectModal{{ $item->id }}">
+                                            <i class="fas fa-times me-1"></i>Tolak
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         @empty

@@ -71,12 +71,15 @@
         .ttd-section {
             margin-top: 30px;
             margin-left: 50%;
+            text-align: center;
         }
         .ttd-section p {
             margin: 3px 0;
         }
-        .ttd-space {
-            height: 60px;
+        .qr-code-ttd {
+            width: 80px;
+            height: 80px;
+            margin: 5px auto;
         }
         .footer {
             position: fixed;
@@ -227,10 +230,24 @@
                     $wadek2User = $pejabat->user ?? null;
                 }
             }
+            
+            // Ambil QR code path
+            $qrPath = null;
+            if($peminjaman->verification && $peminjaman->verification->qr_path) {
+                $qrPath = storage_path('app/public/' . $peminjaman->verification->qr_path);
+            } elseif($peminjaman->qr_code_path) {
+                $qrPath = storage_path('app/public/' . $peminjaman->qr_code_path);
+            }
         @endphp
         <p>{{ \Carbon\Carbon::parse($peminjaman->tugasSurat->Tanggal_Diselesaikan ?? now())->locale('id')->isoFormat('D MMMM Y') }}</p>
-        <p>Wakil Dekan II</p>
-        <div class="ttd-space"></div>
+        <p><strong>Wakil Dekan II</strong></p>
+        
+        @if($qrPath && file_exists($qrPath))
+            <img src="{{ $qrPath }}" class="qr-code-ttd" alt="QR Code">
+        @else
+            <div style="height: 80px;"></div>
+        @endif
+        
         @if($wadek2User)
             <p><strong><u>{{ $wadek2User->Name_User }}</u></strong></p>
             <p>NIP. {{ $wadek2User->dosen->NIP ?? $wadek2User->pegawaiFakultas->NIP ?? '-' }}</p>

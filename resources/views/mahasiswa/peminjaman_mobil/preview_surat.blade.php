@@ -114,12 +114,87 @@
     }
     
     @media print {
+        * {
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
         .no-print {
             display: none !important;
         }
+        body {
+            margin: 0;
+            padding: 0;
+            font-size: 10pt;
+        }
         .surat-container {
             box-shadow: none;
-            padding: 0;
+            padding: 15px 20px;
+            margin: 0;
+            max-width: 100%;
+        }
+        .kop-surat {
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+        .kop-surat img {
+            height: 55px !important;
+            margin-right: 10px;
+        }
+        .text-kop h2 {
+            font-size: 13px !important;
+            margin: 1px 0 !important;
+        }
+        .text-kop h3 {
+            font-size: 11px !important;
+            margin: 1px 0 !important;
+        }
+        .text-kop p {
+            font-size: 8px !important;
+            margin: 0.5px 0 !important;
+        }
+        .nomor-surat {
+            margin: 10px 0;
+        }
+        .nomor-surat h4 {
+            font-size: 12px !important;
+            margin: 3px 0 !important;
+        }
+        .nomor-surat p {
+            font-size: 10px !important;
+        }
+        .isi-surat {
+            font-size: 10pt !important;
+            line-height: 1.4 !important;
+        }
+        .isi-surat p {
+            margin: 5px 0 !important;
+        }
+        .detail-table {
+            font-size: 10pt !important;
+            margin: 8px 0 !important;
+        }
+        .detail-table td {
+            padding: 2px 0 !important;
+        }
+        .ttd-section {
+            margin-top: 20px !important;
+            page-break-inside: avoid;
+        }
+        .ttd-section p {
+            margin: 2px 0 !important;
+            font-size: 10pt !important;
+        }
+        .qr-code {
+            margin: 5px 0 !important;
+        }
+        .qr-code img {
+            width: 70px !important;
+            height: 70px !important;
+        }
+        .footer-info {
+            margin-top: 15px !important;
+            padding-top: 10px !important;
+            font-size: 8pt !important;
         }
     }
 </style>
@@ -278,9 +353,19 @@
             <p>{{ \Carbon\Carbon::parse($peminjaman->updated_at)->locale('id')->isoFormat('D MMMM Y') }}</p>
             <p><strong>Wakil Dekan II</strong></p>
             
-            @if($peminjaman->qr_code_path)
+            @php
+                // Cek QR code dari verification atau fallback ke qr_code_path
+                $qrPath = null;
+                if($peminjaman->verification && $peminjaman->verification->qr_path) {
+                    $qrPath = $peminjaman->verification->qr_path;
+                } elseif($peminjaman->qr_code_path) {
+                    $qrPath = $peminjaman->qr_code_path;
+                }
+            @endphp
+            
+            @if($qrPath)
             <div class="qr-code">
-                <img src="{{ asset('storage/' . $peminjaman->qr_code_path) }}" alt="QR Code TTE">
+                <img src="{{ asset('storage/' . $qrPath) }}" alt="QR Code TTE">
             </div>
             @else
             <div style="height: 80px;"></div>
@@ -293,7 +378,7 @@
         {{-- Footer --}}
         <div class="footer-info">
             <p><strong>Surat ini sah dan ditandatangani secara elektronik</strong></p>
-            @if($peminjaman->qr_code_path)
+            @if(($peminjaman->verification && $peminjaman->verification->qr_path) || $peminjaman->qr_code_path)
             <p>Scan QR Code untuk verifikasi keaslian surat</p>
             @endif
         </div>

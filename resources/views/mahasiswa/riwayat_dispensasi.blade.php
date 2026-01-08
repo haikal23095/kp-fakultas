@@ -256,19 +256,12 @@
                                     <p style="margin: 0;">Bangkalan, {{ \Carbon\Carbon::parse($surat->acc_wadek3_at ?? now())->translatedFormat('d F Y') }}</p>
                                     <p style="margin: 5px 0 10px 0; font-weight: bold;">Wakil Dekan III,</p>
                                     
-                                    {{-- QR Code & Stempel --}}
+                                    {{-- QR Code --}}
                                     <div style="position: relative; margin: 20px auto; height: 140px;">
-                                        {{-- QR Code dulu (di bawah) --}}
                                         @if($verification && $verification->qr_path && file_exists(storage_path('app/public/' . $verification->qr_path)))
                                             <img src="{{ asset('storage/' . $verification->qr_path) }}" 
                                                  alt="QR Code" 
                                                  style="width: 100px; height: 100px; position: absolute; left: 50%; transform: translateX(-50%); top: 10px; z-index: 1;">
-                                        @endif
-                                        {{-- Stempel di atas (numpuk) --}}
-                                        @if(file_exists(public_path('images/stempel.png')))
-                                            <img src="{{ asset('images/stempel.png') }}" 
-                                                 alt="Stempel" 
-                                                 style="opacity: 0.75; width: 140px; position: absolute; left: 50%; transform: translateX(-50%); top: 0px; z-index: 2;">
                                         @endif
                                     </div>
                                     
