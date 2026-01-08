@@ -79,10 +79,10 @@
                     <small class="text-muted">Request Baru</small>
                     <span class="badge bg-warning text-dark">{{ $skPembimbingSkripsiCount ?? 0 }}</span>
                 </div>
-                <a href="#" class="btn btn-warning btn-sm w-100 disabled">
+                <a href="{{ route('wadek1.sk.pembimbing-skripsi.index') }}" class="btn btn-warning btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                <small class="text-warning d-block mt-2" style="font-size: 0.7rem;">Tersedia</small>
             </div>
         </div>
     </div>

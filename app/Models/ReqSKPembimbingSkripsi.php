@@ -5,53 +5,73 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class AccSKPembimbingSkripsi extends Model
+class ReqSKPembimbingSkripsi extends Model
 {
     use HasFactory;
 
-    protected $table = 'Acc_SK_Pembimbing_Skripsi';
+    protected $table = 'Req_SK_Pembimbing_Skripsi';
 
     protected $primaryKey = 'No';
 
     public $timestamps = false;
 
     protected $fillable = [
+        'Id_Prodi',
         'Semester',
         'Tahun_Akademik',
         'Data_Pembimbing_Skripsi',
+        'Id_Dosen_Kaprodi',
         'Nomor_Surat',
         'Status',
-        'Alasan_Tolak',
-        'Alasan-Tolak', // Alias dengan hyphen untuk backward compatibility
-        'QR_Code',
-        'Tanggal_Persetujuan_Dekan',
-        'Id_Dekan',
-        'Tanggal_Pengajuan',
-        'Tanggal_Tenggat',
+        'Id_Acc_SK_Pembimbing_Skripsi',
+        'Alasan-Tolak',
+        'Tanggal-Pengajuan',
+        'Tanggal-Tenggat',
     ];
 
     protected $casts = [
-        'Data_Pembimbing_Skripsi' => 'array',
-        'Tanggal_Persetujuan_Dekan' => 'datetime',
-        'Tanggal_Pengajuan' => 'datetime',
-        'Tanggal_Tenggat' => 'datetime',
+        // Disable auto-cast untuk menghindari double-encoding issues
+        // 'Data_Pembimbing_Skripsi' => 'array',
+        'Tanggal-Pengajuan' => 'datetime',
+        'Tanggal-Tenggat' => 'datetime',
     ];
 
     /**
-     * Relasi ke Dekan (Pejabat)
+     * Relationships to be loaded by default (optional - uncomment if needed)
+     * protected $with = ['accSKPembimbingSkripsi'];
      */
-    public function dekan()
+
+    /**
+     * Relasi ke tabel Prodi
+     */
+    public function prodi()
     {
-        return $this->belongsTo(Pejabat::class, 'Id_Dekan', 'Id_Pejabat');
+        return $this->belongsTo(Prodi::class, 'Id_Prodi', 'Id_Prodi');
     }
 
     /**
-     * Relasi balik ke Request SK Pembimbing Skripsi (One to Many)
-     * Satu approval bisa terkait dengan banyak request
+     * Relasi ke Dosen Kaprodi
      */
-    public function reqSKPembimbingSkripsi()
+    public function kaprodi()
     {
-        return $this->hasMany(ReqSKPembimbingSkripsi::class, 'Id_Acc_SK_Pembimbing_Skripsi', 'No');
+        return $this->belongsTo(Dosen::class, 'Id_Dosen_Kaprodi', 'Id_Dosen');
+    }
+
+    /**
+     * Relasi ke Acc_SK_Pembimbing_Skripsi (One to One)
+     * Satu request akan memiliki satu approval
+     */
+    public function accSKPembimbingSkripsi()
+    {
+        return $this->belongsTo(AccSKPembimbingSkripsi::class, 'Id_Acc_SK_Pembimbing_Skripsi', 'No');
+    }
+
+    /**
+     * Alias untuk accSKPembimbingSkripsi
+     */
+    public function approval()
+    {
+        return $this->accSKPembimbingSkripsi();
     }
 
     /**
@@ -71,11 +91,11 @@ class AccSKPembimbingSkripsi extends Model
     }
 
     /**
-     * Scope untuk filter berdasarkan tahun akademik
+     * Scope untuk filter berdasarkan prodi
      */
-    public function scopeByTahunAkademik($query, $tahunAkademik)
+    public function scopeByProdi($query, $idProdi)
     {
-        return $query->where('Tahun_Akademik', $tahunAkademik);
+        return $query->where('Id_Prodi', $idProdi);
     }
 
     /**
@@ -84,9 +104,11 @@ class AccSKPembimbingSkripsi extends Model
     public function getStatusReadableAttribute()
     {
         $statusMap = [
+            'Dikerjakan admin' => 'Dikerjakan Admin',
             'Menunggu-Persetujuan-Wadek-1' => 'Menunggu Persetujuan Wadek 1',
             'Menunggu-Persetujuan-Dekan' => 'Menunggu Persetujuan Dekan',
             'Selesai' => 'Selesai',
+            'Ditolak-Admin' => 'Ditolak Admin',
             'Ditolak-Wadek1' => 'Ditolak Wadek 1',
             'Ditolak-Dekan' => 'Ditolak Dekan',
         ];
@@ -95,7 +117,7 @@ class AccSKPembimbingSkripsi extends Model
     }
 
     /**
-     * Check apakah sudah disetujui dekan
+     * Check apakah request sudah selesai
      */
     public function isSelesai()
     {
@@ -103,22 +125,24 @@ class AccSKPembimbingSkripsi extends Model
     }
 
     /**
-     * Check apakah ditolak
+     * Check apakah request ditolak
      */
     public function isDitolak()
     {
         return in_array($this->Status, [
+            'Ditolak-Admin',
             'Ditolak-Wadek1',
             'Ditolak-Dekan'
         ]);
     }
 
     /**
-     * Check apakah masih pending approval
+     * Check apakah request masih pending
      */
     public function isPending()
     {
         return in_array($this->Status, [
+            'Dikerjakan admin',
             'Menunggu-Persetujuan-Wadek-1',
             'Menunggu-Persetujuan-Dekan'
         ]);

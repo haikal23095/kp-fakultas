@@ -159,7 +159,7 @@
                                     <h6 class="mb-1 fw-bold">SK Beban Mengajar</h6>
                                     <p class="mb-0 small text-muted">Lihat riwayat pengajuan SK beban mengajar</p>
                                 </div>
-                                <a href="{{ route('kaprodi.sk.beban-mengajar.index') }}" class="btn btn-sm btn-outline-primary">
+                                <a href="{{ route('kaprodi.sk.beban-mengajar.history') }}" class="btn btn-sm btn-outline-primary">
                                     <i class="fas fa-arrow-right"></i>
                                 </a>
                             </div>
@@ -195,9 +195,9 @@
                                     <h6 class="mb-1 fw-bold">SK Pembimbing Skripsi</h6>
                                     <p class="mb-0 small text-muted">Lihat riwayat pengajuan SK pembimbing</p>
                                 </div>
-                                <button class="btn btn-sm btn-outline-warning" onclick="alert('Fitur riwayat SK Pembimbing Skripsi akan segera tersedia')">
+                                <a href="{{ route('kaprodi.sk.pembimbing-skripsi.history') }}" class="btn btn-sm btn-outline-warning">
                                     <i class="fas fa-arrow-right"></i>
-                                </button>
+                                </a>
                             </div>
                         </div>
                     </div>

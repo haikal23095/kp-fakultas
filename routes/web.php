@@ -230,6 +230,24 @@ Route::middleware('auth')->group(function () {
         Route::get('/sk/beban-mengajar/{id}/download', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'downloadBebanMengajar'])
             ->name('sk.beban-mengajar.download');
 
+        // SK Pembimbing Skripsi Routes
+        Route::get('/sk/pembimbing-skripsi', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'pembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi');
+        Route::get('/sk/pembimbing-skripsi/history', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'pembimbingSkripsiHistory'])
+            ->name('sk.pembimbing-skripsi.history');
+        Route::get('/sk/pembimbing-skripsi/{id}/detail-history', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'pembimbingSkripsiDetailHistory'])
+            ->name('sk.pembimbing-skripsi.detail-history');
+        Route::get('/sk/pembimbing-skripsi/{id}', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'pembimbingSkripsiDetail'])
+            ->name('sk.pembimbing-skripsi.detail');
+        Route::post('/sk/pembimbing-skripsi/reject', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'rejectPembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.reject');
+        Route::post('/sk/pembimbing-skripsi/get-details', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'getPembimbingSkripsiDetails'])
+            ->name('sk.pembimbing-skripsi.get-details');
+        Route::post('/sk/pembimbing-skripsi/submit-wadek', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'submitPembimbingSkripsiToWadek'])
+            ->name('sk.pembimbing-skripsi.submit-wadek');
+        Route::get('/sk/pembimbing-skripsi/{id}/download', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'downloadPembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.download');
+
         Route::get('/pengaturan', function () {
             return view('admin_fakultas.pengaturan');
         })->name('settings.index');
@@ -269,6 +287,13 @@ Route::middleware('auth')->group(function () {
         Route::get('/sk-beban-mengajar/{id}', [App\Http\Controllers\Dekan\SKBebanMengajarController::class, 'detail'])->name('sk.beban-mengajar.detail');
         Route::post('/sk-beban-mengajar/{id}/approve', [App\Http\Controllers\Dekan\SKBebanMengajarController::class, 'approve'])->name('sk.beban-mengajar.approve');
         Route::post('/sk-beban-mengajar/{id}/reject', [App\Http\Controllers\Dekan\SKBebanMengajarController::class, 'reject'])->name('sk.beban-mengajar.reject');
+
+        // Route untuk SK Pembimbing Skripsi
+        Route::get('/persetujuan-surat/sk-pembimbing-skripsi', [App\Http\Controllers\Dekan\SKPembimbingSkripsiController::class, 'index'])->name('sk.pembimbing-skripsi.index');
+        Route::get('/sk-pembimbing-skripsi/history', [App\Http\Controllers\Dekan\SKPembimbingSkripsiController::class, 'history'])->name('sk.pembimbing-skripsi.history');
+        Route::get('/sk-pembimbing-skripsi/{id}', [App\Http\Controllers\Dekan\SKPembimbingSkripsiController::class, 'detail'])->name('sk.pembimbing-skripsi.detail');
+        Route::post('/sk-pembimbing-skripsi/{id}/approve', [App\Http\Controllers\Dekan\SKPembimbingSkripsiController::class, 'approve'])->name('sk.pembimbing-skripsi.approve');
+        Route::post('/sk-pembimbing-skripsi/{id}/reject', [App\Http\Controllers\Dekan\SKPembimbingSkripsiController::class, 'reject'])->name('sk.pembimbing-skripsi.reject');
 
         Route::get('/surat/{id}/detail', [App\Http\Controllers\Dekan\DetailSuratController::class, 'show'])->name('surat.detail');
         Route::get('/surat/{id}/preview', [App\Http\Controllers\Dekan\DetailSuratController::class, 'previewDraft'])->name('surat.preview');
@@ -321,6 +346,16 @@ Route::middleware('auth')->group(function () {
 
         Route::post('/sk-beban-mengajar/{id}/reject', [\App\Http\Controllers\Wadek1\SKController::class, 'bebanMengajarReject'])
             ->name('sk.beban-mengajar.reject');
+
+        // SK Pembimbing Skripsi (Wadek 1)
+        Route::get('/sk-pembimbing-skripsi', [\App\Http\Controllers\Wadek1\SKController::class, 'pembimbingSkripsiIndex'])
+            ->name('sk.pembimbing-skripsi.index');
+        Route::get('/sk-pembimbing-skripsi/{id}', [\App\Http\Controllers\Wadek1\SKController::class, 'pembimbingSkripsiDetail'])
+            ->name('sk.pembimbing-skripsi.detail');
+        Route::post('/sk-pembimbing-skripsi/{id}/approve', [\App\Http\Controllers\Wadek1\SKController::class, 'pembimbingSkripsiApprove'])
+            ->name('sk.pembimbing-skripsi.approve');
+        Route::post('/sk-pembimbing-skripsi/{id}/reject', [\App\Http\Controllers\Wadek1\SKController::class, 'pembimbingSkripsiReject'])
+            ->name('sk.pembimbing-skripsi.reject');
     });
 
     // FITUR WADEK 2
@@ -379,9 +414,21 @@ Route::middleware('auth')->group(function () {
 
         // SK Dosen Routes
         Route::get('/sk', [\App\Http\Controllers\Dosen\SKController::class, 'index'])->name('sk.index');
+
+        // SK Dosen Wali
         Route::get('/sk/dosen-wali', [\App\Http\Controllers\Dosen\SKController::class, 'indexDosenWali'])->name('sk.dosen-wali.index');
         Route::get('/sk/dosen-wali/{id}/detail', [\App\Http\Controllers\Dosen\SKController::class, 'detailDosenWali'])->name('sk.dosen-wali.detail');
         Route::get('/sk/dosen-wali/{id}/download', [\App\Http\Controllers\Dosen\SKController::class, 'downloadDosenWali'])->name('sk.dosen-wali.download');
+
+        // SK Beban Mengajar
+        Route::get('/sk/beban-mengajar', [\App\Http\Controllers\Dosen\SKController::class, 'indexBebanMengajar'])->name('sk.beban-mengajar.index');
+        Route::get('/sk/beban-mengajar/{id}/detail', [\App\Http\Controllers\Dosen\SKController::class, 'detailBebanMengajar'])->name('sk.beban-mengajar.detail');
+        Route::get('/sk/beban-mengajar/{id}/download', [\App\Http\Controllers\Dosen\SKController::class, 'downloadBebanMengajar'])->name('sk.beban-mengajar.download');
+
+        // SK Pembimbing Skripsi
+        Route::get('/sk/pembimbing-skripsi', [\App\Http\Controllers\Dosen\SKController::class, 'indexPembimbingSkripsi'])->name('sk.pembimbing-skripsi.index');
+        Route::get('/sk/pembimbing-skripsi/{id}/detail', [\App\Http\Controllers\Dosen\SKController::class, 'detailPembimbingSkripsi'])->name('sk.pembimbing-skripsi.detail');
+        Route::get('/sk/pembimbing-skripsi/{id}/download', [\App\Http\Controllers\Dosen\SKController::class, 'downloadPembimbingSkripsi'])->name('sk.pembimbing-skripsi.download');
     });
 
     // FITUR KAJUR
@@ -421,6 +468,8 @@ Route::middleware('auth')->group(function () {
         // SK Beban Mengajar
         Route::get('/sk/beban-mengajar', [\App\Http\Controllers\Kaprodi\SKController::class, 'historyBebanMengajar'])
             ->name('sk.beban-mengajar.index');
+        Route::get('/sk/beban-mengajar/history', [\App\Http\Controllers\Kaprodi\SKController::class, 'historyBebanMengajar'])
+            ->name('sk.beban-mengajar.history');
         Route::get('/sk/beban-mengajar/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createBebanMengajar'])
             ->name('sk.beban-mengajar.create');
         Route::post('/sk/beban-mengajar', [\App\Http\Controllers\Kaprodi\SKController::class, 'storeBebanMengajar'])
@@ -433,6 +482,8 @@ Route::middleware('auth')->group(function () {
         // SK Dosen Wali
         Route::get('/sk/dosen-wali', [\App\Http\Controllers\Kaprodi\SKController::class, 'indexDosenWali'])
             ->name('sk.dosen-wali.index');
+        Route::get('/sk/dosen-wali/history', [\App\Http\Controllers\Kaprodi\SKController::class, 'indexDosenWali'])
+            ->name('sk.dosen-wali.history');
         Route::get('/sk/dosen-wali/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createDosenWali'])
             ->name('sk.dosen-wali.create');
         Route::post('/sk/dosen-wali', [\App\Http\Controllers\Kaprodi\SKController::class, 'storeDosenWali'])
@@ -447,6 +498,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.pembimbing-skripsi.create');
         Route::post('/sk/pembimbing-skripsi', [\App\Http\Controllers\Kaprodi\SKController::class, 'storePembimbingSkripsi'])
             ->name('sk.pembimbing-skripsi.store');
+        Route::get('/sk/pembimbing-skripsi/history', [\App\Http\Controllers\Kaprodi\SKController::class, 'historyPembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.history');
+        Route::get('/sk/pembimbing-skripsi/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadPembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.download');
         Route::get('/sk/penguji-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPengujiSkripsi'])
             ->name('sk.penguji-skripsi.create');
 

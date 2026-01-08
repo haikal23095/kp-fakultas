@@ -9,6 +9,12 @@ use App\Models\SKDosenWali;
 use App\Models\SKBebanMengajar;
 use App\Models\AccDekanDosenWali;
 use App\Models\AccSKBebanMengajar;
+use App\Models\AccSKPembimbingSkripsi;
+use App\Models\ReqSKPembimbingSkripsi;
+use App\Models\Dosen;
+use App\Models\Pejabat;
+use App\Models\User;
+use App\Models\Notifikasi;
 use Illuminate\Support\Facades\DB;
 
 class SKController extends Controller
@@ -25,8 +31,10 @@ class SKController extends Controller
         // Jumlah SK Beban Mengajar yang menunggu persetujuan Wadek 1
         $skBebanMengajarCount = \App\Models\AccSKBebanMengajar::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
 
+        // Jumlah SK Pembimbing Skripsi yang menunggu persetujuan Wadek 1
+        $skPembimbingSkripsiCount = AccSKPembimbingSkripsi::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
+
         // SK lain belum diimplementasikan
-        $skPembimbingSkripsiCount = 0;
         $skPengujiSkripsiCount = 0;
 
         return view('wadek1.sk.index', compact(
@@ -626,6 +634,269 @@ class SKController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
 
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * List SK Pembimbing Skripsi dari tabel Acc_SK_Pembimbing_Skripsi
+     */
+    public function pembimbingSkripsiIndex(Request $request)
+    {
+        $query = AccSKPembimbingSkripsi::with('reqSKPembimbingSkripsi.prodi');
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        } else {
+            // Default: tampilkan semua status yang relevan untuk Wadek 1
+            $query->whereIn('Status', [
+                'Menunggu-Persetujuan-Wadek-1',
+                'Menunggu-Persetujuan-Dekan',
+                'Ditolak-Wadek1',
+                'Selesai'
+            ]);
+        }
+
+        $skList = $query->orderBy('No', 'desc')->paginate(15);
+
+        // Get dekan info
+        $dekan = Dosen::with(['pejabat'])
+            ->whereHas('pejabat', function ($q) {
+                $q->where('Nama_Jabatan', 'like', 'DEKAN%');
+            })
+            ->first();
+
+        $dekanName = $dekan ? $dekan->Nama_Dosen : '';
+        $dekanNip = $dekan ? $dekan->NIP : '';
+
+        return view('wadek1.sk.pembimbing-skripsi.index', compact('skList', 'dekanName', 'dekanNip'));
+    }
+
+    /**
+     * Detail SK Pembimbing Skripsi
+     */
+    public function pembimbingSkripsiDetail($id)
+    {
+        try {
+            $sk = AccSKPembimbingSkripsi::with('reqSKPembimbingSkripsi.prodi.jurusan')->findOrFail($id);
+
+            // Process Data_Pembimbing_Skripsi to include prodi and jurusan info
+            $dataPembimbing = $sk->Data_Pembimbing_Skripsi;
+            if (is_array($dataPembimbing) && count($sk->reqSKPembimbingSkripsi) > 0) {
+                // Get prodi info from first reqSK (assuming all have same prodi)
+                $reqSK = $sk->reqSKPembimbingSkripsi->first();
+                if ($reqSK && $reqSK->prodi) {
+                    // Add prodi and jurusan data to each mahasiswa
+                    foreach ($dataPembimbing as &$mhs) {
+                        $mhs['prodi_data'] = [
+                            'nama_prodi' => $reqSK->prodi->Nama_Prodi,
+                            'jurusan' => $reqSK->prodi->jurusan ? [
+                                'Nama_Jurusan' => $reqSK->prodi->jurusan->Nama_Jurusan
+                            ] : null
+                        ];
+                    }
+                    $sk->Data_Pembimbing_Skripsi = $dataPembimbing;
+                }
+            }
+
+            // Get dekan info
+            $dekan = Dosen::with(['pejabat'])
+                ->whereHas('pejabat', function ($q) {
+                    $q->where('Nama_Jabatan', 'like', 'DEKAN%');
+                })
+                ->first();
+
+            $dekanName = $dekan ? $dekan->Nama_Dosen : '';
+            $dekanNip = $dekan ? $dekan->NIP : '';
+
+            return response()->json([
+                'success' => true,
+                'sk' => $sk,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error loading SK Pembimbing Skripsi detail: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat detail SK: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Approve SK Pembimbing Skripsi (teruskan ke Dekan)
+     */
+    public function pembimbingSkripsiApprove($id)
+    {
+        try {
+            DB::beginTransaction();
+
+            $accSK = AccSKPembimbingSkripsi::findOrFail($id);
+
+            if ($accSK->Status !== 'Menunggu-Persetujuan-Wadek-1') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SK tidak dalam status menunggu persetujuan Wadek 1'
+                ], 400);
+            }
+
+            // Update status ke Menunggu-Persetujuan-Dekan
+            $accSK->update([
+                'Status' => 'Menunggu-Persetujuan-Dekan',
+                'Tanggal-Persetujuan-Wadek-1' => now()
+            ]);
+
+            // Update semua request SK yang terkait
+            ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
+                ->update(['Status' => 'Menunggu-Persetujuan-Dekan']);
+
+            // Kirim notifikasi ke Dekan
+            $dekanUser = User::whereHas('role', function ($q) {
+                $q->where('Name_Role', 'Dekan');
+            })->first();
+
+            if ($dekanUser) {
+                Notifikasi::create([
+                    'Dest_user' => $dekanUser->Id_User,
+                    'Source_User' => Auth::id(),
+                    'Tipe_Notifikasi' => 'Accepted',
+                    'Pesan' => 'SK Pembimbing Skripsi telah disetujui Wadek 1 dan menunggu persetujuan Anda. Semester ' .
+                        $accSK->Semester . ' TA ' . $accSK->Tahun_Akademik,
+                    'Data_Tambahan' => json_encode([
+                        'acc_id' => $accSK->No,
+                        'nomor_surat' => $accSK->{'Nomor-SK'}
+                    ]),
+                    'Is_Read' => false
+                ]);
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'SK Pembimbing Skripsi berhasil disetujui dan diteruskan ke Dekan'
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Reject SK Pembimbing Skripsi
+     */
+    public function pembimbingSkripsiReject(Request $request, $id)
+    {
+        $request->validate([
+            'alasan' => 'required|string',
+            'target' => 'required|in:admin,kaprodi'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            $accSK = AccSKPembimbingSkripsi::findOrFail($id);
+
+            if ($accSK->Status !== 'Menunggu-Persetujuan-Wadek-1') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'SK tidak dalam status menunggu persetujuan Wadek 1'
+                ], 400);
+            }
+
+            $target = $request->target;
+
+            if ($target === 'admin') {
+                // Kembalikan ke Admin Fakultas
+                $accSK->update([
+                    'Status' => 'Ditolak-Wadek1',
+                    'Alasan_Tolak' => $request->alasan
+                ]);
+
+                ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
+                    ->update([
+                        'Status' => 'Ditolak-Wadek1',
+                        'Alasan-Tolak' => $request->alasan
+                    ]);
+
+                // Kirim notifikasi ke Admin Fakultas
+                $adminUser = User::whereHas('role', function ($q) {
+                    $q->where('Name_Role', 'Admin Fakultas');
+                })->first();
+
+                if ($adminUser) {
+                    Notifikasi::create([
+                        'Dest_user' => $adminUser->Id_User,
+                        'Source_User' => Auth::id(),
+                        'Tipe_Notifikasi' => 'Rejected',
+                        'Pesan' => 'SK Pembimbing Skripsi dikembalikan untuk revisi. Alasan: ' . $request->alasan,
+                        'Data_Tambahan' => json_encode([
+                            'acc_id' => $accSK->No,
+                            'nomor_surat' => $accSK->{'Nomor-SK'},
+                            'alasan' => $request->alasan
+                        ]),
+                        'Is_Read' => false
+                    ]);
+                }
+
+                $message = 'SK Pembimbing Skripsi berhasil dikembalikan ke Admin Fakultas untuk revisi';
+
+            } else {
+                // Tolak dan kirim notifikasi ke Kaprodi
+                $accSK->update([
+                    'Status' => 'Ditolak-Wadek1',
+                    'Alasan_Tolak' => $request->alasan
+                ]);
+
+                ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
+                    ->update([
+                        'Status' => 'Ditolak-Wadek1',
+                        'Alasan-Tolak' => $request->alasan
+                    ]);
+
+                // Kirim notifikasi ke semua Kaprodi yang terkait
+                $reqSKList = ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
+                    ->with('kaprodi.user')
+                    ->get();
+
+                foreach ($reqSKList as $reqSK) {
+                    if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
+                        Notifikasi::create([
+                            'Dest_user' => $reqSK->kaprodi->user->Id_User,
+                            'Source_User' => Auth::id(),
+                            'Tipe_Notifikasi' => 'Rejected',
+                            'Pesan' => 'SK Pembimbing Skripsi Anda ditolak oleh Wadek 1. Alasan: ' . $request->alasan,
+                            'Data_Tambahan' => json_encode([
+                                'req_id' => $reqSK->No,
+                                'acc_id' => $accSK->No,
+                                'alasan' => $request->alasan
+                            ]),
+                            'Is_Read' => false
+                        ]);
+                    }
+                }
+
+                $message = 'SK Pembimbing Skripsi berhasil ditolak dan notifikasi dikirim ke Kaprodi';
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'message' => $message
+            ]);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()

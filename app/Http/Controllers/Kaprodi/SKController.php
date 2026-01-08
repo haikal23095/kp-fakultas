@@ -10,7 +10,8 @@ use App\Models\MataKuliah;
 use App\Models\Mahasiswa;
 use App\Models\SKDosenWali;
 use App\Models\SKBebanMengajar;
-use App\Models\SKPembimbingSkripsi;
+use App\Models\ReqSKPembimbingSkripsi;
+use App\Models\AccSKPembimbingSkripsi;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -430,7 +431,7 @@ class SKController extends Controller
                 return $sk;
             });
 
-        return view('kaprodi.sk.dosen-wali.index', compact('skList'));
+        return view('kaprodi.sk.dosen-wali.history', compact('skList'));
     }
 
     /**
@@ -524,6 +525,51 @@ class SKController extends Controller
     }
 
     /**
+     * Display history of SK Pembimbing Skripsi
+     */
+    public function historyPembimbingSkripsi(Request $request)
+    {
+        // Get logged in user's dosen ID
+        $user = Auth::user();
+        $dosenId = $user->dosen ? $user->dosen->Id_Dosen : null;
+
+        if (!$dosenId) {
+            return redirect()->back()->with('error', 'Data dosen tidak ditemukan');
+        }
+
+        // Query SK Pembimbing Skripsi with AccSK relation for QR Code
+        $query = ReqSKPembimbingSkripsi::with(['prodi', 'kaprodi', 'accSKPembimbingSkripsi.dekan'])
+            ->where('Id_Dosen_Kaprodi', $dosenId);
+
+        // Debug: Check if relation is loaded - UNCOMMENT TO DEBUG
+        // $testSK = $query->first();
+        // dd([
+        //     'sk' => $testSK,
+        //     'accSK_object' => $testSK->accSKPembimbingSkripsi,
+        //     'toArray' => $testSK->toArray(),
+        //     'relationLoaded' => $testSK->relationLoaded('accSKPembimbingSkripsi'),
+        // ]);
+
+        // Apply filters
+        if ($request->filled('semester')) {
+            $query->where('Semester', $request->semester);
+        }
+
+        if ($request->filled('tahun_akademik')) {
+            $query->where('Tahun_Akademik', $request->tahun_akademik);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        // Order by newest first
+        $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
+
+        return view('kaprodi.sk.pembimbing-skripsi.history', compact('skList'));
+    }
+
+    /**
      * Show the form for creating SK Pembimbing Skripsi
      */
     public function createPembimbingSkripsi()
@@ -608,7 +654,7 @@ class SKController extends Controller
                 $dataPembimbing[] = [
                     'id_mahasiswa' => $pembimbing['mahasiswa_id'],
                     'nama_mahasiswa' => $mahasiswaInfo->Nama_Mahasiswa,
-                    'npm' => $mahasiswaInfo->NIM,
+                    'nim' => $mahasiswaInfo->NIM,
                     'judul_skripsi' => $pembimbing['judul_skripsi'],
                     'pembimbing_1' => [
                         'id_dosen' => $pembimbing['pembimbing_1'],
@@ -627,18 +673,19 @@ class SKController extends Controller
             $tanggalPengajuan = Carbon::now();
             $tanggalTenggat = Carbon::now()->addDays(3);
 
-            // Simpan ke database
-            SKPembimbingSkripsi::create([
+            // Simpan ke database tabel Req_SK_Pembimbing_Skripsi
+            ReqSKPembimbingSkripsi::create([
                 'Id_Prodi' => $request->prodi_id,
                 'Semester' => $request->semester,
                 'Tahun_Akademik' => $request->tahun_akademik,
-                'Data_Pembimbing' => $dataPembimbing,
+                'Data_Pembimbing_Skripsi' => json_encode($dataPembimbing), // Convert array to JSON string
+                'Id_Dosen_Kaprodi' => $idDosenKaprodi,
                 'Nomor_Surat' => null, // Will be filled by admin
-                'Id_Acc_SK_Pembimbing_Skripsi' => null, // Will be filled when approved by admin
+                'Status' => 'Dikerjakan admin',
+                'Id_Acc_SK_Pembimbing_Skripsi' => null, // Will be filled when approved
+                'Alasan-Tolak' => null,
                 'Tanggal-Pengajuan' => $tanggalPengajuan,
                 'Tanggal-Tenggat' => $tanggalTenggat,
-                'Id_Dosen_Kaprodi' => $idDosenKaprodi,
-                'Status' => 'Dikerjakan admin'
             ]);
 
             return redirect()->route('kaprodi.sk.index')
@@ -647,6 +694,59 @@ class SKController extends Controller
             return redirect()->back()
                 ->withInput()
                 ->with('error', 'Gagal mengajukan SK Pembimbing Skripsi: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Download SK Pembimbing Skripsi as PDF
+     */
+    public function downloadPembimbingSkripsi($id)
+    {
+        try {
+            $user = Auth::user();
+            $dosenId = $user->dosen ? $user->dosen->Id_Dosen : null;
+
+            if (!$dosenId) {
+                return redirect()->back()->with('error', 'Data dosen tidak ditemukan');
+            }
+
+            // Get SK data with related models including AccSK
+            $sk = ReqSKPembimbingSkripsi::with(['prodi.jurusan', 'kaprodi', 'accSKPembimbingSkripsi.dekan'])
+                ->where('No', $id)
+                ->where('Id_Dosen_Kaprodi', $dosenId)
+                ->firstOrFail();
+
+            // Only allow download if status is Selesai
+            if ($sk->Status !== 'Selesai') {
+                return redirect()->back()->with('error', 'SK belum selesai ditandatangani');
+            }
+
+            // Get AccSKPembimbingSkripsi for Dekan info, QR Code, and Nomor_Surat
+            $accSK = $sk->accSKPembimbingSkripsi;
+
+            if (!$accSK) {
+                return redirect()->back()->with('error', 'Data persetujuan SK tidak ditemukan');
+            }
+
+            // Check if Nomor_Surat is available (from AccSK, not from Req)
+            if (!$accSK->Nomor_Surat) {
+                return redirect()->back()->with('error', 'Nomor surat belum tersedia');
+            }
+
+            // Get Dekan info
+            $dekanName = $accSK->dekan ? $accSK->dekan->Nama_Dosen : 'Dekan Fakultas Teknik';
+            $dekanNip = $accSK->dekan ? $accSK->dekan->NIP : '-';
+
+            // Return view for print/download
+            return view('kaprodi.sk.pembimbing-skripsi.download', [
+                'sk' => $accSK,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip,
+                'qrCodePath' => $accSK->QR_Code ? asset('storage/' . $accSK->QR_Code) : null
+            ]);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mendownload SK: ' . $e->getMessage());
         }
     }
 

@@ -520,11 +520,13 @@
 
                     <!-- Tanda Tangan Dekan -->
                     <div class="preview-signature" style="font-size: 10pt; margin: 40px 0 30px 0;">
-                        <p style="margin-bottom: 3px;">Ditetapkan di Bangkalan</p>
-                        <p style="margin-bottom: 3px;">pada tanggal ${sk['Tanggal-Persetujuan-Dekan'] ? new Date(sk['Tanggal-Persetujuan-Dekan']).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                        <p style="margin-bottom: ${sk.QR_Code ? '10px' : '70px'};"><strong>DEKAN,</strong></p>
-                        ${sk.QR_Code ? `<img src="data:image/png;base64,${sk.QR_Code}" alt="QR Code" style="width: 100px; height: 100px; margin: 10px 0;">` : ''}
-                        <p style="margin-bottom: 0;">
+                        <p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
+                        <p style="margin: 0 0 10px 0;">pada tanggal ${sk['Tanggal-Persetujuan-Dekan'] ? new Date(sk['Tanggal-Persetujuan-Dekan']).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                        <p style="margin: 0 0 10px 0;"><strong>DEKAN,</strong></p>
+                        ${sk.QR_Code ? `<div style="text-align: right; margin: 10px 0;">
+                            <img src="{{ asset('storage') }}/${sk.QR_Code}" alt="QR Code" style="width: 100px; height: 100px; border: 1px solid #000;" onerror="console.error('Failed to load QR Code'); this.style.border='2px solid red';">
+                        </div>` : '<div style="height: 70px;"></div>'}
+                        <p style="margin: 10px 0 0 0;">
                             <strong><u>${dekanName}</u></strong><br>
                             NIP. ${dekanNip}
                         </p>
@@ -583,10 +585,12 @@
                     <div style="margin-top: 50px; font-size: 10pt;">
                         <div style="text-align: right;">
                             <p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
-                            <p style="margin: 0 0 3px 0;">pada tanggal ${sk['Tanggal-Persetujuan-Dekan'] ? new Date(sk['Tanggal-Persetujuan-Dekan']).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                            <p style="margin: 0 0 ${sk.QR_Code ? '10px' : '70px'} 0;"><strong>DEKAN,</strong></p>
-                            ${sk.QR_Code ? `<img src="data:image/png;base64,${sk.QR_Code}" alt="QR Code" style="width: 100px; height: 100px; margin: 10px 0;">` : ''}
-                            <p style="margin: 0 0 0 0;">
+                            <p style="margin: 0 0 10px 0;">pada tanggal ${sk['Tanggal-Persetujuan-Dekan'] ? new Date(sk['Tanggal-Persetujuan-Dekan']).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                            <p style="margin: 0 0 10px 0;"><strong>DEKAN,</strong></p>
+                            ${sk.QR_Code ? `<div style="text-align: right; margin: 10px 0;">
+                                <img src="{{ asset('storage') }}/${sk.QR_Code}" alt="QR Code" style="width: 100px; height: 100px; border: 1px solid #000;" onerror="console.error('Failed to load QR Code'); this.style.border='2px solid red';">
+                            </div>` : '<div style="height: 70px;"></div>'}
+                            <p style="margin: 10px 0 0 0;">
                                 <strong><u>${dekanName}</u></strong><br>
                                 NIP. ${dekanNip}
                             </p>

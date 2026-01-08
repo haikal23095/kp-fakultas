@@ -121,7 +121,7 @@
                                     <tr>
                                         <th width="5%" class="text-center">No</th>
                                         <th width="15%">Nama Mahasiswa</th>
-                                        <th width="10%">NPM</th>
+                                        <th width="10%">NIM</th>
                                         <th width="25%">Judul Skripsi</th>
                                         <th width="17%">Pembimbing 1</th>
                                         <th width="17%">Pembimbing 2</th>
@@ -184,6 +184,9 @@
 @endpush
 
 @push('scripts')
+<!-- jQuery (diperlukan untuk fungsi tambah mahasiswa) -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
 <script>
     let rowIndex = 0;
     
@@ -198,7 +201,7 @@
         let options = '<option value="">-- Pilih Mahasiswa --</option>';
         mahasiswas.forEach(mhs => {
             const selected = mhs.Id_Mahasiswa == selectedId ? 'selected' : '';
-            options += `<option value="${mhs.Id_Mahasiswa}" data-npm="${mhs.NIM}" ${selected}>${mhs.Nama_Mahasiswa} (${mhs.NIM})</option>`;
+            options += `<option value="${mhs.Id_Mahasiswa}" data-nim="${mhs.NIM}" ${selected}>${mhs.Nama_Mahasiswa} (${mhs.NIM})</option>`;
         });
         return options;
     }
@@ -213,114 +216,120 @@
         return options;
     }
     
-    // Add new row
-    $('#tambahPembimbing').click(function() {
-        rowIndex++;
+    // Wait for document ready
+    $(document).ready(function() {
+        console.log('Document ready, setting up event handlers...');
         
-        const newRow = `
-            <tr data-index="${rowIndex}">
-                <td class="text-center">${rowIndex}</td>
-                <td>
-                    <select class="form-select form-select-sm mahasiswa-select" 
-                            name="pembimbing[${rowIndex}][mahasiswa_id]" 
-                            required>
-                        ${generateMahasiswaOptions()}
-                    </select>
-                </td>
-                <td>
-                    <input type="text" 
-                           class="form-control form-control-sm npm-display" 
-                           readonly 
-                           placeholder="NPM otomatis">
-                </td>
-                <td>
-                    <textarea class="form-control form-control-sm" 
-                              name="pembimbing[${rowIndex}][judul_skripsi]" 
-                              rows="2" 
-                              placeholder="Masukkan judul skripsi"
-                              required></textarea>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" 
-                            name="pembimbing[${rowIndex}][pembimbing_1]" 
-                            required>
-                        ${generateDosenOptions()}
-                    </select>
-                </td>
-                <td>
-                    <select class="form-select form-select-sm" 
-                            name="pembimbing[${rowIndex}][pembimbing_2]" 
-                            required>
-                        ${generateDosenOptions()}
-                    </select>
-                </td>
-                <td class="text-center">
-                    <button type="button" class="btn btn-danger btn-sm btn-remove">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </td>
-            </tr>
-        `;
-        
-        $('#bodyPembimbing').append(newRow);
-        updateRowNumbers();
-    });
-    
-    // Remove row
-    $(document).on('click', '.btn-remove', function() {
-        $(this).closest('tr').remove();
-        updateRowNumbers();
-    });
-    
-    // Update row numbers
-    function updateRowNumbers() {
-        $('#bodyPembimbing tr').each(function(index) {
-            $(this).find('td:first').text(index + 1);
+        // Add new row
+        $('#tambahPembimbing').on('click', function() {
+            console.log('Tambah Pembimbing clicked');
+            rowIndex++;
+            
+            const newRow = `
+                <tr data-index="${rowIndex}">
+                    <td class="text-center">${rowIndex}</td>
+                    <td>
+                        <select class="form-select form-select-sm mahasiswa-select" 
+                                name="pembimbing[${rowIndex}][mahasiswa_id]" 
+                                required>
+                            ${generateMahasiswaOptions()}
+                        </select>
+                    </td>
+                    <td>
+                        <input type="text" 
+                               class="form-control form-control-sm nim-display" 
+                               readonly 
+                               placeholder="NIM otomatis">
+                    </td>
+                    <td>
+                        <textarea class="form-control form-control-sm" 
+                                  name="pembimbing[${rowIndex}][judul_skripsi]" 
+                                  rows="2" 
+                                  placeholder="Masukkan judul skripsi"
+                                  required></textarea>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm" 
+                                name="pembimbing[${rowIndex}][pembimbing_1]" 
+                                required>
+                            ${generateDosenOptions()}
+                        </select>
+                    </td>
+                    <td>
+                        <select class="form-select form-select-sm" 
+                                name="pembimbing[${rowIndex}][pembimbing_2]" 
+                                required>
+                            ${generateDosenOptions()}
+                        </select>
+                    </td>
+                    <td class="text-center">
+                        <button type="button" class="btn btn-danger btn-sm btn-remove">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            
+            $('#bodyPembimbing').append(newRow);
+            updateRowNumbers();
+            console.log('Row added, current count:', $('#bodyPembimbing tr').length);
         });
-    }
-    
-    // Auto-fill NPM when mahasiswa is selected
-    $(document).on('change', '.mahasiswa-select', function() {
-        const selectedOption = $(this).find('option:selected');
-        const npm = selectedOption.data('npm');
-        $(this).closest('tr').find('.npm-display').val(npm || '');
-    });
-    
-    // Form validation
-    $('#formPembimbingSkripsi').submit(function(e) {
-        const rowCount = $('#bodyPembimbing tr').length;
         
-        if (rowCount === 0) {
-            e.preventDefault();
-            alert('Harap tambahkan minimal 1 mahasiswa dengan data pembimbing!');
-            return false;
+        // Remove row
+        $(document).on('click', '.btn-remove', function() {
+            $(this).closest('tr').remove();
+            updateRowNumbers();
+        });
+        
+        // Update row numbers
+        function updateRowNumbers() {
+            $('#bodyPembimbing tr').each(function(index) {
+                $(this).find('td:first').text(index + 1);
+            });
         }
         
-        // Validate pembimbing tidak sama
-        let hasError = false;
-        $('#bodyPembimbing tr').each(function() {
-            const pembimbing1 = $(this).find('select[name*="[pembimbing_1]"]').val();
-            const pembimbing2 = $(this).find('select[name*="[pembimbing_2]"]').val();
+        // Auto-fill NIM when mahasiswa is selected
+        $(document).on('change', '.mahasiswa-select', function() {
+            const selectedOption = $(this).find('option:selected');
+            const nim = selectedOption.data('nim');
+            $(this).closest('tr').find('.nim-display').val(nim || '');
+        });
+        
+        // Form validation
+        $('#formPembimbingSkripsi').on('submit', function(e) {
+            const rowCount = $('#bodyPembimbing tr').length;
             
-            if (pembimbing1 && pembimbing2 && pembimbing1 === pembimbing2) {
-                alert('Pembimbing 1 dan Pembimbing 2 tidak boleh sama!');
-                hasError = true;
+            if (rowCount === 0) {
+                e.preventDefault();
+                alert('Harap tambahkan minimal 1 mahasiswa dengan data pembimbing!');
                 return false;
             }
+            
+            // Validate pembimbing tidak sama
+            let hasError = false;
+            $('#bodyPembimbing tr').each(function() {
+                const pembimbing1 = $(this).find('select[name*="[pembimbing_1]"]').val();
+                const pembimbing2 = $(this).find('select[name*="[pembimbing_2]"]').val();
+                
+                if (pembimbing1 && pembimbing2 && pembimbing1 === pembimbing2) {
+                    alert('Pembimbing 1 dan Pembimbing 2 tidak boleh sama!');
+                    hasError = true;
+                    return false;
+                }
+            });
+            
+            if (hasError) {
+                e.preventDefault();
+                return false;
+            }
+            
+            // Disable submit button to prevent double submission
+            $('#btnSubmit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Sedang diproses...');
         });
         
-        if (hasError) {
-            e.preventDefault();
-            return false;
-        }
-        
-        // Disable submit button to prevent double submission
-        $('#btnSubmit').prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-2"></i>Sedang diproses...');
-    });
-    
-    // Add first row on page load
-    $(document).ready(function() {
-        $('#tambahPembimbing').click();
+        // Add first row on page load
+        console.log('Triggering first row addition...');
+        $('#tambahPembimbing').trigger('click');
     });
 </script>
 @endpush

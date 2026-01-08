@@ -1,6 +1,6 @@
 @extends('layouts.wadek1')
 
-@section('title', 'SK Dosen Wali - Wadek 1')
+@section('title', 'SK Pembimbing Skripsi - Wadek 1')
 
 @push('styles')
 <style>
@@ -41,38 +41,34 @@
         margin-top: 5px;
         font-weight: normal;
     }
-    .preview-table-dosen {
+    .preview-table-mahasiswa {
         width: 100%;
         border-collapse: collapse;
         margin: 15px 0;
-        font-size: 11pt;
+        font-size: 10pt;
         border: 1px solid #000;
     }
-    .preview-table-dosen th,
-    .preview-table-dosen td {
+    .preview-table-mahasiswa th,
+    .preview-table-mahasiswa td {
         border: 1px solid #000;
         padding: 5px 8px;
         vertical-align: middle;
         line-height: 1.3;
         color: #000;
     }
-    .preview-table-dosen thead th {
+    .preview-table-mahasiswa thead th {
         background-color: #ffffff;
         font-weight: bold;
         text-align: center;
+        text-transform: capitalize;
     }
-    .preview-table-dosen tbody td {
-        font-size: 10pt;
+    .preview-table-mahasiswa tbody td {
+        font-size: 9pt;
         vertical-align: top;
     }
-    .preview-table-dosen tbody td:nth-child(1) {
+    .preview-table-mahasiswa tbody td:nth-child(1) {
         text-align: center;
-    }
-    .preview-table-dosen tbody td:nth-child(2) {
-        text-align: left;
-    }
-    .preview-table-dosen tbody td:nth-child(3) {
-        text-align: center;
+        vertical-align: top;
     }
 </style>
 @endpush
@@ -95,8 +91,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-0">Daftar SK Dosen Wali</h1>
-        <p class="mb-0 text-muted">SK Dosen Wali yang menunggu persetujuan dan history.</p>
+        <h1 class="h3 fw-bold mb-0">Daftar SK Pembimbing Skripsi</h1>
+        <p class="mb-0 text-muted">SK Pembimbing Skripsi yang menunggu persetujuan dan history.</p>
     </div>
     <div>
         <a href="{{ route('wadek1.sk.index') }}" class="btn btn-outline-secondary btn-sm">
@@ -125,7 +121,7 @@
 
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3">
-        <h6 class="m-0 fw-bold text-success">SK Dosen Wali</h6>
+        <h6 class="m-0 fw-bold text-warning">SK Pembimbing Skripsi</h6>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -136,60 +132,79 @@
                         <th>Semester</th>
                         <th>Tahun Akademik</th>
                         <th>Nomor Surat</th>
-                        <th>Tanggal Pengajuan</th>
+                        <th>Jumlah Mahasiswa</th>
                         <th>Status</th>
                         <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
                     @forelse($skList as $sk)
+                        @php
+                            $dataPembimbing = $sk->Data_Pembimbing_Skripsi;
+                            if (is_string($dataPembimbing)) {
+                                $dataPembimbing = json_decode($dataPembimbing, true);
+                            }
+                            $jumlahMahasiswa = is_array($dataPembimbing) ? count($dataPembimbing) : 0;
+                        @endphp
                         <tr>
                             <td>{{ $sk->No }}</td>
                             <td>
-                                <span class="badge bg-{{ $sk->Semester === 'Ganjil' ? 'primary' : 'info' }}">{{ $sk->Semester }}</span>
+                                <span class="badge bg-{{ $sk->Semester == 'Ganjil' ? 'primary' : 'info' }}">
+                                    {{ $sk->Semester }}
+                                </span>
                             </td>
                             <td>{{ $sk->Tahun_Akademik }}</td>
                             <td>{{ $sk->Nomor_Surat ?? '-' }}</td>
-                            <td>
-                                @php $tgl = $sk->{'Tanggal-Pengajuan'}; @endphp
-                                {{ $tgl ? $tgl->format('d M Y H:i') : '-' }}
+                            <td class="text-center">
+                                <span class="badge bg-secondary">{{ $jumlahMahasiswa }} Mahasiswa</span>
                             </td>
                             <td>
                                 @php
                                     $badgeClass = 'secondary';
+                                    $statusText = $sk->Status;
+                                    
                                     switch($sk->Status) {
                                         case 'Menunggu-Persetujuan-Wadek-1':
-                                            $badgeClass = 'warning text-dark';
+                                            $badgeClass = 'warning';
+                                            $statusText = 'Menunggu Persetujuan';
                                             break;
                                         case 'Menunggu-Persetujuan-Dekan':
-                                            $badgeClass = 'primary';
-                                            break;
-                                        case 'Selesai':
-                                            $badgeClass = 'success';
+                                            $badgeClass = 'info';
+                                            $statusText = 'Disetujui (Menunggu Dekan)';
                                             break;
                                         case 'Ditolak-Wadek1':
                                             $badgeClass = 'danger';
+                                            $statusText = 'Ditolak';
+                                            break;
+                                        case 'Selesai':
+                                            $badgeClass = 'success';
+                                            $statusText = 'Selesai';
                                             break;
                                     }
                                 @endphp
-                                <span class="badge bg-{{ $badgeClass }}">{{ str_replace('-', ' ', $sk->Status) }}</span>
+                                <span class="badge bg-{{ $badgeClass }}">{{ $statusText }}</span>
                             </td>
                             <td class="text-center">
                                 <div class="btn-group btn-group-sm" role="group">
-                                    <button class="btn btn-primary" onclick="showDetail({{ $sk->No }})" title="Lihat Detail">
+                                    <button type="button" 
+                                            class="btn btn-info" 
+                                            onclick="showDetail({{ $sk->No }})"
+                                            title="Lihat Detail">
                                         <i class="fas fa-eye"></i>
                                     </button>
-                                    @if($sk->Status === 'Menunggu-Persetujuan-Wadek-1')
-                                        <button class="btn btn-success" onclick="approveSK({{ $sk->No }})" title="Setujui SK">
-                                            <i class="fas fa-check"></i>
-                                        </button>
-                                        <button class="btn btn-danger" onclick="showRejectModal({{ $sk->No }}, '{{ $sk->Semester }}', '{{ $sk->Tahun_Akademik }}', '{{ $sk->Nomor_Surat }}')" title="Tolak SK">
-                                            <i class="fas fa-times"></i>
-                                        </button>
-                                    @else
-                                        <button class="btn btn-secondary" disabled title="Sudah Diproses">
-                                            <i class="fas fa-check-double"></i>
-                                        </button>
+                                    @if($sk->Status == 'Menunggu-Persetujuan-Wadek-1')
+                                    <button type="button" 
+                                            class="btn btn-success" 
+                                            onclick="approveSK({{ $sk->No }})"
+                                            title="Setujui">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                    <button type="button" 
+                                            class="btn btn-danger" 
+                                            onclick="showRejectModal({{ $sk->No }}, '{{ $sk->Semester }}', '{{ $sk->Tahun_Akademik }}', '{{ $sk->Nomor_Surat ?? '-' }}')"
+                                            title="Tolak">
+                                        <i class="fas fa-times"></i>
+                                    </button>
                                     @endif
                                 </div>
                             </td>
@@ -198,7 +213,7 @@
                         <tr>
                             <td colspan="7" class="text-center text-muted py-4">
                                 <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                                Belum ada SK Dosen Wali.
+                                Belum ada SK Pembimbing Skripsi
                             </td>
                         </tr>
                     @endforelse
@@ -217,17 +232,17 @@
 <div class="modal fade" id="modalDetail" tabindex="-1" aria-labelledby="modalDetailLabel" aria-hidden="true">
     <div class="modal-dialog modal-xl">
         <div class="modal-content">
-            <div class="modal-header bg-primary text-white">
+            <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title" id="modalDetailLabel">
-                    <i class="fas fa-file-alt me-2"></i>Detail SK Dosen Wali
+                    <i class="fas fa-file-alt me-2"></i>Detail SK Pembimbing Skripsi
                 </h5>
-                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <div style="max-height: 750px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">
                     <div class="preview-document" id="previewContent">
                         <div class="text-center">
-                            <div class="spinner-border text-primary" role="status">
+                            <div class="spinner-border text-warning" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
                         </div>
@@ -249,7 +264,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="modalTolakSKLabel">
-                    <i class="fas fa-times-circle me-2"></i>Tolak SK Dosen Wali
+                    <i class="fas fa-times-circle me-2"></i>Tolak SK Pembimbing Skripsi
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -286,15 +301,15 @@
                         <div class="form-check">
                             <input class="form-check-input" type="radio" name="reject-target" id="reject-to-admin" value="admin" checked>
                             <label class="form-check-label" for="reject-to-admin">
-                                <strong>Kembalikan ke Admin Fakultas</strong>
-                                <small class="d-block text-muted">Untuk revisi teknis (penomoran, format, kesalahan data)</small>
+                                <strong>Kembalikan ke Admin Fakultas</strong><br>
+                                <small class="text-muted">Untuk revisi dokumen/data</small>
                             </label>
                         </div>
                         <div class="form-check mt-2">
                             <input class="form-check-input" type="radio" name="reject-target" id="reject-to-kaprodi" value="kaprodi">
                             <label class="form-check-label" for="reject-to-kaprodi">
-                                <strong>Tolak ke Kaprodi</strong>
-                                <small class="d-block text-muted">Untuk penolakan substantif (data dosen tidak sesuai, dll)</small>
+                                <strong>Tolak dan Kirim ke Kaprodi</strong><br>
+                                <small class="text-muted">SK ditolak secara permanen</small>
                             </label>
                         </div>
                     </div>
@@ -332,9 +347,6 @@
 <script>
     const dekanName = @json($dekanName ?? '');
     const dekanNip = @json($dekanNip ?? '');
-    
-    console.log('Global dekanName:', dekanName);
-    console.log('Global dekanNip:', dekanNip);
 
     function applyFilter() {
         const status = document.getElementById('filterStatus').value;
@@ -350,12 +362,12 @@
     }
 
     function showDetail(skId) {
-        // Show modal
         const modal = new bootstrap.Modal(document.getElementById('modalDetail'));
         modal.show();
 
-        // Fetch detail
-        fetch(`{{ url('/wadek1/sk-dosen-wali') }}/${skId}`, {
+        console.log('Fetching SK detail for ID:', skId);
+
+        fetch(`{{ url('/wadek1/sk-pembimbing-skripsi') }}/${skId}`, {
             method: 'GET',
             headers: {
                 'X-CSRF-TOKEN': '{{ csrf_token() }}',
@@ -363,89 +375,146 @@
             }
         })
         .then(response => {
+            console.log('Response status:', response.status);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             return response.json();
         })
         .then(data => {
-            console.log('===== RESPONSE DEBUG =====');
-            console.log('Full Response:', data);
-            console.log('Success:', data.success);
-            console.log('SK Data:', data.sk);
-            console.log('Dekan Name from response:', data.dekanName);
-            console.log('Dekan NIP from response:', data.dekanNip);
-            console.log('Debug info:', data.debug);
-            console.log('========================');
-            
+            console.log('Data received:', data);
             if (data.success) {
                 renderPreview(data.sk, data.dekanName, data.dekanNip);
             } else {
-                alert('Gagal memuat detail SK: ' + (data.message || 'Unknown error'));
+                document.getElementById('previewContent').innerHTML = 
+                    `<div class="alert alert-danger">${data.message || 'Gagal memuat detail SK'}</div>`;
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat memuat detail: ' + error.message);
+            document.getElementById('previewContent').innerHTML = 
+                `<div class="alert alert-danger">
+                    <i class="fas fa-exclamation-circle me-2"></i>
+                    Terjadi kesalahan saat memuat detail: ${error.message}
+                </div>`;
         });
     }
 
     function renderPreview(sk, dekanNameParam, dekanNipParam) {
-        // Use parameter if provided, otherwise fall back to global variables
         const finalDekanName = dekanNameParam || dekanName || '-';
         const finalDekanNip = dekanNipParam || dekanNip || '-';
         
-        console.log('renderPreview called');
-        console.log('dekanNameParam:', dekanNameParam);
-        console.log('dekanNipParam:', dekanNipParam);
-        console.log('finalDekanName:', finalDekanName);
-        console.log('finalDekanNip:', finalDekanNip);
+        // Handle berbagai tipe data untuk Data_Pembimbing_Skripsi
+        let dataPembimbing = sk.Data_Pembimbing_Skripsi || [];
         
-        const dosenList = sk.Data_Dosen_Wali || [];
+        // Jika string, parse JSON
+        if (typeof dataPembimbing === 'string') {
+            try {
+                dataPembimbing = JSON.parse(dataPembimbing);
+            } catch (e) {
+                console.error('Error parsing Data_Pembimbing_Skripsi:', e);
+                dataPembimbing = [];
+            }
+        }
+        
+        // Jika object bukan array, convert ke array
+        if (dataPembimbing && typeof dataPembimbing === 'object' && !Array.isArray(dataPembimbing)) {
+            dataPembimbing = Object.values(dataPembimbing);
+        }
+        
+        // Pastikan dataPembimbing adalah array
+        if (!Array.isArray(dataPembimbing)) {
+            console.error('Data_Pembimbing_Skripsi bukan array:', dataPembimbing);
+            dataPembimbing = [];
+        }
+        
+        console.log('Data Pembimbing (processed):', dataPembimbing);
+        
         const semesterUpper = (sk.Semester || 'GANJIL').toUpperCase();
         const semesterText = sk.Semester || 'Ganjil';
         const tahunAkademik = sk.Tahun_Akademik || '2023/2024';
         const nomorSurat = sk.Nomor_Surat || '-';
 
-        // Kelompokkan dosen per prodi
-        const groupedByProdi = {};
-        dosenList.forEach(dosen => {
-            const prodiName = dosen.prodi || '-';
-            if (!groupedByProdi[prodiName]) {
-                groupedByProdi[prodiName] = [];
+        // Kelompokkan mahasiswa per jurusan
+        const groupedByJurusan = {};
+        dataPembimbing.forEach(mhs => {
+            // Ambil nama jurusan dari relasi prodi, dengan fallback yang lebih baik
+            let jurusanName = '-';
+            if (mhs.prodi_data && mhs.prodi_data.jurusan && mhs.prodi_data.jurusan.Nama_Jurusan) {
+                jurusanName = mhs.prodi_data.jurusan.Nama_Jurusan;
+            } else if (mhs.prodi && mhs.prodi !== '-') {
+                // Jika ada nama prodi tapi tidak ada jurusan, gunakan prodi sebagai pengganti
+                jurusanName = mhs.prodi;
+            } else if (mhs.prodi_data && mhs.prodi_data.nama_prodi) {
+                jurusanName = mhs.prodi_data.nama_prodi;
             }
-            groupedByProdi[prodiName].push(dosen);
+            
+            const prodiName = (mhs.prodi_data && mhs.prodi_data.nama_prodi) ? mhs.prodi_data.nama_prodi : (mhs.prodi || '-');
+            
+            if (!groupedByJurusan[jurusanName]) {
+                groupedByJurusan[jurusanName] = { jurusan: jurusanName, prodi: [] };
+            }
+            if (!groupedByJurusan[jurusanName].prodi.includes(prodiName)) {
+                groupedByJurusan[jurusanName].prodi.push(prodiName);
+            }
+            if (!groupedByJurusan[jurusanName].mahasiswa) {
+                groupedByJurusan[jurusanName].mahasiswa = [];
+            }
+            groupedByJurusan[jurusanName].mahasiswa.push(mhs);
         });
 
         let lampiranHtml = '';
-        Object.keys(groupedByProdi).forEach((prodiName, index) => {
-            const dosenProdi = groupedByProdi[prodiName];
+        Object.keys(groupedByJurusan).forEach((jurusanName, index) => {
+            const jurusanData = groupedByJurusan[jurusanName];
+            const mahasiswaProdi = jurusanData.mahasiswa;
+            const prodiName = jurusanData.prodi[0] || jurusanName;
             lampiranHtml += `
                 <div class="lampiran-prodi" style="margin-top: ${index === 0 ? '30px' : '60px'}; page-break-before: ${index === 0 ? 'auto' : 'always'};">
                     <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
-                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR ${nomorSurat}</p>
-                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PERIHAL</p>
-                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
-                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
-                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
-                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold; text-decoration: underline;">Daftar Dosen Wali Mahasiswa Prodi ${prodiName}</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">TENTANG</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PEMBIMBING SKRIPSI PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DAFTAR MAHASISWA DAN DOSEN PEMBIMBING SKRIPSI</p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK</p>
+                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
                     </div>
-                    <table class="preview-table-dosen">
+                    <table class="preview-table-mahasiswa">
+                        <colgroup>
+                            <col style="width: 4%;">
+                            <col style="width: 8%;">
+                            <col style="width: 15%;">
+                            <col style="width: 23%;">
+                            <col style="width: 25%;">
+                            <col style="width: 25%;">
+                        </colgroup>
                         <thead>
                             <tr>
-                                <th style="width: 8%;">No.</th>
-                                <th style="width: 67%;">Nama Dosen</th>
-                                <th style="width: 25%;">Jumlah Anak Wali</th>
+                                <th>No</th>
+                                <th>NIM</th>
+                                <th>Nama Mahasiswa</th>
+                                <th>Judul Skripsi</th>
+                                <th>Pembimbing 1</th>
+                                <th>Pembimbing 2</th>
                             </tr>
                         </thead>
                         <tbody>
-                            ${dosenProdi.map((dosen, idx) => `
+                            ${mahasiswaProdi.map((mhs, idx) => `
                                 <tr>
-                                    <td>${idx + 1}.</td>
-                                    <td>${dosen.nama_dosen}</td>
-                                    <td>${dosen.jumlah_anak_wali}</td>
+                                    <td style="text-align: center;">${idx + 1}</td>
+                                    <td style="text-align: center;">${mhs.nim || '-'}</td>
+                                    <td>${mhs.nama_mahasiswa || '-'}</td>
+                                    <td style="font-size: 9pt;">${mhs.judul_skripsi || '-'}</td>
+                                    <td style="font-size: 9pt;">
+                                        ${mhs.pembimbing_1 ? mhs.pembimbing_1.nama_dosen : '-'}<br>
+                                        <small>NIP: ${mhs.pembimbing_1 ? mhs.pembimbing_1.nip : '-'}</small>
+                                    </td>
+                                    <td style="font-size: 9pt;">
+                                        ${mhs.pembimbing_2 ? mhs.pembimbing_2.nama_dosen : '-'}<br>
+                                        <small>NIP: ${mhs.pembimbing_2 ? mhs.pembimbing_2.nip : '-'}</small>
+                                    </td>
                                 </tr>
                             `).join('')}
                         </tbody>
@@ -455,10 +524,8 @@
                             <p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
                             <p style="margin: 0 0 30px 0;">pada tanggal ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
                             <p style="margin: 0 0 70px 0;"><strong>DEKAN,</strong></p>
-                            <p style="margin: 0 0 0 0;">
-                                <strong><u>${finalDekanName}</u></strong><br>
-                                NIP. ${finalDekanNip}
-                            </p>
+                            <p style="margin: 0 0 3px 0; text-decoration: underline;"><strong>${finalDekanName}</strong></p>
+                            <p style="margin: 0;">NIP. ${finalDekanNip}</p>
                         </div>
                     </div>
                 </div>
@@ -468,20 +535,25 @@
         const html = `
             <div class="preview-header">
                 <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
-                <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</strong>
+                <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN,</strong>
+                <strong class="line-1">RISET DAN TEKNOLOGI</strong>
                 <strong class="line-2">UNIVERSITAS TRUNOJOYO MADURA</strong>
                 <strong class="line-3">FAKULTAS TEKNIK</strong>
                 <div class="address">
-                    Kampus UTM, Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
-                    Telp: (031) 3011146, Fax: (031) 3011506
+                    Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
+                    Telp: (031) 3011146, Fax. (031) 3011506<br>
+                    Laman: www.trunojoyo.ac.id
                 </div>
                 <div style="clear: both;"></div>
             </div>
 
-            <div style="text-align: center; margin: 20px 0; font-weight: bold; font-size: 11pt;">
+            <div style="text-align: center; margin: 20px 0; font-weight: bold; font-size: 14pt; text-decoration: underline;">
                 KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
-                UNIVERSITAS TRUNOJOYO MADURA<br>
-                NOMOR ${nomorSurat}
+                UNIVERSITAS TRUNOJOYO MADURA
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-size: 12pt;">
+                NOMOR: ${nomorSurat}
             </div>
 
             <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
@@ -489,8 +561,8 @@
             </div>
 
             <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
-                DOSEN WALI MAHASISWA FAKULTAS TEKNIK<br>
-                UNIVERSITAS TRUNOJOYO MADURA<br>
+                PENETAPAN DOSEN PEMBIMBING SKRIPSI<br>
+                FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA<br>
                 SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}
             </div>
 
@@ -498,105 +570,71 @@
                 DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
             </div>
 
-            <div style="text-align: justify; margin-bottom: 20px;">
-                <p style="margin-bottom: 10px; font-weight: normal;">Menimbang</p>
-                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
+            <div style="text-align: justify; margin-bottom: 20px; font-size: 10pt;">
+                <table style="width: 100%; margin-bottom: 15px;">
                     <tr>
-                        <td style="width: 10%; vertical-align: top;">:</td>
-                        <td style="width: 5%; vertical-align: top;">a.</td>
-                        <td style="text-align: justify;">bahwa dalam rangka membantu mahasiswa menyelesaikan program sarjana/diploma sesuai rencana studi, perlu menugaskan dosen tetap di lingkungan Fakultas Teknik Universitas Trunojoyo Madura sebagai dosen wali;</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="vertical-align: top;">b.</td>
-                        <td style="text-align: justify;">bahwa untuk pelaksanaan butir a di atas, perlu menerbitkan Surat Keputusan Dekan Fakultas Teknik;</td>
-                    </tr>
-                </table>
-
-                <p style="margin-bottom: 10px; font-weight: normal;">Mengingat</p>
-                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
-                    <tr>
-                        <td style="width: 10%; vertical-align: top;">:</td>
-                        <td style="width: 5%; vertical-align: top;">1.</td>
-                        <td style="text-align: justify;">Undang-Undang Nomor 20 tahun 2003, tentang Sistem Pendidikan Nasional;</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="vertical-align: top;">2.</td>
-                        <td style="text-align: justify;">Peraturan Pemerintah Nomor 60 tahun 1999, tentang Pendidikan Tinggi;</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="vertical-align: top;">3.</td>
-                        <td style="text-align: justify;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunojoyo Madura;</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="vertical-align: top;">4.</td>
-                        <td style="text-align: justify;">Keputusan Menteri Pendidikan dan Kebudayaan RI Nomor 232/U/2000, tentang pedoman Penyusunan Kurikulum Pendidikan Tinggi dan Penilaian Hasil Belajar Mahasiswa;</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="vertical-align: top;">5.</td>
-                        <td style="text-align: justify;">Keputusan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 73649/MPK.A/KP.06.02/2022 tentang pengangkatan Rektor UTM periode 2022-2026;</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="vertical-align: top;">6.</td>
-                        <td style="text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunojoyo Madura periode 2021-2025;</td>
-                    </tr>
-                </table>
-
-                <p style="margin-bottom: 10px; font-weight: normal;">Memperhatikan</p>
-                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
-                    <tr>
-                        <td style="width: 10%; vertical-align: top;">:</td>
-                        <td style="width: 5%; vertical-align: top;">1.</td>
-                        <td style="text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunojoyo Madura Tahun Akademik 2016/2017;</td>
-                    </tr>
-                    <tr>
-                        <td></td>
-                        <td style="vertical-align: top;">2.</td>
-                        <td style="text-align: justify;">Surat dari masing-masing Ketua Jurusan Fakultas Teknik tentang permohonan SK Dosen Wali ${semesterText} ${tahunAkademik};</td>
-                    </tr>
-                </table>
-
-                <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
-                    MEMUTUSKAN :
-                </div>
-
-                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
-                    <tr>
-                        <td style="width: 15%; vertical-align: top; font-weight: normal;">Menetapkan</td>
-                        <td style="width: 3%; vertical-align: top;">:</td>
-                        <td style="text-align: justify; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
-                    </tr>
-                </table>
-
-                <table style="width: 100%; margin-bottom: 10px; font-size: 10pt;">
-                    <tr>
-                        <td style="width: 15%; vertical-align: top; font-weight: normal;">Kesatu</td>
-                        <td style="width: 3%; vertical-align: top;">:</td>
-                        <td style="text-align: justify;">Menugaskan dosen tetap di Fakultas Teknik Universitas Trunojoyo Madura yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester ${semesterText} Tahun Akademik ${tahunAkademik};</td>
-                    </tr>
-                </table>
-
-                <table style="width: 100%; margin-bottom: 15px; font-size: 10pt;">
-                    <tr>
-                        <td style="width: 15%; vertical-align: top; font-weight: normal;">Kedua</td>
-                        <td style="width: 3%; vertical-align: top;">:</td>
-                        <td style="text-align: justify;">Tugas dan fungsi dosen wali tersebut yaitu:<br>
-                            <span style="margin-left: 15px;">a. Membantu mengarahkan dan mengesahkan rencana studi;</span><br>
-                            <span style="margin-left: 15px;">b. Memberi bimbingan dan nasehat mengenai berbagai masalah yang bersifat kurikuler akademik;</span>
+                        <td style="width: 120px; vertical-align: top;"><strong>Menimbang</strong></td>
+                        <td style="width: 20px; vertical-align: top;">:</td>
+                        <td style="vertical-align: top;">
+                            <table style="width: 100%; border: none;">
+                                <tr>
+                                    <td style="width: 30px; vertical-align: top; border: none;">a.</td>
+                                    <td style="border: none;">Bahwa untuk memperlancar penyusunan Skripsi mahasiswa, perlu menugaskan dosen sebagai pembimbing Skripsi;</td>
+                                </tr>
+                                <tr>
+                                    <td style="vertical-align: top; border: none; padding-top: 5px;">b.</td>
+                                    <td style="border: none; padding-top: 5px;">Bahwa untuk melaksanakan butir a di atas, perlu ditetapkan dalam Keputusan Dekan Fakultas Teknik;</td>
+                                </tr>
+                            </table>
                         </td>
                     </tr>
                 </table>
 
-                <table style="width: 100%; font-size: 10pt; margin-bottom: 10px;">
+                <table style="width: 100%; margin-bottom: 15px;">
                     <tr>
-                        <td style="width: 15%; vertical-align: top; font-weight: normal;">Ketiga</td>
+                        <td style="width: 120px; vertical-align: top;"><strong>Mengingat</strong></td>
+                        <td style="width: 20px; vertical-align: top;">:</td>
+                        <td style="vertical-align: top;">
+                            <ol style="margin: 0; padding-left: 20px;">
+                                <li style="margin-bottom: 5px;">Undang-Undang Nomor 20 tahun 2003, tentang Sistem Pendidikan Nasional;</li>
+                                <li style="margin-bottom: 5px;">Peraturan Pemerintah Nomor 4 Tahun 2012 Tentang Penyelenggaraan Pendidikan Tinggi;</li>
+                                <li style="margin-bottom: 5px;">Peraturan Presiden RI Nomor 4 Tahun 2014 Tentang Perubahan Penyelenggaraan dan Pengelolaan Perguruan Tinggi;</li>
+                                <li style="margin-bottom: 5px;">Keputusan RI Nomor 85 tahun 2001, tentang Statuta Universitas Trunojoyo Madura;</li>
+                                <li style="margin-bottom: 5px;">Keputusan Menteri Pendidikan dan Kebudayaan RI Nomor 232/ U/ 2000, tentang pedoman Penyusunan Kurikulum Pendidikan Tinggi dan Penilaian Hasil Belajar Mahasiswa;</li>
+                                <li style="margin-bottom: 5px;">Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi RI Nomor 79/M/MPK.A/ KP.09.02/ 2022 tentang pengangkatan Rektor UTM periode 2022-2026;</li>
+                                <li>Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UNM3/KP/ 2023 tentang Pengangkatan Pejabat Struktural Dekan Fakultas Teknik;</li>
+                            </ol>
+                        </td>
+                    </tr>
+                </table>
+
+                <p><strong>Memperhatikan:</strong> ${Object.keys(groupedByJurusan).map(jurusanName => `Surat dari Ketua Jurusan ${jurusanName} tentang permohonan SK Dosen Pembimbing Skripsi`).join('; ')};</p>
+
+                <div style="text-align: center; margin: 30px 0 20px 0; font-weight: bold;">
+                    MEMUTUSKAN
+                </div>
+
+                <table style="width: 100%; margin-bottom: 15px;">
+                    <tr>
+                        <td style="width: 15%; vertical-align: top; font-weight: bold;">Menetapkan</td>
                         <td style="width: 3%; vertical-align: top;">:</td>
-                        <td style="text-align: justify;">Keputusan ini berlaku sejak tanggal ditetapkan.</td>
+                        <td>PENETAPAN DOSEN PEMBIMBING SKRIPSI FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%; margin-bottom: 10px;">
+                    <tr>
+                        <td style="width: 15%; vertical-align: top; font-weight: bold;">Kesatu</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td>Dosen Pembimbing Skripsi sebagaimana tercantum dalam lampiran Keputusan ini;</td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 15%; vertical-align: top; font-weight: bold;">Kedua</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td>Keputusan ini berlaku sejak tanggal ditetapkan.</td>
                     </tr>
                 </table>
             </div>
@@ -618,11 +656,11 @@
     }
 
     function approveSK(skId) {
-        if (!confirm('Apakah Anda yakin ingin menyetujui SK Dosen Wali ini? SK akan diteruskan ke Dekan.')) {
+        if (!confirm('Apakah Anda yakin ingin menyetujui SK Pembimbing Skripsi ini? SK akan diteruskan ke Dekan.')) {
             return;
         }
 
-        fetch(`{{ url('/wadek1/sk-dosen-wali') }}/${skId}/approve`, {
+        fetch(`{{ url('/wadek1/sk-pembimbing-skripsi') }}/${skId}/approve`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -630,12 +668,7 @@
                 'Accept': 'application/json'
             }
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
                 alert(data.message);
@@ -646,7 +679,7 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat menyetujui SK: ' + error.message);
+            alert('Terjadi kesalahan saat menyetujui SK');
         });
     }
 
@@ -657,7 +690,6 @@
         document.getElementById('reject-tahun').textContent = tahun;
         document.getElementById('reject-alasan').value = '';
         
-        // Reset radio button ke admin (default)
         document.getElementById('reject-to-admin').checked = true;
         document.getElementById('reject-target-text').textContent = 'Admin Fakultas';
         
@@ -665,7 +697,6 @@
         modal.show();
     }
     
-    // Update target text when radio button changes
     document.addEventListener('DOMContentLoaded', function() {
         const radioButtons = document.querySelectorAll('input[name="reject-target"]');
         radioButtons.forEach(radio => {
@@ -691,7 +722,7 @@
             return;
         }
         
-        fetch('{{ url("/wadek1/sk-dosen-wali") }}/' + skId + '/reject', {
+        fetch(`{{ url('/wadek1/sk-pembimbing-skripsi') }}/${skId}/reject`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -703,16 +734,7 @@
                 target: target
             })
         })
-        .then(response => {
-            // Parse JSON bahkan jika response tidak ok
-            return response.json().then(data => {
-                if (!response.ok) {
-                    // Jika ada error validation atau lainnya
-                    throw { status: response.status, data: data };
-                }
-                return data;
-            });
-        })
+        .then(response => response.json())
         .then(data => {
             if (data.success) {
                 alert(data.message);
@@ -725,20 +747,7 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            if (error.status === 422 && error.data) {
-                // Validation error
-                let errorMsg = 'Validasi gagal:\n';
-                if (error.data.errors) {
-                    Object.keys(error.data.errors).forEach(key => {
-                        errorMsg += '- ' + error.data.errors[key].join(', ') + '\n';
-                    });
-                } else if (error.data.message) {
-                    errorMsg = error.data.message;
-                }
-                alert(errorMsg);
-            } else {
-                alert('Terjadi kesalahan saat menolak SK: ' + (error.message || error.data?.message || 'Unknown error'));
-            }
+            alert('Terjadi kesalahan saat menolak SK');
         });
     }
 </script>
