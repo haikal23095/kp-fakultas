@@ -12,6 +12,8 @@ use App\Models\SKDosenWali;
 use App\Models\SKBebanMengajar;
 use App\Models\ReqSKPembimbingSkripsi;
 use App\Models\AccSKPembimbingSkripsi;
+use App\Models\ReqSKPengujiSkripsi;
+use App\Models\AccSKPengujiSkripsi;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
 
@@ -755,7 +757,128 @@ class SKController extends Controller
      */
     public function createPengujiSkripsi()
     {
-        // TODO: Implement form for SK Penguji Skripsi
-        return view('kaprodi.sk.penguji-skripsi.create');
+        // Get user info
+        $user = Auth::user();
+
+        // Get prodi from logged in kaprodi
+        $prodi = null;
+        if ($user->dosen) {
+            $prodi = $user->dosen->prodi;
+        } elseif ($user->pegawai) {
+            $prodi = Prodi::find($user->pegawai->Id_Prodi);
+        }
+
+        // Get all prodi for dropdown
+        $prodis = Prodi::orderBy('Nama_Prodi', 'asc')->get();
+
+        // Get all dosen from the same prodi
+        $dosens = Dosen::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })
+            ->orderBy('Nama_Dosen', 'asc')
+            ->get();
+
+        // Get all mahasiswa from the same prodi
+        $mahasiswas = Mahasiswa::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })
+            ->orderBy('Nama_Mahasiswa', 'asc')
+            ->get();
+
+        return view('kaprodi.sk.penguji-skripsi.create', compact('prodis', 'dosens', 'mahasiswas', 'prodi'));
+    }
+
+    /**
+     * Store SK Penguji Skripsi
+     */
+    public function storePengujiSkripsi(Request $request)
+    {
+        $request->validate([
+            'prodi_id' => 'required|exists:Prodi,Id_Prodi',
+            'semester' => 'required|in:Ganjil,Genap',
+            'tahun_akademik' => 'required',
+            'penguji' => 'required|array|min:1',
+        ]);
+
+        try {
+            $user = Auth::user();
+            $dosenId = $user->dosen ? $user->dosen->Id_Dosen : null;
+
+            if (!$dosenId) {
+                return redirect()->back()->with('error', 'Data dosen tidak ditemukan');
+            }
+
+            // Process data penguji
+            $dataPenguji = [];
+            foreach ($request->penguji as $item) {
+                $mahasiswa = Mahasiswa::find($item['mahasiswa_id']);
+                $p1 = Dosen::find($item['penguji_1']);
+                $p2 = Dosen::find($item['penguji_2']);
+                $p3 = Dosen::find($item['penguji_3']);
+
+                $dataPenguji[] = [
+                    'mahasiswa_id' => $item['mahasiswa_id'],
+                    'nama_mahasiswa' => $mahasiswa->Nama_Mahasiswa,
+                    'nim' => $mahasiswa->NIM,
+                    'judul_skripsi' => $item['judul_skripsi'],
+                    'penguji_1_id' => $item['penguji_1'],
+                    'nama_penguji_1' => $p1->Nama_Dosen,
+                    'penguji_2_id' => $item['penguji_2'],
+                    'nama_penguji_2' => $p2->Nama_Dosen,
+                    'penguji_3_id' => $item['penguji_3'],
+                    'nama_penguji_3' => $p3->Nama_Dosen,
+                ];
+            }
+
+            $tanggalPengajuan = now();
+            $tanggalTenggat = $tanggalPengajuan->copy()->addDays(3);
+
+            ReqSKPengujiSkripsi::create([
+                'Id_Prodi' => $request->prodi_id,
+                'Semester' => $request->semester,
+                'Tahun_Akademik' => $request->tahun_akademik,
+                'Data_Penguji_Skripsi' => $dataPenguji,
+                'Id_Dosen_Kaprodi' => $dosenId,
+                'Status' => 'Dikerjakan admin',
+                'Tanggal-Pengajuan' => $tanggalPengajuan,
+                'Tanggal-Tenggat' => $tanggalTenggat,
+            ]);
+
+            return redirect()->route('kaprodi.sk.index')->with('success', 'SK Penguji Skripsi berhasil diajukan');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+        }
+    }
+
+    /**
+     * Display history of SK Penguji Skripsi
+     */
+    public function historyPengujiSkripsi(Request $request)
+    {
+        $user = Auth::user();
+        $dosenId = $user->dosen ? $user->dosen->Id_Dosen : null;
+
+        if (!$dosenId) {
+            return redirect()->back()->with('error', 'Data dosen tidak ditemukan');
+        }
+
+        $query = ReqSKPengujiSkripsi::with(['prodi', 'kaprodi'])
+            ->where('Id_Dosen_Kaprodi', $dosenId);
+
+        if ($request->filled('semester')) {
+            $query->where('Semester', $request->semester);
+        }
+
+        if ($request->filled('tahun_akademik')) {
+            $query->where('Tahun_Akademik', $request->tahun_akademik);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
+
+        return view('kaprodi.sk.penguji-skripsi.history', compact('skList'));
     }
 }

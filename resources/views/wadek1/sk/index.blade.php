@@ -104,10 +104,10 @@
                     <small class="text-muted">Request Baru</small>
                     <span class="badge bg-danger">{{ $skPengujiSkripsiCount ?? 0 }}</span>
                 </div>
-                <a href="#" class="btn btn-danger btn-sm w-100 disabled">
+                <a href="{{ route('wadek1.sk.penguji-skripsi.index') }}" class="btn btn-danger btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                <small class="text-danger d-block mt-2" style="font-size: 0.7rem;">Tersedia</small>
             </div>
         </div>
     </div>

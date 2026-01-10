@@ -1,6 +1,6 @@
 @extends('layouts.admin_fakultas')
 
-@section('title', 'Request SK Pembimbing Skripsi')
+@section('title', 'Request SK Penguji Skripsi')
 
 @push('styles')
 <style>
@@ -23,23 +23,20 @@
         margin-bottom: 20px;
         border-bottom: 3px double #000;
         padding-bottom: 10px;
-        position: relative;
-        padding-left: 90px;
     }
     .preview-header img {
-        width: 80px;
-        position: absolute;
-        left: 0;
-        top: 0;
+        width: 65px;
+        float: left;
+        margin-top: -5px;
     }
     .preview-header strong {
         display: block;
         text-transform: uppercase;
         text-align: center;
     }
-    .preview-header .line-1 { font-size: 14pt; font-weight: bold; }
-    .preview-header .line-2 { font-size: 16pt; font-weight: bold; }
-    .preview-header .line-3 { font-size: 14pt; font-weight: bold; }
+    .preview-header .line-1 { font-size: 11pt; font-weight: bold; }
+    .preview-header .line-2 { font-size: 13pt; font-weight: bold; }
+    .preview-header .line-3 { font-size: 11pt; font-weight: bold; }
     .preview-header .address {
         font-size: 10pt;
         margin-top: 5px;
@@ -47,10 +44,9 @@
     }
     .preview-title {
         font-weight: bold;
-        font-size: 14pt;
+        font-size: 12pt;
         margin: 30px 0 10px 0;
         text-align: center;
-        text-decoration: underline;
     }
     .preview-nomor {
         text-align: center;
@@ -121,8 +117,8 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h1 class="h3 fw-bold mb-0">Request SK Pembimbing Skripsi</h1>
-        <p class="mb-0 text-muted">Kelola pengajuan SK Pembimbing Skripsi dari Kaprodi</p>
+        <h1 class="h3 fw-bold mb-0">Request SK Penguji Skripsi</h1>
+        <p class="mb-0 text-muted">Kelola pengajuan SK Penguji Skripsi dari Kaprodi</p>
     </div>
     <a href="{{ route('admin_fakultas.sk.index') }}" class="btn btn-outline-secondary">
         <i class="fas fa-arrow-left me-2"></i>Kembali
@@ -164,7 +160,7 @@
 <!-- SK List -->
 <div class="card border-0 shadow-sm">
     <div class="card-header bg-white py-3">
-        <h6 class="m-0 fw-bold text-warning">Daftar SK Pembimbing Skripsi</h6>
+        <h6 class="m-0 fw-bold text-danger">Daftar SK Penguji Skripsi</h6>
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
@@ -185,12 +181,8 @@
                     @forelse($skList as $index => $sk)
                     <tr>
                         @php
-                            $pembimbingData = $sk->Data_Pembimbing_Skripsi;
-                            // Handle double-encoded JSON (old data)
-                            if (is_string($pembimbingData)) {
-                                $pembimbingData = json_decode($pembimbingData, true);
-                            }
-                            $jumlahMahasiswa = is_array($pembimbingData) ? count($pembimbingData) : 0;
+                            $pengujiData = $sk->Data_Penguji_Skripsi;
+                            $jumlahMahasiswa = is_array($pengujiData) ? count($pengujiData) : 0;
                         @endphp
                         <td>{{ $skList->firstItem() + $index }}</td>
                         <td>{{ $sk->prodi->Nama_Prodi ?? '-' }}</td>
@@ -206,10 +198,7 @@
                             </span>
                         </td>
                         <td>
-                            @php
-                                $tanggalPengajuan = $sk->{'Tanggal-Pengajuan'};
-                            @endphp
-                            {{ $tanggalPengajuan ? $tanggalPengajuan->format('d M Y H:i') : '-' }}
+                            {{ isset($sk->{'Tanggal-Pengajuan'}) ? \Carbon\Carbon::parse($sk->{'Tanggal-Pengajuan'})->format('d M Y H:i') : '-' }}
                         </td>
                         <td>
                             @php
@@ -251,21 +240,28 @@
                         </td>
                         <td class="text-center">
                             <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ route('admin_fakultas.sk.pembimbing-skripsi.detail', $sk->No) }}" 
+                                <a href="{{ route('admin_fakultas.sk.penguji-skripsi.detail', $sk->No) }}" 
                                    class="btn btn-info"
                                    title="Lihat Detail">
                                     <i class="fas fa-eye"></i>
                                 </a>
                                 @if($sk->Status == 'Dikerjakan admin' || $sk->Status == 'Ditolak-Wadek1' || $sk->Status == 'Ditolak-Dekan')
                                 <button type="button" 
-                                        class="btn btn-warning" 
-                                        onclick="showBuatkanSuratModal({{ $sk->No }}, '{{ $sk->prodi->Nama_Prodi ?? '-' }}', '{{ $sk->Semester }}', '{{ $sk->Tahun_Akademik }}', {{ $jumlahMahasiswa }})"
+                                        class="btn btn-warning btn-buatkan-surat" 
+                                        data-id="{{ $sk->No }}"
+                                        data-prodi="{{ $sk->prodi->Nama_Prodi ?? '-' }}"
+                                        data-semester="{{ $sk->Semester }}"
+                                        data-tahun="{{ $sk->Tahun_Akademik }}"
+                                        data-jumlah="{{ $jumlahMahasiswa }}"
                                         title="Buatkan Surat">
                                     <i class="fas fa-file-signature"></i>
                                 </button>
                                 <button type="button" 
-                                        class="btn btn-danger" 
-                                        onclick="showRejectModal({{ $sk->No }}, '{{ $sk->prodi->Nama_Prodi ?? '-' }}', '{{ $sk->Semester }}', '{{ $sk->Tahun_Akademik }}')"
+                                        class="btn btn-danger btn-tolak-sk" 
+                                        data-id="{{ $sk->No }}"
+                                        data-prodi="{{ $sk->prodi->Nama_Prodi ?? '-' }}"
+                                        data-semester="{{ $sk->Semester }}"
+                                        data-tahun="{{ $sk->Tahun_Akademik }}"
                                         title="Tolak">
                                     <i class="fas fa-times"></i>
                                 </button>
@@ -277,7 +273,7 @@
                     <tr>
                         <td colspan="8" class="text-center text-muted py-4">
                             <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
-                            Belum ada request SK Pembimbing Skripsi
+                            Belum ada request SK Penguji Skripsi
                         </td>
                     </tr>
                     @endforelse
@@ -298,7 +294,7 @@
         <div class="modal-content">
             <div class="modal-header bg-danger text-white">
                 <h5 class="modal-title" id="modalTolakSKLabel">
-                    <i class="fas fa-times-circle me-2"></i>Tolak SK Pembimbing Skripsi
+                    <i class="fas fa-times-circle me-2"></i>Tolak SK Penguji Skripsi
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -363,7 +359,7 @@
         <div class="modal-content">
             <div class="modal-header bg-warning text-dark">
                 <h5 class="modal-title" id="modalBuatkanSuratLabel">
-                    <i class="fas fa-file-signature me-2"></i>Buatkan Surat SK Pembimbing Skripsi
+                    <i class="fas fa-file-signature me-2"></i>Buatkan Surat SK Penguji Skripsi
                 </h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -423,12 +419,13 @@
                     </div>
                     
                     <!-- Right Column: Document Preview -->
-                    <div class="col-md-8">
+                    <div class="col-md-8 border-start">
                         <h6 class="fw-bold mb-3">
                             <i class="fas fa-file-alt me-2"></i>Preview Surat
                         </h6>
-                        <div style="max-height: 750px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px;">
-                            <div class="preview-document">
+                        
+                        <div class="preview-container bg-secondary bg-opacity-10 p-4 rounded overflow-auto" style="max-height: 750px;">
+                            <div class="preview-document" id="documentPreview">
                                 <!-- Header with Logo -->
                                 <div class="preview-header">
                                     <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
@@ -442,24 +439,22 @@
                                         Laman: www.trunojoyo.ac.id
                                     </div>
                                 </div>
-
-                                <!-- Document Title -->
+                                
                                 <div class="preview-title">
                                     KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
                                     UNIVERSITAS TRUNOJOYO MADURA
                                 </div>
-                                
                                 <div class="preview-nomor">
                                     NOMOR: <span id="preview-nomor-surat" class="preview-placeholder">[Nomor Surat]</span>
                                 </div>
-
+                                
                                 <div style="text-align: center; font-weight: bold; margin-bottom: 20px;">
                                     TENTANG<br><br>
-                                    PENETAPAN DOSEN PEMBIMBING SKRIPSI<br>
-                                    PROGRAM STUDI <span id="preview-prodi-text" style="text-transform: uppercase;">TEKNIK INFORMATIKA</span> FAKULTAS TEKNIK<br>
-                                    UNIVERSITAS TRUNOJOYO MADURA SEMESTER <span id="preview-semester-text">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-text-2" class="preview-placeholder">2023/2024</span>
+                                    PENETAPAN DOSEN PENGUJI UJIAN SKRIPSI<br>
+                                    PROGRAM STUDI <span id="preview-prodi-text" style="text-transform: uppercase;"></span> FAKULTAS TEKNIK<br>
+                                    UNIVERSITAS TRUNOJOYO MADURA SEMESTER <span id="preview-semester-text" style="text-transform: uppercase;"></span> TAHUN AKADEMIK <span id="preview-tahun-text" class="preview-placeholder"></span>
                                 </div>
-
+                                
                                 <div style="text-align: center; font-weight: bold; margin-bottom: 30px;">
                                     DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA
                                 </div>
@@ -474,7 +469,7 @@
                                                 <table style="border: none; width: 100%;">
                                                     <tr>
                                                         <td style="width: 20px; vertical-align: top; border: none;">a.</td>
-                                                        <td style="text-align: justify; border: none;">Bahwa untuk memperlancar penyusunan Skripsi mahasiswa, perlu menugaskan dosen sebagai pembimbing Skripsi;</td>
+                                                        <td style="text-align: justify; border: none;">Bahwa untuk memperlancar pelaksanaan Ujian Skripsi mahasiswa, perlu menugaskan dosen sebagai penguji Ujian Skripsi;</td>
                                                     </tr>
                                                     <tr>
                                                         <td style="width: 20px; vertical-align: top; border: none; padding-top: 8px;">b.</td>
@@ -511,13 +506,12 @@
                                 <div class="preview-content">
                                     <table style="width: 100%; border: none;">
                                         <tr>
-                                            <td style="width: 120px; vertical-align: top; border: none;">Mengingat</td>
+                                            <td style="width: 120px; vertical-align: top; border: none;">Memperhatikan</td>
                                             <td style="width: 20px; vertical-align: top; border: none;">:</td>
                                             <td style="text-align: justify; border: none;">
                                                 <table style="border: none; width: 100%;">
                                                     <tr>
-                                                        <td style="width: 20px; vertical-align: top; border: none;">Surat dari Ketua Jurusan Teknik Informatika tentang permohonan SK Dosen Pembimbing Skripsi;</td>
-                                                        
+                                                        <td style="width: 20px; vertical-align: top; border: none;">Surat dari Ketua Jurusan <span id="preview-jurusan-text"></span> tentang permohonan SK Dosen Penguji Ujian Skripsi;</td>
                                                     </tr>
                                                 </table>
                                             </td>
@@ -532,19 +526,18 @@
 
                                 <div class="preview-content">
                                     <table style="width: 100%; border: none;">
-                                        
                                         <tr>
                                             <td style="width: 120px; vertical-align: top; border: none;">Menetapkan</td>
                                             <td style="width: 20px; vertical-align: top; border: none;">:</td>
                                             <td style="text-align: justify; border: none;">
-                                                PENETAPAN DOSEN PEMBIMBING SKRIPSI PROGRAM STUDI S1 <span id="preview-prodi-menetapkan" style="text-transform: uppercase;">TEKNIK INFORMATIKA</span> FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER <span id="preview-semester-menetapkan">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-menetapkan">2023/2024</span>.
+                                                KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA TENTANG PENETAPAN DOSEN PENGUJI UJIAN SKRIPSI PROGRAM STUDI S1 <span id="preview-prodi-menetapkan" style="text-transform: uppercase;"></span> FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER <span id="preview-semester-menetapkan" style="text-transform: uppercase;"></span> TAHUN AKADEMIK <span id="preview-tahun-menetapkan"></span>.
                                             </td>
                                         </tr>
                                         <tr>
                                             <td style="width: 120px; vertical-align: top; border: none; padding-top: 10px;">Kesatu</td>
                                             <td style="width: 20px; vertical-align: top; border: none; padding-top: 10px;">:</td>
                                             <td style="text-align: justify; border: none; padding-top: 10px;">
-                                                Dosen Pembimbing Skripsi Program Studi S1 <span id="preview-prodi-kesatu" style="text-transform: capitalize;">Teknik Informatika</span> Fakultas Teknik Universitas Trunojoyo Madura semester <span id="preview-semester-kesatu">Ganjil</span> Tahun Akademik <span id="preview-tahun-kesatu">2023/2024</span> sebagaimana tercantum dalam lampiran Keputusan ini;
+                                                Dosen Penguji Ujian Skripsi Program Studi S1 <span id="preview-prodi-kesatu" style="text-transform: capitalize;"></span> Fakultas Teknik Universitas Trunojoyo Madura semester <span id="preview-semester-kesatu"></span> Tahun Akademik <span id="preview-tahun-kesatu"></span> sebagaimana tercantum dalam lampiran Keputusan ini;
                                             </td>
                                         </tr>
                                         <tr>
@@ -556,23 +549,22 @@
                                         </tr>
                                     </table>
                                 </div>
-
-                                <!-- Signature Section -->
+                                
                                 <div class="preview-signature">
                                     <div style="display: inline-block; text-align: center; margin-top: 30px;">
                                         <div>Ditetapkan di : Bangkalan</div>
-                                        <div>Pada tanggal : <span id="preview-tanggal"></span></div>
+                                        <div>Pada tanggal : {{ now()->translatedFormat('d F Y') }}</div>
                                         <div style="margin-top: 10px; font-weight: bold;">Dekan,</div>
                                         <div style="margin-top: 80px; font-weight: bold;">
-                                            <span id="preview-dekan-name"></span>
+                                            {{ $dekanName }}
                                         </div>
                                         <div>
-                                            NIP. <span id="preview-dekan-nip"></span>
+                                            NIP. {{ $dekanNip }}
                                         </div>
                                     </div>
                                 </div>
 
-                                <!-- Lampiran will be inserted here -->
+                                <!-- Container untuk halaman lampiran -->
                                 <div id="lampiran-container"></div>
                             </div>
                         </div>
@@ -583,310 +575,95 @@
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-1"></i>Batal
                 </button>
-                <button type="button" class="btn btn-warning" onclick="submitToWadek()" id="btnSubmitSK">
-                    <i class="fas fa-paper-plane me-1"></i><span id="submitText">Ajukan SK</span>
+                <button type="button" class="btn btn-primary" onclick="submitToWadek()" id="btnSubmitWadek">
+                    <i class="fas fa-paper-plane me-1"></i>Ajukan SK ke Wadek1
                 </button>
             </div>
         </div>
     </div>
 </div>
 
+@endsection
+
 @push('scripts')
 <script>
-    const dekanName = @json($dekanName ?? '');
-    const dekanNip = @json($dekanNip ?? '');
     let currentSKData = null;
 
-    // Set dekan info and date on page load
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('preview-dekan-name').textContent = dekanName || '[Nama Dekan]';
-        document.getElementById('preview-dekan-nip').textContent = dekanNip || '[NIP Dekan]';
-        
-        const today = new Date();
-        const options = { day: 'numeric', month: 'long', year: 'numeric' };
-        document.getElementById('preview-tanggal').textContent = today.toLocaleDateString('id-ID', options);
-    });
+    $(document).ready(function() {
+        // Event delegation for "Buatkan Surat" button
+        $(document).on('click', '.btn-buatkan-surat', function() {
+            const btn = $(this);
+            const id = btn.data('id');
+            const prodi = btn.data('prodi');
+            const semester = btn.data('semester');
+            const tahun = btn.data('tahun');
+            const jumlah = btn.data('jumlah');
 
-    // Show modal buatkan surat for single SK
-    function showBuatkanSuratModal(skId, prodi, semester, tahunAkademik, jumlahMahasiswa) {
-        // Set current SK data
-        currentSKData = {
-            id: skId,
-            prodi: prodi,
-            semester: semester,
-            tahun: tahunAkademik,
-            jumlah: jumlahMahasiswa
-        };
-        
-        // Populate info
-        document.getElementById('info-prodi').textContent = prodi;
-        document.getElementById('info-semester').textContent = semester;
-        document.getElementById('info-tahun').textContent = tahunAkademik;
-        document.getElementById('info-jumlah').textContent = jumlahMahasiswa + ' Mahasiswa';
-        document.getElementById('current-sk-id').value = skId;
-        
-        // Reset input fields
-        document.getElementById('nomorSurat').value = '';
-        document.getElementById('tahun-akademik').value = tahunAkademik;
-        
-        // Update preview with prodi name
-        document.getElementById('preview-prodi-text').textContent = prodi.toUpperCase();
-        document.getElementById('preview-prodi-menetapkan').textContent = prodi.toUpperCase();
-        document.getElementById('preview-prodi-kesatu').textContent = prodi;
-        
-        // Update semester
-        const semesterUpper = semester.toUpperCase();
-        const semesterCapitalize = semester.charAt(0).toUpperCase() + semester.slice(1).toLowerCase();
-        document.getElementById('preview-semester-text').textContent = semesterUpper;
-        document.getElementById('preview-semester-menetapkan').textContent = semesterUpper;
-        document.getElementById('preview-semester-kesatu').textContent = semesterCapitalize;
-        
-        // Update tahun akademik
-        document.getElementById('preview-tahun-text-2').textContent = tahunAkademik;
-        document.getElementById('preview-tahun-text-2').classList.remove('preview-placeholder');
-        document.getElementById('preview-tahun-menetapkan').textContent = tahunAkademik;
-        document.getElementById('preview-tahun-kesatu').textContent = tahunAkademik;
-        
-        // Load preview document data
-        loadPreviewData(skId);
-        
-        // Show modal
-        const modal = new bootstrap.Modal(document.getElementById('modalBuatkanSurat'));
-        modal.show();
-    }
-
-    // Load data ke preview document
-    function loadPreviewData(skId) {
-        fetch('{{ route("admin_fakultas.sk.pembimbing-skripsi.get-details") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ sk_ids: [skId] })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                updatePreviewTable(data.mahasiswa_list);
-            }
-        })
-        .catch(error => {
-            console.error('Error loading preview:', error);
+            showBuatkanSuratModal(id, prodi, semester, tahun, jumlah);
         });
-    }
 
-    // Update preview table dengan data mahasiswa
-    function updatePreviewTable(mahasiswaList) {
-        const lampiranContainer = document.getElementById('lampiran-container');
-        if (!lampiranContainer) return;
+        // Event delegation for "Tolak" button
+        $(document).on('click', '.btn-tolak-sk', function() {
+            const btn = $(this);
+            const id = btn.data('id');
+            const prodi = btn.data('prodi');
+            const semester = btn.data('semester');
+            const tahun = btn.data('tahun');
 
-        const nomorSuratInput = document.getElementById('nomorSurat');
-        const tahunAkademikInput = document.getElementById('tahun-akademik');
-        
-        const nomorSuratValue = nomorSuratInput && nomorSuratInput.value.trim();
-        const nomorSuratHtml = nomorSuratValue
-            ? nomorSuratValue
-            : '<span class="preview-placeholder">[Nomor Surat]</span>';
+            showRejectModal(id, prodi, semester, tahun);
+        });
 
-        const tahunAkademikText = (tahunAkademikInput && tahunAkademikInput.value.trim())
-            ? tahunAkademikInput.value.trim()
-            : currentSKData.tahun;
-
-        const prodiName = currentSKData.prodi;
-        const semesterUpper = currentSKData.semester.toUpperCase();
-
-        let lampiranHtml = `
-            <div class="lampiran-prodi" style="margin-top: 60px; page-break-before: auto;">
-                <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
-                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
-                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
-                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR <span class="preview-nomor-surat-lampiran">${nomorSuratHtml}</span></p>
-                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">TENTANG</p>
-                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PEMBIMBING SKRIPSI PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
-                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DAFTAR MAHASISWA DAN DOSEN PEMBIMBING SKRIPSI</p>
-                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK</p>
-                    <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNOJOYO MADURA</p>
-                    <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
-                </div>
-                <table class="preview-table-mahasiswa">
-                    <colgroup>
-                        <col style="width: 4%;">
-                        <col style="width: 8%;">
-                        <col style="width: 15%;">
-                        <col style="width: 23%;">
-                        <col style="width: 25%;">
-                        <col style="width: 25%;">
-                    </colgroup>
-                    <thead>
-                        <tr>
-                            <th>No</th>
-                            <th>NIM</th>
-                            <th>Nama Mahasiswa</th>
-                            <th>Judul Skripsi</th>
-                            <th>Pembimbing 1</th>
-                            <th>Pembimbing 2</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${mahasiswaList.map((mhs, idx) => `
-                            <tr>
-                                <td style="text-align: center;">${idx + 1}</td>
-                                <td style="text-align: center;">${mhs.nim || '-'}</td>
-                                <td>${mhs.nama_mahasiswa || '-'}</td>
-                                <td style="font-size: 9pt;">${mhs.judul_skripsi || '-'}</td>
-                                <td style="font-size: 9pt;">
-                                    ${mhs.pembimbing_1 ? mhs.pembimbing_1.nama_dosen : '-'}<br>
-                                    <small>NIP: ${mhs.pembimbing_1 ? mhs.pembimbing_1.nip : '-'}</small>
-                                </td>
-                                <td style="font-size: 9pt;">
-                                    ${mhs.pembimbing_2 ? mhs.pembimbing_2.nama_dosen : '-'}<br>
-                                    <small>NIP: ${mhs.pembimbing_2 ? mhs.pembimbing_2.nip : '-'}</small>
-                                </td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-                <div style="margin-top: 50px; font-size: 10pt;">
-                    <div style="text-align: right;">
-                        <div>Ditetapkan di : Bangkalan</div>
-                        <div>Pada tanggal : ${document.getElementById('preview-tanggal').textContent}</div>
-                        <div style="margin-top: 10px; font-weight: bold;">Dekan,</div>
-                        <div style="margin-top: 80px; font-weight: bold;">
-                            ${dekanName || '[Nama Dekan]'}
-                        </div>
-                        <div>NIP. ${dekanNip || '[NIP Dekan]'}</div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        lampiranContainer.innerHTML = lampiranHtml;
-    }
-
-    // Live update nomor surat
-    document.getElementById('nomorSurat').addEventListener('input', function(e) {
-        const nomor = e.target.value.trim();
-        const previewElement = document.getElementById('preview-nomor-surat');
-        const lampiranElements = document.querySelectorAll('.preview-nomor-surat-lampiran');
-
-        if (nomor) {
-            previewElement.textContent = nomor;
-            previewElement.classList.remove('preview-placeholder');
-            lampiranElements.forEach(el => {
-                el.innerHTML = nomor;
-                el.classList.remove('preview-placeholder');
-            });
-        } else {
-            previewElement.textContent = '[Nomor Surat]';
-            previewElement.classList.add('preview-placeholder');
-            lampiranElements.forEach(el => {
-                el.innerHTML = '<span class="preview-placeholder">[Nomor Surat]</span>';
-            });
-        }
-    });
-
-    // Live update tahun akademik
-    document.getElementById('tahun-akademik').addEventListener('input', function(e) {
-        const tahun = e.target.value.trim();
-        const tahunText2 = document.getElementById('preview-tahun-text-2');
-        const tahunPlaceholders = document.querySelectorAll('.preview-tahun-akademik-lampiran');
-
-        if (tahun) {
-            if (tahunText2) {
-                tahunText2.textContent = tahun;
-                tahunText2.classList.remove('preview-placeholder');
+        // Event listener for nomor surat input
+        $('#nomorSurat').on('input', function() {
+            const val = $(this).val();
+            
+            // Update Page 1
+            if (val) {
+                $('#preview-nomor-surat').text(val).removeClass('preview-placeholder');
+                $('.preview-nomor-surat-lampiran').text(val);
+            } else {
+                $('#preview-nomor-surat').text('[Nomor Surat]').addClass('preview-placeholder');
+                $('.preview-nomor-surat-lampiran').html('<span class="preview-placeholder">[Nomor Surat]</span>');
             }
-            tahunPlaceholders.forEach(el => {
-                el.textContent = tahun;
-                el.classList.remove('preview-placeholder');
-            });
-        } else {
-            if (tahunText2) {
-                tahunText2.textContent = '[2023/2024]';
-                tahunText2.classList.add('preview-placeholder');
-            }
-            tahunPlaceholders.forEach(el => {
-                el.textContent = '[2023/2024]';
-                el.classList.add('preview-placeholder');
-            });
-        }
-    });
+        });
 
-    function submitToWadek() {
-        const nomorSurat = document.getElementById('nomorSurat').value.trim();
-        const tahunAkademik = document.getElementById('tahun-akademik').value.trim();
-        const skId = document.getElementById('current-sk-id').value;
-        
-        if (!nomorSurat) {
-            alert('Nomor surat harus diisi');
-            return;
-        }
-        
-        if (!tahunAkademik) {
-            alert('Tahun akademik harus diisi');
-            return;
-        }
-        
-        if (!skId) {
-            alert('Data SK tidak valid');
-            return;
-        }
-        
-        // Disable button
-        const btnSubmit = document.getElementById('btnSubmitSK');
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Sedang diproses...';
-        
-        // Prepare data
-        const formData = {
-            sk_ids: [skId],
-            nomor_surat: nomorSurat,
-            tahun_akademik: tahunAkademik,
-            _token: '{{ csrf_token() }}'
-        };
-        
-        // Submit to server
-        fetch('{{ route("admin_fakultas.sk.pembimbing-skripsi.submit-wadek") }}', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify(formData)
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.message || 'Terjadi kesalahan server');
+        // Event listener for tahun akademik input
+        $('#tahun-akademik').on('input', function() {
+            const val = $(this).val();
+            const tahunText2 = document.getElementById('preview-tahun-text2');
+            const tahunPlaceholders = document.querySelectorAll('.preview-tahun-akademik-lampiran');
+            const mainTahunPlaceholders = ['#preview-tahun-text', '#preview-tahun-menetapkan', '#preview-tahun-kesatu'];
+
+            if (val) {
+                mainTahunPlaceholders.forEach(selector => {
+                    $(selector).text(val).removeClass('preview-placeholder');
+                });
+                if(tahunText2) $(tahunText2).text(val);
+                
+                tahunPlaceholders.forEach(el => {
+                    el.textContent = val;
+                });
+                $('#preview-tahun-text2').text(val);
+            } else {
+                const defaultVal = currentSKData ? currentSKData.tahun : '..../....';
+                mainTahunPlaceholders.forEach(selector => {
+                    $(selector).text(defaultVal);
+                });
+                $('#preview-tahun-text2').text(defaultVal);
+                if(tahunText2) $(tahunText2).text(defaultVal);
+
+                tahunPlaceholders.forEach(el => {
+                    el.textContent = defaultVal;
                 });
             }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert('SK berhasil diajukan!');
-                window.location.reload();
-            } else {
-                alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
-                btnSubmit.disabled = false;
-                btnSubmit.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Ajukan SK';
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan: ' + error.message);
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Ajukan SK';
         });
-    }
+    });
 
     function applyFilters() {
-        const status = document.getElementById('filterStatus').value;
-        const semester = document.getElementById('filterSemester').value;
+        const status = $('#filterStatus').val();
+        const semester = $('#filterSemester').val();
         
         let url = new URL(window.location.href);
-        
         if (status) url.searchParams.set('status', status);
         else url.searchParams.delete('status');
         
@@ -896,77 +673,281 @@
         window.location.href = url.toString();
     }
 
-    // Show reject modal
-    function showRejectModal(skId, prodi, semester, tahun) {
-        document.getElementById('reject-sk-id').value = skId;
-        document.getElementById('reject-prodi').textContent = prodi;
-        document.getElementById('reject-semester').textContent = semester;
-        document.getElementById('reject-tahun').textContent = tahun;
-        document.getElementById('reject-alasan').value = '';
+    function showRejectModal(id, prodi, semester, tahun) {
+        $('#reject-sk-id').val(id);
+        $('#reject-prodi').text(prodi);
+        $('#reject-semester').text(semester);
+        $('#reject-tahun').text(tahun);
+        $('#reject-alasan').val('');
         
         const modal = new bootstrap.Modal(document.getElementById('modalTolakSK'));
         modal.show();
     }
 
-    // Submit rejection
     function submitRejection() {
-        const skId = document.getElementById('reject-sk-id').value;
-        const alasan = document.getElementById('reject-alasan').value.trim();
+        const sk_id = $('#reject-sk-id').val();
+        const alasan = $('#reject-alasan').val().trim();
         
         if (!alasan) {
-            alert('Alasan penolakan harus diisi');
+            Swal.fire('Error', 'Alasan penolakan harus diisi', 'error');
             return;
         }
-        
+
         if (alasan.length < 10) {
-            alert('Alasan penolakan minimal 10 karakter');
+            Swal.fire('Error', 'Alasan penolakan minimal 10 karakter', 'error');
             return;
         }
-        
+
         // Disable button to prevent double click
-        const btnSubmit = event.target;
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Memproses...';
-        
-        // Submit to server
-        fetch('{{ route("admin_fakultas.sk.pembimbing-skripsi.reject") }}', {
+        const btnTolak = $('.btn-danger[onclick="submitRejection()"]');
+        btnTolak.prop('disabled', true).html('<i class="fas fa-spinner fa-spin me-1"></i>Memproses...');
+
+        $.ajax({
+            url: '{{ route("admin_fakultas.sk.penguji-skripsi.reject") }}',
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({
-                sk_id: skId,
+            data: {
+                _token: '{{ csrf_token() }}',
+                sk_id: sk_id,
                 alasan: alasan
-            })
-        })
-        .then(response => {
-            if (!response.ok) {
-                return response.json().then(err => {
-                    throw new Error(err.message || 'Terjadi kesalahan server');
-                });
+            },
+            success: function(response) {
+                if (response.success) {
+                    Swal.fire('Berhasil', response.message || 'SK berhasil ditolak', 'success').then(() => {
+                        $('#modalTolakSK').modal('hide');
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire('Error', response.message || 'Terjadi kesalahan', 'error');
+                    btnTolak.prop('disabled', false).html('<i class="fas fa-ban me-1"></i>Tolak SK');
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Terjadi kesalahan saat memproses data';
+                if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMsg = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        const err = JSON.parse(xhr.responseText);
+                        errorMsg = err.message || errorMsg;
+                    } catch (e) {
+                        console.error('Parse error:', e);
+                    }
+                }
+                Swal.fire('Error', errorMsg, 'error');
+                btnTolak.prop('disabled', false).html('<i class="fas fa-ban me-1"></i>Tolak SK');
             }
-            return response.json();
-        })
-        .then(data => {
-            if (data.success) {
-                alert('SK berhasil ditolak');
-                // Close modal and reload page
-                const modal = bootstrap.Modal.getInstance(document.getElementById('modalTolakSK'));
-                if (modal) modal.hide();
-                window.location.reload();
-            } else {
-                throw new Error(data.message || 'Terjadi kesalahan');
+        });
+    }
+
+    function showBuatkanSuratModal(id, prodi, semester, tahun, jumlah) {
+        // Init Global Data
+        currentSKData = {
+            id: id,
+            prodi: prodi,
+            semester: semester,
+            tahun: tahun
+        };
+
+        $('#current-sk-id').val(id);
+        $('#info-prodi').text(prodi);
+        $('#info-semester').text(semester);
+        $('#info-tahun').text(tahun);
+        $('#info-jumlah').text(jumlah + ' Mahasiswa');
+        
+        // Reset Inputs
+        $('#nomorSurat').val('');
+        $('#tahun-akademik').val(tahun);
+
+        // Preview text
+        const prodiUpper = prodi.toUpperCase();
+        const semesterUpper = semester.toUpperCase();
+        const semesterCap = semester.charAt(0).toUpperCase() + semester.slice(1).toLowerCase();
+
+        // Jurusan/Prodi
+        $('#preview-prodi-text').text(prodiUpper);
+        $('#preview-jurusan-text').text(prodi); 
+        $('#preview-prodi-menetapkan').text(prodiUpper);
+        $('#preview-prodi-kesatu').text(prodi);
+        
+        // Semester
+        $('#preview-semester-text').text(semesterUpper);
+        $('#preview-semester-text2').text(semesterCap);
+        $('#preview-semester-menetapkan').text(semesterUpper);
+        $('#preview-semester-kesatu').text(semesterCap);
+
+        // Tahun
+        $('#preview-tahun-text').text(tahun);
+        $('#preview-tahun-text2').text(tahun);
+        $('#preview-tahun-menetapkan').text(tahun);
+        $('#preview-tahun-kesatu').text(tahun);
+        
+        // Reset Lampiran
+        const lampiranContainer = document.getElementById('lampiran-container');
+        if (lampiranContainer) {
+            lampiranContainer.innerHTML = '<div class="text-center py-5"><div class="spinner-border text-primary" role="status"></div><div class="mt-2">Memuat data lampiran...</div></div>';
+        }
+        
+        $.ajax({
+            url: '{{ route("admin_fakultas.sk.penguji-skripsi.get-details") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                sk_id: id
+            },
+            success: function(response) {
+                if (response.success) {
+                    if (response.data_penguji && response.data_penguji.length > 0) {
+                        updatePreviewTable(response.data_penguji);
+                    } else {
+                        $('#lampiran-container').html('<div class="text-center text-danger py-5">Tidak ada data mahasiswa ditemukan.</div>');
+                    }
+                } else {
+                    $('#lampiran-container').html('<div class="text-center text-danger py-5">Gagal memuat data lampiran.</div>');
+                }
+            },
+            error: function() {
+                 $('#lampiran-container').html('<div class="text-center text-danger py-5">Terjadi kesalahan sistem.</div>');
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Gagal menolak SK: ' + error.message);
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = '<i class="fas fa-ban me-1"></i>Tolak SK';
+        });
+
+        const modal = new bootstrap.Modal(document.getElementById('modalBuatkanSurat'));
+        modal.show();
+    }
+
+    function updatePreviewTable(dataMahasiswa) {
+        const lampiranContainer = document.getElementById('lampiran-container');
+        if (!lampiranContainer) return;
+
+        const nomorSuratInput = document.getElementById('nomorSurat');
+        const nomorSuratValue = nomorSuratInput && nomorSuratInput.value.trim();
+        const nomorSuratHtml = nomorSuratValue
+            ? nomorSuratValue
+            : '<span class="preview-placeholder">[Nomor Surat]</span>';
+
+        // Gunakan info dari currentSKData
+        const prodiName = currentSKData.prodi || '-';
+        const semesterUpper = (currentSKData.semester || '-').toUpperCase();
+        
+        // Get tahun from input or data
+        const tahunInput = $('#tahun-akademik').val();
+        const tahunAkademikText = tahunInput || currentSKData.tahun || '-';
+        
+        // Generate Table Rows
+        let tableRows = '';
+        dataMahasiswa.forEach((item, index) => {
+             let pengujiContent = '<ul style="list-style:none; padding-left:0; margin:0;">';
+             
+             // Ketua
+             if(item.nama_penguji_1) {
+                pengujiContent += `<li style="margin-bottom:4px;">1. ${item.nama_penguji_1} (Ketua)</li>`;
+             }
+             // Anggota 1
+             if(item.nama_penguji_2) {
+                pengujiContent += `<li style="margin-bottom:4px;">2. ${item.nama_penguji_2} (Anggota)</li>`;
+             }
+             // Anggota 2
+             if(item.nama_penguji_3) {
+                pengujiContent += `<li>3. ${item.nama_penguji_3} (Anggota)</li>`;
+             }
+             pengujiContent += '</ul>';
+
+             tableRows += `
+                <tr>
+                    <td style="text-align: center;">${index + 1}</td>
+                    <td>
+                        <strong>${item.nama_mahasiswa || '-'}</strong><br>
+                        NIM. ${item.nim || '-'}
+                    </td>
+                    <td>${item.judul_skripsi || '-'}</td>
+                    <td>${pengujiContent}</td>
+                </tr>
+             `;
+        });
+
+        let lampiranHtml = `
+            <div class="lampiran-prodi" style="margin-top: 60px; page-break-before: always; border-top: 2px dashed #ccc; padding-top: 40px;">
+                <div style="font-size: 11pt; text-align: left; margin-bottom: 20px;">
+                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
+                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR <span class="preview-nomor-surat-lampiran">${nomorSuratHtml}</span></p>
+                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">TENTANG</p>
+                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PENGUJI UJIAN SKRIPSI PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
+
+                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DAFTAR MAHASISWA DAN DOSEN PENGUJI UJIAN SKRIPSI</p>
+                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK</p>
+                    <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNOJOYO MADURA</p>
+                    <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
+                </div>
+
+                <table class="preview-table-mahasiswa">
+                    <thead>
+                        <tr>
+                            <th width="5%">No</th>
+                            <th width="25%">Nama Mahasiswa / NIM</th>
+                            <th width="30%">Judul Skripsi</th>
+                            <th width="40%">Dosen Penguji</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${tableRows}
+                    </tbody>
+                </table>
+                <div style="margin-top: 40px; font-size: 11pt;">
+                    <div style="text-align: right;">
+                        Bangkalan, {{ now()->translatedFormat('d F Y') }}<br>
+                        Dekan,<br>
+                        <div style="height: 60px;"></div>
+                        <strong>{{ $dekanName }}</strong><br>
+                        NIP. {{ $dekanNip }}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        lampiranContainer.innerHTML = lampiranHtml;
+    }
+
+    function submitToWadek() {
+        const sk_id = $('#current-sk-id').val();
+        const nomor_surat = $('#nomorSurat').val();
+        const tahun_akademik = $('#tahun-akademik').val();
+        
+        if (!nomor_surat) {
+            Swal.fire('Error', 'Nomor surat harus diisi', 'error');
+            return;
+        }
+
+        if (!tahun_akademik) {
+            Swal.fire('Error', 'Tahun Akademik harus diisi', 'error');
+            return;
+        }
+
+        $('#btnSubmitWadek').prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> Memproses...');
+        
+        $.ajax({
+            url: '{{ route("admin_fakultas.sk.penguji-skripsi.submit-wadek") }}',
+            method: 'POST',
+            data: {
+                _token: '{{ csrf_token() }}',
+                sk_id: sk_id,
+                nomor_surat: nomor_surat,
+                tahun_akademik: tahun_akademik
+            },
+            success: function(response) {
+                if (response.success) {
+                     Swal.fire('Berhasil', response.message || 'SK berhasil diajukan', 'success').then(() => {
+                         window.location.reload();
+                     });
+                } else {
+                     Swal.fire('Error', response.message || 'Gagal mengajukan SK', 'error');
+                     $('#btnSubmitWadek').prop('disabled', false).html('<i class="fas fa-paper-plane me-1"></i>Teruskan ke Dekan');
+                }
+            },
+            error: function(xhr) {
+                Swal.fire('Error', 'Terjadi kesalahan sistem', 'error');
+                $('#btnSubmitWadek').prop('disabled', false).html('<i class="fas fa-paper-plane me-1"></i>Teruskan ke Wadek1');
+            }
         });
     }
 </script>
 @endpush
-
-@endsection

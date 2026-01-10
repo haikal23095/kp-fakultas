@@ -275,9 +275,15 @@ class PersetujuanSuratController extends Controller
 
         $skBebanMengajarTotal = \App\Models\AccSKBebanMengajar::count();
 
-        // TODO: Implementasi counting untuk jenis SK lainnya
-        $skPembimbingSkripsiCount = 0;
-        $skPengujiSkripsiCount = 0;
+        // Hitung SK Pembimbing Skripsi
+        $skPembimbingSkripsiCount = \App\Models\AccSKPembimbingSkripsi::where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->count();
+        $skPembimbingSkripsiTotal = \App\Models\AccSKPembimbingSkripsi::count();
+
+        // Hitung SK Penguji Skripsi
+        $skPengujiSkripsiCount = \App\Models\AccSKPengujiSkripsi::where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->count();
+        $skPengujiSkripsiTotal = \App\Models\AccSKPengujiSkripsi::count();
 
         // Hitung total SK Dosen untuk badge di menu utama
         $countSKDosen = $skDosenWaliCount + $skBebanMengajarCount + $skPembimbingSkripsiCount + $skPengujiSkripsiCount;
@@ -288,7 +294,9 @@ class PersetujuanSuratController extends Controller
             'skBebanMengajarCount',
             'skBebanMengajarTotal',
             'skPembimbingSkripsiCount',
-            'skPengujiSkripsiCount'
+            'skPembimbingSkripsiTotal',
+            'skPengujiSkripsiCount',
+            'skPengujiSkripsiTotal'
         ));
     }
 
