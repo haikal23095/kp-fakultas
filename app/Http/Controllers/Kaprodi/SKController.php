@@ -881,4 +881,144 @@ class SKController extends Controller
 
         return view('kaprodi.sk.penguji-skripsi.history', compact('skList'));
     }
+
+    /**
+     * Get kelas mata kuliah data for management
+     */
+    public function getKelasMataKuliah(Request $request)
+    {
+        try {
+            $prodiId = $request->query('prodi_id');
+
+            if (!$prodiId) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Program Studi tidak ditemukan'
+                ], 400);
+            }
+
+            // Get mata kuliah with their kelas
+            $mataKuliahGrouped = MataKuliah::where('Id_Prodi', $prodiId)
+                ->select('Nama_Matakuliah', 'Kelas', 'SKS', 'Nomor')
+                ->orderBy('Nama_Matakuliah', 'asc')
+                ->orderBy('Kelas', 'asc')
+                ->get()
+                ->groupBy('Nama_Matakuliah');
+
+            $mataKuliahData = $mataKuliahGrouped->map(function ($kelasList, $namaMK) {
+                $firstKelas = $kelasList->first();
+                return [
+                    'nama_matakuliah' => $namaMK,
+                    'sks' => $firstKelas->SKS,
+                    'jumlah_kelas' => $kelasList->count(),
+                    'kelas_list' => $kelasList->pluck('Kelas')->toArray()
+                ];
+            })->values();
+
+            return response()->json([
+                'success' => true,
+                'data' => $mataKuliahData
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error in getKelasMataKuliah: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat data kelas: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update kelas mata kuliah
+     */
+    public function updateKelasMataKuliah(Request $request)
+    {
+        $request->validate([
+            'prodi_id' => 'required|exists:Prodi,Id_Prodi',
+            'kelas_data' => 'required|array|min:1',
+            'kelas_data.*.nama_matakuliah' => 'required|string',
+            'kelas_data.*.sks' => 'required|integer|min:1|max:6',
+            'kelas_data.*.jumlah_kelas' => 'required|integer|min:1|max:10',
+        ]);
+
+        try {
+            $prodiId = $request->prodi_id;
+            $kelasData = $request->kelas_data;
+
+            foreach ($kelasData as $mkData) {
+                $namaMataKuliah = $mkData['nama_matakuliah'];
+                $sks = $mkData['sks'];
+                $jumlahKelasBaru = $mkData['jumlah_kelas'];
+
+                // Get existing kelas for this mata kuliah
+                $existingKelas = MataKuliah::where('Id_Prodi', $prodiId)
+                    ->where('Nama_Matakuliah', $namaMataKuliah)
+                    ->orderBy('Kelas', 'asc')
+                    ->get();
+
+                $jumlahKelasLama = $existingKelas->count();
+
+                // If need to add more kelas
+                if ($jumlahKelasBaru > $jumlahKelasLama) {
+                    $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+                    // Get base name from the first existing kelas
+                    $baseName = '';
+                    if ($jumlahKelasLama > 0) {
+                        $firstKelas = $existingKelas->first()->Kelas;
+                        // Extract base name by removing the last character (letter)
+                        // Pattern: "IF 5A" -> "IF 5", "Te A" -> "Te "
+                        $baseName = preg_replace('/[A-Z]$/', '', $firstKelas);
+                    } else {
+                        // If no existing kelas, create base name from prodi
+                        $prodi = Prodi::find($prodiId);
+                        $baseName = substr($prodi->Nama_Prodi, 0, 2) . ' ';
+                    }
+
+                    for ($i = $jumlahKelasLama; $i < $jumlahKelasBaru; $i++) {
+                        MataKuliah::create([
+                            'Id_Prodi' => $prodiId,
+                            'Nama_Matakuliah' => $namaMataKuliah,
+                            'Kelas' => $baseName . $letters[$i],
+                            'SKS' => $sks
+                        ]);
+                    }
+                }
+                // If need to remove kelas
+                elseif ($jumlahKelasBaru < $jumlahKelasLama) {
+                    // Delete the excess kelas (from the end)
+                    $kelasToDelete = $existingKelas->slice($jumlahKelasBaru);
+
+                    foreach ($kelasToDelete as $kelas) {
+                        // Only delete if not used in any beban mengajar
+                        $isUsed = \DB::table('Req_SK_Beban_Mengajar')
+                            ->whereRaw("JSON_CONTAINS(Data_Beban_Mengajar, JSON_OBJECT('id_mata_kuliah', ?))", [$kelas->Nomor])
+                            ->exists();
+
+                        if (!$isUsed) {
+                            $kelas->delete();
+                        }
+                    }
+                }
+                // If same amount, just update SKS if needed
+                else {
+                    MataKuliah::where('Id_Prodi', $prodiId)
+                        ->where('Nama_Matakuliah', $namaMataKuliah)
+                        ->update(['SKS' => $sks]);
+                }
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Perubahan kelas berhasil disimpan'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error in updateKelasMataKuliah: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal menyimpan perubahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

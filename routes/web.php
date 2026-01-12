@@ -514,6 +514,12 @@ Route::middleware('auth')->group(function () {
         Route::get('/sk/beban-mengajar/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadBebanMengajar'])
             ->name('sk.beban-mengajar.download');
 
+        // SK Beban Mengajar - Kelola Kelas
+        Route::get('/sk/beban-mengajar/kelas', [\App\Http\Controllers\Kaprodi\SKController::class, 'getKelasMataKuliah'])
+            ->name('sk.beban-mengajar.kelas.get');
+        Route::post('/sk/beban-mengajar/kelas/update', [\App\Http\Controllers\Kaprodi\SKController::class, 'updateKelasMataKuliah'])
+            ->name('sk.beban-mengajar.kelas.update');
+
         // SK Dosen Wali
         Route::get('/sk/dosen-wali', [\App\Http\Controllers\Kaprodi\SKController::class, 'indexDosenWali'])
             ->name('sk.dosen-wali.index');
