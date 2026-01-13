@@ -115,7 +115,7 @@
                             </button>
                         </div>
 
-                        <div class="table-responsive">
+                        <div class="table-responsive" style="overflow: visible;">
                             <table class="table table-bordered table-hover" id="tabelPenguji">
                                 <thead class="table-light">
                                     <tr>
@@ -135,7 +135,7 @@
                             </table>
                         </div>
 
-                        <div class="alert alert-info mt-3" role="alert">
+                        <div class="alert alert-info mt-5" role="alert">
                             <i class="fas fa-info-circle me-2"></i>
                             <small>
                                 <strong>Petunjuk:</strong> Klik tombol "Tambah Mahasiswa" untuk menambahkan data mahasiswa beserta judul skripsi dan dosen penguji. Pastikan semua data terisi dengan lengkap.
@@ -183,6 +183,63 @@
         padding: 0.25rem 0.5rem;
         font-size: 0.875rem;
     }
+    
+    /* Autocomplete Styles */
+    .autocomplete-wrapper {
+        position: relative;
+    }
+    
+    .autocomplete-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 200px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        z-index: 9999;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .autocomplete-suggestions.show {
+        display: block;
+    }
+    
+    .autocomplete-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.875rem;
+    }
+    
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+        background-color: #e9ecef;
+    }
+    
+    .autocomplete-item .mhs-name {
+        font-weight: 500;
+    }
+    
+    .autocomplete-item .mhs-nim {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .autocomplete-no-result {
+        padding: 8px 12px;
+        color: #6c757d;
+        font-style: italic;
+        font-size: 0.875rem;
+    }
 </style>
 @endpush
 
@@ -195,14 +252,9 @@
     const mahasiswas = @json($mahasiswas);
     const dosens = @json($dosens);
     
-    function generateMahasiswaOptions(selectedId = '') {
-        let options = '<option value="">-- Pilih Mahasiswa --</option>';
-        mahasiswas.forEach(mhs => {
-            const selected = mhs.Id_Mahasiswa == selectedId ? 'selected' : '';
-            options += `<option value="${mhs.Id_Mahasiswa}" data-nim="${mhs.NIM}" ${selected}>${mhs.Nama_Mahasiswa} (${mhs.NIM})</option>`;
-        });
-        return options;
-    }
+    // Debug: Tampilkan data mahasiswa di console
+    console.log('Data Mahasiswas:', mahasiswas);
+    console.log('Jumlah Mahasiswa:', mahasiswas.length);
     
     function generateDosenOptions(selectedId = '') {
         let options = '<option value="">-- Pilih Dosen --</option>';
@@ -211,6 +263,239 @@
             options += `<option value="${dosen.Id_Dosen}" ${selected}>${dosen.Nama_Dosen} (${dosen.NIP})</option>`;
         });
         return options;
+    }
+    
+    // Initialize autocomplete untuk input mahasiswa
+    function initMahasiswaAutocomplete(inputElement) {
+        const wrapper = inputElement.closest('.autocomplete-wrapper');
+        const suggestionsDiv = wrapper.querySelector('.autocomplete-suggestions');
+        const hiddenInput = wrapper.querySelector('.mahasiswa-id-hidden');
+        const nimInput = inputElement.closest('tr').querySelector('.nim-display');
+        let activeIndex = -1;
+        
+        // Filter dan tampilkan suggestions
+        function showSuggestions(searchTerm) {
+            const filtered = mahasiswas.filter(mhs => 
+                mhs.Nama_Mahasiswa.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (mhs.NIM && String(mhs.NIM).includes(searchTerm))
+            );
+            
+            if (filtered.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="autocomplete-no-result">Tidak ada mahasiswa ditemukan</div>';
+            } else {
+                suggestionsDiv.innerHTML = filtered.map((mhs, index) => `
+                    <div class="autocomplete-item" data-id="${mhs.Id_Mahasiswa}" data-name="${mhs.Nama_Mahasiswa}" data-nim="${mhs.NIM}" data-index="${index}">
+                        <div class="mhs-name">${mhs.Nama_Mahasiswa}</div>
+                        <div class="mhs-nim">${mhs.NIM || '-'}</div>
+                    </div>
+                `).join('');
+                
+                // Add click handlers
+                suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        selectMahasiswa(this.dataset.id, this.dataset.name, this.dataset.nim);
+                    });
+                });
+            }
+            
+            suggestionsDiv.classList.add('show');
+            activeIndex = -1;
+        }
+        
+        // Select mahasiswa
+        function selectMahasiswa(id, name, nim) {
+            inputElement.value = name;
+            hiddenInput.value = id;
+            nimInput.value = nim || '';
+            suggestionsDiv.classList.remove('show');
+            inputElement.classList.remove('is-invalid');
+            inputElement.classList.add('is-valid');
+        }
+        
+        // Input event
+        inputElement.addEventListener('input', function() {
+            const value = this.value.trim();
+            hiddenInput.value = ''; // Reset hidden input saat user mengetik
+            nimInput.value = ''; // Reset NIM
+            inputElement.classList.remove('is-valid');
+            
+            if (value.length >= 1) {
+                showSuggestions(value);
+            } else {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Focus event - show all if empty
+        inputElement.addEventListener('focus', function() {
+            if (this.value.trim().length >= 1) {
+                showSuggestions(this.value.trim());
+            }
+        });
+        
+        // Keyboard navigation
+        inputElement.addEventListener('keydown', function(e) {
+            const items = suggestionsDiv.querySelectorAll('.autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                updateActiveItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActiveItem(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    const item = items[activeIndex];
+                    selectMahasiswa(item.dataset.id, item.dataset.name, item.dataset.nim);
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        function updateActiveItem(items) {
+            items.forEach((item, index) => {
+                item.classList.toggle('active', index === activeIndex);
+            });
+            if (items[activeIndex]) {
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Validation on blur
+        inputElement.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (!hiddenInput.value && this.value.trim()) {
+                    // User typed something but didn't select
+                    this.classList.add('is-invalid');
+                }
+            }, 200);
+        });
+    }
+    
+    // Initialize autocomplete untuk input dosen (penguji)
+    function initDosenAutocomplete(inputElement) {
+        const wrapper = inputElement.closest('.autocomplete-wrapper');
+        const suggestionsDiv = wrapper.querySelector('.autocomplete-suggestions');
+        const hiddenInput = wrapper.querySelector('.dosen-id-hidden');
+        let activeIndex = -1;
+        
+        // Filter dan tampilkan suggestions
+        function showSuggestions(searchTerm) {
+            const filtered = dosens.filter(dosen => 
+                dosen.Nama_Dosen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (dosen.NIP && String(dosen.NIP).includes(searchTerm))
+            );
+            
+            if (filtered.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="autocomplete-no-result">Tidak ada dosen ditemukan</div>';
+            } else {
+                suggestionsDiv.innerHTML = filtered.map((dosen, index) => `
+                    <div class="autocomplete-item" data-id="${dosen.Id_Dosen}" data-name="${dosen.Nama_Dosen}" data-index="${index}">
+                        <div class="mhs-name">${dosen.Nama_Dosen}</div>
+                        <div class="mhs-nim">${dosen.NIP || '-'}</div>
+                    </div>
+                `).join('');
+                
+                // Add click handlers
+                suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        selectDosen(this.dataset.id, this.dataset.name);
+                    });
+                });
+            }
+            
+            suggestionsDiv.classList.add('show');
+            activeIndex = -1;
+        }
+        
+        // Select dosen
+        function selectDosen(id, name) {
+            inputElement.value = name;
+            hiddenInput.value = id;
+            suggestionsDiv.classList.remove('show');
+            inputElement.classList.remove('is-invalid');
+            inputElement.classList.add('is-valid');
+        }
+        
+        // Input event
+        inputElement.addEventListener('input', function() {
+            const value = this.value.trim();
+            hiddenInput.value = ''; // Reset hidden input saat user mengetik
+            inputElement.classList.remove('is-valid');
+            
+            if (value.length >= 1) {
+                showSuggestions(value);
+            } else {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Focus event - show all if empty
+        inputElement.addEventListener('focus', function() {
+            if (this.value.trim().length >= 1) {
+                showSuggestions(this.value.trim());
+            }
+        });
+        
+        // Keyboard navigation
+        inputElement.addEventListener('keydown', function(e) {
+            const items = suggestionsDiv.querySelectorAll('.autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                updateActiveItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActiveItem(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    const item = items[activeIndex];
+                    selectDosen(item.dataset.id, item.dataset.name);
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        function updateActiveItem(items) {
+            items.forEach((item, index) => {
+                item.classList.toggle('active', index === activeIndex);
+            });
+            if (items[activeIndex]) {
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Validation on blur
+        inputElement.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (!hiddenInput.value && this.value.trim()) {
+                    // User typed something but didn't select
+                    this.classList.add('is-invalid');
+                }
+            }, 200);
+        });
     }
     
     $(document).ready(function() {
@@ -222,11 +507,16 @@
                 <tr data-index="${rowIndex}">
                     <td class="text-center">${rowIndex}</td>
                     <td>
-                        <select class="form-select form-select-sm mahasiswa-select" 
-                                name="penguji[${rowIndex}][mahasiswa_id]" 
-                                required>
-                            ${generateMahasiswaOptions()}
-                        </select>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" 
+                                   class="form-control form-control-sm mahasiswa-autocomplete" 
+                                   data-row="${rowIndex}"
+                                   placeholder="Ketik nama mahasiswa..." 
+                                   autocomplete="off"
+                                   required>
+                            <input type="hidden" name="penguji[${rowIndex}][mahasiswa_id]" class="mahasiswa-id-hidden" required>
+                            <div class="autocomplete-suggestions"></div>
+                        </div>
                     </td>
                     <td>
                         <input type="text" 
@@ -242,25 +532,43 @@
                                   required></textarea>
                     </td>
                     <td>
-                        <select class="form-select form-select-sm" 
-                                name="penguji[${rowIndex}][penguji_1]" 
-                                required>
-                            ${generateDosenOptions()}
-                        </select>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" 
+                                   class="form-control form-control-sm dosen-autocomplete" 
+                                   data-row="${rowIndex}"
+                                   data-penguji="1"
+                                   placeholder="Ketik nama dosen..." 
+                                   autocomplete="off"
+                                   required>
+                            <input type="hidden" name="penguji[${rowIndex}][penguji_1]" class="dosen-id-hidden" required>
+                            <div class="autocomplete-suggestions"></div>
+                        </div>
                     </td>
                     <td>
-                        <select class="form-select form-select-sm" 
-                                name="penguji[${rowIndex}][penguji_2]" 
-                                required>
-                            ${generateDosenOptions()}
-                        </select>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" 
+                                   class="form-control form-control-sm dosen-autocomplete" 
+                                   data-row="${rowIndex}"
+                                   data-penguji="2"
+                                   placeholder="Ketik nama dosen..." 
+                                   autocomplete="off"
+                                   required>
+                            <input type="hidden" name="penguji[${rowIndex}][penguji_2]" class="dosen-id-hidden" required>
+                            <div class="autocomplete-suggestions"></div>
+                        </div>
                     </td>
                     <td>
-                        <select class="form-select form-select-sm" 
-                                name="penguji[${rowIndex}][penguji_3]" 
-                                required>
-                            ${generateDosenOptions()}
-                        </select>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" 
+                                   class="form-control form-control-sm dosen-autocomplete" 
+                                   data-row="${rowIndex}"
+                                   data-penguji="3"
+                                   placeholder="Ketik nama dosen..." 
+                                   autocomplete="off"
+                                   required>
+                            <input type="hidden" name="penguji[${rowIndex}][penguji_3]" class="dosen-id-hidden" required>
+                            <div class="autocomplete-suggestions"></div>
+                        </div>
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-danger btn-sm btn-remove">
@@ -271,6 +579,18 @@
             `;
             
             $('#bodyPenguji').append(newRow);
+            
+            // Initialize autocomplete untuk mahasiswa baru
+            const newRowElement = $('#bodyPenguji tr').last()[0];
+            const mahasiswaInput = newRowElement.querySelector('.mahasiswa-autocomplete');
+            initMahasiswaAutocomplete(mahasiswaInput);
+            
+            // Initialize autocomplete untuk semua dosen (penguji 1, 2, 3)
+            const dosenInputs = newRowElement.querySelectorAll('.dosen-autocomplete');
+            dosenInputs.forEach(input => {
+                initDosenAutocomplete(input);
+            });
+            
             updateRowNumbers();
         });
         
@@ -287,13 +607,6 @@
             });
         }
         
-        // Auto-fill NIM when mahasiswa is selected
-        $(document).on('change', '.mahasiswa-select', function() {
-            const selectedOption = $(this).find('option:selected');
-            const nim = selectedOption.data('nim');
-            $(this).closest('tr').find('.nim-display').val(nim || '');
-        });
-        
         // Form validation
         $('#formPengujiSkripsi').on('submit', function(e) {
             const rowCount = $('#bodyPenguji tr').length;
@@ -306,9 +619,9 @@
             
             let hasError = false;
             $('#bodyPenguji tr').each(function() {
-                const p1 = $(this).find('select[name*="[penguji_1]"]').val();
-                const p2 = $(this).find('select[name*="[penguji_2]"]').val();
-                const p3 = $(this).find('select[name*="[penguji_3]"]').val();
+                const p1 = $(this).find('input[name*="[penguji_1]"]').val();
+                const p2 = $(this).find('input[name*="[penguji_2]"]').val();
+                const p3 = $(this).find('input[name*="[penguji_3]"]').val();
                 
                 if (p1 && p2 && p1 === p2) {
                     alert('Penguji 1 dan Penguji 2 tidak boleh sama!');

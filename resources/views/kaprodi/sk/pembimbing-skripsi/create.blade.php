@@ -180,6 +180,67 @@
         padding: 0.25rem 0.5rem;
         font-size: 0.875rem;
     }
+    
+    /* Autocomplete Styles */
+    .autocomplete-wrapper {
+        position: relative;
+    }
+    
+    .autocomplete-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 200px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        z-index: 9999;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .autocomplete-suggestions.show {
+        display: block;
+    }
+    
+    .autocomplete-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.8rem;
+    }
+    
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+        background-color: #e9ecef;
+    }
+    
+    .autocomplete-item .item-name {
+        font-weight: 500;
+    }
+    
+    .autocomplete-item .item-info {
+        font-size: 0.7rem;
+        color: #6c757d;
+    }
+    
+    .autocomplete-no-result {
+        padding: 8px 12px;
+        color: #6c757d;
+        font-style: italic;
+        font-size: 0.8rem;
+    }
+    
+    .table-responsive {
+        overflow: visible;
+    }
 </style>
 @endpush
 
@@ -196,26 +257,6 @@
     // Data dosen dari backend
     const dosens = @json($dosens);
     
-    // Function to generate mahasiswa options
-    function generateMahasiswaOptions(selectedId = '') {
-        let options = '<option value="">-- Pilih Mahasiswa --</option>';
-        mahasiswas.forEach(mhs => {
-            const selected = mhs.Id_Mahasiswa == selectedId ? 'selected' : '';
-            options += `<option value="${mhs.Id_Mahasiswa}" data-nim="${mhs.NIM}" ${selected}>${mhs.Nama_Mahasiswa} (${mhs.NIM})</option>`;
-        });
-        return options;
-    }
-    
-    // Function to generate dosen options
-    function generateDosenOptions(selectedId = '') {
-        let options = '<option value="">-- Pilih Dosen --</option>';
-        dosens.forEach(dosen => {
-            const selected = dosen.Id_Dosen == selectedId ? 'selected' : '';
-            options += `<option value="${dosen.Id_Dosen}" ${selected}>${dosen.Nama_Dosen} (${dosen.NIP})</option>`;
-        });
-        return options;
-    }
-    
     // Wait for document ready
     $(document).ready(function() {
         console.log('Document ready, setting up event handlers...');
@@ -229,11 +270,16 @@
                 <tr data-index="${rowIndex}">
                     <td class="text-center">${rowIndex}</td>
                     <td>
-                        <select class="form-select form-select-sm mahasiswa-select" 
-                                name="pembimbing[${rowIndex}][mahasiswa_id]" 
-                                required>
-                            ${generateMahasiswaOptions()}
-                        </select>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" 
+                                   class="form-control form-control-sm mahasiswa-autocomplete" 
+                                   placeholder="Ketik nama/NIM..."
+                                   autocomplete="off">
+                            <input type="hidden" 
+                                   name="pembimbing[${rowIndex}][mahasiswa_id]" 
+                                   class="mahasiswa-id-hidden">
+                            <div class="autocomplete-suggestions mahasiswa-suggestions"></div>
+                        </div>
                     </td>
                     <td>
                         <input type="text" 
@@ -249,18 +295,30 @@
                                   required></textarea>
                     </td>
                     <td>
-                        <select class="form-select form-select-sm" 
-                                name="pembimbing[${rowIndex}][pembimbing_1]" 
-                                required>
-                            ${generateDosenOptions()}
-                        </select>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" 
+                                   class="form-control form-control-sm dosen-autocomplete" 
+                                   placeholder="Ketik nama/NIP..."
+                                   autocomplete="off"
+                                   data-target="pembimbing_1">
+                            <input type="hidden" 
+                                   name="pembimbing[${rowIndex}][pembimbing_1]" 
+                                   class="dosen-id-hidden">
+                            <div class="autocomplete-suggestions dosen-suggestions"></div>
+                        </div>
                     </td>
                     <td>
-                        <select class="form-select form-select-sm" 
-                                name="pembimbing[${rowIndex}][pembimbing_2]" 
-                                required>
-                            ${generateDosenOptions()}
-                        </select>
+                        <div class="autocomplete-wrapper">
+                            <input type="text" 
+                                   class="form-control form-control-sm dosen-autocomplete" 
+                                   placeholder="Ketik nama/NIP..."
+                                   autocomplete="off"
+                                   data-target="pembimbing_2">
+                            <input type="hidden" 
+                                   name="pembimbing[${rowIndex}][pembimbing_2]" 
+                                   class="dosen-id-hidden">
+                            <div class="autocomplete-suggestions dosen-suggestions"></div>
+                        </div>
                     </td>
                     <td class="text-center">
                         <button type="button" class="btn btn-danger btn-sm btn-remove">
@@ -271,6 +329,14 @@
             `;
             
             $('#bodyPembimbing').append(newRow);
+            
+            // Initialize autocomplete for new row
+            const newRowElement = $(`#bodyPembimbing tr[data-index="${rowIndex}"]`);
+            initMahasiswaAutocomplete(newRowElement.find('.mahasiswa-autocomplete')[0]);
+            newRowElement.find('.dosen-autocomplete').each(function() {
+                initDosenAutocomplete(this);
+            });
+            
             updateRowNumbers();
             console.log('Row added, current count:', $('#bodyPembimbing tr').length);
         });
@@ -288,13 +354,6 @@
             });
         }
         
-        // Auto-fill NIM when mahasiswa is selected
-        $(document).on('change', '.mahasiswa-select', function() {
-            const selectedOption = $(this).find('option:selected');
-            const nim = selectedOption.data('nim');
-            $(this).closest('tr').find('.nim-display').val(nim || '');
-        });
-        
         // Form validation
         $('#formPembimbingSkripsi').on('submit', function(e) {
             const rowCount = $('#bodyPembimbing tr').length;
@@ -305,11 +364,24 @@
                 return false;
             }
             
-            // Validate pembimbing tidak sama
+            // Validate all required fields
             let hasError = false;
             $('#bodyPembimbing tr').each(function() {
-                const pembimbing1 = $(this).find('select[name*="[pembimbing_1]"]').val();
-                const pembimbing2 = $(this).find('select[name*="[pembimbing_2]"]').val();
+                const mahasiswaId = $(this).find('.mahasiswa-id-hidden').val();
+                const pembimbing1 = $(this).find('input[name*="[pembimbing_1]"]').val();
+                const pembimbing2 = $(this).find('input[name*="[pembimbing_2]"]').val();
+                
+                if (!mahasiswaId) {
+                    alert('Harap pilih mahasiswa dari daftar rekomendasi!');
+                    hasError = true;
+                    return false;
+                }
+                
+                if (!pembimbing1 || !pembimbing2) {
+                    alert('Harap pilih pembimbing 1 dan pembimbing 2 dari daftar rekomendasi!');
+                    hasError = true;
+                    return false;
+                }
                 
                 if (pembimbing1 && pembimbing2 && pembimbing1 === pembimbing2) {
                     alert('Pembimbing 1 dan Pembimbing 2 tidak boleh sama!');
@@ -331,6 +403,179 @@
         console.log('Triggering first row addition...');
         $('#tambahPembimbing').trigger('click');
     });
+    
+    // Initialize autocomplete for mahasiswa
+    function initMahasiswaAutocomplete(inputElement) {
+        const wrapper = inputElement.closest('.autocomplete-wrapper');
+        const hiddenInput = wrapper.querySelector('.mahasiswa-id-hidden');
+        const suggestionsDiv = wrapper.querySelector('.mahasiswa-suggestions');
+        const row = inputElement.closest('tr');
+        let activeIndex = -1;
+        
+        inputElement.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            hiddenInput.value = '';
+            row.querySelector('.nim-display').value = '';
+            
+            if (searchTerm.length < 2) {
+                suggestionsDiv.classList.remove('show');
+                suggestionsDiv.innerHTML = '';
+                return;
+            }
+            
+            // Filter mahasiswa
+            const filtered = mahasiswas.filter(mhs => {
+                const nama = mhs.Nama_Mahasiswa.toLowerCase();
+                const nim = String(mhs.NIM).toLowerCase();
+                return nama.includes(searchTerm) || nim.includes(searchTerm);
+            });
+            
+            // Build suggestions HTML
+            if (filtered.length > 0) {
+                suggestionsDiv.innerHTML = filtered.slice(0, 10).map((mhs, index) => `
+                    <div class="autocomplete-item" data-id="${mhs.Id_Mahasiswa}" data-nama="${mhs.Nama_Mahasiswa}" data-nim="${mhs.NIM}" data-index="${index}">
+                        <div class="item-name">${mhs.Nama_Mahasiswa}</div>
+                        <div class="item-info">NIM: ${mhs.NIM}</div>
+                    </div>
+                `).join('');
+            } else {
+                suggestionsDiv.innerHTML = '<div class="autocomplete-no-result">Mahasiswa tidak ditemukan</div>';
+            }
+            
+            suggestionsDiv.classList.add('show');
+            activeIndex = -1;
+            
+            // Add click handlers
+            suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    inputElement.value = this.dataset.nama;
+                    hiddenInput.value = this.dataset.id;
+                    row.querySelector('.nim-display').value = this.dataset.nim;
+                    suggestionsDiv.classList.remove('show');
+                });
+            });
+        });
+        
+        // Keyboard navigation
+        inputElement.addEventListener('keydown', function(e) {
+            const items = suggestionsDiv.querySelectorAll('.autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                updateActiveItem(items, activeIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActiveItem(items, activeIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    items[activeIndex].click();
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Close on outside click
+        document.addEventListener('click', function(e) {
+            if (!inputElement.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+    }
+    
+    // Initialize autocomplete for dosen
+    function initDosenAutocomplete(inputElement) {
+        const wrapper = inputElement.closest('.autocomplete-wrapper');
+        const hiddenInput = wrapper.querySelector('.dosen-id-hidden');
+        const suggestionsDiv = wrapper.querySelector('.dosen-suggestions');
+        let activeIndex = -1;
+        
+        inputElement.addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase().trim();
+            hiddenInput.value = '';
+            
+            if (searchTerm.length < 2) {
+                suggestionsDiv.classList.remove('show');
+                suggestionsDiv.innerHTML = '';
+                return;
+            }
+            
+            // Filter dosen
+            const filtered = dosens.filter(dosen => {
+                const nama = dosen.Nama_Dosen.toLowerCase();
+                const nip = String(dosen.NIP).toLowerCase();
+                return nama.includes(searchTerm) || nip.includes(searchTerm);
+            });
+            
+            // Build suggestions HTML
+            if (filtered.length > 0) {
+                suggestionsDiv.innerHTML = filtered.slice(0, 10).map((dosen, index) => `
+                    <div class="autocomplete-item" data-id="${dosen.Id_Dosen}" data-nama="${dosen.Nama_Dosen}" data-index="${index}">
+                        <div class="item-name">${dosen.Nama_Dosen}</div>
+                        <div class="item-info">NIP: ${dosen.NIP}</div>
+                    </div>
+                `).join('');
+            } else {
+                suggestionsDiv.innerHTML = '<div class="autocomplete-no-result">Dosen tidak ditemukan</div>';
+            }
+            
+            suggestionsDiv.classList.add('show');
+            activeIndex = -1;
+            
+            // Add click handlers
+            suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    inputElement.value = this.dataset.nama;
+                    hiddenInput.value = this.dataset.id;
+                    suggestionsDiv.classList.remove('show');
+                });
+            });
+        });
+        
+        // Keyboard navigation
+        inputElement.addEventListener('keydown', function(e) {
+            const items = suggestionsDiv.querySelectorAll('.autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                updateActiveItem(items, activeIndex);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActiveItem(items, activeIndex);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    items[activeIndex].click();
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Close on outside click
+        document.addEventListener('click', function(e) {
+            if (!inputElement.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+    }
+    
+    // Helper function to update active item
+    function updateActiveItem(items, activeIndex) {
+        items.forEach((item, index) => {
+            if (index === activeIndex) {
+                item.classList.add('active');
+                item.scrollIntoView({ block: 'nearest' });
+            } else {
+                item.classList.remove('active');
+            }
+        });
+    }
 </script>
 @endpush
 

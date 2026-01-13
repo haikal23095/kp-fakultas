@@ -853,17 +853,18 @@
         })
         .then(data => {
             if (data.success) {
-                alert('SK berhasil diajukan!');
-                window.location.reload();
+                Swal.fire('Berhasil', data.message || 'SK berhasil diajukan', 'success').then(() => {
+                    window.location.reload();
+                });
             } else {
-                alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+                Swal.fire('Error', data.message || 'Gagal mengajukan SK', 'error');
                 btnSubmit.disabled = false;
                 btnSubmit.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Ajukan SK';
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan: ' + error.message);
+            Swal.fire('Error', 'Terjadi kesalahan: ' + error.message, 'error');
             btnSubmit.disabled = false;
             btnSubmit.innerHTML = '<i class="fas fa-paper-plane me-1"></i>Ajukan SK';
         });

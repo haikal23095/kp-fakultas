@@ -882,14 +882,16 @@
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                window.location.reload();
+                Swal.fire('Berhasil', data.message || 'SK berhasil diajukan', 'success').then(() => {
+                    window.location.reload();
+                });
             } else {
-                alert('Gagal: ' + (data.message || 'Terjadi kesalahan'));
+                Swal.fire('Error', data.message || 'Gagal mengajukan SK', 'error');
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat mengirim data');
+            Swal.fire('Error', 'Terjadi kesalahan saat mengirim data', 'error');
         });
     }
 
