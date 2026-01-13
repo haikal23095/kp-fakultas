@@ -27,38 +27,21 @@ class SKController extends Controller
      */
     public function index()
     {
-        // Get counts for each SK type
-        // For now, we only have SK Dosen Wali implemented
-        $skDosenWaliCount = SKDosenWali::where('Status', '!=', 'Selesai')
-            ->where('Status', '!=', 'Ditolak')
-            ->where('Status', '!=', 'Ditolak-Admin')
-            ->count();
+        // Get counts for each SK type - only "Dikerjakan admin" status
+        $skDosenWaliCount = SKDosenWali::where('Status', 'Dikerjakan admin')->count();
+        $skDosenWaliTotal = SKDosenWali::where('Status', 'Dikerjakan admin')->count();
 
-        $skDosenWaliTotal = SKDosenWali::count();
+        // Get SK Beban Mengajar count - only "Dikerjakan admin" status
+        $skBebanMengajarCount = SKBebanMengajar::where('Status', 'Dikerjakan admin')->count();
+        $skBebanMengajarTotal = SKBebanMengajar::where('Status', 'Dikerjakan admin')->count();
 
-        // Get SK Beban Mengajar count
-        $skBebanMengajarCount = SKBebanMengajar::where('Status', '!=', 'Selesai')
-            ->where('Status', '!=', 'Ditolak')
-            ->where('Status', '!=', 'Ditolak-Admin')
-            ->count();
+        // Get SK Pembimbing Skripsi count - only "Dikerjakan admin" status
+        $skPembimbingSkripsiCount = ReqSKPembimbingSkripsi::where('Status', 'Dikerjakan admin')->count();
+        $skPembimbingSkripsiTotal = ReqSKPembimbingSkripsi::where('Status', 'Dikerjakan admin')->count();
 
-        $skBebanMengajarTotal = SKBebanMengajar::count();
-
-        // Get SK Pembimbing Skripsi count
-        $skPembimbingSkripsiCount = ReqSKPembimbingSkripsi::where('Status', '!=', 'Selesai')
-            ->where('Status', '!=', 'Ditolak')
-            ->where('Status', '!=', 'Ditolak-Admin')
-            ->count();
-
-        $skPembimbingSkripsiTotal = AccSKPembimbingSkripsi::count();
-
-        // Get SK Penguji Skripsi count
-        $skPengujiSkripsiCount = ReqSKPengujiSkripsi::where('Status', '!=', 'Selesai')
-            ->where('Status', '!=', 'Ditolak-Admin')
-            ->where('Status', '!=', 'Ditolak-Dekan')
-            ->count();
-
-        $skPengujiSkripsiTotal = ReqSKPengujiSkripsi::count();
+        // Get SK Penguji Skripsi count - only "Dikerjakan admin" status
+        $skPengujiSkripsiCount = ReqSKPengujiSkripsi::where('Status', 'Dikerjakan admin')->count();
+        $skPengujiSkripsiTotal = ReqSKPengujiSkripsi::where('Status', 'Dikerjakan admin')->count();
 
         return view('admin_fakultas.sk.index', compact(
             'skDosenWaliCount',
@@ -79,11 +62,10 @@ class SKController extends Controller
     {
         $query = SKDosenWali::with('prodi');
 
-        // Apply filters
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        }
+        // Hanya tampilkan SK dengan status "Dikerjakan admin"
+        $query->where('Status', 'Dikerjakan admin');
 
+        // Apply filters
         if ($request->filled('prodi')) {
             $query->where('Id_Prodi', $request->prodi);
         }
@@ -546,11 +528,10 @@ class SKController extends Controller
     {
         $query = SKBebanMengajar::with('prodi');
 
-        // Apply filters
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        }
+        // Hanya tampilkan SK dengan status "Dikerjakan admin"
+        $query->where('Status', 'Dikerjakan admin');
 
+        // Apply filters
         if ($request->filled('prodi')) {
             $query->where('Id_Prodi', $request->prodi);
         }
@@ -981,11 +962,10 @@ class SKController extends Controller
     {
         $query = ReqSKPembimbingSkripsi::with(['prodi', 'kaprodi']);
 
-        // Apply filters
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        }
+        // Hanya tampilkan SK dengan status "Dikerjakan admin"
+        $query->where('Status', 'Dikerjakan admin');
 
+        // Apply filters
         if ($request->filled('semester')) {
             $query->where('Semester', $request->semester);
         }
@@ -1380,11 +1360,10 @@ class SKController extends Controller
     {
         $query = ReqSKPengujiSkripsi::with(['prodi', 'kaprodi']);
 
-        // Apply filters
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        }
+        // Hanya tampilkan SK dengan status "Dikerjakan admin"
+        $query->where('Status', 'Dikerjakan admin');
 
+        // Apply filters
         if ($request->filled('semester')) {
             $query->where('Semester', $request->semester);
         }

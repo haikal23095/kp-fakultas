@@ -129,26 +129,14 @@
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-4">
-                <select class="form-select" id="filterStatus">
-                    <option value="">Semua Status</option>
-                    <option value="Dikerjakan admin">Dikerjakan Admin</option>
-                    <option value="Menunggu-Persetujuan-Wadek-1">Menunggu Wadek 1</option>
-                    <option value="Menunggu-Persetujuan-Dekan">Menunggu Dekan</option>
-                    <option value="Selesai">Selesai</option>
-                    <option value="Ditolak-Admin">Ditolak Admin</option>
-                    <option value="Ditolak-Wadek1">Ditolak Wadek 1</option>
-                    <option value="Ditolak-Dekan">Ditolak Dekan</option>
-                </select>
-            </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <select class="form-select" id="filterSemester">
                     <option value="">Semua Semester</option>
                     <option value="Ganjil">Ganjil</option>
                     <option value="Genap">Genap</option>
                 </select>
             </div>
-            <div class="col-md-4">
+            <div class="col-md-6">
                 <button class="btn btn-primary w-100" onclick="applyFilters()">
                     <i class="fas fa-filter me-2"></i>Filter
                 </button>
@@ -660,12 +648,9 @@
     });
 
     function applyFilters() {
-        const status = $('#filterStatus').val();
         const semester = $('#filterSemester').val();
         
         let url = new URL(window.location.href);
-        if (status) url.searchParams.set('status', status);
-        else url.searchParams.delete('status');
         
         if (semester) url.searchParams.set('semester', semester);
         else url.searchParams.delete('semester');

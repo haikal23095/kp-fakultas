@@ -247,6 +247,63 @@
     .btn-hapus:hover {
         transform: scale(1.1);
     }
+    
+    /* Autocomplete Styles */
+    .autocomplete-wrapper {
+        position: relative;
+    }
+    
+    .autocomplete-suggestions {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        max-height: 200px;
+        overflow-y: auto;
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-top: none;
+        border-radius: 0 0 0.375rem 0.375rem;
+        z-index: 1050;
+        display: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    
+    .autocomplete-suggestions.show {
+        display: block;
+    }
+    
+    .autocomplete-item {
+        padding: 8px 12px;
+        cursor: pointer;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 0.875rem;
+    }
+    
+    .autocomplete-item:last-child {
+        border-bottom: none;
+    }
+    
+    .autocomplete-item:hover,
+    .autocomplete-item.active {
+        background-color: #e9ecef;
+    }
+    
+    .autocomplete-item .dosen-name {
+        font-weight: 500;
+    }
+    
+    .autocomplete-item .dosen-nip {
+        font-size: 0.75rem;
+        color: #6c757d;
+    }
+    
+    .autocomplete-no-result {
+        padding: 8px 12px;
+        color: #6c757d;
+        font-style: italic;
+        font-size: 0.875rem;
+    }
 </style>
 @endpush
 
@@ -295,16 +352,28 @@
         row.innerHTML = `
             <td class="text-center align-middle">${counter}</td>
             <td>
-                <select class="form-select form-select-sm" name="beban[${counter}][dosen_id]" required>
-                    ${dosenOptions}
-                </select>
+                <div class="autocomplete-wrapper">
+                    <input type="text" 
+                           class="form-control form-control-sm dosen-autocomplete" 
+                           data-row="${counter}"
+                           placeholder="Ketik nama dosen..." 
+                           autocomplete="off"
+                           required>
+                    <input type="hidden" name="beban[${counter}][dosen_id]" class="dosen-id-hidden" required>
+                    <div class="autocomplete-suggestions"></div>
+                </div>
             </td>
             <td>
-                <select class="form-select form-select-sm mata-kuliah-select" 
-                        data-row="${counter}" 
-                        required>
-                    ${mataKuliahOptions}
-                </select>
+                <div class="autocomplete-wrapper">
+                    <input type="text" 
+                           class="form-control form-control-sm matakuliah-autocomplete" 
+                           data-row="${counter}"
+                           placeholder="Ketik nama mata kuliah..." 
+                           autocomplete="off"
+                           required>
+                    <input type="hidden" class="matakuliah-name-hidden" required>
+                    <div class="autocomplete-suggestions"></div>
+                </div>
             </td>
             <td>
                 <select class="form-select form-select-sm kelas-select" 
@@ -336,38 +405,9 @@
         
         tbody.appendChild(row);
         
-        // Add event listener untuk mata kuliah change
-        const mataKuliahSelect = row.querySelector('.mata-kuliah-select');
+        // Get elements
         const kelasSelect = row.querySelector('.kelas-select');
         const sksInput = row.querySelector('.sks-input');
-        
-        mataKuliahSelect.addEventListener('change', function() {
-            const namaMataKuliah = this.value;
-            kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
-            
-            if (namaMataKuliah) {
-                const kelasList = getKelasByMataKuliah(namaMataKuliah);
-                
-                kelasList.forEach(kelas => {
-                    const option = document.createElement('option');
-                    option.value = kelas.Nomor;
-                    option.textContent = kelas.Kelas;
-                    option.dataset.sks = kelas.SKS;
-                    kelasSelect.appendChild(option);
-                });
-                
-                kelasSelect.disabled = false;
-                
-                // Set SKS dari mata kuliah yang dipilih
-                const selectedOption = this.options[this.selectedIndex];
-                sksInput.value = selectedOption.dataset.sks || 3;
-            } else {
-                kelasSelect.disabled = true;
-                sksInput.value = 3;
-            }
-            
-            updateTotalSKS();
-        });
         
         // Add event listener untuk kelas change (update SKS jika berbeda)
         kelasSelect.addEventListener('change', function() {
@@ -381,9 +421,273 @@
         // Add event listener untuk update total SKS
         sksInput.addEventListener('input', updateTotalSKS);
         
+        // Initialize autocomplete untuk dosen
+        const dosenInput = row.querySelector('.dosen-autocomplete');
+        initDosenAutocomplete(dosenInput);
+        
+        // Initialize autocomplete untuk mata kuliah
+        const mataKuliahInput = row.querySelector('.matakuliah-autocomplete');
+        initMataKuliahAutocomplete(mataKuliahInput, kelasSelect, sksInput);
+        
         updateNomor();
         updateTotalSKS();
     });
+    
+    // Initialize autocomplete untuk input dosen
+    function initDosenAutocomplete(inputElement) {
+        const wrapper = inputElement.closest('.autocomplete-wrapper');
+        const suggestionsDiv = wrapper.querySelector('.autocomplete-suggestions');
+        const hiddenInput = wrapper.querySelector('.dosen-id-hidden');
+        let activeIndex = -1;
+        
+        // Filter dan tampilkan suggestions
+        function showSuggestions(searchTerm) {
+            const filtered = dosens.filter(dosen => 
+                dosen.Nama_Dosen.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (dosen.NIP && dosen.NIP.includes(searchTerm))
+            );
+            
+            if (filtered.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="autocomplete-no-result">Tidak ada dosen ditemukan</div>';
+            } else {
+                suggestionsDiv.innerHTML = filtered.map((dosen, index) => `
+                    <div class="autocomplete-item" data-id="${dosen.Id_Dosen}" data-name="${dosen.Nama_Dosen}" data-index="${index}">
+                        <div class="dosen-name">${dosen.Nama_Dosen}</div>
+                        <div class="dosen-nip">${dosen.NIP || '-'}</div>
+                    </div>
+                `).join('');
+                
+                // Add click handlers
+                suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        selectDosen(this.dataset.id, this.dataset.name);
+                    });
+                });
+            }
+            
+            suggestionsDiv.classList.add('show');
+            activeIndex = -1;
+        }
+        
+        // Select dosen
+        function selectDosen(id, name) {
+            inputElement.value = name;
+            hiddenInput.value = id;
+            suggestionsDiv.classList.remove('show');
+            inputElement.classList.remove('is-invalid');
+            inputElement.classList.add('is-valid');
+        }
+        
+        // Input event
+        inputElement.addEventListener('input', function() {
+            const value = this.value.trim();
+            hiddenInput.value = ''; // Reset hidden input saat user mengetik
+            inputElement.classList.remove('is-valid');
+            
+            if (value.length >= 1) {
+                showSuggestions(value);
+            } else {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Focus event - show all if empty
+        inputElement.addEventListener('focus', function() {
+            if (this.value.trim().length >= 1) {
+                showSuggestions(this.value.trim());
+            }
+        });
+        
+        // Keyboard navigation
+        inputElement.addEventListener('keydown', function(e) {
+            const items = suggestionsDiv.querySelectorAll('.autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                updateActiveItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActiveItem(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    const item = items[activeIndex];
+                    selectDosen(item.dataset.id, item.dataset.name);
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        function updateActiveItem(items) {
+            items.forEach((item, index) => {
+                item.classList.toggle('active', index === activeIndex);
+            });
+            if (items[activeIndex]) {
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Validation on blur
+        inputElement.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (!hiddenInput.value && this.value.trim()) {
+                    // User typed something but didn't select
+                    this.classList.add('is-invalid');
+                }
+            }, 200);
+        });
+    }
+    
+    // Initialize autocomplete untuk input mata kuliah
+    function initMataKuliahAutocomplete(inputElement, kelasSelect, sksInput) {
+        const wrapper = inputElement.closest('.autocomplete-wrapper');
+        const suggestionsDiv = wrapper.querySelector('.autocomplete-suggestions');
+        const hiddenInput = wrapper.querySelector('.matakuliah-name-hidden');
+        let activeIndex = -1;
+        
+        // Filter dan tampilkan suggestions
+        function showSuggestions(searchTerm) {
+            const filtered = mataKuliahList.filter(mk => 
+                mk.Nama_Matakuliah.toLowerCase().includes(searchTerm.toLowerCase())
+            );
+            
+            if (filtered.length === 0) {
+                suggestionsDiv.innerHTML = '<div class="autocomplete-no-result">Tidak ada mata kuliah ditemukan</div>';
+            } else {
+                suggestionsDiv.innerHTML = filtered.map((mk, index) => `
+                    <div class="autocomplete-item" data-name="${mk.Nama_Matakuliah}" data-sks="${mk.SKS}" data-index="${index}">
+                        <div class="dosen-name">${mk.Nama_Matakuliah}</div>
+                        <div class="dosen-nip">${mk.SKS} SKS</div>
+                    </div>
+                `).join('');
+                
+                // Add click handlers
+                suggestionsDiv.querySelectorAll('.autocomplete-item').forEach(item => {
+                    item.addEventListener('click', function() {
+                        selectMataKuliah(this.dataset.name, this.dataset.sks);
+                    });
+                });
+            }
+            
+            suggestionsDiv.classList.add('show');
+            activeIndex = -1;
+        }
+        
+        // Select mata kuliah
+        function selectMataKuliah(name, sks) {
+            inputElement.value = name;
+            hiddenInput.value = name;
+            suggestionsDiv.classList.remove('show');
+            inputElement.classList.remove('is-invalid');
+            inputElement.classList.add('is-valid');
+            
+            // Update kelas dropdown
+            kelasSelect.innerHTML = '<option value="">-- Pilih Kelas --</option>';
+            
+            if (name) {
+                const kelasByMK = getKelasByMataKuliah(name);
+                
+                kelasByMK.forEach(kelas => {
+                    const option = document.createElement('option');
+                    option.value = kelas.Nomor;
+                    option.textContent = kelas.Kelas;
+                    option.dataset.sks = kelas.SKS;
+                    kelasSelect.appendChild(option);
+                });
+                
+                kelasSelect.disabled = false;
+                sksInput.value = sks || 3;
+            } else {
+                kelasSelect.disabled = true;
+                sksInput.value = 3;
+            }
+            
+            updateTotalSKS();
+        }
+        
+        // Input event
+        inputElement.addEventListener('input', function() {
+            const value = this.value.trim();
+            hiddenInput.value = ''; // Reset hidden input saat user mengetik
+            inputElement.classList.remove('is-valid');
+            
+            // Reset kelas dropdown
+            kelasSelect.innerHTML = '<option value="">-- Pilih MK dulu --</option>';
+            kelasSelect.disabled = true;
+            
+            if (value.length >= 1) {
+                showSuggestions(value);
+            } else {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Focus event - show all if empty
+        inputElement.addEventListener('focus', function() {
+            if (this.value.trim().length >= 1) {
+                showSuggestions(this.value.trim());
+            }
+        });
+        
+        // Keyboard navigation
+        inputElement.addEventListener('keydown', function(e) {
+            const items = suggestionsDiv.querySelectorAll('.autocomplete-item');
+            
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                activeIndex = Math.min(activeIndex + 1, items.length - 1);
+                updateActiveItem(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                activeIndex = Math.max(activeIndex - 1, 0);
+                updateActiveItem(items);
+            } else if (e.key === 'Enter') {
+                e.preventDefault();
+                if (activeIndex >= 0 && items[activeIndex]) {
+                    const item = items[activeIndex];
+                    selectMataKuliah(item.dataset.name, item.dataset.sks);
+                }
+            } else if (e.key === 'Escape') {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        function updateActiveItem(items) {
+            items.forEach((item, index) => {
+                item.classList.toggle('active', index === activeIndex);
+            });
+            if (items[activeIndex]) {
+                items[activeIndex].scrollIntoView({ block: 'nearest' });
+            }
+        }
+        
+        // Close suggestions when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!wrapper.contains(e.target)) {
+                suggestionsDiv.classList.remove('show');
+            }
+        });
+        
+        // Validation on blur
+        inputElement.addEventListener('blur', function() {
+            setTimeout(() => {
+                if (!hiddenInput.value && this.value.trim()) {
+                    // User typed something but didn't select
+                    this.classList.add('is-invalid');
+                }
+            }, 200);
+        });
+    }
     
     // Hapus baris
     function hapusBaris(id) {
