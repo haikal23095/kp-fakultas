@@ -1590,30 +1590,7 @@ class SKController extends Controller
             $sk->Status = $hasDitolakDekan ? 'Menunggu-Persetujuan-Dekan' : 'Menunggu-Persetujuan-Wadek-1';
             $sk->save();
 
-            // Send notification to Wadek 1 or Dekan
-            $targetRoleName = $hasDitolakDekan ? 'Dekan' : 'Wadek1';
-            $targetUsers = User::whereHas('role', function ($q) use ($targetRoleName) {
-                $q->where('Name_Role', $targetRoleName);
-            })->get();
-
             $targetRoleDisplay = $hasDitolakDekan ? 'Dekan' : 'Wadek 1';
-
-            foreach ($targetUsers as $targetUser) {
-                Notifikasi::create([
-                    'Dest_user' => $targetUser->Id_User,
-                    'Source_User' => Auth::id(),
-                    'Tipe_Notifikasi' => 'Accepted',
-                    'Pesan' => 'SK Penguji Skripsi baru menunggu persetujuan Anda. Semester ' .
-                        $sk->Semester . ' ' . $sk->Tahun_Akademik . ' - ' . ($sk->prodi->Nama_Prodi ?? 'Prodi'),
-                    'Data_Tambahan' => json_encode([
-                        'sk_type' => 'penguji-skripsi',
-                        'acc_id' => $accSK->No,
-                        'url' => '#' // Placeholder until routes are created
-                    ]),
-                    'Is_Read' => false,
-                    'created_at' => now()
-                ]);
-            }
 
             DB::commit();
 

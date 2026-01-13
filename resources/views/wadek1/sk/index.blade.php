@@ -32,7 +32,7 @@
                 <a href="{{ route('wadek1.sk.beban-mengajar.index') }}" class="btn btn-primary btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-primary d-block mt-2" style="font-size: 0.7rem;">Tersedia</small>
+                <small class="text-primary d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skBebanMengajarTotal ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -82,7 +82,7 @@
                 <a href="{{ route('wadek1.sk.pembimbing-skripsi.index') }}" class="btn btn-warning btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-warning d-block mt-2" style="font-size: 0.7rem;">Tersedia</small>
+                <small class="text-warning d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPembimbingSkripsiTotal ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -107,7 +107,7 @@
                 <a href="{{ route('wadek1.sk.penguji-skripsi.index') }}" class="btn btn-danger btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-danger d-block mt-2" style="font-size: 0.7rem;">Tersedia</small>
+                <small class="text-danger d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPengujiSkripsiTotal ?? 0 }} SK</small>
             </div>
         </div>
     </div>

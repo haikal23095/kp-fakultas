@@ -32,19 +32,25 @@ class SKController extends Controller
 
         // Jumlah SK Beban Mengajar yang menunggu persetujuan Wadek 1
         $skBebanMengajarCount = \App\Models\AccSKBebanMengajar::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
+        $skBebanMengajarTotal = \App\Models\AccSKBebanMengajar::count();
 
         // Jumlah SK Pembimbing Skripsi yang menunggu persetujuan Wadek 1
         $skPembimbingSkripsiCount = AccSKPembimbingSkripsi::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
+        $skPembimbingSkripsiTotal = AccSKPembimbingSkripsi::count();
 
         // Jumlah SK Penguji Skripsi yang menunggu persetujuan Wadek 1
         $skPengujiSkripsiCount = AccSKPengujiSkripsi::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
+        $skPengujiSkripsiTotal = AccSKPengujiSkripsi::count();
 
         return view('wadek1.sk.index', compact(
             'skDosenWaliCount',
             'skDosenWaliTotal',
             'skBebanMengajarCount',
+            'skBebanMengajarTotal',
             'skPembimbingSkripsiCount',
-            'skPengujiSkripsiCount'
+            'skPembimbingSkripsiTotal',
+            'skPengujiSkripsiCount',
+            'skPengujiSkripsiTotal'
         ));
     }
 
