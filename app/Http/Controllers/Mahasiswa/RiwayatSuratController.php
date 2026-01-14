@@ -25,41 +25,53 @@ class RiwayatSuratController extends Controller
         $user = Auth::user();
         $type = $request->query('type');
 
-        // Hitung jumlah surat per jenis
-        $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 3)->count();
+        // Hitung jumlah surat per jenis (sesuai dengan method detail masing-masing)
+        
+        // Count Surat Keterangan Aktif (Id_Jenis_Surat = 1, sesuai riwayatAktif())
+        $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 1)
+            ->count();
 
-        // Ambil jumlah magang langsung dari tabel Surat_Magang via relasi TugasSurat
+        // Count Magang - langsung dari tabel Surat_Magang (sesuai riwayatMagang())
         $countMagang = SuratMagang::whereHas('tugasSurat', function ($query) use ($user) {
             $query->where('Id_Pemberi_Tugas_Surat', $user->Id_User);
         })->count();
 
-        // Cari ID Jenis Surat untuk Legalisir
-        $jenisSuratLegalisir = \App\Models\JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
-        $countLegalisir = 0;
-        if ($jenisSuratLegalisir) {
-            $countLegalisir = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-                ->where('Id_Jenis_Surat', $jenisSuratLegalisir->Id_Jenis_Surat)
-                ->count();
-        }
+        // Count Legalisir - langsung dari tabel Surat_Legalisir (sesuai riwayatLegalisir())
+        $countLegalisir = SuratLegalisir::where('Id_User', $user->Id_User)->count();
 
-        // Hitung jenis surat lainnya
-        $countMobilDinas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 15)->count();
+        // Count Peminjaman Mobil Dinas (Id_Jenis_Surat = 4)
+        $countMobilDinas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('Id_Jenis_Surat', 4)
+            ->count();
+        
+        // Count Tidak Menerima Beasiswa (sesuai riwayatTidakBeasiswa())
         $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
             ->where('Id_Jenis_Surat', 6)
             ->whereHas('suratTidakBeasiswa')
             ->count();
-        $countCekPlagiasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 17)->count();
-        $countDispensasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 18)->count();
+        
+        // Count Dispensasi (sesuai riwayatDispensasi())
+        $countDispensasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->whereHas('suratDispensasi')
+            ->count();
+        
+        // Count Berkelakuan Baik (sesuai riwayatBerkelakuanBaik())
         $countBerkelakuanBaik = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
             ->whereHas('jenisSurat', function($q) {
                 $q->where('Nama_Surat', 'LIKE', '%Berkelakuan Baik%');
             })
             ->count();
-        $countSuratTugas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 20)->count();
-        $countMBKM = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 21)->count();
-        $countPeminjamanGedung = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 22)->count();
-        $countLembur = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 23)->count();
-        $countPeminjamanRuang = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)->where('Id_Jenis_Surat', 24)->count();
+        
+        // Count Surat Tugas (belum tersedia - return 0)
+        $countSuratTugas = 0;
+        
+        // Count yang sudah dihapus dari view (tidak perlu lagi tapi tetap ada untuk backward compatibility)
+        $countCekPlagiasi = 0;
+        $countMBKM = 0;
+        $countPeminjamanGedung = 0;
+        $countLembur = 0;
+        $countPeminjamanRuang = 0;
 
         return view('mahasiswa.riwayat', [
             'countAktif' => $countAktif,

@@ -157,6 +157,11 @@ class DetailSuratController extends Controller
             'Dest_user' => $tugas->Id_Pemberi_Tugas_Surat,
             'Source_User' => $user->Id_User,
             'Is_Read' => false,
+            'Data_Tambahan' => json_encode([
+                'id_tugas_surat' => $tugas->Id_Tugas_Surat,
+                'jenis_surat' => $this->getJenisSuratSlug($tugas),
+                'action_url' => $this->getActionUrlForMahasiswa($tugas),
+            ]),
             'created_at' => now(),
         ]);
 
@@ -202,6 +207,12 @@ class DetailSuratController extends Controller
                 'Dest_user' => $dekan->Id_User,
                 'Source_User' => $user->Id_User,
                 'Is_Read' => false,
+                'Data_Tambahan' => json_encode([
+                    'id_tugas_surat' => $tugas->Id_Tugas_Surat,
+                    'nomor_surat' => $tugas->Nomor_Surat,
+                    'jenis_surat' => $this->getJenisSuratSlug($tugas),
+                    'action_url' => route('dekan.surat.pending'),
+                ]),
                 'created_at' => now(),
             ]);
         }
@@ -210,6 +221,45 @@ class DetailSuratController extends Controller
 
         return redirect()->route('admin_fakultas.surat.detail', $tugas->Id_Tugas_Surat)
             ->with('success', 'Nomor surat disimpan dan surat diteruskan ke Dekan.');
+    }
+
+    /**
+     * Helper: Get jenis surat slug from TugasSurat
+     */
+    private function getJenisSuratSlug($tugasSurat)
+    {
+        if ($tugasSurat->suratKetAktif) return 'aktif';
+        if ($tugasSurat->suratMagang) return 'magang';
+        if ($tugasSurat->suratLegalisir) return 'legalisir';
+        if ($tugasSurat->suratTidakBeasiswa) return 'tidak_beasiswa';
+        if ($tugasSurat->suratDispensasi) return 'dispensasi';
+        if ($tugasSurat->suratKelakuanBaik) return 'berkelakuan_baik';
+        
+        // Fallback berdasarkan Id_Jenis_Surat
+        if ($tugasSurat->Id_Jenis_Surat == 1) return 'aktif';
+        if ($tugasSurat->Id_Jenis_Surat == 2) return 'magang';
+        if ($tugasSurat->Id_Jenis_Surat == 4) return 'mobil_dinas';
+        
+        return 'general';
+    }
+
+    /**
+     * Helper: Get action URL for mahasiswa based on jenis surat
+     */
+    private function getActionUrlForMahasiswa($tugasSurat)
+    {
+        $jenisSurat = $this->getJenisSuratSlug($tugasSurat);
+        
+        return match($jenisSurat) {
+            'aktif' => route('mahasiswa.riwayat.aktif'),
+            'magang' => route('mahasiswa.riwayat.magang'),
+            'legalisir' => route('mahasiswa.riwayat.legalisir'),
+            'mobil_dinas' => route('mahasiswa.riwayat.mobil_dinas'),
+            'tidak_beasiswa' => route('mahasiswa.riwayat.tidak_beasiswa'),
+            'dispensasi' => route('mahasiswa.riwayat.dispensasi'),
+            'berkelakuan_baik' => route('mahasiswa.riwayat.berkelakuan_baik'),
+            default => route('mahasiswa.riwayat'),
+        };
     }
 
     /**

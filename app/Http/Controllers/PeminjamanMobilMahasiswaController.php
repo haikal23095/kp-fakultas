@@ -71,6 +71,23 @@ class PeminjamanMobilMahasiswaController extends Controller
                 'status_pengajuan' => 'Diajukan',
             ]);
 
+            // 3. Kirim notifikasi ke Admin Fakultas (Id_Role = 7)
+            $adminFakultas = \App\Models\User::where('Id_Role', 7)->get();
+            foreach ($adminFakultas as $admin) {
+                \App\Models\Notifikasi::create([
+                    'Tipe_Notifikasi' => "Invitation",
+                    'Pesan' => "Pengajuan baru: Peminjaman Mobil Dinas dari " . Auth::user()->Name_User,
+                    'Dest_user' => $admin->Id_User,
+                    'Source_User' => Auth::id(),
+                    'Is_Read' => false,
+                    'Data_Tambahan' => json_encode([
+                        'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
+                        'jenis_surat' => 'mobil_dinas',
+                        'action_url' => route('admin_fakultas.surat.mobil_dinas'),
+                    ]),
+                ]);
+            }
+
             DB::commit();
 
             return redirect()

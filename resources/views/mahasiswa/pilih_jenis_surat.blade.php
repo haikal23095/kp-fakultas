@@ -78,11 +78,6 @@
         color: white;
     }
 
-    .card-cek-plagiasi .surat-icon {
-        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
-        color: white;
-    }
-
     .card-dispensasi .surat-icon {
         background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
         color: white;
@@ -90,21 +85,6 @@
 
     .card-berkelakuan-baik .surat-icon {
         background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
-        color: white;
-    }
-
-    .card-mbkm .surat-icon {
-        background: linear-gradient(135deg, #d299c2 0%, #fef9d7 100%);
-        color: white;
-    }
-
-    .card-peminjaman-gedung .surat-icon {
-        background: linear-gradient(135deg, #fdcbf1 0%, #e6dee9 100%);
-        color: white;
-    }
-
-    .card-peminjaman-ruang .surat-icon {
-        background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
         color: white;
     }
 </style>
@@ -207,21 +187,6 @@
         </a>
     </div>
 
-    {{-- Card Cek Plagiasi --}}
-    <div class="col-lg-4 col-md-6 mb-4">
-        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
-            <div class="card surat-card shadow-sm card-cek-plagiasi">
-                <div class="card-body">
-                    <div class="surat-icon">
-                        <i class="fas fa-search"></i>
-                    </div>
-                    <h5>Cek Plagiasi (Turnitin)</h5>
-                    <p>Permohonan cek plagiasi dokumen/skripsi</p>
-                </div>
-            </div>
-        </a>
-    </div>
-
     {{-- Card Dispensasi --}}
     <div class="col-lg-4 col-md-6 mb-4">
         <a href="{{ route('mahasiswa.pengajuan.dispen.create') }}" class="text-decoration-none">
@@ -247,55 +212,6 @@
                     </div>
                     <h5>Berkelakuan Baik</h5>
                     <p>Surat keterangan berkelakuan baik</p>
-                </div>
-            </div>
-        </a>
-    </div>
-
-
-
-    {{-- Card MBKM --}}
-    <div class="col-lg-4 col-md-6 mb-4">
-        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
-            <div class="card surat-card shadow-sm card-mbkm">
-                <div class="card-body">
-                    <div class="surat-icon">
-                        <i class="fas fa-graduation-cap"></i>
-                    </div>
-                    <h5>Rekomendasi MBKM</h5>
-                    <p>Surat rekomendasi untuk program MBKM</p>
-                </div>
-            </div>
-        </a>
-    </div>
-
-    {{-- Card Peminjaman Gedung --}}
-    <div class="col-lg-4 col-md-6 mb-4">
-        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
-            <div class="card surat-card shadow-sm card-peminjaman-gedung">
-                <div class="card-body">
-                    <div class="surat-icon">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <h5>Peminjaman Gedung</h5>
-                    <p>Ajukan peminjaman gedung dan ruangan</p>
-                </div>
-            </div>
-        </a>
-    </div>
-
-
-
-    {{-- Card Peminjaman Ruang --}}
-    <div class="col-lg-4 col-md-6 mb-4">
-        <a href="#" class="text-decoration-none" onclick="alert('Fitur segera hadir'); return false;">
-            <div class="card surat-card shadow-sm card-peminjaman-ruang">
-                <div class="card-body">
-                    <div class="surat-icon">
-                        <i class="fas fa-door-open"></i>
-                    </div>
-                    <h5>Peminjaman Ruang</h5>
-                    <p>Ajukan peminjaman ruang rapat/lab</p>
                 </div>
             </div>
         </a>

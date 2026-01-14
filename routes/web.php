@@ -88,9 +88,11 @@ Route::middleware('auth')->group(function () {
     // NOTIFIKASI ROUTES (Available for all authenticated users)
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
     Route::get('/notifikasi/recent', [NotifikasiController::class, 'getRecent'])->name('notifikasi.recent');
+    Route::get('/notifikasi/{id}/redirect', [NotifikasiController::class, 'markAsReadAndRedirect'])->name('notifikasi.markReadRedirect');
     Route::post('/notifikasi/{id}/read', [NotifikasiController::class, 'markAsRead'])->name('notifikasi.markRead');
     Route::post('/notifikasi/mark-all-read', [NotifikasiController::class, 'markAllAsRead'])->name('notifikasi.markAllRead');
     Route::delete('/notifikasi/{id}', [NotifikasiController::class, 'destroy'])->name('notifikasi.delete');
+    Route::delete('/notifikasi', [NotifikasiController::class, 'deleteAll'])->name('notifikasi.deleteAll');
 
     // FITUR ADMIN PRODI
     Route::prefix('admin-prodi')->name('admin_prodi.')->group(function () {
@@ -371,9 +373,6 @@ Route::middleware('auth')->group(function () {
 
     // FITUR DOSEN
     Route::prefix('dosen')->name('dosen.')->group(function () {
-        Route::get('/pengajuan', function () {
-            return view('dosen.pengajuan');
-        })->name('pengajuan.index');
         // PENANDA: Rute yang hilang ditambahkan di sini
         Route::get('/riwayat', function () {
             return view('dosen.riwayat');

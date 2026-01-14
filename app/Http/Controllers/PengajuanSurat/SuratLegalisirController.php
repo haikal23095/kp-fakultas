@@ -72,12 +72,17 @@ class SuratLegalisirController extends Controller
 
             // Kirim notifikasi ke mahasiswa
             Notifikasi::create([
-                'Tipe_Notifikasi' => 'Accepted',
+                'Tipe_Notifikasi' => 'Invitation',
                 'Pesan' => 'Pengajuan legalisir ' . $jenisDokumen . ' berhasil dikirim. Menunggu verifikasi admin.',
                 'Dest_user' => $userId,
                 'Source_User' => $userId,
                 'Is_Read' => false,
-                'Data_Tambahan' => json_encode(['entity' => 'legalisir', 'id_tugas' => $tugasSurat->Id_Tugas_Surat]),
+                'Data_Tambahan' => json_encode([
+                    'entity' => 'legalisir', 
+                    'id_tugas' => $tugasSurat->Id_Tugas_Surat,
+                    'jenis_surat' => 'legalisir',
+                    'action_url' => route('mahasiswa.riwayat.legalisir'),
+                ]),
             ]);
 
             DB::commit();
