@@ -704,10 +704,14 @@
             })
         })
         .then(response => {
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            return response.json();
+            // Parse JSON bahkan jika response tidak ok
+            return response.json().then(data => {
+                if (!response.ok) {
+                    // Jika ada error validation atau lainnya
+                    throw { status: response.status, data: data };
+                }
+                return data;
+            });
         })
         .then(data => {
             if (data.success) {
@@ -721,7 +725,20 @@
         })
         .catch(error => {
             console.error('Error:', error);
-            alert('Terjadi kesalahan saat menolak SK: ' + error.message);
+            if (error.status === 422 && error.data) {
+                // Validation error
+                let errorMsg = 'Validasi gagal:\n';
+                if (error.data.errors) {
+                    Object.keys(error.data.errors).forEach(key => {
+                        errorMsg += '- ' + error.data.errors[key].join(', ') + '\n';
+                    });
+                } else if (error.data.message) {
+                    errorMsg = error.data.message;
+                }
+                alert(errorMsg);
+            } else {
+                alert('Terjadi kesalahan saat menolak SK: ' + (error.message || error.data?.message || 'Unknown error'));
+            }
         });
     }
 </script>

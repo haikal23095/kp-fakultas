@@ -28,6 +28,10 @@ class NotifikasiController extends Controller
 
         // Determine the layout based on user role
         $roleId = $user->Id_Role;
+
+        // Debug: Log role information
+        \Log::info('NotifikasiController - User ID: ' . $user->Id_User . ', Role ID: ' . $roleId);
+
         $layout = match ($roleId) {
             1 => 'admin_prodi',
             2 => 'dekan',
@@ -39,6 +43,8 @@ class NotifikasiController extends Controller
             8 => 'wadek1',
             default => 'mahasiswa',
         };
+
+        \Log::info('NotifikasiController - Layout selected: ' . $layout);
 
         return view('notifikasi.index', compact('notifikasis', 'unreadCount', 'layout'));
     }

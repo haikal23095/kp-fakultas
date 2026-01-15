@@ -92,7 +92,7 @@
 <div class="row g-4">
     {{-- SK Beban Mengajar --}}
     <div class="col-xl-3 col-md-6">
-        <a href="#" class="text-decoration-none">
+        <a href="{{ route('dekan.sk.beban-mengajar.index') }}" class="text-decoration-none">
             <div class="card border-0 shadow-sm hover-card position-relative">
                 <span class="badge bg-primary badge-count">
                     {{ $skBebanMengajarCount ?? 0 }}
@@ -107,10 +107,10 @@
                     <p class="card-text text-muted small mb-3">
                         Tandatangani SK beban mengajar dosen
                     </p>
-                    <button class="btn btn-primary btn-sm w-100 disabled">
+                    <button class="btn btn-primary btn-sm w-100">
                         <i class="fas fa-list me-2"></i>Lihat Daftar
                     </button>
-                    <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                    <small class="text-primary d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skBebanMengajarTotal ?? 0 }} SK</small>
                 </div>
             </div>
         </a>
@@ -144,7 +144,7 @@
 
     {{-- SK Pembimbing Skripsi --}}
     <div class="col-xl-3 col-md-6">
-        <a href="#" class="text-decoration-none">
+        <a href="{{ route('dekan.sk.pembimbing-skripsi.index') }}" class="text-decoration-none">
             <div class="card border-0 shadow-sm hover-card position-relative">
                 <span class="badge bg-warning badge-count">
                     {{ $skPembimbingSkripsiCount ?? 0 }}
@@ -159,10 +159,10 @@
                     <p class="card-text text-muted small mb-3">
                         Tandatangani SK dosen pembimbing skripsi
                     </p>
-                    <button class="btn btn-warning btn-sm w-100 disabled">
+                    <button class="btn btn-warning btn-sm w-100">
                         <i class="fas fa-list me-2"></i>Lihat Daftar
                     </button>
-                    <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                    <small class="text-warning d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPembimbingSkripsiTotal ?? 0 }} SK</small>
                 </div>
             </div>
         </a>
@@ -170,7 +170,7 @@
 
     {{-- SK Penguji Skripsi --}}
     <div class="col-xl-3 col-md-6">
-        <a href="#" class="text-decoration-none">
+        <a href="{{ route('dekan.sk.penguji-skripsi.index') }}" class="text-decoration-none">
             <div class="card border-0 shadow-sm hover-card position-relative">
                 <span class="badge bg-danger badge-count">
                     {{ $skPengujiSkripsiCount ?? 0 }}
@@ -185,10 +185,10 @@
                     <p class="card-text text-muted small mb-3">
                         Tandatangani SK dosen penguji ujian skripsi
                     </p>
-                    <button class="btn btn-danger btn-sm w-100 disabled">
+                    <button class="btn btn-danger btn-sm w-100">
                         <i class="fas fa-list me-2"></i>Lihat Daftar
                     </button>
-                    <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                    <small class="text-danger d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPengujiSkripsiTotal ?? 0 }} SK</small>
                 </div>
             </div>
         </a>

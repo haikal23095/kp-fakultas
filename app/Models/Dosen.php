@@ -52,4 +52,16 @@ class Dosen extends Model
     {
         return $this->belongsTo(Pejabat::class, 'Id_Pejabat', 'Id_Pejabat');
     }
+
+    // Relasi ke Acc_SK_Dosen_Wali sebagai Dekan yang menyetujui
+    public function accSkDosenWaliAsDekan()
+    {
+        return $this->hasMany(AccDekanDosenWali::class, 'Id_Dekan', 'Id_Dosen');
+    }
+
+    // Relasi ke Acc_SK_Beban_Mengajar sebagai Dekan yang menyetujui
+    public function accSkBebanMengajarAsDekan()
+    {
+        return $this->hasMany(AccSKBebanMengajar::class, 'Id_Dekan', 'Id_Dosen');
+    }
 }

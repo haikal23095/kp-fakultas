@@ -48,10 +48,10 @@
                     <small class="text-muted">Request Baru</small>
                     <span class="badge bg-primary">{{ $skBebanMengajarCount }}</span>
                 </div>
-                <a href="#" class="btn btn-primary btn-sm w-100 disabled">
+                <a href="{{ route('admin_fakultas.sk.beban-mengajar') }}" class="btn btn-primary btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                <small class="text-primary d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skBebanMengajarTotal ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -98,10 +98,10 @@
                     <small class="text-muted">Request Baru</small>
                     <span class="badge bg-warning text-dark">{{ $skPembimbingSkripsiCount }}</span>
                 </div>
-                <a href="#" class="btn btn-warning btn-sm w-100 disabled">
+                <a href="{{ route('admin_fakultas.sk.pembimbing-skripsi') }}" class="btn btn-warning btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                <small class="text-warning d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPembimbingSkripsiTotal ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -121,12 +121,12 @@
                 </p>
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <small class="text-muted">Request Baru</small>
-                    <span class="badge bg-danger">{{ $skPengujiSkripsiCount }}</span>
+                    <span class="badge bg-danger">{{ $skPengujiSkripsiCount ?? 0 }}</span>
                 </div>
-                <a href="#" class="btn btn-danger btn-sm w-100 disabled">
+                <a href="{{ route('admin_fakultas.sk.penguji-skripsi') }}" class="btn btn-danger btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-muted d-block mt-2" style="font-size: 0.7rem;">Coming Soon</small>
+                <small class="text-danger d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPengujiSkripsiTotal ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -209,19 +209,21 @@
                 <div class="row g-3">
                     <!-- SK Beban Mengajar -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm sk-card-disabled">
-                            <div class="card-body text-center p-4">
-                                <div class="icon-circle bg-primary bg-opacity-10 mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                                    <i class="fas fa-chalkboard-teacher fa-2x text-primary"></i>
+                        <a href="{{ route('admin_fakultas.sk.beban-mengajar.history') }}" class="text-decoration-none">
+                            <div class="card h-100 border shadow-sm sk-card-active">
+                                <div class="card-body text-center p-4">
+                                    <div class="icon-circle bg-primary bg-opacity-10 mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                        <i class="fas fa-chalkboard-teacher fa-2x text-primary"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-2">SK Beban Mengajar</h6>
+                                    <p class="small text-muted mb-3">Riwayat SK beban mengajar dosen</p>
+                                    <span class="badge bg-primary mb-2">{{ $skBebanMengajarTotal ?? 0 }} Total SK</span>
+                                    <button class="btn btn-primary btn-sm w-100">
+                                        <i class="fas fa-list me-1"></i>Lihat Riwayat
+                                    </button>
                                 </div>
-                                <h6 class="fw-bold mb-2">SK Beban Mengajar</h6>
-                                <p class="small text-muted mb-3">Riwayat SK beban mengajar dosen</p>
-                                <span class="badge bg-secondary mb-2">Coming Soon</span>
-                                <button class="btn btn-primary btn-sm w-100 disabled">
-                                    <i class="fas fa-list me-1"></i>Lihat Riwayat
-                                </button>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <!-- SK Dosen Wali -->
@@ -245,36 +247,40 @@
 
                     <!-- SK Pembimbing Skripsi -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm sk-card-disabled">
-                            <div class="card-body text-center p-4">
-                                <div class="icon-circle bg-warning bg-opacity-10 mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                                    <i class="fas fa-book-reader fa-2x text-warning"></i>
+                        <a href="{{ route('admin_fakultas.sk.pembimbing-skripsi.history') }}" class="text-decoration-none">
+                            <div class="card h-100 border shadow-sm sk-card-active">
+                                <div class="card-body text-center p-4">
+                                    <div class="icon-circle bg-warning bg-opacity-10 mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                        <i class="fas fa-book-reader fa-2x text-warning"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-2">SK Pembimbing Skripsi</h6>
+                                    <p class="small text-muted mb-3">Riwayat SK pembimbing skripsi</p>
+                                    <span class="badge bg-warning text-dark mb-2">{{ $skPembimbingSkripsiTotal ?? 0 }} Total SK</span>
+                                    <button class="btn btn-warning btn-sm w-100">
+                                        <i class="fas fa-list me-1"></i>Lihat Riwayat
+                                    </button>
                                 </div>
-                                <h6 class="fw-bold mb-2">SK Pembimbing Skripsi</h6>
-                                <p class="small text-muted mb-3">Riwayat SK pembimbing skripsi</p>
-                                <span class="badge bg-secondary mb-2">Coming Soon</span>
-                                <button class="btn btn-warning btn-sm w-100 disabled">
-                                    <i class="fas fa-list me-1"></i>Lihat Riwayat
-                                </button>
                             </div>
-                        </div>
+                        </a>
                     </div>
 
                     <!-- SK Penguji Skripsi -->
                     <div class="col-md-6">
-                        <div class="card h-100 border shadow-sm sk-card-disabled">
-                            <div class="card-body text-center p-4">
-                                <div class="icon-circle bg-danger bg-opacity-10 mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
-                                    <i class="fas fa-user-check fa-2x text-danger"></i>
+                        <a href="{{ route('admin_fakultas.sk.penguji-skripsi.history') }}" class="text-decoration-none">
+                            <div class="card h-100 border shadow-sm sk-card-active">
+                                <div class="card-body text-center p-4">
+                                    <div class="icon-circle bg-danger bg-opacity-10 mx-auto mb-3" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
+                                        <i class="fas fa-user-check fa-2x text-danger"></i>
+                                    </div>
+                                    <h6 class="fw-bold mb-2">SK Penguji Skripsi</h6>
+                                    <p class="small text-muted mb-3">Riwayat SK penguji skripsi</p>
+                                    <span class="badge bg-danger mb-2">{{ $skPengujiSkripsiTotal ?? 0 }} Total SK</span>
+                                    <button class="btn btn-danger btn-sm w-100">
+                                        <i class="fas fa-list me-1"></i>Lihat Riwayat
+                                    </button>
                                 </div>
-                                <h6 class="fw-bold mb-2">SK Penguji Skripsi</h6>
-                                <p class="small text-muted mb-3">Riwayat SK penguji skripsi</p>
-                                <span class="badge bg-secondary mb-2">Coming Soon</span>
-                                <button class="btn btn-danger btn-sm w-100 disabled">
-                                    <i class="fas fa-list me-1"></i>Lihat Riwayat
-                                </button>
                             </div>
-                        </div>
+                        </a>
                     </div>
                 </div>
             </div>
