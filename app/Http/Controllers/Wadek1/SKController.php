@@ -261,9 +261,9 @@ class SKController extends Controller
             $updatedCount = SKDosenWali::where('Id_Acc_SK_Dosen_Wali', $sk->No)
                 ->where('Status', 'Menunggu-Persetujuan-Wadek-1')
                 ->update([
-                    'Status' => 'Ditolak-Wadek1',
-                    'Alasan-Tolak' => $request->alasan
-                ]);
+                        'Status' => 'Ditolak-Wadek1',
+                        'Alasan-Tolak' => $request->alasan
+                    ]);
 
             \Log::info('Wadek1 Reject SK - Req Updated:', ['count' => $updatedCount]);
 
@@ -537,9 +537,9 @@ class SKController extends Controller
             $updatedCount = SKBebanMengajar::where('Id_Acc_SK_Beban_Mengajar', $sk->No)
                 ->where('Status', 'Menunggu-Persetujuan-Wadek-1')
                 ->update([
-                    'Status' => 'Ditolak-Wadek1',
-                    'Alasan-Tolak' => $request->alasan
-                ]);
+                        'Status' => 'Ditolak-Wadek1',
+                        'Alasan-Tolak' => $request->alasan
+                    ]);
 
             \Log::info('Wadek1 Reject SK Beban Mengajar - Req Updated:', ['count' => $updatedCount]);
 
@@ -832,9 +832,9 @@ class SKController extends Controller
 
                 ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
                     ->update([
-                        'Status' => 'Ditolak-Wadek1',
-                        'Alasan-Tolak' => $request->alasan
-                    ]);
+                            'Status' => 'Ditolak-Wadek1',
+                            'Alasan-Tolak' => $request->alasan
+                        ]);
 
                 // Kirim notifikasi ke Admin Fakultas
                 $adminUser = User::whereHas('role', function ($q) {
@@ -867,9 +867,9 @@ class SKController extends Controller
 
                 ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
                     ->update([
-                        'Status' => 'Ditolak-Wadek1',
-                        'Alasan-Tolak' => $request->alasan
-                    ]);
+                            'Status' => 'Ditolak-Wadek1',
+                            'Alasan-Tolak' => $request->alasan
+                        ]);
 
                 // Kirim notifikasi ke semua Kaprodi yang terkait
                 $reqSKList = ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
@@ -1114,9 +1114,9 @@ class SKController extends Controller
 
                 ReqSKPengujiSkripsi::where('Id_Acc_SK_Penguji_Skripsi', $accSK->No)
                     ->update([
-                        'Status' => 'Ditolak-Wadek1',
-                        'Alasan-Tolak' => $request->alasan
-                    ]);
+                            'Status' => 'Ditolak-Wadek1',
+                            'Alasan-Tolak' => $request->alasan
+                        ]);
 
                 // Kirim notifikasi ke Admin Fakultas (Pegawai_Fakultas)
                 $adminUsers = User::whereHas('role', function ($q) {
@@ -1157,9 +1157,9 @@ class SKController extends Controller
 
                 ReqSKPengujiSkripsi::where('Id_Acc_SK_Penguji_Skripsi', $accSK->No)
                     ->update([
-                        'Status' => 'Ditolak-Wadek1',
-                        'Alasan-Tolak' => $request->alasan
-                    ]);
+                            'Status' => 'Ditolak-Wadek1',
+                            'Alasan-Tolak' => $request->alasan
+                        ]);
 
                 // Kirim notifikasi ke semua Kaprodi yang terkait
                 $reqSKList = ReqSKPengujiSkripsi::where('Id_Acc_SK_Penguji_Skripsi', $accSK->No)
@@ -1200,5 +1200,131 @@ class SKController extends Controller
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * History SK Beban Mengajar untuk Wadek 1
+     * Menampilkan SK dengan status: Menunggu-Persetujuan-Dekan, Selesai, Ditolak-Wadek1, Ditolak-Dekan
+     */
+    public function bebanMengajarHistory(Request $request)
+    {
+        $user = Auth::user()->load('pegawaiFakultas.fakultas', 'dosen.fakultas');
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas ?? $user->dosen?->Id_Fakultas;
+
+        $query = AccSKBebanMengajar::whereIn('Status', [
+            'Menunggu-Persetujuan-Dekan',
+            'Selesai',
+            'Ditolak-Wadek1',
+            'Ditolak-Dekan'
+        ]);
+
+        // Filter berdasarkan status jika ada parameter
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
+
+        return view('wadek1.sk.beban-mengajar.history', compact('skList'));
+    }
+
+    /**
+     * History SK Dosen Wali untuk Wadek 1
+     * Menampilkan SK dengan status: Menunggu-Persetujuan-Dekan, Selesai, Ditolak-Wadek1, Ditolak-Dekan
+     */
+    public function dosenWaliHistory(Request $request)
+    {
+        $user = Auth::user()->load('pegawaiFakultas.fakultas', 'dosen.fakultas');
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas ?? $user->dosen?->Id_Fakultas;
+
+        $query = AccDekanDosenWali::whereIn('Status', [
+            'Menunggu-Persetujuan-Dekan',
+            'Selesai',
+            'Ditolak-Wadek1',
+            'Ditolak-Dekan'
+        ]);
+
+        // Filter berdasarkan status jika ada parameter
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
+
+        return view('wadek1.sk.dosen-wali.history', compact('skList'));
+    }
+
+    /**
+     * History SK Pembimbing Skripsi untuk Wadek 1
+     * Menampilkan SK dengan status: Menunggu-Persetujuan-Dekan, Selesai, Ditolak-Wadek1, Ditolak-Dekan
+     */
+    public function pembimbingSkripsiHistory(Request $request)
+    {
+        $user = Auth::user()->load('pegawaiFakultas.fakultas', 'dosen.fakultas');
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas ?? $user->dosen?->Id_Fakultas;
+
+        $query = AccSKPembimbingSkripsi::with('reqSKPembimbingSkripsi')
+            ->whereIn('Status', [
+                    'Menunggu-Persetujuan-Dekan',
+                    'Selesai',
+                    'Ditolak-Wadek1',
+                    'Ditolak-Dekan'
+                ]);
+
+        // Filter berdasarkan status jika ada parameter
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        $skList = $query->orderBy('No', 'desc')->paginate(15);
+
+        // Get dekan info
+        $dekan = Dosen::with(['pejabat'])
+            ->whereHas('pejabat', function ($q) {
+                $q->where('Nama_Jabatan', 'like', 'DEKAN%');
+            })
+            ->first();
+
+        $dekanName = $dekan ? $dekan->Nama_Dosen : '';
+        $dekanNip = $dekan ? $dekan->NIP : '';
+
+        return view('wadek1.sk.pembimbing-skripsi.history', compact('skList', 'dekanName', 'dekanNip'));
+    }
+
+    /**
+     * History SK Penguji Skripsi untuk Wadek 1
+     * Menampilkan SK dengan status: Menunggu-Persetujuan-Dekan, Selesai, Ditolak-Wadek1, Ditolak-Dekan
+     */
+    public function pengujiSkripsiHistory(Request $request)
+    {
+        $user = Auth::user()->load('pegawaiFakultas.fakultas', 'dosen.fakultas');
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas ?? $user->dosen?->Id_Fakultas;
+
+        $query = AccSKPengujiSkripsi::with('reqSKPengujiSkripsi')
+            ->whereIn('Status', [
+                    'Menunggu-Persetujuan-Dekan',
+                    'Selesai',
+                    'Ditolak-Wadek1',
+                    'Ditolak-Dekan'
+                ]);
+
+        // Filter berdasarkan status jika ada parameter
+        if ($request->filled('status')) {
+            $query->where('Status', $request->status);
+        }
+
+        $skList = $query->orderBy('No', 'desc')->paginate(15);
+
+        // Get dekan info
+        $dekan = Dosen::with(['pejabat'])
+            ->whereHas('pejabat', function ($q) {
+                $q->where('Nama_Jabatan', 'like', 'DEKAN%');
+            })
+            ->first();
+
+        $dekanName = $dekan ? $dekan->Nama_Dosen : '';
+        $dekanNip = $dekan ? $dekan->NIP : '';
+
+        return view('wadek1.sk.penguji-skripsi.history', compact('skList', 'dekanName', 'dekanNip'));
     }
 }

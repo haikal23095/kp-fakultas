@@ -2,6 +2,86 @@
 
 @section('title', 'Riwayat SK Penguji Skripsi')
 
+@push('styles')
+<style>
+    .preview-document {
+        font-family: 'Times New Roman', Times, serif;
+        background: #ffffff;
+        color: #000;
+        border: 1px solid #000;
+        padding: 2cm 2.5cm;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        font-size: 11pt;
+        line-height: 1.5;
+        min-height: 500px;
+        width: 21cm;
+        max-width: 100%;
+        margin: 0 auto;
+    }
+    
+    .preview-header {
+        text-align: center;
+        margin-bottom: 20px;
+        border-bottom: 3px double #000;
+        padding-bottom: 10px;
+    }
+    
+    .preview-header img {
+        width: 80px;
+        float: left;
+        margin-top: -5px;
+    }
+    
+    .preview-header strong {
+        display: block;
+        text-transform: uppercase;
+    }
+    
+    .preview-header .line-1 { font-size: 14pt; font-weight: bold; }
+    .preview-header .line-2 { font-size: 16pt; font-weight: bold; }
+    .preview-header .line-3 { font-size: 14pt; font-weight: bold; }
+    .preview-header .address {
+        font-size: 10pt;
+        margin-top: 5px;
+        font-weight: normal;
+    }
+    
+    .preview-table-mahasiswa {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 15px 0;
+        font-size: 10pt;
+        border: 1px solid #000;
+    }
+    
+    .preview-table-mahasiswa th,
+    .preview-table-mahasiswa td {
+        border: 1px solid #000;
+        padding: 5px 8px;
+        vertical-align: middle;
+        line-height: 1.3;
+        color: #000;
+    }
+    
+    .preview-table-mahasiswa thead th {
+        background-color: #ffffff;
+        font-weight: bold;
+        text-align: center;
+        text-transform: capitalize;
+    }
+    
+    .preview-table-mahasiswa tbody td {
+        font-size: 9pt;
+        vertical-align: top;
+    }
+    
+    .preview-table-mahasiswa tbody td:nth-child(1) {
+        text-align: center;
+        vertical-align: top;
+    }
+</style>
+@endpush
+
 @section('content')
 
 <div class="mb-4">
@@ -159,22 +239,53 @@
                                     <span class="badge bg-{{ $badgeClass }}">{{ $statusText }}</span>
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-danger btn-detail" 
-                                        title="Detail"
-                                        data-id="{{ $sk->Id_Req }}"
-                                        data-nomor="{{ $sk->accSKPengujiSkripsi->Nomor_Surat ?? 'Belum ada nomor' }}"
-                                        data-prodi="{{ $sk->prodi->Nama_Prodi ?? '-' }}"
-                                        data-semester="{{ $sk->Semester }}"
-                                        data-tahun="{{ $sk->Tahun_Akademik }}"
-                                        data-status="{{ $sk->Status }}"
-                                        data-tanggal="{{ $sk->{'Tanggal-Pengajuan'} ? \Carbon\Carbon::parse($sk->{'Tanggal-Pengajuan'})->format('d M Y H:i') : '-' }}"
-                                        data-tenggat="{{ $sk->{'Tanggal-Tenggat'} ? \Carbon\Carbon::parse($sk->{'Tanggal-Tenggat'})->format('d M Y') : '-' }}"
-                                        data-alasan="{{ $sk->{'Alasan-Tolak'} ?? '-' }}"
-                                        data-penguji='@json($sk->Data_Penguji_Skripsi ?? [])'
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#detailModal">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
+                                    @php
+                                        $finalDataPenguji = $sk->Data_Penguji_Skripsi ?? [];
+                                        if ($sk->accSKPengujiSkripsi && $sk->accSKPengujiSkripsi->Data_Penguji_Skripsi) {
+                                            $finalDataPenguji = $sk->accSKPengujiSkripsi->Data_Penguji_Skripsi;
+                                        }
+                                        
+                                        $dekanName = '-';
+                                        $dekanNip = '-';
+                                        $qrCode = null;
+                                        
+                                        if ($sk->accSKPengujiSkripsi) {
+                                            $qrCode = $sk->accSKPengujiSkripsi->QR_Code;
+                                            if ($sk->accSKPengujiSkripsi->dekan) {
+                                                $dekanName = $sk->accSKPengujiSkripsi->dekan->Nama_Dosen;
+                                                $dekanNip = $sk->accSKPengujiSkripsi->dekan->NIP;
+                                            }
+                                        }
+                                    @endphp
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-danger btn-detail" 
+                                            title="Detail"
+                                            data-id="{{ $sk->No }}"
+                                            data-nomor="{{ $sk->accSKPengujiSkripsi->Nomor_Surat ?? 'Belum ada nomor' }}"
+                                            data-prodi="{{ $sk->prodi->Nama_Prodi ?? '-' }}"
+                                            data-semester="{{ $sk->Semester }}"
+                                            data-tahun="{{ $sk->Tahun_Akademik }}"
+                                            data-status="{{ $sk->Status }}"
+                                            data-tanggal="{{ $sk->{'Tanggal-Pengajuan'} ? \Carbon\Carbon::parse($sk->{'Tanggal-Pengajuan'})->format('d M Y H:i') : '-' }}"
+                                            data-tenggat="{{ $sk->{'Tanggal-Tenggat'} ? \Carbon\Carbon::parse($sk->{'Tanggal-Tenggat'})->format('d M Y') : '-' }}"
+                                            data-alasan="{{ $sk->{'Alasan-Tolak'} ?? '-' }}"
+                                            data-penguji='@json($finalDataPenguji)'
+                                            data-dekan-name="{{ $dekanName }}"
+                                            data-dekan-nip="{{ $dekanNip }}"
+                                            data-qr-code="{{ $qrCode ? asset('storage/' . $qrCode) : '' }}"
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#detailModal">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        @if($sk->Status == 'Selesai')
+                                        <a href="{{ route('kaprodi.sk.penguji-skripsi.download', $sk->No) }}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           target="_blank"
+                                           title="Download PDF">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                        @endif
+                                    </div>
                                 </td>
                             </tr>
                             @empty
@@ -275,8 +386,20 @@
                         </table>
                     </div>
                 </div>
+
+                <div class="mt-4">
+                    <h6 class="fw-bold border-bottom pb-2">
+                        <i class="fas fa-file-pdf me-2 text-danger"></i>Preview SK Penguji Skripsi
+                    </h6>
+                    <div style="max-height: 800px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; background: #f8f9fa; padding: 20px;">
+                        <div class="preview-document" id="preview-content">
+                            <!-- Konten SK akan di-generate melalui JavaScript -->
+                        </div>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
+                <div id="download-btn-container"></div>
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
                     <i class="fas fa-times me-2"></i>Tutup
                 </button>
@@ -332,6 +455,19 @@ document.addEventListener('DOMContentLoaded', function() {
         
         document.getElementById('detail-status').innerHTML = '<span class="badge bg-' + badgeClass + '">' + statusText + '</span>';
         
+        // Handle Download Button in Modal
+        const downloadContainer = document.getElementById('download-btn-container');
+        if (status === 'Selesai') {
+            const downloadUrl = "{{ route('kaprodi.sk.penguji-skripsi.download', ':id') }}".replace(':id', button.dataset.id);
+            downloadContainer.innerHTML = `
+                <a href="${downloadUrl}" target="_blank" class="btn btn-success">
+                    <i class="fas fa-download me-2"></i>Download PDF
+                </a>
+            `;
+        } else {
+            downloadContainer.innerHTML = '';
+        }
+
         // Show/hide alasan tolak
         if (status.includes('Ditolak')) {
             document.getElementById('alasan-tolak-row').style.display = '';
@@ -358,10 +494,227 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 pengujiList.appendChild(row);
             });
+            
+            // Render SK Preview
+            renderSKPreview({
+                nomor: button.dataset.nomor,
+                prodi: button.dataset.prodi,
+                semester: button.dataset.semester,
+                tahun: button.dataset.tahun,
+                penguji: pengujiData,
+                dekanName: button.dataset.dekanName,
+                dekanNip: button.dataset.dekanNip,
+                qrCode: button.dataset.qrCode
+            });
         } else {
             pengujiList.innerHTML = '<tr><td colspan="6" class="text-center text-muted">Tidak ada data mahasiswa</td></tr>';
+            document.getElementById('preview-content').innerHTML = '<div class="text-center py-4 text-muted">Tidak ada data untuk preview</div>';
         }
     });
+
+    function renderSKPreview(data) {
+        const previewContent = document.getElementById('preview-content');
+        const { nomor, prodi, semester, tahun, penguji, dekanName, dekanNip, qrCode } = data;
+        const semesterUpper = semester.toUpperCase();
+        const logoUrl = "{{ asset('images/logo_unijoyo.png') }}";
+        
+        let dataPenguji = penguji || [];
+        const groupedByJurusan = {};
+        dataPenguji.forEach(mhs => {
+            let pName = mhs.prodi || mhs.nama_prodi || prodi || '-';
+            if (!groupedByJurusan[pName]) {
+                groupedByJurusan[pName] = { prodi: pName, mahasiswa: [] };
+            }
+            groupedByJurusan[pName].mahasiswa.push(mhs);
+        });
+
+        const ttdHtml = qrCode 
+            ? `<p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
+               <p style="margin: 0 0 10px 0;">pada tanggal ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+               <p style="margin: 0 0 10px 0;"><strong>DEKAN,</strong></p>
+               <div style="text-align: right; margin: 10px 0;">
+                   <img src="${qrCode}" alt="QR Code" style="width: 100px; height: 100px; border: 1px solid #000;">
+               </div>
+               <p style="margin: 10px 0 0 0;">
+                   <strong><u>${dekanName}</u></strong><br>
+                   NIP. ${dekanNip}
+               </p>`
+            : `<p style="margin: 0 0 3px 0;">Ditetapkan di Bangkalan</p>
+               <p style="margin: 0 0 30px 0;">pada tanggal ${new Date().toLocaleDateString('id-ID', {day: 'numeric', month: 'long', year: 'numeric'})}</p>
+               <p style="margin: 0 0 70px 0;"><strong>DEKAN,</strong></p>
+               <p style="margin: 0 0 0 0;">
+                   <strong><u>${dekanName}</u></strong><br>
+                   NIP. ${dekanNip}
+               </p>`;
+
+        let lampiranHtml = '';
+        Object.keys(groupedByJurusan).forEach((pName, index) => {
+            const mhsList = groupedByJurusan[pName].mahasiswa;
+            lampiranHtml += `
+                <div class="lampiran-prodi" style="margin-top: ${index === 0 ? '30px' : '60px'}; page-break-before: ${index === 0 ? 'auto' : 'always'};">
+                    <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR ${nomor}</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">TENTANG</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PENGUJI SKRIPSI PROGRAM STUDI ${pName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}</p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DAFTAR MAHASISWA DAN DOSEN PENGUJI SKRIPSI</p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">PROGRAM STUDI ${pName.toUpperCase()} FAKULTAS TEKNIK</p>
+                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}</p>
+                    </div>
+                    <table class="preview-table-mahasiswa">
+                        <thead>
+                            <tr>
+                                <th style="width: 5%">No</th>
+                                <th style="width: 10%">NIM</th>
+                                <th style="width: 20%">Nama Mahasiswa</th>
+                                <th style="width: 20%">Judul Skripsi</th>
+                                <th style="width: 15%">Penguji 1</th>
+                                <th style="width: 15%">Penguji 2</th>
+                                <th style="width: 15%">Penguji 3</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${mhsList.map((mhs, idx) => `
+                                <tr>
+                                    <td style="text-align: center;">${idx + 1}</td>
+                                    <td style="text-align: center;">${mhs.nim || '-'}</td>
+                                    <td>${mhs.nama_mahasiswa || '-'}</td>
+                                    <td style="font-size: 9pt;">${mhs.judul_skripsi || '-'}</td>
+                                    <td style="font-size: 9pt;">${mhs.nama_penguji_1 || '-'}${mhs.nip_penguji_1 ? '<br><small>NIP: '+mhs.nip_penguji_1+'</small>' : ''}</td>
+                                    <td style="font-size: 9pt;">${mhs.nama_penguji_2 || '-'}${mhs.nip_penguji_2 ? '<br><small>NIP: '+mhs.nip_penguji_2+'</small>' : ''}</td>
+                                    <td style="font-size: 9pt;">${mhs.nama_penguji_3 || '-'}${mhs.nip_penguji_3 ? '<br><small>NIP: '+mhs.nip_penguji_3+'</small>' : ''}</td>
+                                </tr>
+                            `).join('')}
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 50px; font-size: 10pt;">
+                        <div style="text-align: right;">
+                            ${ttdHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        const html = `
+            <div class="preview-header">
+                <img src="${logoUrl}" alt="Logo UTM">
+                <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN,</strong>
+                <strong class="line-1">RISET DAN TEKNOLOGI</strong>
+                <strong class="line-2">UNIVERSITAS TRUNODJOYO MADURA</strong>
+                <strong class="line-3">FAKULTAS TEKNIK</strong>
+                <div class="address">
+                    Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
+                    Telp: (031) 3011146, Fax. (031) 3011506<br>
+                    Laman: www.trunojoyo.ac.id
+                </div>
+                <div style="clear: both;"></div>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0; font-weight: bold; font-size: 12pt;">
+                KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
+                UNIVERSITAS TRUNOJOYO MADURA
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-size: 12pt;">
+                NOMOR: ${nomor}
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
+                TENTANG
+            </div>
+
+            <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
+                PENETAPAN DOSEN PENGUJI SKRIPSI<br>
+                PROGRAM STUDI S1 ${prodi.toUpperCase()}  FAKULTAS TEKNIK<br>
+                UNIVERSITAS TRUNOJOYO MADURA<br>
+                SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}
+            </div>
+
+            <div style="margin: 20px 0; font-weight: bold; font-size: 11pt;">
+                DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
+            </div>
+
+            <div style="text-align: justify; margin-bottom: 20px; font-size: 10pt;">
+                <table style="width: 100%; margin-bottom: 15px;">
+                    <tr>
+                        <td style="width: 100px; vertical-align: top;"><strong>Menimbang</strong></td>
+                        <td style="width: 20px; vertical-align: top;">:</td>
+                        <td style="vertical-align: top;">
+                            <table style="width: 100%; border: none;">
+                                <tr>
+                                    <td style="width: 25px; vertical-align: top; border: none;">a.</td>
+                                    <td style="border: none;">Bahwa untuk memperlancar penyelesaian Skripsi mahasiswa, perlu menugaskan dosen sebagai penguji Skripsi;</td>
+                                </tr>
+                                <tr>
+                                    <td style="vertical-align: top; border: none; padding-top: 5px;">b.</td>
+                                    <td style="border: none; padding-top: 5px;">Bahwa untuk melaksanakan butir a di atas, perlu ditetapkan dalam Keputusan Dekan Fakultas Teknik;</td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%; margin-bottom: 15px;">
+                    <tr>
+                        <td style="width: 100px; vertical-align: top;"><strong>Mengingat</strong></td>
+                        <td style="width: 20px; vertical-align: top;">:</td>
+                        <td style="vertical-align: top;">
+                            <ol style="margin: 0; padding-left: 20px;">
+                                <li style="margin-bottom: 5px;">Undang-Undang Nomor 20 tahun 2003, tentang Sistem Pendidikan Nasional;</li>
+                                <li style="margin-bottom: 5px;">Undang-undang Nomor 12 Tahun 2012 Tentang Pendidikan Tinggi;</li>
+                                <li style="margin-bottom: 5px;">Peraturan Pemerintah Nomor 4 Tahun 2014 Tentang Penyelenggaraan Pendidikan Tinggi dan Pengelolaan Perguruan Tinggi;</li>
+                                <li style="margin-bottom: 5px;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang Pendirian Universitas Trunojoyo Madura;</li>
+                                <li style="margin-bottom: 5px;">Keputusan Menteri Pendidikan dan Kebudayaan RI Nomor 232/U/2000, tentang pedoman Penyusunan Kurikulum Pendidikan Tinggi dan Penilaian Hasil Belajar Mahasiswa;</li>
+                                <li style="margin-bottom: 5px;">Keputusan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 73649/MPK.A/KP.06.02/2022 tentang pengangkatan Rektor UTM periode 2022-2026;</li>
+                                <li style="margin-bottom: 5px;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunojoyo Madura periode 2021-2025;</li>
+                            </ol>
+                        </td>
+                    </tr>
+                </table>
+
+                <p><strong>Memperhatikan:</strong> ${Object.keys(groupedByJurusan).map(pName => `Surat dari Kaprodi ${pName} tentang permohonan SK Dosen Penguji Skripsi`).join('; ')};</p>
+
+                <div style="text-align: center; margin: 30px 0 20px 0; font-weight: bold;">
+                    MEMUTUSKAN
+                </div>
+
+                <table style="width: 100%; margin-bottom: 15px;">
+                    <tr>
+                        <td style="width: 20%; vertical-align: top; font-weight: bold;">Menetapkan</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td>PENETAPAN DOSEN PENGUJI SKRIPSI PROGRAM STUDI S1 ${prodi.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}.</td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%; margin-bottom: 10px;">
+                    <tr>
+                        <td style="width: 20%; vertical-align: top; font-weight: bold;">Kesatu</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td>Dosen Penguji Skripsi Program Studi S1 Teknik Informatika Fakultas Teknik Universitas Trunojoyo Madura semester Ganjil Tahun Akademik 2023/2024 sebagaimana tercantum dalam lampiran Keputusan ini;</td>
+                    </tr>
+                </table>
+
+                <table style="width: 100%;">
+                    <tr>
+                        <td style="width: 20%; vertical-align: top; font-weight: bold;">Kedua</td>
+                        <td style="width: 3%; vertical-align: top;">:</td>
+                        <td>Keputusan ini berlaku sejak tanggal ditetapkan.</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div style="font-size: 10pt; margin: 40px 0 30px 0; text-align: right;">
+                ${ttdHtml}
+            </div>
+
+            ${lampiranHtml}
+        `;
+
+        previewContent.innerHTML = html;
+    }
 });
 </script>
 @endpush

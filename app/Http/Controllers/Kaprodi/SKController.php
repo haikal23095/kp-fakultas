@@ -862,7 +862,7 @@ class SKController extends Controller
             return redirect()->back()->with('error', 'Data dosen tidak ditemukan');
         }
 
-        $query = ReqSKPengujiSkripsi::with(['prodi', 'kaprodi'])
+        $query = ReqSKPengujiSkripsi::with(['prodi', 'kaprodi', 'accSKPengujiSkripsi.dekan'])
             ->where('Id_Dosen_Kaprodi', $dosenId);
 
         if ($request->filled('semester')) {
@@ -880,6 +880,54 @@ class SKController extends Controller
         $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
 
         return view('kaprodi.sk.penguji-skripsi.history', compact('skList'));
+    }
+
+    /**
+     * Download SK Penguji Skripsi as PDF
+     */
+    public function downloadPengujiSkripsi($id)
+    {
+        try {
+            $user = Auth::user();
+            $dosenId = $user->dosen ? $user->dosen->Id_Dosen : null;
+
+            if (!$dosenId) {
+                return redirect()->back()->with('error', 'Data dosen tidak ditemukan');
+            }
+
+            // Get SK data with related models
+            $sk = ReqSKPengujiSkripsi::with(['prodi.jurusan', 'kaprodi', 'accSKPengujiSkripsi.dekan'])
+                ->where('No', $id)
+                ->where('Id_Dosen_Kaprodi', $dosenId)
+                ->firstOrFail();
+
+            // Only allow download if status is Selesai
+            if ($sk->Status !== 'Selesai') {
+                return redirect()->back()->with('error', 'SK belum selesai ditandatangani');
+            }
+
+            $accSK = $sk->accSKPengujiSkripsi;
+
+            if (!$accSK) {
+                return redirect()->back()->with('error', 'Data persetujuan SK tidak ditemukan');
+            }
+
+            // Get Dekan info
+            $dekanName = $accSK->dekan ? $accSK->dekan->Nama_Dosen : 'Dekan Fakultas Teknik';
+            $dekanNip = $accSK->dekan ? $accSK->dekan->NIP : '-';
+
+            // Return view for print/download
+            return view('kaprodi.sk.penguji-skripsi.download', [
+                'sk' => $accSK,
+                'prodi' => $sk->prodi,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip,
+                'qrCodePath' => $accSK->QR_Code ? asset('storage/' . $accSK->QR_Code) : null
+            ]);
+
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mendownload SK: ' . $e->getMessage());
+        }
     }
 
     /**
