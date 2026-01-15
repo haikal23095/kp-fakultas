@@ -241,7 +241,7 @@
                                         <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM" style="height: 60px; float: left;">
                                         <div style="margin-left: 70px;">
                                             <strong style="display: block; font-size: 10pt;">KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</strong>
-                                            <strong style="display: block; font-size: 11pt;">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                                            <strong style="display: block; font-size: 11pt;">UNIVERSITAS TRUNODJOYO</strong>
                                             <strong style="display: block; font-size: 12pt;">FAKULTAS TEKNIK</strong>
                                             <div style="font-size: 8pt; margin-top: 5px;">
                                                 Jl. Raya Telang, PO.Box. 2 Kamal, Bangkalan – Madura<br>
@@ -418,7 +418,7 @@
                                         <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM" style="height: 60px; float: left;">
                                         <div style="margin-left: 70px;">
                                             <strong style="display: block; font-size: 10pt;">KEMENTERIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</strong>
-                                            <strong style="display: block; font-size: 11pt;">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                                            <strong style="display: block; font-size: 11pt;">UNIVERSITAS TRUNODJOYO</strong>
                                             <strong style="display: block; font-size: 12pt;">FAKULTAS TEKNIK</strong>
                                             <div style="font-size: 8pt; margin-top: 5px;">
                                                 Jl. Raya Telang, PO.Box. 2 Kamal, Bangkalan – Madura<br>

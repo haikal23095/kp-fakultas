@@ -272,7 +272,7 @@
             <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas" style="width: 80px; height: auto; flex-shrink: 0;">
             <div style="flex: 1; text-align: center;">
                 <h2 style="margin: 0; font-size: 11.5pt; font-weight: bold; text-transform: uppercase; line-height: 1.2;">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
-                <h2 style="margin: 1px 0; font-size: 13.5pt; font-weight: bold; text-transform: uppercase; line-height: 1.2;">UNIVERSITAS TRUNOJOYO MADURA</h2>
+                <h2 style="margin: 1px 0; font-size: 13.5pt; font-weight: bold; text-transform: uppercase; line-height: 1.2;">UNIVERSITAS TRUNODJOYO</h2>
                 <h2 style="margin: 1px 0; font-size: 12.5pt; font-weight: bold; text-transform: uppercase; line-height: 1.2;">{{ strtoupper($fakultasName) }}</h2>
                 <p style="margin: 6px 0 0 0; font-size: 9pt; line-height: 1.3;">
                     Jl. Raya Telang, Perumahan Telang Inda, Telang, Kec. Kamal, Kabupaten Bangkalan, Jawa Timur 69162
@@ -337,7 +337,7 @@
                 </table>
             </div>
 
-            <p>Adalah benar mahasiswa aktif {{ $fakultasName }}, Universitas Trunojoyo Madura yang bersangkutan <strong>TIDAK SEDANG MENERIMA BEASISWA</strong> dari pihak manapun baik dari pemerintah, swasta, maupun institusi lainnya.</p>
+            <p>Adalah benar mahasiswa aktif {{ $fakultasName }}, Universitas Trunodjoyo yang bersangkutan <strong>TIDAK SEDANG MENERIMA BEASISWA</strong> dari pihak manapun baik dari pemerintah, swasta, maupun institusi lainnya.</p>
             
             <p style="margin-top: 15px;">Data Orang Tua/Wali:</p>
             

@@ -24,16 +24,31 @@ class ReqSKPengujiSkripsi extends Model
         'Nomor_Surat',
         'Status',
         'Id_Acc_SK_Penguji_Skripsi',
-        'Alasan_Tolak',
-        'Tanggal_Pengajuan',
-        'Tanggal_Tenggat',
+        'Alasan-Tolak',
+        'Tanggal-Pengajuan',
+        'Tanggal-Tenggat',
     ];
 
     protected $casts = [
         'Data_Penguji_Skripsi' => 'array',
-        'Tanggal_Pengajuan' => 'datetime',
-        'Tanggal_Tenggat' => 'datetime',
+        'Tanggal-Pengajuan' => 'datetime',
+        'Tanggal-Tenggat' => 'datetime',
     ];
+
+    /**
+     * Accessor untuk mapping data hyphen ke underscore (backward compatibility)
+     */
+    public function getTanggalPengajuanAttribute()
+    {
+        $value = $this->attributes['Tanggal-Pengajuan'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    public function getTanggalTenggatAttribute()
+    {
+        $value = $this->attributes['Tanggal-Tenggat'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
 
     /**
      * Relasi ke tabel Prodi

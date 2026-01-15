@@ -36,6 +36,27 @@ class AccDekanDosenWali extends Model
     ];
 
     /**
+     * Accessor untuk mapping data hyphen ke underscore (backward compatibility)
+     */
+    public function getTanggalPengajuanAttribute()
+    {
+        $value = $this->attributes['Tanggal-Pengajuan'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    public function getTanggalTenggatAttribute()
+    {
+        $value = $this->attributes['Tanggal-Tenggat'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    public function getTanggalPersetujuanDekanAttribute()
+    {
+        $value = $this->attributes['Tanggal-Persetujuan-Dekan'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    /**
      * Relasi ke Dosen (Dekan yang menyetujui)
      */
     public function dekan()

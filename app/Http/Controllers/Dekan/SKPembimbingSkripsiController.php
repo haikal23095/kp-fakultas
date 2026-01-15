@@ -21,16 +21,11 @@ class SKPembimbingSkripsiController extends Controller
      */
     public function index(Request $request)
     {
-        // Show all SK dengan optional filter, kecuali yang Ditolak-Wadek1 dan Menunggu-Persetujuan-Wadek-1
-        $query = AccSKPembimbingSkripsi::with(['reqSKPembimbingSkripsi'])
-            ->whereNotIn('Status', ['Ditolak-Wadek1', 'Menunggu-Persetujuan-Wadek-1']);
-
-        // Filter berdasarkan status jika ada
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        }
-
-        $daftarSK = $query->orderBy('Tanggal_Pengajuan', 'desc')->get();
+        // Hanya tampilkan SK yang statusnya Menunggu-Persetujuan-Dekan
+        $daftarSK = AccSKPembimbingSkripsi::with(['reqSKPembimbingSkripsi'])
+            ->where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->orderBy('Tanggal-Pengajuan', 'desc')
+            ->get();
 
         return view('dekan.sk.pembimbing-skripsi.index', compact('daftarSK'));
     }
@@ -429,8 +424,8 @@ class SKPembimbingSkripsiController extends Controller
     {
         try {
             $history = AccSKPembimbingSkripsi::with(['reqSKPembimbingSkripsi', 'dekan'])
-                ->where('Status', 'Selesai')
-                ->orderBy('Tanggal_Persetujuan_Dekan', 'desc')
+                ->whereIn('Status', ['Selesai', 'Ditolak-Dekan'])
+                ->orderBy('No', 'desc')
                 ->get();
 
             return response()->json([

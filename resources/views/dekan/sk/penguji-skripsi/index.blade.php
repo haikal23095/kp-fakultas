@@ -168,19 +168,9 @@
             <div class="d-flex align-items-start">
                 <i class="fas fa-info-circle text-primary me-3 mt-1"></i>
                 <div>
-                    <strong>Total SK:</strong> {{ $daftarSK->count() }} SK Penguji Skripsi
+                    <strong>Total Antrian:</strong> {{ $daftarSK->count() }} SK Menunggu Persetujuan
                 </div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <div class="d-flex justify-content-end">
-            <select class="form-select" id="filterStatus" onchange="applyFilter()" style="max-width: 250px;">
-                <option value="">Semua Status</option>
-                <option value="Menunggu-Persetujuan-Dekan">Menunggu Persetujuan</option>
-                <option value="Selesai">Selesai</option>
-                <option value="Ditolak-Dekan">Ditolak</option>
-            </select>
         </div>
     </div>
 </div>
@@ -344,7 +334,7 @@
         <div class="modal-content">
             <div class="modal-header bg-success text-white">
                 <h5 class="modal-title" id="modalHistoryLabel">
-                    <i class="fas fa-history me-2"></i>History SK Penguji Skripsi yang Sudah Ditandatangani
+                    <i class="fas fa-history me-2"></i>History SK Penguji Skripsi
                 </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
@@ -485,7 +475,7 @@
                             <th>Nomor Surat</th>
                             <th>Jumlah Mahasiswa</th>
                             <th>Tanggal TTD</th>
-                            <th>Ditandatangani Oleh</th>
+                            <th>Status</th>
                             <th class="text-center">Aksi</th>
                         </tr>
                     </thead>
@@ -496,7 +486,15 @@
             const dataPenguji = sk.Data_Penguji_Skripsi || [];
             const jumlahMahasiswa = Array.isArray(dataPenguji) ? dataPenguji.length : 0;
             const tanggalTTD = sk.Tanggal_Persetujuan_Dekan || '-';
-            const dekanName = sk.dekan ? sk.dekan.Nama_Dosen : 'Dekan';
+            
+            let statusBadge = '';
+            if (sk.Status === 'Selesai') {
+                statusBadge = '<span class="badge bg-success">Selesai</span>';
+            } else if (sk.Status === 'Ditolak-Dekan') {
+                statusBadge = '<span class="badge bg-danger">Ditolak Dekan</span>';
+            } else {
+                statusBadge = `<span class="badge bg-secondary">${sk.Status}</span>`;
+            }
             
             html += `
                 <tr>
@@ -505,7 +503,7 @@
                     <td>${sk.Nomor_Surat || '-'}</td>
                     <td><span class="badge bg-primary">${jumlahMahasiswa} Mahasiswa</span></td>
                     <td>${tanggalTTD}</td>
-                    <td>${dekanName}</td>
+                    <td>${statusBadge}</td>
                     <td class="text-center">
                         <button class="btn btn-sm btn-primary" onclick="showHistoryDetail(${sk.No})">
                             <i class="fas fa-eye"></i> Lihat
@@ -708,13 +706,13 @@
                 <div class="lampiran-prodi" style="margin-top: ${index === 0 ? '30px' : '60px'}; page-break-before: ${index === 0 ? 'auto' : 'always'};">
                     <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
-                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO</p>
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR ${nomorSurat}</p>
                         <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">TENTANG</p>
-                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PENGUJI SKRIPSI PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PENGUJI SKRIPSI PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
                         <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DAFTAR MAHASISWA DAN DOSEN PENGUJI SKRIPSI</p>
                         <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK</p>
-                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNODJOYO</p>
                         <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
                     </div>
                     <table class="preview-table-mahasiswa">
@@ -789,7 +787,7 @@
                 <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
                 <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN,</strong>
                 <strong class="line-1">RISET DAN TEKNOLOGI</strong>
-                <strong class="line-2">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                <strong class="line-2">UNIVERSITAS TRUNODJOYO</strong>
                 <strong class="line-3">FAKULTAS TEKNIK</strong>
                 <div class="address">
                     Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
@@ -801,7 +799,7 @@
 
             <div style="text-align: center; margin: 20px 0; font-weight: bold; font-size: 12pt;">
                 KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
-                UNIVERSITAS TRUNOJOYO MADURA
+                UNIVERSITAS TRUNODJOYO
             </div>
 
             <div style="text-align: center; margin: 15px 0; font-size: 12pt;">
@@ -814,12 +812,12 @@
 
             <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
                 PENETAPAN DOSEN PENGUJI SKRIPSI<br>
-                FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA<br>
+                FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO<br>
                 SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}
             </div>
 
             <div style="margin: 20px 0; font-weight: bold; font-size: 11pt;">
-                DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
+                DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO,
             </div>
 
             <div style="text-align: justify; margin-bottom: 20px; font-size: 10pt;">
@@ -851,10 +849,10 @@
                                 <li style="margin-bottom: 5px;">Undang-Undang Nomor 20 tahun 2003, tentang Sistem Pendidikan Nasional;</li>
                                 <li style="margin-bottom: 5px;">Peraturan Pemerintah Nomor 4 Tahun 2012 Tentang Penyelenggaraan Pendidikan Tinggi;</li>
                                 <li style="margin-bottom: 5px;">Peraturan Presiden RI Nomor 4 Tahun 2014 Tentang Perubahan Penyelenggaraan dan Pengelolaan Perguruan Tinggi;</li>
-                                <li style="margin-bottom: 5px;">Keputusan RI Nomor 85 tahun 2001, tentang Statuta Universitas Trunojoyo Madura;</li>
+                                <li style="margin-bottom: 5px;">Keputusan RI Nomor 85 tahun 2001, tentang Statuta Universitas Trunodjoyo;</li>
                                 <li style="margin-bottom: 5px;">Keputusan Menteri Pendidikan dan Kebudayaan RI Nomor 232/ U/ 2000, tentang pedoman Penyusunan Kurikulum Pendidikan Tinggi dan Penilaian Hasil Belajar Mahasiswa;</li>
                                 <li style="margin-bottom: 5px;">Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi RI Nomor 79/M/MPK.A/ KP.09.02/ 2022 tentang pengangkatan Rektor UTM periode 2022-2026;</li>
-                                <li>Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UNM3/KP/ 2023 tentang Pengangkatan Pejabat Struktural Dekan Fakultas Teknik;</li>
+                                <li>Keputusan Rektor Universitas Trunodjoyo Nomor 1357/UNM3/KP/ 2023 tentang Pengangkatan Pejabat Struktural Dekan Fakultas Teknik;</li>
                             </ol>
                         </td>
                     </tr>
@@ -870,7 +868,7 @@
                     <tr>
                         <td style="width: 15%; vertical-align: top; font-weight: bold;">Menetapkan</td>
                         <td style="width: 3%; vertical-align: top;">:</td>
-                        <td>PENETAPAN DOSEN PEMBIMBING SKRIPSI FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
+                        <td>PENETAPAN DOSEN PEMBIMBING SKRIPSI FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
                     </tr>
                 </table>
 
@@ -1022,29 +1020,6 @@
             alert('Terjadi kesalahan saat menolak SK: ' + error.message);
         });
     }
-
-    // Function untuk apply filter
-    function applyFilter() {
-        const status = document.getElementById('filterStatus').value;
-        const url = new URL(window.location.href);
-        
-        if (status) {
-            url.searchParams.set('status', status);
-        } else {
-            url.searchParams.delete('status');
-        }
-        
-        window.location.href = url.toString();
-    }
-
-    // Set filter value dari URL saat page load
-    document.addEventListener('DOMContentLoaded', function() {
-        const urlParams = new URLSearchParams(window.location.search);
-        const status = urlParams.get('status');
-        if (status) {
-            document.getElementById('filterStatus').value = status;
-        }
-    });
 
     // Add hover effect
     document.querySelectorAll('.card-sk').forEach(card => {

@@ -46,8 +46,22 @@ class AccSKPengujiSkripsi extends Model
     }
 
     /**
+     * Accessor untuk Tanggal_Pengajuan (mapping data dari Tanggal-Pengajuan)
+     */
+    public function getTanggalPengajuanAttribute()
+    {
+        $value = $this->attributes['Tanggal-Pengajuan'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    public function getTanggalTenggatAttribute()
+    {
+        $value = $this->attributes['Tanggal-Tenggat'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    /**
      * Relasi balik ke Request SK Penguji Skripsi (One to Many)
-     * Satu approval bisa terkait dengan banyak request
      */
     public function reqSKPengujiSkripsi()
     {

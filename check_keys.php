@@ -24,15 +24,12 @@ if ($sk) {
         }
     }
 
-    echo "\n=== ACCESSING QR_CODE ===\n";
-    if (isset($array['acc_s_k_pembimbing_skripsi'])) {
-        $accSK = $array['acc_s_k_pembimbing_skripsi'];
-        echo "AccSK keys: " . implode(', ', array_keys($accSK)) . "\n";
-
-        foreach ($accSK as $k => $v) {
-            if (stripos($k, 'qr') !== false || stripos($k, 'code') !== false) {
-                echo "Found QR key: $k = $v\n";
-            }
+    echo "\n=== ACCESSING DEKAN ===\n";
+    if (isset($array['acc_s_k_pembimbing_skripsi']['dekan'])) {
+        $dekan = $array['acc_s_k_pembimbing_skripsi']['dekan'];
+        echo "Dekan keys: " . implode(', ', array_keys($dekan)) . "\n";
+        foreach ($dekan as $k => $v) {
+            echo "Key: $k -> Value: $v\n";
         }
     }
 }

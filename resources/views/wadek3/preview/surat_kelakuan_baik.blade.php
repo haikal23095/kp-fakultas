@@ -315,7 +315,7 @@
             @endif
             <div class="text-kop">
                 <h2>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
-                <h3>UNIVERSITAS TRUNOJOYO MADURA</h3>
+                <h3>UNIVERSITAS TRUNODJOYO</h3>
                 <h3>FAKULTAS TEKNIK</h3>
                 <p>Jl. Raya Telang, PO Box 2 Kamal, Bangkalan - Madura</p>
                 <p>Telp: (031) 3011146, Fax. (031) 3011506</p>
@@ -417,9 +417,9 @@
             </div>
 
             <p>
-                Adalah benar mahasiswa Fakultas Teknik Universitas Trunojoyo Madura yang memiliki <strong>KELAKUAN BAIK</strong> 
+                Adalah benar mahasiswa Fakultas Teknik Universitas Trunodjoyo yang memiliki <strong>KELAKUAN BAIK</strong> 
                 dan tidak pernah terlibat dalam pelanggaran tata tertib/kode etik mahasiswa selama menjalani pendidikan 
-                di Universitas Trunojoyo Madura.
+                di Universitas Trunodjoyo.
             </p>
 
             <p>

@@ -427,7 +427,7 @@
                     <div class="preview-header">
                         <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
                         <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</strong>
-                        <strong class="line-2">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                        <strong class="line-2">UNIVERSITAS TRUNODJOYO</strong>
                         <strong class="line-3">FAKULTAS TEKNIK</strong>
                         <div class="address">
                             Kampus UTM, Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
@@ -439,7 +439,7 @@
                     <!-- Title -->
                     <div style="text-align: center; margin: 20px 0; font-weight: bold; font-size: 11pt;">
                         KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
-                        UNIVERSITAS TRUNOJOYO MADURA<br>
+                        UNIVERSITAS TRUNODJOYO<br>
                         NOMOR ${nomorSurat}
                     </div>
 
@@ -449,12 +449,12 @@
 
                     <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
                         BEBAN MENGAJAR DOSEN PROGRAM STUDI FAKULTAS TEKNIK<br>
-                        UNIVERSITAS TRUNOJOYO MADURA<br>
+                        UNIVERSITAS TRUNODJOYO<br>
                         SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}
                     </div>
 
                     <div style="margin: 20px 0; font-weight: bold; font-size: 11pt;">
-                        DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
+                        DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO,
                     </div>
 
                     <!-- Content Preview -->
@@ -464,7 +464,7 @@
                             <tr>
                                 <td style="width: 10%; vertical-align: top;">:</td>
                                 <td style="width: 5%; vertical-align: top;">a.</td>
-                                <td style="text-align: justify;">bahwa untuk kelancaran perkuliahan Program S1 di Fakultas Teknik Universitas Trunojoyo Madura, maka perlu menetapkan beban mengajar dosen;</td>
+                                <td style="text-align: justify;">bahwa untuk kelancaran perkuliahan Program S1 di Fakultas Teknik Universitas Trunodjoyo, maka perlu menetapkan beban mengajar dosen;</td>
                             </tr>
                             <tr>
                                 <td></td>
@@ -488,7 +488,7 @@
                             <tr>
                                 <td></td>
                                 <td style="vertical-align: top;">3.</td>
-                                <td style="text-align: justify;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunojoyo Madura;</td>
+                                <td style="text-align: justify;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunodjoyo;</td>
                             </tr>
                             <tr>
                                 <td></td>
@@ -503,7 +503,7 @@
                             <tr>
                                 <td></td>
                                 <td style="vertical-align: top;">6.</td>
-                                <td style="text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunojoyo Madura periode 2021-2025;</td>
+                                <td style="text-align: justify;">Keputusan Rektor Universitas Trunodjoyo Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunodjoyo periode 2021-2025;</td>
                             </tr>
                         </table>
 
@@ -512,7 +512,7 @@
                             <tr>
                                 <td style="width: 10%; vertical-align: top;">:</td>
                                 <td style="width: 5%; vertical-align: top;">1.</td>
-                                <td style="text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunojoyo Madura Tahun Akademik 2016/2017;</td>
+                                <td style="text-align: justify;">Keputusan Rektor Universitas Trunodjoyo Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunodjoyo Tahun Akademik 2016/2017;</td>
                             </tr>
                             <tr>
                                 <td></td>
@@ -529,14 +529,14 @@
                             <tr>
                                 <td style="width: 15%; vertical-align: top; font-weight: normal;">Menetapkan</td>
                                 <td style="width: 3%; vertical-align: top;">:</td>
-                                <td style="text-align: justify; font-weight: bold;">BEBAN MENGAJAR DOSEN PROGRAM STUDI S1 FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
+                                <td style="text-align: justify; font-weight: bold;">BEBAN MENGAJAR DOSEN PROGRAM STUDI S1 FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
                             </tr>
                         </table>
                         <table style="width: 100%; margin-bottom: 10px; font-size: 10pt;">
                             <tr>
                                 <td style="width: 15%; vertical-align: top; font-weight: normal;">Kesatu</td>
                                 <td style="width: 3%; vertical-align: top;">:</td>
-                                <td style="text-align: justify;">Beban mengajar dosen Program Studi S1 Teknik Informatika, Program Studi S1 Teknik Industri, Program Studi S1 Teknik Elektro, Program Studi S1 Teknik Mesin, Program Studi S1 Sistem Informasi, Program Studi S1 Teknik Mekatronika Fakultas Teknik Universitas Trunojoyo Madura Semester ${semesterUpper} Tahun Akademik ${tahunAkademik} sebagaimana terlampir dalam surat keputusan ini.</td>
+                                <td style="text-align: justify;">Beban mengajar dosen Program Studi S1 Teknik Informatika, Program Studi S1 Teknik Industri, Program Studi S1 Teknik Elektro, Program Studi S1 Teknik Mesin, Program Studi S1 Sistem Informasi, Program Studi S1 Teknik Mekatronika Fakultas Teknik Universitas Trunodjoyo Semester ${semesterUpper} Tahun Akademik ${tahunAkademik} sebagaimana terlampir dalam surat keputusan ini.</td>
                             </tr>
                         </table>
 
@@ -570,11 +570,11 @@
                 <div class="lampiran-prodi" style="margin-top: ${index === 0 ? '30px' : '60px'}; page-break-before: ${index === 0 ? 'auto' : 'always'};">
                     <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
-                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN ${index + 1} KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN ${index + 1} KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO</p>
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR ${nomorSurat}</p>
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">TENTANG</p>
-                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">BEBAN MENGAJAR DOSEN PROGRAM STUDI S1 FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
-                        <p style="margin: 0 0 13px 0; text-align: center; font-weight: bold;">BEBAN MENGAJAR DOSEN ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">BEBAN MENGAJAR DOSEN PROGRAM STUDI S1 FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
+                        <p style="margin: 0 0 13px 0; text-align: center; font-weight: bold;">BEBAN MENGAJAR DOSEN ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
                     </div>
                     <table class="preview-table-beban">
                         <thead>

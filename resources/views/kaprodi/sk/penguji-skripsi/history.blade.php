@@ -554,13 +554,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="lampiran-prodi" style="margin-top: ${index === 0 ? '30px' : '60px'}; page-break-before: ${index === 0 ? 'auto' : 'always'};">
                     <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
-                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO</p>
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR ${nomor}</p>
                         <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">TENTANG</p>
-                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PENGUJI SKRIPSI PROGRAM STUDI ${pName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PENGUJI SKRIPSI PROGRAM STUDI ${pName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}</p>
                         <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DAFTAR MAHASISWA DAN DOSEN PENGUJI SKRIPSI</p>
                         <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">PROGRAM STUDI ${pName.toUpperCase()} FAKULTAS TEKNIK</p>
-                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNODJOYO</p>
                         <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}</p>
                     </div>
                     <table class="preview-table-mahasiswa">
@@ -603,7 +603,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <img src="${logoUrl}" alt="Logo UTM">
                 <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN,</strong>
                 <strong class="line-1">RISET DAN TEKNOLOGI</strong>
-                <strong class="line-2">UNIVERSITAS TRUNODJOYO MADURA</strong>
+                <strong class="line-2">UNIVERSITAS TRUNODJOYO</strong>
                 <strong class="line-3">FAKULTAS TEKNIK</strong>
                 <div class="address">
                     Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
@@ -615,7 +615,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             <div style="text-align: center; margin: 20px 0; font-weight: bold; font-size: 12pt;">
                 KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
-                UNIVERSITAS TRUNOJOYO MADURA
+                UNIVERSITAS TRUNODJOYO
             </div>
 
             <div style="text-align: center; margin: 15px 0; font-size: 12pt;">
@@ -629,12 +629,12 @@ document.addEventListener('DOMContentLoaded', function() {
             <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
                 PENETAPAN DOSEN PENGUJI SKRIPSI<br>
                 PROGRAM STUDI S1 ${prodi.toUpperCase()}  FAKULTAS TEKNIK<br>
-                UNIVERSITAS TRUNOJOYO MADURA<br>
+                UNIVERSITAS TRUNODJOYO<br>
                 SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}
             </div>
 
             <div style="margin: 20px 0; font-weight: bold; font-size: 11pt;">
-                DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
+                DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO,
             </div>
 
             <div style="text-align: justify; margin-bottom: 20px; font-size: 10pt;">
@@ -666,10 +666,10 @@ document.addEventListener('DOMContentLoaded', function() {
                                 <li style="margin-bottom: 5px;">Undang-Undang Nomor 20 tahun 2003, tentang Sistem Pendidikan Nasional;</li>
                                 <li style="margin-bottom: 5px;">Undang-undang Nomor 12 Tahun 2012 Tentang Pendidikan Tinggi;</li>
                                 <li style="margin-bottom: 5px;">Peraturan Pemerintah Nomor 4 Tahun 2014 Tentang Penyelenggaraan Pendidikan Tinggi dan Pengelolaan Perguruan Tinggi;</li>
-                                <li style="margin-bottom: 5px;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang Pendirian Universitas Trunojoyo Madura;</li>
+                                <li style="margin-bottom: 5px;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang Pendirian Universitas Trunodjoyo;</li>
                                 <li style="margin-bottom: 5px;">Keputusan Menteri Pendidikan dan Kebudayaan RI Nomor 232/U/2000, tentang pedoman Penyusunan Kurikulum Pendidikan Tinggi dan Penilaian Hasil Belajar Mahasiswa;</li>
                                 <li style="margin-bottom: 5px;">Keputusan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi Nomor 73649/MPK.A/KP.06.02/2022 tentang pengangkatan Rektor UTM periode 2022-2026;</li>
-                                <li style="margin-bottom: 5px;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunojoyo Madura periode 2021-2025;</li>
+                                <li style="margin-bottom: 5px;">Keputusan Rektor Universitas Trunodjoyo Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunodjoyo periode 2021-2025;</li>
                             </ol>
                         </td>
                     </tr>
@@ -685,7 +685,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tr>
                         <td style="width: 20%; vertical-align: top; font-weight: bold;">Menetapkan</td>
                         <td style="width: 3%; vertical-align: top;">:</td>
-                        <td>PENETAPAN DOSEN PENGUJI SKRIPSI PROGRAM STUDI S1 ${prodi.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}.</td>
+                        <td>PENETAPAN DOSEN PENGUJI SKRIPSI PROGRAM STUDI S1 ${prodi.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahun}.</td>
                     </tr>
                 </table>
 
@@ -693,7 +693,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <tr>
                         <td style="width: 20%; vertical-align: top; font-weight: bold;">Kesatu</td>
                         <td style="width: 3%; vertical-align: top;">:</td>
-                        <td>Dosen Penguji Skripsi Program Studi S1 Teknik Informatika Fakultas Teknik Universitas Trunojoyo Madura semester Ganjil Tahun Akademik 2023/2024 sebagaimana tercantum dalam lampiran Keputusan ini;</td>
+                        <td>Dosen Penguji Skripsi Program Studi S1 Teknik Informatika Fakultas Teknik Universitas Trunodjoyo semester Ganjil Tahun Akademik 2023/2024 sebagaimana tercantum dalam lampiran Keputusan ini;</td>
                     </tr>
                 </table>
 

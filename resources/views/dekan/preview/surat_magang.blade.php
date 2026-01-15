@@ -55,7 +55,7 @@
             <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas" />
             <div class="kop-title">
                 <h2>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
-                <h2>UNIVERSITAS TRUNOJOYO MADURA</h2>
+                <h2>UNIVERSITAS TRUNODJOYO</h2>
                 <h2>{{ strtoupper($fakultasName) }}</h2>
                 <p>Jl. Raya Telang, Perumahan Telang Indah, Telang, Kamal - Bangkalan 69162</p>
             </div>

@@ -295,11 +295,11 @@
                 <div class="lampiran-prodi" style="margin-top: ${index === 0 ? '30px' : '60px'}; page-break-before: ${index === 0 ? 'auto' : 'always'};">
                     <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
-                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO</p>
                         <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR ${nomorSurat}</p>
                         <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PERIHAL</p>
-                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
-                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                        <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
+                        <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO</p>
                         <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}</p>
                         <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold; text-decoration: underline;">Daftar Dosen Wali Mahasiswa Prodi ${prodiName}</p>
                     </div>
@@ -329,7 +329,7 @@
                 <div style="text-align: center; margin-bottom: 20px; border-bottom: 3px double #000; padding-bottom: 10px;">
                     <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM" style="width: 80px; float: left; margin-top: -5px;">
                     <strong style="display: block; text-transform: uppercase; font-size: 14pt; font-weight: bold;">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</strong>
-                    <strong style="display: block; text-transform: uppercase; font-size: 16pt; font-weight: bold;">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                    <strong style="display: block; text-transform: uppercase; font-size: 16pt; font-weight: bold;">UNIVERSITAS TRUNODJOYO</strong>
                     <strong style="display: block; text-transform: uppercase; font-size: 14pt; font-weight: bold;">FAKULTAS TEKNIK</strong>
                     <div style="font-size: 10pt; margin-top: 5px; font-weight: normal;">
                         Kampus UTM, Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
@@ -340,7 +340,7 @@
 
                 <div style="text-align: center; margin: 20px 0; font-weight: bold; font-size: 11pt;">
                     KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
-                    UNIVERSITAS TRUNOJOYO MADURA<br>
+                    UNIVERSITAS TRUNODJOYO<br>
                     NOMOR ${nomorSurat}
                 </div>
 
@@ -348,12 +348,12 @@
 
                 <div style="text-align: center; margin: 15px 0; font-weight: bold; font-size: 11pt;">
                     DOSEN WALI MAHASISWA FAKULTAS TEKNIK<br>
-                    UNIVERSITAS TRUNOJOYO MADURA<br>
+                    UNIVERSITAS TRUNODJOYO<br>
                     SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}
                 </div>
 
                 <div style="margin: 20px 0; font-weight: bold; font-size: 11pt;">
-                    DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
+                    DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO,
                 </div>
 
                 <div style="text-align: justify; margin-bottom: 20px; font-size: 10pt;">
@@ -362,7 +362,7 @@
                         <tr>
                             <td style="width: 10%; vertical-align: top;">:</td>
                             <td style="width: 5%; vertical-align: top;">a.</td>
-                            <td style="text-align: justify;">bahwa dalam rangka membantu mahasiswa menyelesaikan program sarjana/diploma sesuai rencana studi, perlu menugaskan dosen tetap di lingkungan Fakultas Teknik Universitas Trunojoyo Madura sebagai dosen wali;</td>
+                            <td style="text-align: justify;">bahwa dalam rangka membantu mahasiswa menyelesaikan program sarjana/diploma sesuai rencana studi, perlu menugaskan dosen tetap di lingkungan Fakultas Teknik Universitas Trunodjoyo sebagai dosen wali;</td>
                         </tr>
                         <tr>
                             <td></td>
@@ -386,7 +386,7 @@
                         <tr>
                             <td></td>
                             <td style="vertical-align: top;">3.</td>
-                            <td style="text-align: justify;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunojoyo Madura;</td>
+                            <td style="text-align: justify;">Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunodjoyo;</td>
                         </tr>
                         <tr>
                             <td></td>
@@ -401,7 +401,7 @@
                         <tr>
                             <td></td>
                             <td style="vertical-align: top;">6.</td>
-                            <td style="text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunojoyo Madura periode 2021-2025;</td>
+                            <td style="text-align: justify;">Keputusan Rektor Universitas Trunodjoyo Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunodjoyo periode 2021-2025;</td>
                         </tr>
                     </table>
 
@@ -410,7 +410,7 @@
                         <tr>
                             <td style="width: 10%; vertical-align: top;">:</td>
                             <td style="width: 5%; vertical-align: top;">1.</td>
-                            <td style="text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunojoyo Madura Tahun Akademik 2016/2017;</td>
+                            <td style="text-align: justify;">Keputusan Rektor Universitas Trunodjoyo Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunodjoyo Tahun Akademik 2016/2017;</td>
                         </tr>
                         <tr>
                             <td></td>
@@ -425,7 +425,7 @@
                         <tr>
                             <td style="width: 15%; vertical-align: top; font-weight: normal;">Menetapkan</td>
                             <td style="width: 3%; vertical-align: top;">:</td>
-                            <td style="text-align: justify; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
+                            <td style="text-align: justify; font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK ${tahunAkademik}.</td>
                         </tr>
                     </table>
 
@@ -433,7 +433,7 @@
                         <tr>
                             <td style="width: 15%; vertical-align: top; font-weight: normal;">Kesatu</td>
                             <td style="width: 3%; vertical-align: top;">:</td>
-                            <td style="text-align: justify;">Menugaskan dosen tetap di Fakultas Teknik Universitas Trunojoyo Madura yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester ${semesterText} Tahun Akademik ${tahunAkademik};</td>
+                            <td style="text-align: justify;">Menugaskan dosen tetap di Fakultas Teknik Universitas Trunodjoyo yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester ${semesterText} Tahun Akademik ${tahunAkademik};</td>
                         </tr>
                     </table>
 

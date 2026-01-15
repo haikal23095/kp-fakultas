@@ -318,7 +318,7 @@
             <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas">
             <div class="kop-surat-text">
                 <h2>KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h2>
-                <h2>UNIVERSITAS TRUNOJOYO MADURA</h2>
+                <h2>UNIVERSITAS TRUNODJOYO</h2>
                 <h2>{{ strtoupper($fakultasName) }}</h2>
                 <p>
                     Jl. Raya Telang, Perumahan Telang Inda, Telang, Kec. Kamal, Kabupaten Bangkalan, Jawa Timur 69162
@@ -383,7 +383,7 @@
                 </table>
             </div>
 
-            <p>Adalah benar mahasiswa aktif {{ $fakultasName }}, Universitas Trunojoyo Madura yang bersangkutan <strong>TIDAK SEDANG MENERIMA BEASISWA</strong> dari pihak manapun baik dari pemerintah, swasta, maupun institusi lainnya.</p>
+            <p>Adalah benar mahasiswa aktif {{ $fakultasName }}, Universitas Trunodjoyo yang bersangkutan <strong>TIDAK SEDANG MENERIMA BEASISWA</strong> dari pihak manapun baik dari pemerintah, swasta, maupun institusi lainnya.</p>
             
             <p style="margin-top: 15px;">Data Orang Tua/Wali:</p>
             

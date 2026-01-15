@@ -1232,8 +1232,8 @@ class SKController extends Controller
                 'Semester' => $skItems->first()->Semester,
                 'Tahun_Akademik' => $request->tahun_akademik,
                 'Data_Pembimbing_Skripsi' => json_encode($mergedMahasiswa),
-                'Tanggal_Pengajuan' => $tanggalPengajuan,
-                'Tanggal_Tenggat' => $tanggalTenggat,
+                'Tanggal-Pengajuan' => $tanggalPengajuan,
+                'Tanggal-Tenggat' => $tanggalTenggat,
                 'Status' => $hasDitolakDekan ? 'Menunggu-Persetujuan-Dekan' : 'Menunggu-Persetujuan-Wadek-1',
             ]);
 
@@ -1299,7 +1299,7 @@ class SKController extends Controller
             $query->where('Semester', $request->semester);
         }
 
-        $skList = $query->orderBy('Tanggal_Pengajuan', 'desc')->paginate(15);
+        $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')->paginate(15);
 
         return view('admin_fakultas.sk.pembimbing-skripsi.history', compact('skList'));
     }

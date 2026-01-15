@@ -303,7 +303,7 @@
                                                     <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo" style="height: 80px;" class="me-3">
                                                     <div class="text-center">
                                                         <h6 class="mb-0 fw-bold">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</h6>
-                                                        <h5 class="mb-0 fw-bold">UNIVERSITAS TRUNOJOYO MADURA</h5>
+                                                        <h5 class="mb-0 fw-bold">UNIVERSITAS TRUNODJOYO</h5>
                                                         <h4 class="mb-0 fw-bold">FAKULTAS TEKNIK</h4>
                                                         <small class="d-block">Sekretariat: Kampus Unijoyo PO Box 2 Telang Kamal Telp 031 7011147 Fax. 031 7011506</small>
                                                     </div>

@@ -26,28 +26,42 @@ class AccSKPembimbingSkripsi extends Model
         'QR_Code',
         'Tanggal_Persetujuan_Dekan',
         'Id_Dekan',
-        'Tanggal_Pengajuan',
-        'Tanggal_Tenggat',
+        'Tanggal-Pengajuan',
+        'Tanggal-Tenggat',
     ];
 
     protected $casts = [
         'Data_Pembimbing_Skripsi' => 'array',
         'Tanggal_Persetujuan_Dekan' => 'datetime',
-        'Tanggal_Pengajuan' => 'datetime',
-        'Tanggal_Tenggat' => 'datetime',
+        'Tanggal-Pengajuan' => 'datetime',
+        'Tanggal-Tenggat' => 'datetime',
     ];
 
     /**
-     * Relasi ke Dekan (Pejabat)
+     * Relasi ke Dekan (Dosen)
      */
     public function dekan()
     {
-        return $this->belongsTo(Pejabat::class, 'Id_Dekan', 'Id_Pejabat');
+        return $this->belongsTo(Dosen::class, 'Id_Dekan', 'Id_Dosen');
+    }
+
+    /**
+     * Accessor untuk Tanggal_Pengajuan (mapping data dari Tanggal-Pengajuan)
+     */
+    public function getTanggalPengajuanAttribute()
+    {
+        $value = $this->attributes['Tanggal-Pengajuan'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    public function getTanggalTenggatAttribute()
+    {
+        $value = $this->attributes['Tanggal-Tenggat'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
     }
 
     /**
      * Relasi balik ke Request SK Pembimbing Skripsi (One to Many)
-     * Satu approval bisa terkait dengan banyak request
      */
     public function reqSKPembimbingSkripsi()
     {

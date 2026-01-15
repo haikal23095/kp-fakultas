@@ -37,6 +37,21 @@ class ReqSKPembimbingSkripsi extends Model
     ];
 
     /**
+     * Accessor untuk mapping data hyphen ke underscore (backward compatibility)
+     */
+    public function getTanggalPengajuanAttribute()
+    {
+        $value = $this->attributes['Tanggal-Pengajuan'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    public function getTanggalTenggatAttribute()
+    {
+        $value = $this->attributes['Tanggal-Tenggat'] ?? null;
+        return $value ? $this->asDateTime($value) : null;
+    }
+
+    /**
      * Relationships to be loaded by default (optional - uncomment if needed)
      * protected $with = ['accSKPembimbingSkripsi'];
      */

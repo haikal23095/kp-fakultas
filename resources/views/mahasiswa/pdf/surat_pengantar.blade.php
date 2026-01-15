@@ -194,7 +194,7 @@
             <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas">
             <div class="kop-surat-text">
                 <h3 style="font-weight: 400; margin-bottom: 0;">KEMENTRIAN PENDIDIKAN TINGGI, SAINS, DAN TEKNOLOGI</h2>
-                <h3 style="font-weight: 400; margin-top: 0; margin-bottom: 0;">UNIVERSITAS TRUNOJOYO MADURA</h2>
+                <h3 style="font-weight: 400; margin-top: 0; margin-bottom: 0;">UNIVERSITAS TRUNODJOYO</h2>
                 <h3 style="margin-top: 0; margin-bottom: 0;">FAKULTAS TEKNIK</h2>
                 <p>Jl. Raya Telang, PO Box 2 Kamal, Bangkalan - Madura</p>
                 <p>Telp: (031) 3011146, Fax. (031) 3011506</p>

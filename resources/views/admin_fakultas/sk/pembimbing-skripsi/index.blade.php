@@ -422,7 +422,7 @@
                                     <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
                                     <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN,</strong>
                                     <strong class="line-1">RISET DAN TEKNOLOGI</strong>
-                                    <strong class="line-2">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                                    <strong class="line-2">UNIVERSITAS TRUNODJOYO</strong>
                                     <strong class="line-3">FAKULTAS TEKNIK</strong>
                                     <div class="address">
                                         Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
@@ -434,7 +434,7 @@
                                 <!-- Document Title -->
                                 <div class="preview-title">
                                     KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
-                                    UNIVERSITAS TRUNOJOYO MADURA
+                                    UNIVERSITAS TRUNODJOYO
                                 </div>
                                 
                                 <div class="preview-nomor">
@@ -445,11 +445,11 @@
                                     TENTANG<br><br>
                                     PENETAPAN DOSEN PEMBIMBING SKRIPSI<br>
                                     PROGRAM STUDI <span id="preview-prodi-text" style="text-transform: uppercase;">TEKNIK INFORMATIKA</span> FAKULTAS TEKNIK<br>
-                                    UNIVERSITAS TRUNOJOYO MADURA SEMESTER <span id="preview-semester-text">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-text-2" class="preview-placeholder">2023/2024</span>
+                                    UNIVERSITAS TRUNODJOYO SEMESTER <span id="preview-semester-text">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-text-2" class="preview-placeholder">2023/2024</span>
                                 </div>
 
                                 <div style="text-align: center; font-weight: bold; margin-bottom: 30px;">
-                                    DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA
+                                    DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO
                                 </div>
 
                                 <!-- Menimbang Section -->
@@ -485,10 +485,10 @@
                                                     <li style="margin-bottom: 5px; text-align: justify;">Undang-Undang Nomor 20 tahun 2003, tentang Sistem Pendidikan Nasional;</li>
                                                     <li style="margin-bottom: 5px; text-align: justify;">Peraturan Pemerintah Nomor 4 Tahun 2012 Tentang Penyelenggaraan Pendidikan Tinggi;</li>
                                                     <li style="margin-bottom: 5px; text-align: justify;">Peraturan Presiden RI Nomor 4 Tahun 2014 Tentang Perubahan Penyelenggaraan dan Pengelolaan Perguruan Tinggi;</li>
-                                                    <li style="margin-bottom: 5px; text-align: justify;">Keputusan RI Nomor 85 tahun 2001, tentang Statuta Universitas Trunojoyo Madura;</li>
+                                                    <li style="margin-bottom: 5px; text-align: justify;">Keputusan RI Nomor 85 tahun 2001, tentang Statuta Universitas Trunodjoyo;</li>
                                                     <li style="margin-bottom: 5px; text-align: justify;">Keputusan Menteri Pendidikan dan Kebudayaan RI Nomor 232/ U/ 2000, tentang pedoman Penyusunan Kurikulum Pendidikan Tinggi dan Penilaian Hasil Belajar Mahasiswa;</li>
                                                     <li style="margin-bottom: 5px; text-align: justify;">Peraturan Menteri Pendidikan, Kebudayaan, Riset, dan Teknologi RI Nomor 79/M/MPK.A/ KP.09.02/ 2022 tentang pengangkatan Rektor UTM periode 2022-2026;</li>
-                                                    <li style="margin-bottom: 5px; text-align: justify;">Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UNM3/KP/ 2023 tentang Pengangkatan Pejabat Struktural Dekan Fakultas Teknik, Universitas Trunojoyo Madura;</li>
+                                                    <li style="margin-bottom: 5px; text-align: justify;">Keputusan Rektor Universitas Trunodjoyo Nomor 1357/UNM3/KP/ 2023 tentang Pengangkatan Pejabat Struktural Dekan Fakultas Teknik, Universitas Trunodjoyo;</li>
                                                 </ol>
                                             </td>
                                         </tr>
@@ -525,14 +525,14 @@
                                             <td style="width: 120px; vertical-align: top; border: none;">Menetapkan</td>
                                             <td style="width: 20px; vertical-align: top; border: none;">:</td>
                                             <td style="text-align: justify; border: none;">
-                                                PENETAPAN DOSEN PEMBIMBING SKRIPSI PROGRAM STUDI S1 <span id="preview-prodi-menetapkan" style="text-transform: uppercase;">TEKNIK INFORMATIKA</span> FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER <span id="preview-semester-menetapkan">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-menetapkan">2023/2024</span>.
+                                                PENETAPAN DOSEN PEMBIMBING SKRIPSI PROGRAM STUDI S1 <span id="preview-prodi-menetapkan" style="text-transform: uppercase;">TEKNIK INFORMATIKA</span> FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER <span id="preview-semester-menetapkan">GANJIL</span> TAHUN AKADEMIK <span id="preview-tahun-menetapkan">2023/2024</span>.
                                             </td>
                                         </tr>
                                         <tr>
                                             <td style="width: 120px; vertical-align: top; border: none; padding-top: 10px;">Kesatu</td>
                                             <td style="width: 20px; vertical-align: top; border: none; padding-top: 10px;">:</td>
                                             <td style="text-align: justify; border: none; padding-top: 10px;">
-                                                Dosen Pembimbing Skripsi Program Studi S1 <span id="preview-prodi-kesatu" style="text-transform: capitalize;">Teknik Informatika</span> Fakultas Teknik Universitas Trunojoyo Madura semester <span id="preview-semester-kesatu">Ganjil</span> Tahun Akademik <span id="preview-tahun-kesatu">2023/2024</span> sebagaimana tercantum dalam lampiran Keputusan ini;
+                                                Dosen Pembimbing Skripsi Program Studi S1 <span id="preview-prodi-kesatu" style="text-transform: capitalize;">Teknik Informatika</span> Fakultas Teknik Universitas Trunodjoyo semester <span id="preview-semester-kesatu">Ganjil</span> Tahun Akademik <span id="preview-tahun-kesatu">2023/2024</span> sebagaimana tercantum dalam lampiran Keputusan ini;
                                             </td>
                                         </tr>
                                         <tr>
@@ -688,13 +688,13 @@
             <div class="lampiran-prodi" style="margin-top: 60px; page-break-before: auto;">
                 <div style="font-size: 11pt; text-align: left; margin-bottom: 10px;">
                     <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">SALINAN</p>
-                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                    <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">LAMPIRAN KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO</p>
                     <p style="margin: 0 0 3px 0; font-weight: normal; font-size: 9pt;">NOMOR <span class="preview-nomor-surat-lampiran">${nomorSuratHtml}</span></p>
                     <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">TENTANG</p>
-                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PEMBIMBING SKRIPSI PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
+                    <p style="margin: 0 0 10px 0; font-weight: normal; font-size: 9pt;">PENETAPAN DOSEN PEMBIMBING SKRIPSI PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
                     <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">DAFTAR MAHASISWA DAN DOSEN PEMBIMBING SKRIPSI</p>
                     <p style="margin: 0 0 10px 0; text-align: center; font-weight: bold;">PROGRAM STUDI ${prodiName.toUpperCase()} FAKULTAS TEKNIK</p>
-                    <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNOJOYO MADURA</p>
+                    <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">UNIVERSITAS TRUNODJOYO</p>
                     <p style="margin: 0 0 15px 0; text-align: center; font-weight: bold;">SEMESTER ${semesterUpper} TAHUN AKADEMIK <span class="preview-tahun-akademik-lampiran">${tahunAkademikText}</span></p>
                 </div>
                 <table class="preview-table-mahasiswa">

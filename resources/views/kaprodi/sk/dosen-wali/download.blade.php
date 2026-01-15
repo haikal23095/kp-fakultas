@@ -198,7 +198,7 @@
         <div class="header">
             <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
             <span class="title title-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</span>
-            <span class="title title-2">UNIVERSITAS TRUNOJOYO MADURA</span>
+            <span class="title title-2">UNIVERSITAS TRUNODJOYO</span>
             <span class="title title-3">FAKULTAS TEKNIK</span>
             <div class="address">
                 Kampus UTM, Jl. Raya Telang PO BOX 2 Kamal, Bangkalan - Madura<br>
@@ -209,7 +209,7 @@
         <!-- Nomor Surat -->
         <div class="section-title">
             KEPUTUSAN DEKAN FAKULTAS TEKNIK<br>
-            UNIVERSITAS TRUNOJOYO MADURA<br>
+            UNIVERSITAS TRUNODJOYO<br>
             NOMOR {{ $accSK->Nomor_Surat ?? '-' }}
         </div>
 
@@ -217,12 +217,12 @@
 
         <div class="section-title">
             DOSEN WALI MAHASISWA FAKULTAS TEKNIK<br>
-            UNIVERSITAS TRUNOJOYO MADURA<br>
+            UNIVERSITAS TRUNODJOYO<br>
             SEMESTER {{ strtoupper($sk->Semester) }} TAHUN AKADEMIK {{ $sk->Tahun_Akademik }}
         </div>
 
         <div style="margin: 20px 0; font-weight: bold; font-size: 10pt;">
-            DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA,
+            DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO,
         </div>
 
         <!-- Content -->
@@ -231,7 +231,7 @@
             <table>
                 <tr>
                     <td width="5%">a.</td>
-                    <td>bahwa dalam rangka membantu mahasiswa menyelesaikan program sarjana/diploma sesuai rencana studi, perlu menugaskan dosen tetap di lingkungan Fakultas Teknik Universitas Trunojoyo Madura sebagai dosen wali;</td>
+                    <td>bahwa dalam rangka membantu mahasiswa menyelesaikan program sarjana/diploma sesuai rencana studi, perlu menugaskan dosen tetap di lingkungan Fakultas Teknik Universitas Trunodjoyo sebagai dosen wali;</td>
                 </tr>
                 <tr>
                     <td>b.</td>
@@ -251,7 +251,7 @@
                 </tr>
                 <tr>
                     <td>3.</td>
-                    <td>Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunojoyo Madura;</td>
+                    <td>Keputusan Presiden RI Nomor 85 tahun 2001, tentang pendirian Universitas Trunodjoyo;</td>
                 </tr>
                 <tr>
                     <td>4.</td>
@@ -263,7 +263,7 @@
                 </tr>
                 <tr>
                     <td>6.</td>
-                    <td>Keputusan Rektor Universitas Trunojoyo Madura Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunojoyo Madura periode 2021-2025;</td>
+                    <td>Keputusan Rektor Universitas Trunodjoyo Nomor 1357/UN46/KP/2023 tentang Pengangkatan Dekan Fakultas Teknik Universitas Trunodjoyo periode 2021-2025;</td>
                 </tr>
             </table>
 
@@ -271,7 +271,7 @@
             <table>
                 <tr>
                     <td width="5%">1.</td>
-                    <td>Keputusan Rektor Universitas Trunojoyo Madura Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunojoyo Madura Tahun Akademik 2016/2017;</td>
+                    <td>Keputusan Rektor Universitas Trunodjoyo Nomor 190/UN46/2016, tentang Buku Pedoman Akademik Universitas Trunodjoyo Tahun Akademik 2016/2017;</td>
                 </tr>
                 <tr>
                     <td>2.</td>
@@ -285,7 +285,7 @@
                 <tr>
                     <td width="20%" style="font-weight: bold;">Menetapkan</td>
                     <td width="3%">:</td>
-                    <td style="font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA SEMESTER {{ strtoupper($sk->Semester) }} TAHUN AKADEMIK {{ $sk->Tahun_Akademik }}.</td>
+                    <td style="font-weight: bold;">DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO SEMESTER {{ strtoupper($sk->Semester) }} TAHUN AKADEMIK {{ $sk->Tahun_Akademik }}.</td>
                 </tr>
             </table>
 
@@ -293,7 +293,7 @@
                 <tr>
                     <td width="20%" style="font-weight: bold;">Kesatu</td>
                     <td width="3%">:</td>
-                    <td>Menugaskan dosen tetap di Fakultas Teknik Universitas Trunojoyo Madura yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester {{ $sk->Semester }} Tahun Akademik {{ $sk->Tahun_Akademik }};</td>
+                    <td>Menugaskan dosen tetap di Fakultas Teknik Universitas Trunodjoyo yang namanya tersebut dalam lampiran Surat Keputusan ini sebagai dosen wali Semester {{ $sk->Semester }} Tahun Akademik {{ $sk->Tahun_Akademik }};</td>
                 </tr>
                 <tr>
                     <td width="20%" style="font-weight: bold;">Kedua</td>
@@ -329,9 +329,9 @@
         <div class="lampiran">
             <div class="lampiran-header">
                 <p>SALINAN</p>
-                <p>LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                <p>LAMPIRAN I KEPUTUSAN DEKAN FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO</p>
                 <p>NOMOR {{ $accSK->Nomor_Surat ?? '-' }}</p>
-                <p>PERIHAL DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNOJOYO MADURA</p>
+                <p>PERIHAL DOSEN WALI MAHASISWA FAKULTAS TEKNIK UNIVERSITAS TRUNODJOYO</p>
                 <p>SEMESTER {{ strtoupper($sk->Semester) }} TAHUN AKADEMIK {{ $sk->Tahun_Akademik }}</p>
             </div>
 
