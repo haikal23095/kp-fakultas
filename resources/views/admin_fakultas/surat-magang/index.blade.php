@@ -93,13 +93,12 @@
                                         {{ substr($namaMahasiswa, 0, 1) }}
                                     </div>
                                     <div>
-                                        <h6 class="mb-0 text-sm fw-bold text-dark">{{ $namaMahasiswa }}</h6>
-                                        <p class="text-xs text-secondary mb-0">{{ $nimMahasiswa }}</p>
-                                        @if(count($dataMahasiswa) > 1)
-                                        <span class="badge bg-info text-white" style="font-size: 0.6rem;">
-                                            +{{ count($dataMahasiswa) - 1 }} lainnya
-                                        </span>
-                                        @endif
+                                        @foreach($dataMahasiswa as $mhs)
+                                            <div class="mb-1">
+                                                <h6 class="mb-0 text-sm fw-bold text-dark">{{ $mhs['nama'] ?? 'N/A' }}</h6>
+                                                <p class="text-xs text-secondary mb-0">{{ $mhs['nim'] ?? 'N/A' }}</p>
+                                            </div>
+                                        @endforeach
                                     </div>
                                 </div>
                             </td>
@@ -184,11 +183,10 @@
                             </div>
                             <div class="card-body">
                                 <div class="mb-2">
-                                    <small class="text-muted">Mahasiswa:</small>
-                                    <div class="fw-bold">{{ $dataMahasiswa[0]['nama'] ?? 'N/A' }}</div>
-                                    @if(count($dataMahasiswa) > 1)
-                                        <small class="text-info">+{{ count($dataMahasiswa) - 1 }} mahasiswa lainnya</small>
-                                    @endif
+                                    <small class="text-muted">Daftar Mahasiswa:</small>
+                                    @foreach($dataMahasiswa as $mhs)
+                                        <div class="fw-bold mb-1">{{ $mhs['nama'] ?? 'N/A' }} <small class="text-muted">({{ $mhs['nim'] ?? '-' }})</small></div>
+                                    @endforeach
                                 </div>
                                 <div class="mb-2">
                                     <small class="text-muted">Program Studi:</small>
@@ -370,11 +368,10 @@
                             </div>
                             <div class="card-body">
                                 <div class="mb-2">
-                                    <small class="text-muted">Mahasiswa:</small>
-                                    <div class="fw-bold">{{ $dataMahasiswa[0]['nama'] ?? 'N/A' }}</div>
-                                    @if(count($dataMahasiswa) > 1)
-                                        <small class="text-info">+{{ count($dataMahasiswa) - 1 }} mahasiswa lainnya</small>
-                                    @endif
+                                    <small class="text-muted">Daftar Mahasiswa:</small>
+                                    @foreach($dataMahasiswa as $mhs)
+                                        <div class="fw-bold mb-1">{{ $mhs['nama'] ?? 'N/A' }} <small class="text-muted">({{ $mhs['nim'] ?? '-' }})</small></div>
+                                    @endforeach
                                 </div>
                                 <div class="mb-2">
                                     <small class="text-muted">Instansi:</small>
