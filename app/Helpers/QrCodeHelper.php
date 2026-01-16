@@ -155,4 +155,58 @@ class QrCodeHelper
             throw $e;
         }
     }
+
+    /**
+     * Generate QR Code dan return relative path untuk disimpan di database
+     * 
+     * @param string $data Data yang akan di-encode
+     * @param string $prefix Prefix nama file
+     * @param int $boxSize Ukuran pixel per box
+     * @return string Relative path file QR code (e.g., 'qr-codes/qr_xxx.png')
+     */
+    public static function generateAndGetPath($data, $prefix = 'qr', $boxSize = 10)
+    {
+        try {
+            // Generate nama file unik
+            $filename = $prefix . '_' . Str::random(16) . '.png';
+            $relativePath = 'qr-codes/' . $filename;
+            
+            // Path absolut untuk simpan file
+            $absolutePath = storage_path('app/public/' . $relativePath);
+            
+            // Pastikan direktori ada
+            $directory = dirname($absolutePath);
+            if (!file_exists($directory)) {
+                mkdir($directory, 0777, true);
+            }
+            
+            // Convert boxSize to pixel size
+            $size = $boxSize * 20;
+            
+            // Generate QR Code
+            $qrCode = new QrCode(
+                data: $data,
+                size: $size,
+                margin: 10
+            );
+            
+            $writer = new PngWriter();
+            $result = $writer->write($qrCode);
+            $result->saveToFile($absolutePath);
+            
+            // Cek berhasil
+            if (file_exists($absolutePath)) {
+                return $relativePath; // Return relative path untuk database
+            } else {
+                \Log::error('Failed to save QR Code file', [
+                    'path' => $absolutePath
+                ]);
+                throw new \Exception('Failed to save QR Code file');
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('QR Code generation exception: ' . $e->getMessage());
+            throw $e;
+        }
+    }
 }

@@ -147,11 +147,16 @@ class SuratKeteranganAktifController extends Controller
             // Kirim notifikasi ke admin fakultas
             if ($adminUser) {
                 Notifikasi::create([
-                    'Tipe_Notifikasi' => 'Caution',
+                    'Tipe_Notifikasi' => 'Invitation',
                     'Pesan' => '📬 Pengajuan surat baru: Surat Keterangan Mahasiswa Aktif dari ' . Auth::user()->Name_User,
                     'Dest_user' => $adminUser->Id_User,
                     'Source_User' => Auth::id(),
                     'Is_Read' => false,
+                    'Data_Tambahan' => json_encode([
+                        'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
+                        'jenis_surat' => 'aktif',
+                        'action_url' => route('admin_fakultas.surat.kelola'),
+                    ]),
                     'created_at' => now(),
                 ]);
             }

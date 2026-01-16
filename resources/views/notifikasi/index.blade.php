@@ -6,14 +6,25 @@
 <div class="container-fluid">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="h3 text-gray-800">Notifikasi</h1>
-        @if($unreadCount > 0)
-        <form action="{{ route('notifikasi.markAllRead') }}" method="POST" class="d-inline">
-            @csrf
-            <button type="submit" class="btn btn-sm btn-primary">
-                <i class="fas fa-check-double me-1"></i>Tandai Semua Sudah Dibaca
-            </button>
-        </form>
-        @endif
+        <div class="btn-group">
+            @if($unreadCount > 0)
+            <form action="{{ route('notifikasi.markAllRead') }}" method="POST" class="d-inline">
+                @csrf
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="fas fa-check-double me-1"></i>Tandai Semua Sudah Dibaca
+                </button>
+            </form>
+            @endif
+            @if($notifikasis->total() > 0)
+            <form action="{{ route('notifikasi.deleteAll') }}" method="POST" class="d-inline ms-2" onsubmit="return confirm('Hapus semua notifikasi Anda? Tindakan ini tidak dapat dibatalkan.')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="btn btn-sm btn-danger">
+                    <i class="fas fa-trash-alt me-1"></i>Hapus Semua
+                </button>
+            </form>
+            @endif
+        </div>
     </div>
 
     @if(session('success'))
@@ -26,7 +37,7 @@
     <div class="card shadow">
         <div class="card-body">
             @forelse($notifikasis as $notif)
-            <div class="d-flex align-items-start mb-3 pb-3 border-bottom {{ !$notif->Is_Read ? 'bg-light p-3 rounded' : '' }}">
+            <div class="d-flex align-items-start mb-3 pb-3 border-bottom {{ !$notif->Is_Read ? 'bg-light p-3 rounded' : '' }} position-relative" style="cursor: pointer;" onclick="window.location.href='{{ route('notifikasi.markReadRedirect', $notif->Id_Notifikasi) }}'">
                 <div class="me-3">
                     @if($notif->Tipe_Notifikasi == 'surat')
                         <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 45px; height: 45px;">
@@ -68,7 +79,7 @@
                                 @endphp
                                 
                                 @if($invitation && $invitation->status === 'pending')
-                                    <div class="mt-2">
+                                    <div class="mt-2" onclick="event.stopPropagation();">
                                         <form action="{{ route('mahasiswa.invitation.accept', $invitation->id_invitation) }}" method="POST" class="d-inline">
                                             @csrf
                                             <button type="submit" class="btn btn-sm btn-success">
@@ -112,16 +123,8 @@
                                 @endif
                             @endif
                         </div>
-                        <div class="btn-group">
-                            @if(!$notif->Is_Read)
-                            <form action="{{ route('notifikasi.markRead', $notif->Id_Notifikasi) }}" method="POST" class="d-inline">
-                                @csrf
-                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Tandai sudah dibaca">
-                                    <i class="fas fa-check"></i>
-                                </button>
-                            </form>
-                            @endif
-                            <form action="{{ route('notifikasi.delete', $notif->Id_Notifikasi) }}" method="POST" class="d-inline" onsubmit="return confirm('Hapus notifikasi ini?')">
+                        <div class="btn-group" onclick="event.stopPropagation();">
+                            <form action="{{ route('notifikasi.delete', $notif->Id_Notifikasi) }}" method="POST" class="d-inline" onsubmit="event.stopPropagation(); return confirm('Hapus notifikasi ini?');">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-sm btn-outline-danger" title="Hapus">

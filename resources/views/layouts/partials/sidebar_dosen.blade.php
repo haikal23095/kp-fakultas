@@ -31,12 +31,6 @@
 
         <li class="nav-heading mt-3 mb-1 small">DOSEN MENU</li>
         <li>
-            <a href="{{ route('dosen.pengajuan.index') }}" class="nav-link text-white {{ request()->routeIs('dosen.pengajuan.index') ? 'active' : '' }}">
-                <i class="fas fa-file-alt me-2"></i>
-                Pengajuan Surat
-            </a>
-        </li>
-        <li>
             <a href="{{ route('dosen.riwayat.index') }}" class="nav-link text-white {{ request()->routeIs('dosen.riwayat.index') ? 'active' : '' }}">
                 <i class="fas fa-history me-2"></i>
                 Riwayat Surat

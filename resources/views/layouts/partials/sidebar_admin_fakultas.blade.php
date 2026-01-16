@@ -43,12 +43,6 @@
                 Arsip Surat
             </a>
         </li>
-        <li class="nav-item">
-            <a href="{{ route('admin_fakultas.settings.index') }}" class="nav-link text-white {{ request()->routeIs('admin_fakultas.settings.index') ? 'active' : '' }}">
-                <i class="fas fa-cogs me-2"></i>
-                Pengaturan Sistem
-            </a>
-        </li>
     </ul>
     <hr>
     {{-- Notifikasi Link --}}

@@ -75,11 +75,13 @@
                     <thead>
                         <tr>
                             <th><i class="fas fa-calendar me-2"></i>Tanggal</th>
-                            <th><i class="fas fa-file-alt me-2"></i>No. Surat</th>
+                            @if($jenisSurat->Id_Jenis_Surat != 3)
+                                <th><i class="fas fa-file-alt me-2"></i>No. Surat</th>
+                            @endif
                             <th><i class="fas fa-user me-2"></i>Pengaju</th>
                             @if($jenisSurat->Id_Jenis_Surat == 3)
                                 <th class="text-center"><i class="fas fa-print me-2"></i>Jumlah Cetak</th>
-                                <th class="text-center"><i class="fas fa-money-bill me-2"></i>Harga</th>
+                                <th class="text-center"><i class="fas fa-money-bill me-2"></i>Biaya</th>
                             @endif
                             <th class="text-center"><i class="fas fa-check-circle me-2"></i>Status</th>
                             @if($jenisSurat->Id_Jenis_Surat != 3)
@@ -90,34 +92,52 @@
                     <tbody>
                         {{-- Gabungkan Tugas_Surat dan Surat_Legalisir --}}
                         @php
-                            $allArsip = $arsipTugas;
-                            if(isset($arsipLegalisir) && $arsipLegalisir->count() > 0) {
-                                $allArsip = $allArsip->concat($arsipLegalisir);
+                            // Untuk legalisir (ID=3): HANYA gunakan $arsipLegalisir
+                            // Untuk Peminjaman Mobil (ID=13): HANYA gunakan $arsipTugas (dari Surat_Peminjaman_Mobil)
+                            // Untuk surat lain: HANYA gunakan $arsipTugas
+                            if($jenisSurat->Id_Jenis_Surat == 3) {
+                                $allArsip = isset($arsipLegalisir) ? $arsipLegalisir : collect();
+                            } else {
+                                $allArsip = $arsipTugas;
                             }
-                            $allArsip = $allArsip->sortByDesc(function($item) {
-                                // Untuk legalisir, ambil dari tugasSurat atau created_at
-                                if(isset($item->tugasSurat)) {
+                            
+                            $allArsip = $allArsip->sortByDesc(function($item) use ($jenisSurat) {
+                                // Untuk legalisir
+                                if($jenisSurat->Id_Jenis_Surat == 3 && isset($item->tugasSurat)) {
                                     return $item->tugasSurat->Tanggal_Diselesaikan ?? $item->Tanggal_Bayar;
                                 }
+                                // Untuk peminjaman mobil
+                                if($jenisSurat->Id_Jenis_Surat == 13) {
+                                    return $item->updated_at ?? $item->created_at;
+                                }
+                                // Untuk tugas surat biasa
                                 return $item->Tanggal_Diselesaikan ?? null;
                             });
                         @endphp
 
                         @foreach($allArsip as $t)
                         @php
-                            // Deteksi apakah ini legalisir atau tugas surat biasa
-                            $isLegalisir = isset($t->Nomor_Surat_Legalisir);
+                            // Deteksi jenis data
+                            $isLegalisir = isset($t->Jenis_Dokumen);
+                            $isPeminjamanMobil = isset($t->status_pengajuan) && isset($t->tujuan);
                             
                             if($isLegalisir) {
                                 // Data dari Surat_Legalisir
                                 $tanggal = $t->tugasSurat ? $t->tugasSurat->Tanggal_Diselesaikan : ($t->Tanggal_Bayar ?? $t->created_at);
-                                $nomorSurat = $t->Nomor_Surat_Legalisir;
                                 $namaPengaju = $t->user->Name_User ?? 'N/A';
                                 $roleJabatan = $t->user->role->Name_Role ?? 'N/A';
                                 $namaProdi = $t->user->mahasiswa->prodi->Nama_Prodi ?? 'N/A';
                                 $status = $t->Status;
                                 $jumlahCetak = $t->Jumlah_Salinan ?? 0;
                                 $harga = $t->Biaya ?? 0;
+                            } elseif($isPeminjamanMobil) {
+                                // Data dari Surat_Peminjaman_Mobil
+                                $tanggal = $t->tugasSurat->Tanggal_Diselesaikan ?? $t->updated_at;
+                                $nomorSurat = $t->tugasSurat->Nomor_Surat ?? '';
+                                $namaPengaju = $t->user->Name_User ?? 'N/A';
+                                $roleJabatan = $t->user->role->Name_Role ?? 'N/A';
+                                $namaProdi = $t->user->mahasiswa->prodi->Nama_Prodi ?? null;
+                                $status = $t->status_pengajuan;
                             } else {
                                 // Data dari Tugas_Surat
                                 $tanggal = $t->Tanggal_Diselesaikan;
@@ -131,18 +151,20 @@
                         <tr data-tanggal="{{ optional($tanggal)->format('Y-m-d') ?? '' }}"
                             data-bulan="{{ optional($tanggal)->format('m') ?? '' }}"
                             data-tahun="{{ optional($tanggal)->format('Y') ?? '' }}"
-                            data-nomor="{{ strtolower($nomorSurat ?? '') }}">
+                            data-nomor="{{ $nomorSurat ?? '' }}">
                             <td>
                                 <div class="fw-bold">{{ optional($tanggal)->format('d M Y') ?? '-' }}</div>
                                 <small class="text-muted"><i class="far fa-clock me-1"></i>{{ optional($tanggal)->format('H:i') ?? '' }}</small>
                             </td>
+                            @if(!$isLegalisir)
                             <td>
-                                @if($nomorSurat)
+                                @if(isset($nomorSurat) && $nomorSurat)
                                     <span class="badge bg-light text-dark fw-bold">{{ $nomorSurat }}</span>
                                 @else
                                     <span class="text-muted fst-italic small">Belum ada nomor</span>
                                 @endif
                             </td>
+                            @endif
                             <td>
                                 <div class="fw-bold">{{ $namaPengaju }}</div>
                                 <small class="text-muted">
@@ -195,6 +217,14 @@
                                     @if(!$t->suratMagang->Acc_Dekan && !$t->suratMagang->Acc_Koordinator && !$t->suratMagang->File_proposal_kegiatan)
                                         <span class="text-muted">-</span>
                                     @endif
+                                @elseif($isPeminjamanMobil)
+                                    {{-- Untuk Peminjaman Mobil Dinas --}}
+                                    <a href="{{ route('admin_fakultas.peminjaman_mobil.download_surat', $t->id) }}" 
+                                       target="_blank" 
+                                       class="btn btn-primary btn-sm"
+                                       title="Download Surat Peminjaman Mobil">
+                                        <i class="fas fa-download me-1"></i>Unduh
+                                    </a>
                                 @elseif(!empty($t->File_Surat))
                                     {{-- Untuk surat lain yang punya File_Surat --}}
                                     <a href="{{ asset('storage/' . ltrim($t->File_Surat, '/')) }}" target="_blank" class="btn btn-primary btn-sm">

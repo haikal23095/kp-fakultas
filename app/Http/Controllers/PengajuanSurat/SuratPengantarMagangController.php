@@ -370,7 +370,13 @@ class SuratPengantarMagangController extends Controller
                 'Pesan' => $mahasiswa->Nama_Mahasiswa . ' menerima undangan magang Anda',
                 'Dest_User' => $invitation->mahasiswaPengundang->Id_User,
                 'Source_User' => Auth::user()->Id_User,
-                'Is_Read' => false
+                'Is_Read' => false,
+                'Data_Tambahan' => json_encode([
+                    'invitation_id' => $invitation->id_invitation,
+                    'id_surat_magang' => $suratMagang->Id_Surat_Magang,
+                    'jenis_surat' => 'magang',
+                    'action_url' => route('mahasiswa.riwayat.magang'),
+                ]),
             ]);
 
             // Cek apakah semua invitation sudah accepted
@@ -397,7 +403,13 @@ class SuratPengantarMagangController extends Controller
                     'Pesan' => 'Semua teman telah menerima undangan magang. Pengajuan Anda telah dikirim ke koordinator.',
                     'Dest_User' => $invitation->mahasiswaPengundang->Id_User,
                     'Source_User' => Auth::user()->Id_User,
-                    'Is_Read' => false
+                    'Is_Read' => false,
+                    'Data_Tambahan' => json_encode([
+                        'id_surat_magang' => $suratMagang->Id_Surat_Magang,
+                        'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
+                        'jenis_surat' => 'magang',
+                        'action_url' => route('mahasiswa.riwayat.magang'),
+                    ]),
                 ]);
             }
 
