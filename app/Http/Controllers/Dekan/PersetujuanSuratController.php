@@ -11,6 +11,7 @@ use App\Models\Mahasiswa;
 use App\Models\Pegawai;
 use App\Models\Prodi;
 use App\Models\Pejabat;
+use App\Models\AccSKBebanMengajar;
 use App\Helpers\QrCodeHelper;
 
 class PersetujuanSuratController extends Controller
@@ -45,7 +46,10 @@ class PersetujuanSuratController extends Controller
         // TODO: Implementasi counting untuk jenis surat baru
         // Untuk sementara set 0, bisa diimplementasikan setelah tabel database dibuat
         $countCutiDosen = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
-        $countTidakBeasiswa = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
+        $countTidakBeasiswa = TugasSurat::where('Id_Jenis_Surat', 6)
+            ->whereHas('suratTidakBeasiswa')
+            ->where('Status', 'menunggu-ttd')
+            ->count();
         $countSKFakultas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countSuratTugas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
         $countMBKM = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
@@ -113,29 +117,28 @@ class PersetujuanSuratController extends Controller
             })
             ->get();
 
-        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+        return view('dekan.surat_magang.index', compact('daftarSurat'));
     }
 
     /**
-     * Tampilkan daftar legalisir yang menunggu persetujuan
+     * Tampilkan daftar legalisir yang menunggu TTD Dekan
      */
     public function listLegalisir()
     {
         $user = Auth::user();
 
-        $daftarSurat = TugasSurat::with([
-            'jenisSurat',
-            'pemberiTugas.role',
-            'penerimaTugas',
-            'suratLegalisir.user.role', // Eager load user (pemohon) dari Surat_Legalisir
-            'pemberiTugas.mahasiswa.prodi'
+        // Ambil data legalisir langsung dari tabel Surat_Legalisir dengan status menunggu_ttd_pimpinan
+        $daftarLegalisir = \App\Models\SuratLegalisir::with([
+            'user.mahasiswa.prodi',
+            'user.role',
+            'tugasSurat.jenisSurat',
+            'pejabat'
         ])
-            ->where('Id_Jenis_Surat', 14) // Legalisir menggunakan Id_Jenis_Surat = 14
-            ->whereHas('suratLegalisir') // Hanya yang punya relasi ke Surat_Legalisir
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->where('Status', 'menunggu_ttd_pimpinan')
+            ->orderBy('id_no', 'desc')
             ->get();
 
-        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+        return view('dekan.persetujuan_legalisir', compact('daftarLegalisir'));
     }
 
     /**
@@ -163,21 +166,21 @@ class PersetujuanSuratController extends Controller
 
     /**
      * Tampilkan daftar surat keterangan tidak menerima beasiswa yang menunggu persetujuan
-     * TODO: Implementasi lengkap setelah tabel database dibuat
      */
     public function listTidakBeasiswa()
     {
         $user = Auth::user();
 
-        // TODO: Ganti dengan query yang sesuai
         $daftarSurat = TugasSurat::with([
             'jenisSurat',
             'pemberiTugas.role',
-            'penerimaTugas'
+            'pemberiTugas.mahasiswa.prodi',
+            'penerimaTugas',
+            'suratTidakBeasiswa'
         ])
-            ->where('Id_Jenis_Surat', 99) // TODO: Ganti dengan Id_Jenis_Surat yang benar
+            ->where('Id_Jenis_Surat', 6)
+            ->whereHas('suratTidakBeasiswa')
             ->where('Status', 'menunggu-ttd')
-            ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
             ->get();
 
@@ -266,10 +269,21 @@ class PersetujuanSuratController extends Controller
 
         $skDosenWaliTotal = \App\Models\AccDekanDosenWali::count();
 
-        // TODO: Implementasi counting untuk jenis SK lainnya
-        $skBebanMengajarCount = 0;
-        $skPembimbingSkripsiCount = 0;
-        $skPengujiSkripsiCount = 0;
+        // Hitung SK Beban Mengajar
+        $skBebanMengajarCount = \App\Models\AccSKBebanMengajar::where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->count();
+
+        $skBebanMengajarTotal = \App\Models\AccSKBebanMengajar::count();
+
+        // Hitung SK Pembimbing Skripsi
+        $skPembimbingSkripsiCount = \App\Models\AccSKPembimbingSkripsi::where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->count();
+        $skPembimbingSkripsiTotal = \App\Models\AccSKPembimbingSkripsi::count();
+
+        // Hitung SK Penguji Skripsi
+        $skPengujiSkripsiCount = \App\Models\AccSKPengujiSkripsi::where('Status', 'Menunggu-Persetujuan-Dekan')
+            ->count();
+        $skPengujiSkripsiTotal = \App\Models\AccSKPengujiSkripsi::count();
 
         // Hitung total SK Dosen untuk badge di menu utama
         $countSKDosen = $skDosenWaliCount + $skBebanMengajarCount + $skPembimbingSkripsiCount + $skPengujiSkripsiCount;
@@ -278,8 +292,11 @@ class PersetujuanSuratController extends Controller
             'skDosenWaliCount',
             'skDosenWaliTotal',
             'skBebanMengajarCount',
+            'skBebanMengajarTotal',
             'skPembimbingSkripsiCount',
-            'skPengujiSkripsiCount'
+            'skPembimbingSkripsiTotal',
+            'skPengujiSkripsiCount',
+            'skPengujiSkripsiTotal'
         ));
     }
 
@@ -299,7 +316,7 @@ class PersetujuanSuratController extends Controller
             ->orderBy('Tanggal-Pengajuan', 'desc')
             ->get();
 
-        return view('dekan.sk.dosen-wali', compact('daftarSK'));
+        return view('dekan.sk.dosen-wali.index', compact('daftarSK'));
     }
 
     /**

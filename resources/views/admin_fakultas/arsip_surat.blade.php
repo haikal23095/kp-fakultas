@@ -277,52 +277,134 @@
         <p>Surat yang telah diselesaikan otomatis muncul di sini setelah proses manajemen selesai.</p>
     </div>
 @else
-    @php
-        $cardStyles = [
-            ['icon' => 'fa-id-card', 'color' => 'blue', 'badge' => 'primary'],
-            ['icon' => 'fa-briefcase', 'color' => 'green', 'badge' => 'success'],
-            ['icon' => 'fa-stamp', 'color' => 'orange', 'badge' => 'warning'],
-            ['icon' => 'fa-folder', 'color' => 'purple', 'badge' => 'info'],
-            ['icon' => 'fa-file-alt', 'color' => 'blue', 'badge' => 'secondary'],
-            ['icon' => 'fa-certificate', 'color' => 'green', 'badge' => 'danger'],
-        ];
-    @endphp
-
     <div class="row">
-        @foreach($arsipByJenis as $group)
-        @php
-            $jenisSurat = $group->jenis;
-            $items = $group->items;
-            $style = $cardStyles[$loop->index % count($cardStyles)];
-            $bulanIni = $items->filter(function($t) {
-                return $t->Tanggal_Diselesaikan && $t->Tanggal_Diselesaikan->isCurrentMonth();
-            })->count();
-        @endphp
+        {{-- Card Surat Keterangan Aktif --}}
         <div class="col-lg-4 col-md-6 mb-4">
-            <a href="{{ route('admin_fakultas.surat.archive.detail', $jenisSurat->Id_Jenis_Surat) }}" class="text-decoration-none">
+            <a href="{{ route('admin_fakultas.surat.archive.detail', 1) }}" class="text-decoration-none">
                 <div class="card card-jenis-surat position-relative">
-                    <span class="badge badge-count bg-{{ $style['badge'] }}">{{ $items->count() }} Arsip</span>
+                    <span class="badge badge-count bg-primary">{{ $countArsipAktif ?? 0 }} Arsip</span>
                     <div class="card-body">
-                        <div class="card-icon {{ $style['color'] }}">
-                            <i class="fas {{ $style['icon'] }}"></i>
+                        <div class="card-icon blue">
+                            <i class="fas fa-id-card"></i>
                         </div>
-                        <h5>{{ $jenisSurat->Nama_Surat }}</h5>
+                        <h5>Surat Keterangan Aktif</h5>
                         <p>Klik untuk melihat seluruh surat yang sudah selesai diproses.</p>
-                        <div class="stats-row">
-                            <div class="stat-item">
-                                <div class="stat-label">Total</div>
-                                <div class="stat-value text-success">{{ $items->count() }}</div>
-                            </div>
-                            <div class="stat-item">
-                                <div class="stat-label">Bulan Ini</div>
-                                <div class="stat-value text-primary">{{ $bulanIni }}</div>
-                            </div>
-                        </div>
                     </div>
                 </div>
             </a>
         </div>
-        @endforeach
+
+        {{-- Card Surat Pengantar Magang --}}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="{{ route('admin_fakultas.surat.archive.detail', 2) }}" class="text-decoration-none">
+                <div class="card card-jenis-surat position-relative">
+                    <span class="badge badge-count bg-success">{{ $countArsipMagang ?? 0 }} Arsip</span>
+                    <div class="card-body">
+                        <div class="card-icon green">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                        <h5>Surat Pengantar Magang</h5>
+                        <p>Klik untuk melihat seluruh surat yang sudah selesai diproses.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {{-- Card Legalisir --}}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="{{ route('admin_fakultas.surat.archive.detail', 3) }}" class="text-decoration-none">
+                <div class="card card-jenis-surat position-relative">
+                    <span class="badge badge-count bg-warning">{{ $countArsipLegalisir ?? 0 }} Arsip</span>
+                    <div class="card-body">
+                        <div class="card-icon orange">
+                            <i class="fas fa-stamp"></i>
+                        </div>
+                        <h5>Legalisir</h5>
+                        <p>Klik untuk melihat seluruh surat yang sudah selesai diproses.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {{-- Card SK Dosen --}}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="{{ route('admin_fakultas.surat.archive.detail', 12) }}" class="text-decoration-none">
+                <div class="card card-jenis-surat position-relative">
+                    <span class="badge badge-count bg-primary">{{ $countArsipSKDosen ?? 0 }} Arsip</span>
+                    <div class="card-body">
+                        <div class="card-icon blue">
+                            <i class="fas fa-file-signature"></i>
+                        </div>
+                        <h5>SK Dosen</h5>
+                        <p>Klik untuk melihat seluruh surat yang sudah selesai diproses.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {{-- Card Tidak Menerima Beasiswa --}}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="{{ route('admin_fakultas.surat.archive.detail', 6) }}" class="text-decoration-none">
+                <div class="card card-jenis-surat position-relative">
+                    <span class="badge badge-count bg-danger">{{ $countArsipTidakBeasiswa ?? 0 }} Arsip</span>
+                    <div class="card-body">
+                        <div class="card-icon orange">
+                            <i class="fas fa-file-invoice-dollar"></i>
+                        </div>
+                        <h5>Tidak Menerima Beasiswa</h5>
+                        <p>Klik untuk melihat seluruh surat yang sudah selesai diproses.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {{-- Card Dispensasi --}}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="{{ route('admin_fakultas.surat.archive.detail', 7) }}" class="text-decoration-none">
+                <div class="card card-jenis-surat position-relative">
+                    <span class="badge badge-count bg-primary">{{ $countArsipDispensasi ?? 0 }} Arsip</span>
+                    <div class="card-body">
+                        <div class="card-icon blue">
+                            <i class="fas fa-user-clock"></i>
+                        </div>
+                        <h5>Surat Dispensasi</h5>
+                        <p>Klik untuk melihat seluruh surat yang sudah selesai diproses.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {{-- Card Berkelakuan Baik --}}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="{{ route('admin_fakultas.surat.archive.detail', 8) }}" class="text-decoration-none">
+                <div class="card card-jenis-surat position-relative">
+                    <span class="badge badge-count bg-success">{{ $countArsipBerkelakuanBaik ?? 0 }} Arsip</span>
+                    <div class="card-body">
+                        <div class="card-icon green">
+                            <i class="fas fa-user-check"></i>
+                        </div>
+                        <h5>Berkelakuan Baik</h5>
+                        <p>Klik untuk melihat seluruh surat yang sudah selesai diproses.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+
+        {{-- Card Mobil Dinas --}}
+        <div class="col-lg-4 col-md-6 mb-4">
+            <a href="{{ route('admin_fakultas.surat.archive.detail', 13) }}" class="text-decoration-none">
+                <div class="card card-jenis-surat position-relative">
+                    <span class="badge badge-count bg-info">{{ $countArsipMobilDinas ?? 0 }} Arsip</span>
+                    <div class="card-body">
+                        <div class="card-icon blue">
+                            <i class="fas fa-car"></i>
+                        </div>
+                        <h5>Surat Mobil Dinas</h5>
+                        <p>Klik untuk melihat seluruh surat yang sudah selesai diproses.</p>
+                    </div>
+                </div>
+            </a>
+        </div>
     </div>
 
     <div class="row mb-4">

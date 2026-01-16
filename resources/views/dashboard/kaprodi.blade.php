@@ -399,9 +399,9 @@ function showDetail(suratId) {
                 content.innerHTML = `
                     <div class="preview-document">
                         <div class="preview-header">
-                            <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas Trunojoyo Madura">
+                            <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas Trunodjoyo">
                             <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</strong>
-                            <strong class="line-2">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                            <strong class="line-2">UNIVERSITAS TRUNODJOYO</strong>
                             <strong class="line-3">FAKULTAS TEKNIK</strong>
                             <div class="address">
                                 Sekretariat: Kampus Unijoyo PO Box 2 Telang Kamal Telp 031 7011147 Fax. 031 7011506

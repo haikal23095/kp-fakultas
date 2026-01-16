@@ -415,7 +415,7 @@
 
                 <div class="d-grid gap-2">
                     <a href="#" id="btnPreviewFormPengantar" class="btn btn-info text-white" target="_blank">
-                        <i class="fas fa-file-alt me-2"></i>Surat Pengantar (TTD Mahasiswa & Kaprodi)
+                        <i class="fas fa-file-alt me-2"></i>Form Pengantar (TTD Mahasiswa & Kaprodi)
                     </a>
                     <a href="#" id="btnDownloadSurat" class="btn btn-success" target="_blank">
                         <i class="fas fa-print me-2"></i>Surat Pengantar Magang (TTD Dekan)

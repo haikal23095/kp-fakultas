@@ -234,12 +234,22 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-8 mb-3">
                             <label class="form-label"><strong>Program Studi</strong></label>
                             <input type="text" class="form-control mahasiswa-jurusan" 
                                    name="mahasiswa[0][jurusan]"
                                    value="{{ $prodi->Nama_Prodi ?? 'Program Studi Tidak Ditemukan' }}" 
                                    readonly
+                                   data-index="0">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><strong>No WhatsApp</strong></label>
+                            <input type="text" class="form-control mahasiswa-no-wa" 
+                                   name="mahasiswa[0][no_wa]"
+                                   placeholder="08xxxxxxxxxx"
+                                   required
+                                   pattern="[0-9]{10,15}"
+                                   title="Masukkan nomor WhatsApp yang valid (10-15 digit)"
                                    data-index="0">
                         </div>
                     </div>
@@ -283,12 +293,22 @@
                         </div>
                     </div>
                     <div class="row">
-                        <div class="col-md-12 mb-3">
+                        <div class="col-md-8 mb-3">
                             <label class="form-label"><strong>Program Studi</strong></label>
                             <input type="text" class="form-control mahasiswa-jurusan" 
                                    name=""
                                    placeholder="Program Studi otomatis terisi"
                                    readonly
+                                   data-index="">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label"><strong>No WhatsApp</strong></label>
+                            <input type="text" class="form-control mahasiswa-no-wa" 
+                                   name=""
+                                   placeholder="08xxxxxxxxxx"
+                                   required
+                                   pattern="[0-9]{10,15}"
+                                   title="Masukkan nomor WhatsApp yang valid (10-15 digit)"
                                    data-index="">
                         </div>
                     </div>
@@ -375,9 +395,9 @@
                 <div class="preview-document">
                     {{-- Header Pratinjau --}}
                     <div class="preview-header">
-                        <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas Trunojoyo Madura">
+                        <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo Universitas Trunodjoyo">
                         <strong class="line-1">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</strong>
-                        <strong class="line-2">UNIVERSITAS TRUNOJOYO MADURA</strong>
+                        <strong class="line-2">UNIVERSITAS TRUNODJOYO</strong>
                         <strong class="line-3">FAKULTAS TEKNIK</strong>
                         <div class="address">
                             Sekretariat: Kampus Unijoyo PO Box 2 Telang Kamal Telp 031 7011147 Fax. 031 7011506

@@ -73,46 +73,29 @@
                     <h6 class="m-0 font-weight-bold text-primary">Edit Informasi Profile</h6>
                 </div>
                 <div class="card-body">
-                    <form action="{{ route('profile.update') }}" method="POST">
-                        @csrf
-                        @method('PUT')
-                        
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Username</label>
-                            <input type="text" class="form-control" id="username" value="{{ $user->Username }}" disabled readonly>
-                            <small class="text-muted">Username tidak dapat diubah</small>
-                        </div>
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" value="{{ $user->Username }}" disabled readonly>
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="Name_User" class="form-label">Nama Lengkap <span class="text-danger">*</span></label>
-                            <input type="text" class="form-control @error('Name_User') is-invalid @enderror" 
-                                   id="Name_User" name="Name_User" value="{{ old('Name_User', $user->Name_User) }}" required>
-                            @error('Name_User')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                    <div class="mb-3">
+                        <label for="Name_User" class="form-label">Nama Lengkap</label>
+                        <input type="text" class="form-control" id="Name_User" value="{{ $user->Name_User }}" disabled readonly>
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="email" class="form-label">Email <span class="text-danger">*</span></label>
-                            <input type="email" class="form-control @error('email') is-invalid @enderror" 
-                                   id="email" name="email" value="{{ old('email', $user->email) }}" required>
-                            @error('email')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="email" value="{{ $user->email }}" disabled readonly>
+                    </div>
 
-                        <div class="mb-3">
-                            <label for="role" class="form-label">Role</label>
-                            <input type="text" class="form-control" id="role" value="{{ $user->role->Name_Role ?? '-' }}" disabled readonly>
-                            <small class="text-muted">Role tidak dapat diubah</small>
-                        </div>
-
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fas fa-save me-2"></i>Simpan Perubahan
-                            </button>
-                        </div>
-                    </form>
+                    <div class="mb-3">
+                        <label for="role" class="form-label">Role</label>
+                        <input type="text" class="form-control" id="role" value="{{ $user->role->Name_Role ?? '-' }}" disabled readonly>
+                    </div>
+                    
+                    <div class="alert alert-info py-2 mb-0">
+                        <small><i class="fas fa-info-circle me-1"></i> Informasi profil di atas disinkronisasi dari sistem akademik dan tidak dapat diubah.</small>
+                    </div>
                 </div>
             </div>
 

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verifikasi Surat - Universitas Trunojoyo Madura</title>
+    <title>Verifikasi Surat - Universitas Trunodjoyo</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -69,7 +69,7 @@
         <div class="card-header-custom">
             <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
             <h2 class="mb-0">Verifikasi Surat Pengantar KP/Magang</h2>
-            <p class="mb-0 mt-2">Universitas Trunojoyo Madura</p>
+            <p class="mb-0 mt-2">Universitas Trunodjoyo</p>
         </div>
 
         <div class="card-body p-4">
@@ -156,7 +156,7 @@
         <div class="card-footer text-center text-muted p-3" style="background: #f9fafb;">
             <small>
                 <i class="fas fa-shield-alt me-1"></i>
-                Dokumen ini terverifikasi melalui sistem Universitas Trunojoyo Madura
+                Dokumen ini terverifikasi melalui sistem Universitas Trunodjoyo
             </small>
         </div>
     </div>

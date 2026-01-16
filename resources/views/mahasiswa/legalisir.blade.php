@@ -55,21 +55,21 @@
                 <label for="jenisDokumen" class="form-label"><strong>Jenis Dokumen</strong></label>
                 <select class="form-select" id="jenisDokumen" name="jenis_dokumen" required>
                     <option selected disabled value="">-- Pilih dokumen yang akan dilegalisir --</option>
-                    <option value="1">Ijazah</option>
-                    <option value="2">Transkrip Nilai</option>
+                    <option value="Ijazah">Ijazah</option>
+                    <option value="Transkrip">Transkrip Nilai</option>
                 </select>
-            </div>
-
-            {{-- Unggah File --}}
-            <div class="mb-3">
-                <label for="fileDokumen" class="form-label"><strong>Unggah File Dokumen (PDF)</strong></label>
-                <input class="form-control" type="file" id="fileDokumen" name="file_dokumen" accept=".pdf" required>
             </div>
 
             {{-- Jumlah Salinan --}}
             <div class="mb-4">
                 <label for="jumlahSalinan" class="form-label"><strong>Jumlah Salinan Legalisir</strong></label>
-                <input type="number" class="form-control" id="jumlahSalinan" name="jumlah_salinan" value="1" min="1" max="10">
+                <input type="number" class="form-control" id="jumlahSalinan" name="jumlah_salinan" value="1" min="1" max="10" required>
+            </div>
+            
+            {{-- Info: Berkas Fisik Dibawa Langsung --}}
+            <div class="alert alert-warning" role="alert">
+                <h6 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Pengajuan Tanpa Berkas</h6>
+                <p class="mb-0">Anda tidak perlu mengunggah file. Berkas fisik (asli) akan dibawa langsung ke Admin Fakultas untuk diproses.</p>
             </div>
             
             <hr>

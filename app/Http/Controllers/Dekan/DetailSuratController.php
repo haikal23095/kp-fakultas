@@ -29,6 +29,7 @@ class DetailSuratController extends Controller
             'penerimaTugas.role',
             'suratMagang',      // Tambahkan ini
             'suratKetAktif'     // Tambahkan ini
+            // NOTE: suratKelakuanBaik dikelola oleh Wadek3
         ];
 
         if (method_exists(TugasSurat::class, 'fileArsip')) {
@@ -173,6 +174,8 @@ class DetailSuratController extends Controller
                     \Log::warning('Gagal update status child Surat_Magang ke Success: ' . $e->getMessage());
                 }
             }
+
+            // NOTE: Surat Kelakuan Baik dikelola oleh Wadek3 (Role 10), bukan Dekan
             // NOTE: Surat_Ket_Aktif tidak punya kolom Status, skip
 
             // PENTING: Update juga status di tabel parent
@@ -323,6 +326,8 @@ class DetailSuratController extends Controller
             'penerimaTugas',
             'suratMagang',
             'suratKetAktif',
+            'suratTidakBeasiswa',
+            // NOTE: suratKelakuanBaik dikelola oleh Wadek3
             'verification.penandatangan.pegawai',
             'verification.penandatangan.dosen'
         ])->findOrFail($id);
@@ -363,6 +368,20 @@ class DetailSuratController extends Controller
                 'mode' => 'preview'
             ]);
         }
+
+        // Untuk surat tidak beasiswa
+        if ($tugasSurat->suratTidakBeasiswa) {
+            return view('dekan.preview.surat_tidak_beasiswa', [
+                'surat' => $tugasSurat,
+                'mahasiswa' => $mahasiswa,
+                'jenisSurat' => $jenisSurat,
+                'verification' => $tugasSurat->verification,
+                'suratTidakBeasiswa' => $tugasSurat->suratTidakBeasiswa,
+                'mode' => 'preview'
+            ]);
+        }
+
+        // NOTE: Surat berkelakuan baik dikelola oleh Wadek3 (Role 10)
 
         return response('Preview tidak tersedia untuk jenis surat ini.', 404);
     }

@@ -102,7 +102,13 @@
                                 <strong>{{ $item->Jenis_Dokumen }}</strong><br>
                                 <small class="text-muted">{{ $item->Jumlah_Salinan }} Salinan</small>
                             </td>
-                            <td>{{ \Carbon\Carbon::parse($item->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d/m/Y') }}</td>
+                            <td>
+                                @if($item->tugasSurat)
+                                    {{ \Carbon\Carbon::parse($item->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d/m/Y') }}
+                                @else
+                                    <span class="text-muted small">-</span>
+                                @endif
+                            </td>
                             <td>
                                 @if($item->Biaya)
                                     Rp {{ number_format($item->Biaya, 0, ',', '.') }}

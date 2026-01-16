@@ -8,8 +8,6 @@ use App\Models\Notifikasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use Endroid\QrCode\QrCode;
-use Endroid\QrCode\Writer\PngWriter;
 
 class SuratMagangController extends Controller
 {
@@ -70,39 +68,28 @@ class SuratMagangController extends Controller
         $surat->Acc_Dekan = 1;
         $surat->Status = 'Success';
 
-        // Simpan ID Dekan (bukan nama, karena kolom Nama_Dekan adalah integer untuk Id_Dosen)
+        // Simpan ID Dekan (INTEGER) bukan nama (STRING) karena kolom Nama_Dekan adalah foreign key
         if ($dekan->dosen) {
             $surat->Nama_Dekan = $dekan->dosen->Id_Dosen; // Simpan ID, bukan nama
             $surat->Nip_Dekan = $dekan->dosen->NIP;
         } elseif ($dekan->pegawaiFakultas) {
-            $surat->Nama_Dekan = $dekan->pegawaiFakultas->Id_Pegawai; // Simpan ID
+            // Jika pegawai fakultas, kita tidak bisa menyimpan ke Nama_Dekan karena foreign key ke Dosen
+            // Skip atau set null
+            $surat->Nama_Dekan = null;
             $surat->Nip_Dekan = $dekan->pegawaiFakultas->Nip_Pegawai;
         } else {
-            $surat->Nama_Dekan = null; // Tidak ada ID yang valid
+            $surat->Nama_Dekan = null;
             $surat->Nip_Dekan = '-';
         }
 
-        // Generate QR Code untuk Dekan
+        // Generate QR Code untuk Dekan menggunakan QrCodeHelper
         $qrContent = url("/verify-surat-magang/{$surat->id_no}");
-        $qrFileName = 'qr_codes/dekan_' . $surat->id_no . '_' . time() . '.png';
-        $qrPath = storage_path('app/public/' . $qrFileName);
+        $qrCodePath = \App\Helpers\QrCodeHelper::generateAndGetPath($qrContent, 10);
 
-        // Pastikan direktori ada
-        if (!file_exists(dirname($qrPath))) {
-            mkdir(dirname($qrPath), 0777, true);
+        if ($qrCodePath) {
+            $surat->Qr_code_dekan = $qrCodePath;
         }
 
-        // Generate QR Code dengan Endroid v6.0 (readonly constructor)
-        $qrCode = new QrCode(
-            data: $qrContent,
-            size: 200,
-            margin: 10
-        );
-        $writer = new PngWriter();
-        $result = $writer->write($qrCode);
-        $result->saveToFile($qrPath);
-
-        $surat->Qr_code_dekan = $qrFileName;
         $surat->save();
 
         // Update Status_KP mahasiswa menjadi "Sedang_Melaksanakan"

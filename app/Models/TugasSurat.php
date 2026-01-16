@@ -169,6 +169,11 @@ class TugasSurat extends Model
             return $this->suratLegalisir->Status;
         }
 
+        if ($this->relationLoaded('suratDispensasi') && $this->suratDispensasi) {
+            // Untuk dispensasi, status ada di Tugas_Surat
+            return $this->attributes['Status'] ?? null;
+        }
+
         return null;
     }
 
@@ -223,6 +228,27 @@ class TugasSurat extends Model
     public function suratLegalisir()
     {
         return $this->hasOne(SuratLegalisir::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    public function suratTidakBeasiswa()
+    {
+        return $this->hasOne(SuratTidakBeasiswa::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
+     * Relasi ke SuratKelakuanBaik (one-to-one)
+     */
+    public function suratKelakuanBaik()
+    {
+        return $this->hasOne(SuratKelakuanBaik::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+    }
+
+    /**
+     * Relasi ke SuratDispensasi (one-to-one)
+     */
+    public function suratDispensasi()
+    {
+        return $this->hasOne(SuratDispensasi::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
     }
 
     /**

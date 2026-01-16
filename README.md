@@ -1,10 +1,10 @@
-# Sistem Manajemen Surat Fakultas Teknik - Universitas Trunojoyo Madura
+# Sistem Manajemen Surat Fakultas Teknik - Universitas Trunodjoyo
 
 ![Laravel](https://img.shields.io/badge/Laravel-12.x-red.svg)
 ![PHP](https://img.shields.io/badge/PHP-8.2+-blue.svg)
 ![License](https://img.shields.io/badge/License-MIT-green.svg)
 
-Sistem informasi berbasis web untuk mengelola proses pengajuan, verifikasi, dan penerbitan surat-surat administratif di Fakultas Teknik Universitas Trunojoyo Madura. Sistem ini mendukung workflow multi-level approval dengan integrasi QR Code untuk validasi dokumen digital.
+Sistem informasi berbasis web untuk mengelola proses pengajuan, verifikasi, dan penerbitan surat-surat administratif di Fakultas Teknik Universitas Trunodjoyo. Sistem ini mendukung workflow multi-level approval dengan integrasi QR Code untuk validasi dokumen digital.
 
 ## 📋 Daftar Isi
 
@@ -563,9 +563,9 @@ Developed by **Tim Pengembang Fakultas Teknik UTM**
 -   [Laravel Framework](https://laravel.com/)
 -   [Endroid QR Code](https://github.com/endroid/qr-code)
 -   [SB Admin 2 Bootstrap Template](https://startbootstrap.com/theme/sb-admin-2)
--   [Universitas Trunojoyo Madura](https://www.trunojoyo.ac.id/)
+-   [Universitas Trunodjoyo](https://www.trunojoyo.ac.id/)
 
 ---
 
-**Universitas Trunojoyo Madura - Fakultas Teknik**  
+**Universitas Trunodjoyo - Fakultas Teknik**  
 _Sistem Manajemen Surat Digital - 2025_
