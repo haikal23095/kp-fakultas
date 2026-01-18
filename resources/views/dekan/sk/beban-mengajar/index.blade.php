@@ -125,15 +125,6 @@
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-4">
-                <label class="form-label small">Filter Status</label>
-                <select class="form-select" id="filterStatus" onchange="applyFilter()">
-                    <option value="">Semua Status</option>
-                    <option value="Menunggu-Persetujuan-Dekan" {{ request('status') == 'Menunggu-Persetujuan-Dekan' ? 'selected' : '' }}>Menunggu Persetujuan</option>
-                    <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                    <option value="Ditolak-Dekan" {{ request('status') == 'Ditolak-Dekan' ? 'selected' : '' }}>Ditolak</option>
-                </select>
-            </div>
-            <div class="col-md-4">
                 <label class="form-label small">Filter Semester</label>
                 <select class="form-select" id="filterSemester" onchange="applyFilter()">
                     <option value="">Semua Semester</option>
@@ -320,15 +311,9 @@
 let currentSKId = null;
 
 function applyFilter() {
-    const status = document.getElementById('filterStatus').value;
     const semester = document.getElementById('filterSemester').value;
     
     const url = new URL(window.location.href);
-    if (status) {
-        url.searchParams.set('status', status);
-    } else {
-        url.searchParams.delete('status');
-    }
     
     if (semester) {
         url.searchParams.set('semester', semester);

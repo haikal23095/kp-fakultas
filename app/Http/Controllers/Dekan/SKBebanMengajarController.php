@@ -13,21 +13,22 @@ use App\Models\Notifikasi;
 use App\Models\User;
 use App\Models\Prodi;
 use App\Helpers\QrCodeHelper;
+use App\Services\WahaService;
+use Illuminate\Support\Facades\DB;
 
 class SKBebanMengajarController extends Controller
 {
-    /**
-     * Tampilkan daftar SK Beban Mengajar yang menunggu persetujuan Dekan
-     */
+    protected $waha;
+
+    public function __construct(WahaService $waha)
+    {
+        $this->waha = $waha;
+    }
+
     public function index(Request $request)
     {
-        // Show all SK dengan optional filter, kecuali yang ditolak Wadek1
-        $query = AccSKBebanMengajar::where('Status', '!=', 'Ditolak-Wadek1');
-
-        // Filter berdasarkan status jika ada
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        }
+        // Hanya tampilkan SK yang menunggu persetujuan Dekan
+        $query = AccSKBebanMengajar::where('Status', 'Menunggu-Persetujuan-Dekan');
 
         // Filter berdasarkan semester jika ada
         if ($request->filled('semester')) {
@@ -102,11 +103,13 @@ class SKBebanMengajarController extends Controller
      */
     public function approve(Request $request, $id)
     {
+        DB::beginTransaction();
         try {
             $sk = AccSKBebanMengajar::findOrFail($id);
 
             // Validasi: hanya bisa approve jika status masih Menunggu-Persetujuan-Dekan
             if ($sk->Status !== 'Menunggu-Persetujuan-Dekan') {
+                DB::rollBack();
                 return redirect()->back()->with('error', 'SK tidak dalam status yang valid untuk disetujui');
             }
 
@@ -115,6 +118,7 @@ class SKBebanMengajarController extends Controller
             $dekan = Dosen::where('Id_User', $user->Id_User)->first();
 
             if (!$dekan) {
+                DB::rollBack();
                 return redirect()->back()->with('error', 'Data Dekan tidak ditemukan');
             }
 
@@ -123,7 +127,7 @@ class SKBebanMengajarController extends Controller
 
             $qrCode = QrCodeHelper::generateQrCode($qrData);
 
-            // Update status SK
+            // 1. Update status SK Utama (Acc_SK_Beban_Mengajar)
             $sk->update([
                 'Status' => 'Selesai',
                 'Id_Dekan' => $dekan->Id_Dosen,
@@ -131,15 +135,18 @@ class SKBebanMengajarController extends Controller
                 'QR_Code' => $qrCode
             ]);
 
-            // Update status semua Req_SK_Beban_Mengajar yang terkait
-            SKBebanMengajar::where('Id_Acc_SK_Beban_Mengajar', $sk->No)
+            // 2. Update status semua Req_SK_Beban_Mengajar yang terkait
+            // Gunakan ID dari $sk->No untuk memastikan konsistensi
+            DB::table('Req_SK_Beban_Mengajar')
+                ->where('Id_Acc_SK_Beban_Mengajar', $sk->No)
                 ->update([
                     'Status' => 'Selesai',
-                    'Nomor_Surat' => $sk->Nomor_Surat,
-                    'QR_Code' => $qrCode,  // Simpan QR Code juga ke Req_SK_Beban_Mengajar
-                    'Tanggal-Persetujuan-Dekan' => now()
+                    'Nomor_Surat' => $sk->Nomor_Surat
                 ]);
 
+            DB::commit();
+
+            // --- PROSES NOTIFIKASI (Diluar Transaksi agar jika gagal WA status tetap Selesai) ---
             $dekanUserId = $user->Id_User;
 
             // 1. Kirim notifikasi ke Admin Fakultas
@@ -162,115 +169,83 @@ class SKBebanMengajarController extends Controller
                             'semester' => $sk->Semester
                         ])
                     ]);
-                    Log::info('Notifikasi berhasil dibuat untuk Admin Fakultas', ['admin_user_id' => $adminUser->Id_User]);
+
+                    if ($adminUser->No_WA) {
+                        $pesanWA = "✅ *SK BEBAN MENGAJAR DISETUJUI*\n\nSK Tahun Akademik {$sk->Tahun_Akademik} Semester {$sk->Semester} telah disetujui oleh Dekan.\n\n*Nomor Surat:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                        $this->waha->sendMessage($adminUser->No_WA, $pesanWA);
+                    }
                 } catch (\Exception $e) {
-                    Log::error('Error creating notification for admin: ' . $e->getMessage());
+                    Log::error('Notification Admin Error: ' . $e->getMessage());
                 }
             }
 
-            // 2. Kirim notifikasi ke semua Kaprodi yang terlibat
+            // 2. Kirim notifikasi ke Kaprodi
             $allSK = SKBebanMengajar::where('Id_Acc_SK_Beban_Mengajar', $sk->No)
                 ->whereNotNull('Id_Dosen_Kaprodi')
                 ->with(['kaprodi.user', 'prodi'])
                 ->get();
 
-            $kaprodiDosenIds = $allSK->pluck('Id_Dosen_Kaprodi')->unique()->filter();
-            $notifKaprodiCount = 0;
-
-            foreach ($kaprodiDosenIds as $kaprodiDosenId) {
-                $dosenKaprodi = Dosen::with('user')->find($kaprodiDosenId);
-
-                if ($dosenKaprodi && $dosenKaprodi->Id_User) {
-                    $skWithProdi = $allSK->where('Id_Dosen_Kaprodi', $kaprodiDosenId)->first();
-                    $prodiInfo = $skWithProdi && $skWithProdi->prodi ? $skWithProdi->prodi : null;
-
+            foreach ($allSK as $itemSK) {
+                if ($itemSK->kaprodi && $itemSK->kaprodi->user) {
                     try {
                         Notifikasi::create([
                             'Tipe_Notifikasi' => 'Accepted',
-                            'Pesan' => "SK Beban Mengajar Tahun Akademik {$sk->Tahun_Akademik} Semester {$sk->Semester} telah disetujui dan ditandatangani oleh Dekan dengan Nomor Surat: {$sk->Nomor_Surat}",
-                            'Dest_user' => $dosenKaprodi->Id_User,
+                            'Pesan' => "SK Beban Mengajar {$itemSK->prodi->Nama_Prodi} telah disetujui oleh Dekan.",
+                            'Dest_user' => $itemSK->kaprodi->Id_User,
                             'Source_User' => $dekanUserId,
-                            'Is_Read' => 0,
-                            'Data_Tambahan' => json_encode([
-                                'id_acc_sk' => $sk->No,
-                                'nomor_surat' => $sk->Nomor_Surat,
-                                'tahun_akademik' => $sk->Tahun_Akademik,
-                                'semester' => $sk->Semester,
-                                'id_prodi' => $prodiInfo ? $prodiInfo->Id_Prodi : null,
-                                'nama_prodi' => $prodiInfo ? $prodiInfo->Nama_Prodi : null
-                            ])
+                            'Is_Read' => 0
                         ]);
-                        $notifKaprodiCount++;
-                        Log::info('Notifikasi berhasil dibuat untuk Kaprodi', [
-                            'kaprodi_name' => $dosenKaprodi->Nama_Dosen,
-                            'user_id' => $dosenKaprodi->Id_User
-                        ]);
+
+                        if ($itemSK->kaprodi->user->No_WA) {
+                            $pesanWA = "✅ *SK BEBAN MENGAJAR DISETUJUI*\n\nSK Prodi " . ($itemSK->prodi->Nama_Prodi ?? '-') . " telah disetujui oleh Dekan.\n\n*Nomor Surat:* {$sk->Nomor_Surat}";
+                            $this->waha->sendMessage($itemSK->kaprodi->user->No_WA, $pesanWA);
+                        }
                     } catch (\Exception $e) {
-                        Log::error('Error creating notification for kaprodi: ' . $e->getMessage());
+                        Log::error('Notification Kaprodi Error: ' . $e->getMessage());
                     }
                 }
             }
 
-            // 3. Kirim notifikasi ke semua dosen yang ada di Data_Beban_Mengajar
+            // 3. Notifikasi ke Dosen (Hanya yang ada di JSON)
             $bebanData = $sk->Data_Beban_Mengajar;
             if (is_string($bebanData)) {
                 $bebanData = json_decode($bebanData, true);
             }
 
-            $notifDosenCount = 0;
-            $dosenNipProcessed = []; // Track untuk avoid duplicate notifikasi ke dosen yang sama
-
             if (is_array($bebanData)) {
+                $dosenNipProcessed = [];
                 foreach ($bebanData as $item) {
                     $nip = $item['nip'] ?? $item['NIP'] ?? null;
-
                     if ($nip && !in_array($nip, $dosenNipProcessed)) {
-                        $dosenMengajar = Dosen::where('NIP', $nip)->first();
-
-                        if ($dosenMengajar && $dosenMengajar->Id_User) {
+                        $dosen = Dosen::with('user')->where('NIP', $nip)->first();
+                        if ($dosen && $dosen->user) {
                             try {
                                 Notifikasi::create([
                                     'Tipe_Notifikasi' => 'Accepted',
-                                    'Pesan' => "SK Beban Mengajar Anda untuk Tahun Akademik {$sk->Tahun_Akademik} Semester {$sk->Semester} telah disetujui dan ditandatangani oleh Dekan dengan Nomor Surat: {$sk->Nomor_Surat}",
-                                    'Dest_user' => $dosenMengajar->Id_User,
+                                    'Pesan' => "SK Beban Mengajar Anda telah disetujui oleh Dekan.",
+                                    'Dest_user' => $dosen->Id_User,
                                     'Source_User' => $dekanUserId,
-                                    'Is_Read' => 0,
-                                    'Data_Tambahan' => json_encode([
-                                        'id_acc_sk' => $sk->No,
-                                        'nomor_surat' => $sk->Nomor_Surat,
-                                        'tahun_akademik' => $sk->Tahun_Akademik,
-                                        'semester' => $sk->Semester,
-                                        'nip_dosen' => $nip,
-                                        'nama_dosen' => $item['nama_dosen'] ?? $item['Nama_Dosen'] ?? null
-                                    ])
+                                    'Is_Read' => 0
                                 ]);
-                                $notifDosenCount++;
+
+                                if ($dosen->user->No_WA) {
+                                    $pesanWA = "✅ *SK BEBAN MENGAJAR DISETUJUI*\n\nSK Beban Mengajar Anda Semester {$sk->Semester} telah disetujui oleh Dekan.\n\nNomor: {$sk->Nomor_Surat}";
+                                    $this->waha->sendMessage($dosen->user->No_WA, $pesanWA);
+                                }
                                 $dosenNipProcessed[] = $nip;
-                                Log::info('Notifikasi berhasil dibuat untuk Dosen Mengajar', [
-                                    'nip' => $nip,
-                                    'user_id' => $dosenMengajar->Id_User
-                                ]);
                             } catch (\Exception $e) {
-                                Log::error('Error creating notification for dosen: ' . $e->getMessage(), ['nip' => $nip]);
+                                Log::error('Notification Dosen Error: ' . $e->getMessage());
                             }
                         }
                     }
                 }
             }
 
-            Log::info('SK Beban Mengajar disetujui', [
-                'id_acc_sk' => $sk->No,
-                'id_dekan' => $dekan->Id_Dosen,
-                'nomor_surat' => $sk->Nomor_Surat,
-                'notif_admin' => $adminUser ? 1 : 0,
-                'notif_kaprodi' => $notifKaprodiCount,
-                'notif_dosen' => $notifDosenCount
-            ]);
-
-            return redirect()->route('dekan.sk.beban-mengajar.index')->with('success', 'SK Beban Mengajar berhasil disetujui dan ditandatangani');
+            return redirect()->route('dekan.sk.beban-mengajar.index')->with('success', 'SK Beban Mengajar berhasil disetujui dan notifikasi sedang dikirim.');
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Error approving SK: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyetujui SK');
+            return redirect()->back()->with('error', 'Terjadi kesalahan saat menyetujui SK: ' . $e->getMessage());
         }
     }
 
@@ -284,11 +259,13 @@ class SKBebanMengajarController extends Controller
             'target' => 'required|in:admin,kaprodi'
         ]);
 
+        DB::beginTransaction();
         try {
-            $sk = AccSKBebanMengajar::with(['skBebanMengajar.kaprodi.user'])->findOrFail($id);
+            $sk = AccSKBebanMengajar::findOrFail($id);
 
             // Validasi: hanya bisa reject jika status masih Menunggu-Persetujuan-Dekan
             if ($sk->Status !== 'Menunggu-Persetujuan-Dekan') {
+                DB::rollBack();
                 return response()->json([
                     'success' => false,
                     'message' => 'SK tidak dalam status yang valid untuk ditolak'
@@ -297,142 +274,94 @@ class SKBebanMengajarController extends Controller
 
             $target = $request->target;
             $alasanPenolakan = $request->alasan_penolakan;
-
-            // Status berubah menjadi 'Ditolak-Dekan'
             $newStatus = 'Ditolak-Dekan';
 
-            // Update status SK
+            // 1. Update status SK Utama
             $sk->update([
                 'Status' => $newStatus,
                 'Alasan-Tolak' => $alasanPenolakan
             ]);
 
-            // Update status semua Req_SK_Beban_Mengajar yang terkait
-            SKBebanMengajar::where('Id_Acc_SK_Beban_Mengajar', $sk->No)
+            // 2. Update status semua Req_SK_Beban_Mengajar yang terkait
+            DB::table('Req_SK_Beban_Mengajar')
+                ->where('Id_Acc_SK_Beban_Mengajar', $sk->No)
                 ->update([
                     'Status' => $newStatus,
                     'Alasan-Tolak' => $alasanPenolakan
                 ]);
 
-            // Kirim notifikasi berdasarkan target
+            DB::commit();
+
+            // --- PROSES NOTIFIKASI (Diluar Transaksi) ---
             $dekanUserId = Auth::id();
 
             if ($target === 'admin') {
-                // Kirim ke Admin Fakultas - cari user dengan role Pegawai_Fakultas
                 $adminUser = User::whereHas('role', function ($q) {
                     $q->where('Name_Role', 'Pegawai_Fakultas');
                 })->first();
 
-                Log::info('Searching admin user', [
-                    'found' => $adminUser ? 'yes' : 'no',
-                    'dekan_user_id' => $dekanUserId
-                ]);
-
                 if ($adminUser) {
                     try {
-                        $notif = Notifikasi::create([
+                        Notifikasi::create([
                             'Tipe_Notifikasi' => 'Rejected',
                             'Pesan' => "SK Beban Mengajar Tahun Akademik {$sk->Tahun_Akademik} Semester {$sk->Semester} ditolak oleh Dekan. Alasan: {$alasanPenolakan}",
                             'Dest_user' => $adminUser->Id_User,
                             'Source_User' => $dekanUserId,
-                            'Is_Read' => 0,
-                            'Data_Tambahan' => json_encode([
-                                'id_acc_sk' => $sk->No,
-                                'tahun_akademik' => $sk->Tahun_Akademik,
-                                'semester' => $sk->Semester
-                            ])
+                            'Is_Read' => 0
                         ]);
-                        Log::info('Notifikasi berhasil dibuat untuk Admin', ['notif_id' => $notif->Id_Notifikasi]);
+
+                        if ($adminUser->No_WA) {
+                            $pesanWA = "❌ *SK BEBAN MENGAJAR DITOLAK*\n\nSK Tahun Akademik {$sk->Tahun_Akademik} Semester {$sk->Semester} ditolak oleh Dekan.\n\n*Alasan:* {$alasanPenolakan}\n\n_Sistem SIFAKULTAS_";
+                            $this->waha->sendMessage($adminUser->No_WA, $pesanWA);
+                        }
                     } catch (\Exception $e) {
-                        Log::error('Error creating notification for admin: ' . $e->getMessage());
+                        Log::error('Reject Notification Admin Error: ' . $e->getMessage());
                     }
-                } else {
-                    Log::warning('Admin Fakultas user not found');
                 }
             } else {
-                // Kirim ke SEMUA Kaprodi yang terlibat - ambil semua SK yang terkait dengan relasi ke Dosen Kaprodi
                 $allSK = SKBebanMengajar::where('Id_Acc_SK_Beban_Mengajar', $sk->No)
                     ->whereNotNull('Id_Dosen_Kaprodi')
                     ->with(['kaprodi.user', 'prodi'])
                     ->get();
 
-                // Ambil ID Dosen Kaprodi yang unik
                 $kaprodiDosenIds = $allSK->pluck('Id_Dosen_Kaprodi')->unique()->filter();
 
-                Log::info('Searching all kaprodi', [
-                    'total_sk' => $allSK->count(),
-                    'unique_kaprodi_dosen_ids' => $kaprodiDosenIds->toArray(),
-                    'dekan_user_id' => $dekanUserId
-                ]);
-
-                $notifCount = 0;
                 foreach ($kaprodiDosenIds as $kaprodiDosenId) {
-                    // Cari dosen kaprodi
                     $dosenKaprodi = Dosen::with('user')->find($kaprodiDosenId);
-
                     if ($dosenKaprodi && $dosenKaprodi->Id_User) {
-                        // Dapatkan info prodi dari SK
                         $skWithProdi = $allSK->where('Id_Dosen_Kaprodi', $kaprodiDosenId)->first();
-                        $prodiInfo = $skWithProdi && $skWithProdi->prodi ? $skWithProdi->prodi : null;
+                        $prodiName = $skWithProdi && $skWithProdi->prodi ? $skWithProdi->prodi->Nama_Prodi : '-';
 
                         try {
-                            $notif = Notifikasi::create([
+                            Notifikasi::create([
                                 'Tipe_Notifikasi' => 'Rejected',
-                                'Pesan' => "SK Beban Mengajar Tahun Akademik {$sk->Tahun_Akademik} Semester {$sk->Semester} ditolak oleh Dekan. Alasan: {$alasanPenolakan}",
+                                'Pesan' => "SK Beban Mengajar {$prodiName} ditolak oleh Dekan. Alasan: {$alasanPenolakan}",
                                 'Dest_user' => $dosenKaprodi->Id_User,
                                 'Source_User' => $dekanUserId,
-                                'Is_Read' => 0,
-                                'Data_Tambahan' => json_encode([
-                                    'id_acc_sk' => $sk->No,
-                                    'tahun_akademik' => $sk->Tahun_Akademik,
-                                    'semester' => $sk->Semester,
-                                    'id_dosen_kaprodi' => $dosenKaprodi->Id_Dosen,
-                                    'nama_kaprodi' => $dosenKaprodi->Nama_Dosen,
-                                    'id_prodi' => $prodiInfo ? $prodiInfo->Id_Prodi : null,
-                                    'nama_prodi' => $prodiInfo ? $prodiInfo->Nama_Prodi : null
-                                ])
+                                'Is_Read' => 0
                             ]);
-                            $notifCount++;
-                            Log::info('Notifikasi berhasil dibuat untuk Kaprodi', [
-                                'notif_id' => $notif->Id_Notifikasi,
-                                'kaprodi_dosen_id' => $dosenKaprodi->Id_Dosen,
-                                'kaprodi_name' => $dosenKaprodi->Nama_Dosen,
-                                'user_id' => $dosenKaprodi->Id_User,
-                                'prodi_name' => $prodiInfo ? $prodiInfo->Nama_Prodi : 'N/A'
-                            ]);
+
+                            if ($dosenKaprodi->user && $dosenKaprodi->user->No_WA) {
+                                $pesanWA = "❌ *SK BEBAN MENGAJAR DITOLAK*\n\nSK Beban Mengajar Prodi {$prodiName} ditolak oleh Dekan.\n\n*Alasan:* {$alasanPenolakan}\n\n_Sistem SIFAKULTAS_";
+                                $this->waha->sendMessage($dosenKaprodi->user->No_WA, $pesanWA);
+                            }
                         } catch (\Exception $e) {
-                            Log::error('Error creating notification for kaprodi: ' . $e->getMessage(), [
-                                'kaprodi_dosen_id' => $dosenKaprodi->Id_Dosen,
-                                'user_id' => $dosenKaprodi->Id_User
-                            ]);
+                            Log::error('Reject Notification Kaprodi Error: ' . $e->getMessage());
                         }
-                    } else {
-                        Log::warning('Kaprodi dosen not found or has no Id_User', [
-                            'kaprodi_dosen_id' => $kaprodiDosenId,
-                            'dosen_found' => $dosenKaprodi ? 'yes' : 'no',
-                            'has_user' => $dosenKaprodi && $dosenKaprodi->Id_User ? 'yes' : 'no'
-                        ]);
                     }
                 }
-
-                Log::info('Total notifikasi dibuat untuk Kaprodi', ['count' => $notifCount]);
             }
-
-            Log::info('SK Beban Mengajar ditolak', [
-                'id_acc_sk' => $sk->No,
-                'target' => $target,
-                'new_status' => $newStatus
-            ]);
 
             return response()->json([
                 'success' => true,
                 'message' => 'SK Beban Mengajar berhasil ditolak'
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
             Log::error('Error rejecting SK: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Terjadi kesalahan saat menolak SK'
+                'message' => 'Terjadi kesalahan saat menolak SK: ' . $e->getMessage()
             ], 500);
         }
     }
