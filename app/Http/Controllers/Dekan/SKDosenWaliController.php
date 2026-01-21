@@ -217,8 +217,7 @@ class SKDosenWaliController extends Controller
     {
         try {
             $history = AccDekanDosenWali::with(['reqSKDosenWali.prodi', 'reqSKDosenWali.kaprodi.user'])
-                ->where('Status', 'Selesai')
-                ->whereNotNull('QR_Code')
+                ->whereIn('Status', ['Selesai', 'Ditolak-Dekan'])
                 ->orderBy('Tanggal-Persetujuan-Dekan', 'desc')
                 ->get();
 

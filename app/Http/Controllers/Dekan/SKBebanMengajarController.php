@@ -369,17 +369,23 @@ class SKBebanMengajarController extends Controller
     /**
      * Tampilkan history SK Beban Mengajar yang sudah diproses
      */
-    public function history(Request $request)
+    public function history()
     {
-        $query = AccSKBebanMengajar::whereIn('Status', ['Selesai', 'Ditolak-Dekan']);
+        try {
+            $history = AccSKBebanMengajar::whereIn('Status', ['Selesai', 'Ditolak-Dekan'])
+                ->orderBy('Tanggal-Persetujuan-Dekan', 'desc')
+                ->get();
 
-        // Filter berdasarkan semester jika ada
-        if ($request->filled('semester')) {
-            $query->where('Semester', $request->semester);
+            return response()->json([
+                'success' => true,
+                'history' => $history
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error fetching SK Beban Mengajar history: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat history: ' . $e->getMessage()
+            ], 500);
         }
-
-        $daftarSK = $query->orderBy('Tanggal-Persetujuan-Dekan', 'desc')->paginate(10);
-
-        return view('dekan.sk.beban-mengajar.history', compact('daftarSK'));
     }
 }

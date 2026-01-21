@@ -142,7 +142,7 @@
             <p class="mb-0 text-muted small">Daftar SK Dosen Wali yang menunggu tanda tangan Dekan</p>
         </div>
         <div class="d-flex gap-2">
-            <button type="button" class="btn btn-primary" onclick="showHistory()">
+            <button type="button" class="btn btn-warning" onclick="showHistory()">
                 <i class="fas fa-history me-2"></i>History
             </button>
             <a href="{{ route('dekan.persetujuan.sk_dosen') }}" class="btn btn-outline-secondary">

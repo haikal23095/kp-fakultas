@@ -158,16 +158,16 @@ Route::middleware('auth')->group(function () {
         Route::get('/peminjaman-mobil/{id}/download-surat', [PeminjamanMobilAdminController::class, 'downloadSurat'])->name('peminjaman_mobil.download_surat');
         Route::get('/peminjaman-mobil/arsip', [PeminjamanMobilAdminController::class, 'arsip'])->name('peminjaman_mobil.arsip');
         Route::get('/peminjaman-mobil/ditolak', [PeminjamanMobilAdminController::class, 'ditolak'])->name('peminjaman_mobil.ditolak');
-        
+
         // Management Kendaraan
         Route::get('/kendaraan', [PeminjamanMobilAdminController::class, 'kendaraanIndex'])->name('kendaraan.index');
         Route::post('/kendaraan', [PeminjamanMobilAdminController::class, 'kendaraanStore'])->name('kendaraan.store');
         Route::put('/kendaraan/{id}', [PeminjamanMobilAdminController::class, 'kendaraanUpdate'])->name('kendaraan.update');
         Route::delete('/kendaraan/{id}', [PeminjamanMobilAdminController::class, 'kendaraanDestroy'])->name('kendaraan.destroy');
-        
+
         Route::get('/surat-cuti', [FakultasManajemenSuratController::class, 'listCuti'])->name('surat.cuti');
         Route::get('/surat-tidak-beasiswa', [\App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController::class, 'indexAdmin'])->name('surat.tidak_beasiswa');
-        
+
         // Routes untuk Surat Dispensasi (menggunakan SuratDispensasiController khusus)
         Route::get('/surat-dispensasi', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'index'])->name('surat.dispensasi');
         Route::get('/surat-dispensasi/{id}', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'show'])->name('surat.dispensasi.detail');
@@ -175,7 +175,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat-dispensasi/{id}/download-lampiran', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'downloadLampiran'])->name('surat.dispensasi.download_lampiran');
         Route::post('/surat-dispensasi/{id}/assign-nomor', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'assignNomorSurat'])->name('surat.dispensasi.assign_nomor');
         Route::get('/surat-dispensasi/{id}/download-pdf', [\App\Http\Controllers\Admin_Fakultas\SuratDispensasiController::class, 'downloadPDF'])->name('surat.dispensasi.download_pdf');
-        
+
         Route::get('/surat-berkelakuan-baik', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'indexAdmin'])->name('surat.berkelakuan_baik');
         Route::post('/surat-berkelakuan-baik/{id}/beri-nomor', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'beriNomor'])->name('surat.kelakuan_baik.beri_nomor');
         Route::post('/surat-berkelakuan-baik/{id}/kirim-wadek3', [\App\Http\Controllers\PengajuanSurat\SuratKelakuanBaikController::class, 'kirimKeWadek3'])->name('surat.kelakuan_baik.kirim_wadek3');
@@ -318,6 +318,7 @@ Route::middleware('auth')->group(function () {
 
         // Route untuk SK Dosen
         Route::get('/persetujuan-surat/sk-dosen', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'listSKDosen'])->name('persetujuan.sk_dosen');
+        Route::get('/sk-dosen/history', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'skHistory'])->name('sk.history');
 
         // Route untuk SK Dosen Wali - menggunakan controller terpisah
         Route::get('/persetujuan-surat/sk-dosen-wali', [App\Http\Controllers\Dekan\SKDosenWaliController::class, 'index'])->name('persetujuan.sk_dosen_wali');
@@ -438,11 +439,11 @@ Route::middleware('auth')->group(function () {
             ->name('sarpras.peminjaman_mobil.arsip');
         Route::get('/sarpras/peminjaman-mobil/{id}/download', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'downloadSurat'])
             ->name('sarpras.peminjaman_mobil.download');
-        
+
         // Legacy route (keep for compatibility)
         Route::get('/sarpras/persetujuan-mobil', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'index'])
             ->name('sarpras.persetujuan-mobil');
-        
+
         Route::get('/sarpras/persetujuan-ruang', [\App\Http\Controllers\Wadek2\PeminjamanController::class, 'persetujuanRuang'])
             ->name('sarpras.persetujuan-ruang');
 
@@ -472,7 +473,7 @@ Route::middleware('auth')->group(function () {
             ->name('kemahasiswaan.download-permohonan');
         Route::get('/kemahasiswaan/dispensasi/{id}/download-lampiran', [\App\Http\Controllers\Wadek3\KemahasiswaanController::class, 'downloadLampiran'])
             ->name('kemahasiswaan.download-lampiran');
-        
+
         // Persetujuan Surat Berkelakuan Baik (redirect ke controller utama)
         Route::get('/kemahasiswaan/validasi-kelakuan-baik', [\App\Http\Controllers\Wadek3\KelakuanBaikController::class, 'index'])
             ->name('kemahasiswaan.validasi-kelakuan-baik');
