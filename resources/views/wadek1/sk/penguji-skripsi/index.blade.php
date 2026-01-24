@@ -106,14 +106,12 @@
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-4">
-                <label class="form-label small">Filter Status</label>
-                <select class="form-select" id="filterStatus" onchange="applyFilter()">
-                    <option value="">Semua Status</option>
-                    <option value="Menunggu-Persetujuan-Wadek-1" {{ request('status') == 'Menunggu-Persetujuan-Wadek-1' ? 'selected' : '' }}>Menunggu Persetujuan</option>
-                    <option value="Menunggu-Persetujuan-Dekan" {{ request('status') == 'Menunggu-Persetujuan-Dekan' ? 'selected' : '' }}>Disetujui (Menunggu Dekan)</option>
-                    <option value="Ditolak-Wadek1" {{ request('status') == 'Ditolak-Wadek1' ? 'selected' : '' }}>Ditolak</option>
-                    <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                </select>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0">
+                        <i class="fas fa-search text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" id="searchSk" placeholder="Cari NOMOR SK..." onkeyup="applyFilter()">
+                </div>
             </div>
         </div>
     </div>
@@ -349,16 +347,17 @@
     const dekanNip = @json($dekanNip ?? '');
 
     function applyFilter() {
-        const status = document.getElementById('filterStatus').value;
-        const url = new URL(window.location.href);
+        const search = document.getElementById('searchSk').value.toLowerCase();
+        const rows = document.querySelectorAll('tbody tr');
         
-        if (status) {
-            url.searchParams.set('status', status);
-        } else {
-            url.searchParams.delete('status');
-        }
-        
-        window.location.href = url.toString();
+        rows.forEach(row => {
+            const noSurat = row.cells[3].textContent.toLowerCase();
+            if (noSurat.includes(search)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
     }
 
     function showDetail(skId) {

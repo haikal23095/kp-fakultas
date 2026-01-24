@@ -199,7 +199,7 @@
                                             class="btn btn-primary" 
                                             onclick="showDetail({{ $sk->No }})" 
                                             title="Lihat Detail">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="fas fa-eye me-1"></i> Detail
                                     </button>
                                     @if($sk->Status === 'Menunggu-Persetujuan-Dekan')
                                         <button type="button" 
@@ -395,6 +395,23 @@ function showDetail(skId) {
                 </div>
             `;
         });
+}
+
+/**
+ * Helper function for history to close history modal and show detail
+ */
+function viewHistoryDetail(skId) {
+    // Hide history modal if open
+    const historyModalEl = document.getElementById('modalHistory');
+    const historyModal = bootstrap.Modal.getInstance(historyModalEl);
+    if (historyModal) {
+        historyModal.hide();
+    }
+    
+    // Slight delay to allow modal backdrop to clean up or avoid conflicts
+    setTimeout(() => {
+        showDetail(skId);
+    }, 400);
 }
 
 function displayDetail(sk, dekan) {
@@ -749,8 +766,9 @@ function renderHistory(history) {
                         <th>No</th>
                         <th>Semester/Tahun</th>
                         <th>Nomor Surat</th>
+                        <th>Tanggal TTD</th>
                         <th>Status</th>
-                        <th>Tanggal</th>
+                        <th class="text-center">Aksi</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -770,8 +788,13 @@ function renderHistory(history) {
                 <td>${index + 1}</td>
                 <td>${sk.Semester} ${sk.Tahun_Akademik}</td>
                 <td>${sk.Nomor_Surat || '-'}</td>
-                <td><span class="badge bg-${statusClass}">${sk.Status}</span></td>
                 <td>${date}</td>
+                <td><span class="badge bg-${statusClass}">${sk.Status}</span></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="viewHistoryDetail(${sk.No})">
+                        <i class="fas fa-eye me-1"></i> Detail
+                    </button>
+                </td>
             </tr>
         `;
     });

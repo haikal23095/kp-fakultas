@@ -125,16 +125,6 @@
     <div class="card-body">
         <div class="row g-3">
             <div class="col-md-4">
-                <label class="form-label small">Filter Status</label>
-                <select class="form-select" id="filterStatus" onchange="applyFilter()">
-                    <option value="">Semua Status</option>
-                    <option value="Menunggu-Persetujuan-Wadek-1" {{ request('status') == 'Menunggu-Persetujuan-Wadek-1' ? 'selected' : '' }}>Menunggu Persetujuan</option>
-                    <option value="Menunggu-Persetujuan-Dekan" {{ request('status') == 'Menunggu-Persetujuan-Dekan' ? 'selected' : '' }}>Disetujui (Menunggu Dekan)</option>
-                    <option value="Ditolak-Wadek1" {{ request('status') == 'Ditolak-Wadek1' ? 'selected' : '' }}>Ditolak</option>
-                    <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                </select>
-            </div>
-            <div class="col-md-4">
                 <label class="form-label small">Filter Semester</label>
                 <select class="form-select" id="filterSemester" onchange="applyFilter()">
                     <option value="">Semua Semester</option>
@@ -355,13 +345,9 @@
 @push('scripts')
 <script>
     function applyFilter() {
-        const status = document.getElementById('filterStatus').value;
         const semester = document.getElementById('filterSemester').value;
         
         let url = new URL(window.location.href);
-        
-        if (status) url.searchParams.set('status', status);
-        else url.searchParams.delete('status');
         
         if (semester) url.searchParams.set('semester', semester);
         else url.searchParams.delete('semester');

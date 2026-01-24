@@ -34,6 +34,11 @@ class WahaService
                         'text' => $message,
                     ]);
 
+            if (!$response->successful()) {
+                Log::error("WAHA Failed Response: " . $response->body());
+                echo "WAHA Error Body: " . $response->body() . "\n";
+            }
+
             return $response->successful();
         } catch (\Exception $e) {
             Log::error("WAHA Error: " . $e->getMessage());

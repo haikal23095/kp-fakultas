@@ -37,7 +37,7 @@
                 <a href="{{ route('wadek1.sk.beban-mengajar.index') }}" class="btn btn-primary btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-primary d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skBebanMengajarTotal ?? 0 }} SK</small>
+                <small class="text-primary d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skBebanMengajarTotalPending ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -62,7 +62,7 @@
                 <a href="{{ route('wadek1.sk.dosen-wali.index') }}" class="btn btn-success btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-success d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skDosenWaliTotal ?? 0 }} SK</small>
+                <small class="text-success d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skDosenWaliTotalPending ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -87,7 +87,7 @@
                 <a href="{{ route('wadek1.sk.pembimbing-skripsi.index') }}" class="btn btn-warning btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-warning d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPembimbingSkripsiTotal ?? 0 }} SK</small>
+                <small class="text-warning d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPembimbingSkripsiTotalPending ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -112,7 +112,7 @@
                 <a href="{{ route('wadek1.sk.penguji-skripsi.index') }}" class="btn btn-danger btn-sm w-100">
                     <i class="fas fa-list me-2"></i>Lihat Request
                 </a>
-                <small class="text-danger d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPengujiSkripsiTotal ?? 0 }} SK</small>
+                <small class="text-danger d-block mt-2" style="font-size: 0.7rem;">Total: {{ $skPengujiSkripsiTotalPending ?? 0 }} SK</small>
             </div>
         </div>
     </div>
@@ -165,7 +165,7 @@
                                     </div>
                                     <h6 class="fw-bold mb-2">SK Beban Mengajar</h6>
                                     <p class="small text-muted mb-3">Riwayat SK beban mengajar dosen</p>
-                                    <span class="badge bg-primary mb-2">{{ $skBebanMengajarTotal ?? 0 }} Total SK</span>
+                                    <span class="badge bg-primary mb-2">{{ $skBebanMengajarTotalAll ?? 0 }} Total SK</span>
                                     <button class="btn btn-primary btn-sm w-100">
                                         <i class="fas fa-list me-1"></i>Lihat Riwayat
                                     </button>
@@ -184,7 +184,7 @@
                                     </div>
                                     <h6 class="fw-bold mb-2">SK Dosen Wali</h6>
                                     <p class="small text-muted mb-3">Riwayat SK dosen wali mahasiswa</p>
-                                    <span class="badge bg-success mb-2">{{ $skDosenWaliTotal ?? 0 }} Total SK</span>
+                                    <span class="badge bg-success mb-2">{{ $skDosenWaliTotalAll ?? 0 }} Total SK</span>
                                     <button class="btn btn-success btn-sm w-100">
                                         <i class="fas fa-list me-1"></i>Lihat Riwayat
                                     </button>
@@ -203,7 +203,7 @@
                                     </div>
                                     <h6 class="fw-bold mb-2">SK Pembimbing Skripsi</h6>
                                     <p class="small text-muted mb-3">Riwayat SK pembimbing skripsi</p>
-                                    <span class="badge bg-warning text-dark mb-2">{{ $skPembimbingSkripsiTotal ?? 0 }} Total SK</span>
+                                    <span class="badge bg-warning text-dark mb-2">{{ $skPembimbingSkripsiTotalAll ?? 0 }} Total SK</span>
                                     <button class="btn btn-warning btn-sm w-100">
                                         <i class="fas fa-list me-1"></i>Lihat Riwayat
                                     </button>
@@ -222,7 +222,7 @@
                                     </div>
                                     <h6 class="fw-bold mb-2">SK Penguji Skripsi</h6>
                                     <p class="small text-muted mb-3">Riwayat SK penguji skripsi</p>
-                                    <span class="badge bg-danger mb-2">{{ $skPengujiSkripsiTotal ?? 0 }} Total SK</span>
+                                    <span class="badge bg-danger mb-2">{{ $skPengujiSkripsiTotalAll ?? 0 }} Total SK</span>
                                     <button class="btn btn-danger btn-sm w-100">
                                         <i class="fas fa-list me-1"></i>Lihat Riwayat
                                     </button>

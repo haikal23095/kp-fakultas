@@ -103,6 +103,9 @@ class SKBebanMengajarController extends Controller
      */
     public function approve(Request $request, $id)
     {
+        // Tingkatkan limit waktu eksekusi karena pengiriman notifikasi WA bisa memakan waktu lama
+        set_time_limit(180);
+
         DB::beginTransaction();
         try {
             $sk = AccSKBebanMengajar::findOrFail($id);
@@ -254,6 +257,9 @@ class SKBebanMengajarController extends Controller
      */
     public function reject(Request $request, $id)
     {
+        // Tingkatkan limit waktu eksekusi
+        set_time_limit(180);
+
         $request->validate([
             'alasan_penolakan' => 'required|string|max:500',
             'target' => 'required|in:admin,kaprodi'
