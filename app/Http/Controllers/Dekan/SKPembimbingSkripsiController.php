@@ -13,9 +13,17 @@ use App\Models\Dosen;
 use App\Models\Notifikasi;
 use App\Models\User;
 use App\Helpers\QrCodeHelper;
+use App\Services\WahaService;
 
 class SKPembimbingSkripsiController extends Controller
 {
+    protected $waha;
+
+    public function __construct(WahaService $waha)
+    {
+        $this->waha = $waha;
+    }
+
     /**
      * Tampilkan daftar SK Pembimbing Skripsi yang menunggu persetujuan Dekan
      */
@@ -82,6 +90,7 @@ class SKPembimbingSkripsiController extends Controller
      */
     public function approve($id)
     {
+        set_time_limit(180);
         try {
             DB::beginTransaction();
 
@@ -177,6 +186,17 @@ class SKPembimbingSkripsiController extends Controller
                 ]);
 
                 Log::info('Notification sent to Admin Fakultas on approval', ['admin_id' => $adminUser->Id_User]);
+
+                // Kirim Notifikasi WhatsApp ke Admin via WAHA
+                if ($adminUser->No_WA) {
+                    try {
+                        $pesanWA = "✅ *SK PEMBIMBING SKRIPSI DISETUJUI*\n\nSK Pembimbing Skripsi Semester {$sk->Semester} Tahun Akademik {$sk->Tahun_Akademik} telah disetujui dan ditandatangani oleh Dekan.\n\n*Nomor Surat:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                        $this->waha->sendMessage($adminUser->No_WA, $pesanWA);
+                        Log::info('WhatsApp notification sent to Admin Fakultas');
+                    } catch (\Exception $e) {
+                        Log::error('Error sending WhatsApp notification to Admin: ' . $e->getMessage());
+                    }
+                }
             } else {
                 Log::warning('Admin Fakultas user not found for approval notification');
             }
@@ -208,6 +228,16 @@ class SKPembimbingSkripsiController extends Controller
                         'kaprodi_id' => $reqSK->kaprodi->user->Id_User,
                         'req_id' => $reqSK->No
                     ]);
+
+                    // Kirim Notifikasi WhatsApp ke Kaprodi via WAHA
+                    if ($reqSK->kaprodi && $reqSK->kaprodi->user && $reqSK->kaprodi->user->No_WA) {
+                        try {
+                            $pesanWA = "✅ *SK PEMBIMBING SKRIPSI DISETUJUI*\n\nSK Pembimbing Skripsi Semester {$sk->Semester} Tahun Akademik {$sk->Tahun_Akademik} yang Anda ajukan telah disetujui dan ditandatangani oleh Dekan.\n\n*Nomor Surat:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                            $this->waha->sendMessage($reqSK->kaprodi->user->No_WA, $pesanWA);
+                        } catch (\Exception $e) {
+                            Log::error('Error sending WhatsApp notification to Kaprodi: ' . $e->getMessage());
+                        }
+                    }
                 }
             }
 
@@ -263,6 +293,16 @@ class SKPembimbingSkripsiController extends Controller
                             'user_id' => $dosen->user->Id_User,
                             'nama_dosen' => $dosen->Nama_Dosen
                         ]);
+
+                        // Kirim Notifikasi WhatsApp ke Dosen Pembimbing via WAHA
+                        if ($dosen->user->No_WA) {
+                            try {
+                                $pesanWA = "✅ *SK PENETAPAN DOSEN PEMBIMBING*\n\nAnda telah ditetapkan sebagai Dosen Pembimbing Skripsi untuk semester {$sk->Semester} {$sk->Tahun_Akademik}.\n\n*Nomor SK:* {$sk->Nomor_Surat}\n\nSK telah ditandatangani oleh Dekan. Silakan cek di sistem SIFAKULTAS.\n\n_Sistem SIFAKULTAS_";
+                                $this->waha->sendMessage($dosen->user->No_WA, $pesanWA);
+                            } catch (\Exception $e) {
+                                Log::error('Error sending WhatsApp notification to Dosen: ' . $e->getMessage());
+                            }
+                        }
                     }
                 }
             }
