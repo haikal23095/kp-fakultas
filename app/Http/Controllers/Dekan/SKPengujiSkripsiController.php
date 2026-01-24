@@ -13,9 +13,17 @@ use App\Models\Dosen;
 use App\Models\Notifikasi;
 use App\Models\User;
 use App\Helpers\QrCodeHelper;
+use App\Services\WahaService;
 
 class SKPengujiSkripsiController extends Controller
 {
+    protected $waha;
+
+    public function __construct(WahaService $waha)
+    {
+        $this->waha = $waha;
+    }
+
     /**
      * Tampilkan daftar SK Penguji Skripsi yang menunggu persetujuan Dekan
      */
@@ -116,6 +124,9 @@ class SKPengujiSkripsiController extends Controller
      */
     public function approve($id)
     {
+        // Tingkatkan limit waktu eksekusi karena pengiriman notifikasi WA bisa memakan waktu lama
+        set_time_limit(180);
+
         try {
             DB::beginTransaction();
 
@@ -161,7 +172,7 @@ class SKPengujiSkripsiController extends Controller
 
             // Convert array to JSON string for QR Code
             $qrDataString = json_encode($qrData);
-            $qrCodeAbsolutePath = QrCodeHelper::generateQRCode($qrDataString, 'sk_penguji_skripsi');
+            $qrCodeAbsolutePath = QrCodeHelper::generateQrCode($qrDataString, 'sk_penguji_skripsi');
 
             // Convert absolute path to relative path for database storage
             $qrCodePath = str_replace(storage_path('app/public/'), '', $qrCodeAbsolutePath);
@@ -186,6 +197,9 @@ class SKPengujiSkripsiController extends Controller
 
             Log::info('Related requests updated to Selesai');
 
+            DB::commit();
+
+            // --- PROSES NOTIFIKASI (DI LUAR TRANSAKSI) ---
             // Kirim notifikasi ke Admin Fakultas (Pegawai_Fakultas)
             $adminUsers = User::whereHas('role', function ($q) {
                 $q->where('Name_Role', 'Pegawai_Fakultas');
@@ -193,21 +207,30 @@ class SKPengujiSkripsiController extends Controller
 
             $adminNotificationsSent = 0;
             foreach ($adminUsers as $adminUser) {
-                Notifikasi::create([
-                    'Dest_user' => $adminUser->Id_User,
-                    'Source_User' => Auth::id(),
-                    'Tipe_Notifikasi' => 'Accepted',
-                    'Pesan' => 'SK Penguji Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditandatangani oleh Dekan',
-                    'Data_Tambahan' => json_encode([
-                        'acc_id' => $sk->No,
-                        'nomor_surat' => $sk->Nomor_Surat,
-                        'semester' => $sk->Semester,
-                        'tahun_akademik' => $sk->Tahun_Akademik,
-                        'qr_code' => $qrCodePath
-                    ]),
-                    'Is_Read' => false
-                ]);
-                $adminNotificationsSent++;
+                try {
+                    Notifikasi::create([
+                        'Dest_user' => $adminUser->Id_User,
+                        'Source_User' => Auth::id(),
+                        'Tipe_Notifikasi' => 'Accepted',
+                        'Pesan' => 'SK Penguji Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditandatangani oleh Dekan',
+                        'Data_Tambahan' => json_encode([
+                            'acc_id' => $sk->No,
+                            'nomor_surat' => $sk->Nomor_Surat,
+                            'semester' => $sk->Semester,
+                            'tahun_akademik' => $sk->Tahun_Akademik,
+                            'qr_code' => $qrCodePath
+                        ]),
+                        'Is_Read' => false
+                    ]);
+
+                    if ($adminUser->No_WA) {
+                        $pesanWA = "✅ *SK PENGUJI SKRIPSI DISETUJUI*\n\nSK Penguji Skripsi Semester {$sk->Semester} {$sk->Tahun_Akademik} telah ditandatangani oleh Dekan.\n\n*Nomor:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                        $this->waha->sendMessage($adminUser->No_WA, $pesanWA);
+                    }
+                    $adminNotificationsSent++;
+                } catch (\Exception $e) {
+                    Log::error('Error sending admin notification: ' . $e->getMessage());
+                }
             }
 
             Log::info('Notifications sent to Admin Fakultas on approval', ['count' => $adminNotificationsSent]);
@@ -226,22 +249,31 @@ class SKPengujiSkripsiController extends Controller
 
                     // Hindari duplikasi notifikasi untuk kaprodi yang sama
                     if (!in_array($kaprodiUserId, $sentToKaprodiIds)) {
-                        Notifikasi::create([
-                            'Dest_user' => $kaprodiUserId,
-                            'Source_User' => Auth::id(),
-                            'Tipe_Notifikasi' => 'Accepted',
-                            'Pesan' => 'SK Penguji Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' yang Anda ajukan telah ditandatangani oleh Dekan',
-                            'Data_Tambahan' => json_encode([
-                                'req_id' => $reqSK->No,
-                                'acc_id' => $sk->No,
-                                'semester' => $sk->Semester,
-                                'tahun_akademik' => $sk->Tahun_Akademik
-                            ]),
-                            'Is_Read' => false
-                        ]);
+                        try {
+                            Notifikasi::create([
+                                'Dest_user' => $kaprodiUserId,
+                                'Source_User' => Auth::id(),
+                                'Tipe_Notifikasi' => 'Accepted',
+                                'Pesan' => 'SK Penguji Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' yang Anda ajukan telah ditandatangani oleh Dekan',
+                                'Data_Tambahan' => json_encode([
+                                    'req_id' => $reqSK->No,
+                                    'acc_id' => $sk->No,
+                                    'semester' => $sk->Semester,
+                                    'tahun_akademik' => $sk->Tahun_Akademik
+                                ]),
+                                'Is_Read' => false
+                            ]);
 
-                        $sentToKaprodiIds[] = $kaprodiUserId;
-                        $kaprodiNotificationsSent++;
+                            if ($reqSK->kaprodi->user->No_WA) {
+                                $pesanWA = "✅ *SK PENGUJI SKRIPSI DISETUJUI*\n\nSK Penguji Skripsi Semester {$sk->Semester} {$sk->Tahun_Akademik} yang Anda ajukan telah ditandatangani oleh Dekan.\n\n*Nomor:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                                $this->waha->sendMessage($reqSK->kaprodi->user->No_WA, $pesanWA);
+                            }
+
+                            $sentToKaprodiIds[] = $kaprodiUserId;
+                            $kaprodiNotificationsSent++;
+                        } catch (\Exception $e) {
+                            Log::error('Error sending kaprodi notification: ' . $e->getMessage());
+                        }
 
                         Log::info('Notification sent to Kaprodi on approval', [
                             'kaprodi_id' => $kaprodiUserId,
@@ -280,21 +312,30 @@ class SKPengujiSkripsiController extends Controller
                 foreach ($uniqueDosenIds as $idDosen) {
                     $dosen = Dosen::with('user')->find($idDosen);
                     if ($dosen && $dosen->user) {
-                        Notifikasi::create([
-                            'Dest_user' => $dosen->user->Id_User,
-                            'Source_User' => Auth::id(),
-                            'Tipe_Notifikasi' => 'Accepted',
-                            'Pesan' => 'Anda telah ditetapkan sebagai Dosen Penguji Skripsi untuk semester ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . '. SK telah ditandatangani oleh Dekan.',
-                            'Data_Tambahan' => json_encode([
-                                'acc_id' => $sk->No,
-                                'nomor_surat' => $sk->Nomor_Surat,
-                                'semester' => $sk->Semester,
-                                'tahun_akademik' => $sk->Tahun_Akademik,
-                                'qr_code' => $qrCodePath
-                            ]),
-                            'Is_Read' => false
-                        ]);
-                        $dosenNotificationsSent++;
+                        try {
+                            Notifikasi::create([
+                                'Dest_user' => $dosen->user->Id_User,
+                                'Source_User' => Auth::id(),
+                                'Tipe_Notifikasi' => 'Accepted',
+                                'Pesan' => 'Anda telah ditetapkan sebagai Dosen Penguji Skripsi untuk semester ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . '. SK telah ditandatangani oleh Dekan.',
+                                'Data_Tambahan' => json_encode([
+                                    'acc_id' => $sk->No,
+                                    'nomor_surat' => $sk->Nomor_Surat,
+                                    'semester' => $sk->Semester,
+                                    'tahun_akademik' => $sk->Tahun_Akademik,
+                                    'qr_code' => $qrCodePath
+                                ]),
+                                'Is_Read' => false
+                            ]);
+
+                            if ($dosen->user->No_WA) {
+                                $pesanWA = "✅ *PENETAPAN DOSEN PENGUJI*\n\nAnda telah ditetapkan sebagai Dosen Penguji Skripsi untuk Semester {$sk->Semester} {$sk->Tahun_Akademik}.\n\nSK telah ditandatangani oleh Dekan.\n\n*Nomor:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                                $this->waha->sendMessage($dosen->user->No_WA, $pesanWA);
+                            }
+                            $dosenNotificationsSent++;
+                        } catch (\Exception $e) {
+                            Log::error('Error sending dosen notification: ' . $e->getMessage());
+                        }
 
                         Log::info('Notification sent to Dosen Penguji on approval', [
                             'dosen_id' => $dosen->Id_Dosen,
@@ -307,8 +348,6 @@ class SKPengujiSkripsiController extends Controller
 
             Log::info('Total notifications sent to Dosen Penguji on approval', ['count' => $dosenNotificationsSent]);
 
-            DB::commit();
-
             return response()->json([
                 'success' => true,
                 'message' => 'SK Penguji Skripsi berhasil disetujui dan ditandatangani',
@@ -316,7 +355,11 @@ class SKPengujiSkripsiController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            // Jika dalam transaksi, rollback
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+
             Log::error('Error approving SK Penguji Skripsi', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -334,6 +377,9 @@ class SKPengujiSkripsiController extends Controller
      */
     public function reject(Request $request, $id)
     {
+        // Tingkatkan limit waktu eksekusi
+        set_time_limit(180);
+
         $request->validate([
             'alasan' => 'required|string|min:10',
             'target' => 'required|in:admin,kaprodi'
@@ -364,6 +410,8 @@ class SKPengujiSkripsiController extends Controller
                     'Status' => 'Ditolak-Dekan',
                     'Alasan-Tolak' => $request->alasan
                 ]);
+
+            DB::commit();
 
             if ($target === 'admin') {
                 // Kirim ke semua Admin Fakultas (Pegawai_Fakultas)
@@ -442,15 +490,15 @@ class SKPengujiSkripsiController extends Controller
                 $message = 'SK Penguji Skripsi berhasil ditolak dan notifikasi dikirim ke ' . $notificationsSent . ' Kaprodi';
             }
 
-            DB::commit();
-
             return response()->json([
                 'success' => true,
                 'message' => $message
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             Log::error('Error rejecting SK Penguji Skripsi', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Dekan;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\TugasSurat;
 use App\Models\Dosen;
 use App\Models\Mahasiswa;
@@ -267,23 +268,23 @@ class PersetujuanSuratController extends Controller
         $skDosenWaliCount = \App\Models\AccDekanDosenWali::where('Status', 'Menunggu-Persetujuan-Dekan')
             ->count();
 
-        $skDosenWaliTotal = \App\Models\AccDekanDosenWali::count();
+        $skDosenWaliTotal = $skDosenWaliCount;
 
         // Hitung SK Beban Mengajar
         $skBebanMengajarCount = \App\Models\AccSKBebanMengajar::where('Status', 'Menunggu-Persetujuan-Dekan')
             ->count();
 
-        $skBebanMengajarTotal = \App\Models\AccSKBebanMengajar::count();
+        $skBebanMengajarTotal = $skBebanMengajarCount;
 
         // Hitung SK Pembimbing Skripsi
         $skPembimbingSkripsiCount = \App\Models\AccSKPembimbingSkripsi::where('Status', 'Menunggu-Persetujuan-Dekan')
             ->count();
-        $skPembimbingSkripsiTotal = \App\Models\AccSKPembimbingSkripsi::count();
+        $skPembimbingSkripsiTotal = $skPembimbingSkripsiCount;
 
         // Hitung SK Penguji Skripsi
         $skPengujiSkripsiCount = \App\Models\AccSKPengujiSkripsi::where('Status', 'Menunggu-Persetujuan-Dekan')
             ->count();
-        $skPengujiSkripsiTotal = \App\Models\AccSKPengujiSkripsi::count();
+        $skPengujiSkripsiTotal = $skPengujiSkripsiCount;
 
         // Hitung total SK Dosen untuk badge di menu utama
         $countSKDosen = $skDosenWaliCount + $skBebanMengajarCount + $skPembimbingSkripsiCount + $skPengujiSkripsiCount;
@@ -298,6 +299,44 @@ class PersetujuanSuratController extends Controller
             'skPengujiSkripsiCount',
             'skPengujiSkripsiTotal'
         ));
+    }
+
+    /**
+     * Ambil history gabungan semua jenis SK Dosen yang sudah diproses
+     */
+    public function skHistory()
+    {
+        try {
+            $beban = \App\Models\AccSKBebanMengajar::whereIn('Status', ['Selesai', 'Ditolak-Dekan'])
+                ->select('No as id', 'Semester', 'Tahun_Akademik', 'Status', 'Tanggal-Persetujuan-Dekan as tanggal', DB::raw("'SK Beban Mengajar' as tipe"))
+                ->get();
+
+            $pembimbing = \App\Models\AccSKPembimbingSkripsi::whereIn('Status', ['Selesai', 'Ditolak-Dekan'])
+                ->select('No as id', 'Semester', 'Tahun_Akademik', 'Status', 'Tanggal_Persetujuan_Dekan as tanggal', DB::raw("'SK Pembimbing Skripsi' as tipe"))
+                ->get();
+
+            $penguji = \App\Models\AccSKPengujiSkripsi::whereIn('Status', ['Selesai', 'Ditolak-Dekan'])
+                ->select('No as id', 'Semester', 'Tahun_Akademik', 'Status', 'Tanggal_Persetujuan_Dekan as tanggal', DB::raw("'SK Penguji Skripsi' as tipe"))
+                ->get();
+
+            $dosenWali = \App\Models\AccDekanDosenWali::whereIn('Status', ['Selesai', 'Ditolak-Dekan'])
+                ->select('No as id', 'Semester', 'Tahun_Akademik', 'Status', 'Tanggal-Persetujuan-Dekan as tanggal', DB::raw("'SK Dosen Wali' as tipe"))
+                ->get();
+
+            $history = $beban->concat($pembimbing)->concat($penguji)->concat($dosenWali)
+                ->sortByDesc('tanggal')
+                ->values();
+
+            return response()->json([
+                'success' => true,
+                'history' => $history
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal memuat history: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     /**

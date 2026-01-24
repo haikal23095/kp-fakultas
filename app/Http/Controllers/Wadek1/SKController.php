@@ -28,29 +28,37 @@ class SKController extends Controller
     {
         // Jumlah SK Dosen Wali yang sedang menunggu persetujuan Wadek 1
         $skDosenWaliCount = SKDosenWali::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
-        $skDosenWaliTotal = SKDosenWali::count();
+        $skDosenWaliTotalPending = $skDosenWaliCount;
+        $skDosenWaliTotalAll = SKDosenWali::count();
 
         // Jumlah SK Beban Mengajar yang menunggu persetujuan Wadek 1
         $skBebanMengajarCount = \App\Models\AccSKBebanMengajar::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
-        $skBebanMengajarTotal = \App\Models\AccSKBebanMengajar::count();
+        $skBebanMengajarTotalPending = $skBebanMengajarCount;
+        $skBebanMengajarTotalAll = \App\Models\AccSKBebanMengajar::count();
 
         // Jumlah SK Pembimbing Skripsi yang menunggu persetujuan Wadek 1
         $skPembimbingSkripsiCount = AccSKPembimbingSkripsi::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
-        $skPembimbingSkripsiTotal = AccSKPembimbingSkripsi::count();
+        $skPembimbingSkripsiTotalPending = $skPembimbingSkripsiCount;
+        $skPembimbingSkripsiTotalAll = AccSKPembimbingSkripsi::count();
 
         // Jumlah SK Penguji Skripsi yang menunggu persetujuan Wadek 1
         $skPengujiSkripsiCount = AccSKPengujiSkripsi::where('Status', 'Menunggu-Persetujuan-Wadek-1')->count();
-        $skPengujiSkripsiTotal = AccSKPengujiSkripsi::count();
+        $skPengujiSkripsiTotalPending = $skPengujiSkripsiCount;
+        $skPengujiSkripsiTotalAll = AccSKPengujiSkripsi::count();
 
         return view('wadek1.sk.index', compact(
             'skDosenWaliCount',
-            'skDosenWaliTotal',
+            'skDosenWaliTotalPending',
+            'skDosenWaliTotalAll',
             'skBebanMengajarCount',
-            'skBebanMengajarTotal',
+            'skBebanMengajarTotalPending',
+            'skBebanMengajarTotalAll',
             'skPembimbingSkripsiCount',
-            'skPembimbingSkripsiTotal',
+            'skPembimbingSkripsiTotalPending',
+            'skPembimbingSkripsiTotalAll',
             'skPengujiSkripsiCount',
-            'skPengujiSkripsiTotal'
+            'skPengujiSkripsiTotalPending',
+            'skPengujiSkripsiTotalAll'
         ));
     }
 
@@ -67,13 +75,8 @@ class SKController extends Controller
             $fakultasId = $user->dosen->Id_Fakultas;
         }
 
-        // Ambil data dari Acc_SK_Dosen_Wali - tampilkan semua untuk history
-        $query = AccDekanDosenWali::query();
-
-        // Filter berdasarkan status jika ada
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        }
+        // Ambil data dari Acc_SK_Dosen_Wali - hanya yang menunggu persetujuan Wadek 1
+        $query = AccDekanDosenWali::where('Status', 'Menunggu-Persetujuan-Wadek-1');
 
         $skList = $query->orderBy('Tanggal-Pengajuan', 'desc')
             ->paginate(15);
@@ -261,9 +264,9 @@ class SKController extends Controller
             $updatedCount = SKDosenWali::where('Id_Acc_SK_Dosen_Wali', $sk->No)
                 ->where('Status', 'Menunggu-Persetujuan-Wadek-1')
                 ->update([
-                        'Status' => 'Ditolak-Wadek1',
-                        'Alasan-Tolak' => $request->alasan
-                    ]);
+                    'Status' => 'Ditolak-Wadek1',
+                    'Alasan-Tolak' => $request->alasan
+                ]);
 
             \Log::info('Wadek1 Reject SK - Req Updated:', ['count' => $updatedCount]);
 
@@ -363,13 +366,8 @@ class SKController extends Controller
             $fakultasId = $user->dosen->Id_Fakultas;
         }
 
-        // Ambil data dari Acc_SK_Beban_Mengajar
-        $query = AccSKBebanMengajar::query();
-
-        // Filter berdasarkan status jika ada
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        }
+        // Ambil data dari Acc_SK_Beban_Mengajar yang menunggu persetujuan Wadek 1
+        $query = AccSKBebanMengajar::where('Status', 'Menunggu-Persetujuan-Wadek-1');
 
         // Filter berdasarkan semester
         if ($request->filled('semester')) {
@@ -537,9 +535,9 @@ class SKController extends Controller
             $updatedCount = SKBebanMengajar::where('Id_Acc_SK_Beban_Mengajar', $sk->No)
                 ->where('Status', 'Menunggu-Persetujuan-Wadek-1')
                 ->update([
-                        'Status' => 'Ditolak-Wadek1',
-                        'Alasan-Tolak' => $request->alasan
-                    ]);
+                    'Status' => 'Ditolak-Wadek1',
+                    'Alasan-Tolak' => $request->alasan
+                ]);
 
             \Log::info('Wadek1 Reject SK Beban Mengajar - Req Updated:', ['count' => $updatedCount]);
 
@@ -654,20 +652,8 @@ class SKController extends Controller
      */
     public function pembimbingSkripsiIndex(Request $request)
     {
-        $query = AccSKPembimbingSkripsi::with('reqSKPembimbingSkripsi.prodi');
-
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        } else {
-            // Default: tampilkan semua status yang relevan untuk Wadek 1
-            $query->whereIn('Status', [
-                'Menunggu-Persetujuan-Wadek-1',
-                'Menunggu-Persetujuan-Dekan',
-                'Ditolak-Wadek1',
-                'Selesai'
-            ]);
-        }
+        $query = AccSKPembimbingSkripsi::with('reqSKPembimbingSkripsi.prodi')
+            ->where('Status', 'Menunggu-Persetujuan-Wadek-1');
 
         $skList = $query->orderBy('No', 'desc')->paginate(15);
 
@@ -832,9 +818,9 @@ class SKController extends Controller
 
                 ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
                     ->update([
-                            'Status' => 'Ditolak-Wadek1',
-                            'Alasan-Tolak' => $request->alasan
-                        ]);
+                        'Status' => 'Ditolak-Wadek1',
+                        'Alasan-Tolak' => $request->alasan
+                    ]);
 
                 // Kirim notifikasi ke Admin Fakultas
                 $adminUser = User::whereHas('role', function ($q) {
@@ -867,9 +853,9 @@ class SKController extends Controller
 
                 ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
                     ->update([
-                            'Status' => 'Ditolak-Wadek1',
-                            'Alasan-Tolak' => $request->alasan
-                        ]);
+                        'Status' => 'Ditolak-Wadek1',
+                        'Alasan-Tolak' => $request->alasan
+                    ]);
 
                 // Kirim notifikasi ke semua Kaprodi yang terkait
                 $reqSKList = ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $accSK->No)
@@ -917,20 +903,8 @@ class SKController extends Controller
      */
     public function pengujiSkripsiIndex(Request $request)
     {
-        $query = AccSKPengujiSkripsi::with('reqSKPengujiSkripsi.prodi');
-
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('Status', $request->status);
-        } else {
-            // Default: tampilkan semua status yang relevan untuk Wadek 1
-            $query->whereIn('Status', [
-                'Menunggu-Persetujuan-Wadek-1',
-                'Menunggu-Persetujuan-Dekan',
-                'Ditolak-Wadek1',
-                'Selesai'
-            ]);
-        }
+        $query = AccSKPengujiSkripsi::with('reqSKPengujiSkripsi.prodi')
+            ->where('Status', 'Menunggu-Persetujuan-Wadek-1');
 
         $skList = $query->orderBy('No', 'desc')->paginate(15);
 
@@ -1114,9 +1088,9 @@ class SKController extends Controller
 
                 ReqSKPengujiSkripsi::where('Id_Acc_SK_Penguji_Skripsi', $accSK->No)
                     ->update([
-                            'Status' => 'Ditolak-Wadek1',
-                            'Alasan-Tolak' => $request->alasan
-                        ]);
+                        'Status' => 'Ditolak-Wadek1',
+                        'Alasan-Tolak' => $request->alasan
+                    ]);
 
                 // Kirim notifikasi ke Admin Fakultas (Pegawai_Fakultas)
                 $adminUsers = User::whereHas('role', function ($q) {
@@ -1157,9 +1131,9 @@ class SKController extends Controller
 
                 ReqSKPengujiSkripsi::where('Id_Acc_SK_Penguji_Skripsi', $accSK->No)
                     ->update([
-                            'Status' => 'Ditolak-Wadek1',
-                            'Alasan-Tolak' => $request->alasan
-                        ]);
+                        'Status' => 'Ditolak-Wadek1',
+                        'Alasan-Tolak' => $request->alasan
+                    ]);
 
                 // Kirim notifikasi ke semua Kaprodi yang terkait
                 $reqSKList = ReqSKPengujiSkripsi::where('Id_Acc_SK_Penguji_Skripsi', $accSK->No)
@@ -1265,11 +1239,11 @@ class SKController extends Controller
 
         $query = AccSKPembimbingSkripsi::with('reqSKPembimbingSkripsi')
             ->whereIn('Status', [
-                    'Menunggu-Persetujuan-Dekan',
-                    'Selesai',
-                    'Ditolak-Wadek1',
-                    'Ditolak-Dekan'
-                ]);
+                'Menunggu-Persetujuan-Dekan',
+                'Selesai',
+                'Ditolak-Wadek1',
+                'Ditolak-Dekan'
+            ]);
 
         // Filter berdasarkan status jika ada parameter
         if ($request->filled('status')) {
@@ -1302,11 +1276,11 @@ class SKController extends Controller
 
         $query = AccSKPengujiSkripsi::with('reqSKPengujiSkripsi')
             ->whereIn('Status', [
-                    'Menunggu-Persetujuan-Dekan',
-                    'Selesai',
-                    'Ditolak-Wadek1',
-                    'Ditolak-Dekan'
-                ]);
+                'Menunggu-Persetujuan-Dekan',
+                'Selesai',
+                'Ditolak-Wadek1',
+                'Ditolak-Dekan'
+            ]);
 
         // Filter berdasarkan status jika ada parameter
         if ($request->filled('status')) {

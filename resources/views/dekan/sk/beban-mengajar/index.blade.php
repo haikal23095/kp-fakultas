@@ -113,9 +113,12 @@
         <h1 class="h3 fw-bold mb-0">Daftar SK Beban Mengajar</h1>
         <p class="mb-0 text-muted">SK Beban Mengajar yang menunggu persetujuan dan penandatanganan Dekan.</p>
     </div>
-    <div>
-        <a href="{{ route('dekan.persetujuan.sk_dosen') }}" class="btn btn-outline-secondary btn-sm">
-            <i class="fas fa-arrow-left me-1"></i> Kembali ke Ringkasan SK
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-warning" onclick="showHistory()">
+            <i class="fas fa-history me-1"></i> History
+        </button>
+        <a href="{{ route('dekan.persetujuan.sk_dosen') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"></i> Kembali
         </a>
     </div>
 </div>
@@ -124,15 +127,6 @@
 <div class="card border-0 shadow-sm mb-4">
     <div class="card-body">
         <div class="row g-3">
-            <div class="col-md-4">
-                <label class="form-label small">Filter Status</label>
-                <select class="form-select" id="filterStatus" onchange="applyFilter()">
-                    <option value="">Semua Status</option>
-                    <option value="Menunggu-Persetujuan-Dekan" {{ request('status') == 'Menunggu-Persetujuan-Dekan' ? 'selected' : '' }}>Menunggu Persetujuan</option>
-                    <option value="Selesai" {{ request('status') == 'Selesai' ? 'selected' : '' }}>Selesai</option>
-                    <option value="Ditolak-Dekan" {{ request('status') == 'Ditolak-Dekan' ? 'selected' : '' }}>Ditolak</option>
-                </select>
-            </div>
             <div class="col-md-4">
                 <label class="form-label small">Filter Semester</label>
                 <select class="form-select" id="filterSemester" onchange="applyFilter()">
@@ -205,7 +199,7 @@
                                             class="btn btn-primary" 
                                             onclick="showDetail({{ $sk->No }})" 
                                             title="Lihat Detail">
-                                        <i class="fas fa-eye"></i>
+                                        <i class="fas fa-eye me-1"></i> Detail
                                     </button>
                                     @if($sk->Status === 'Menunggu-Persetujuan-Dekan')
                                         <button type="button" 
@@ -313,6 +307,33 @@
     </div>
 </div>
 
+<!-- Modal History -->
+<div class="modal fade" id="modalHistory" tabindex="-1" aria-labelledby="modalHistoryLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalHistoryLabel">
+                    <i class="fas fa-history me-2"></i>History SK Beban Mengajar
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="historyContent">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2 text-muted">Memuat data...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @endsection
 
 @push('scripts')
@@ -320,15 +341,9 @@
 let currentSKId = null;
 
 function applyFilter() {
-    const status = document.getElementById('filterStatus').value;
     const semester = document.getElementById('filterSemester').value;
     
     const url = new URL(window.location.href);
-    if (status) {
-        url.searchParams.set('status', status);
-    } else {
-        url.searchParams.delete('status');
-    }
     
     if (semester) {
         url.searchParams.set('semester', semester);
@@ -380,6 +395,23 @@ function showDetail(skId) {
                 </div>
             `;
         });
+}
+
+/**
+ * Helper function for history to close history modal and show detail
+ */
+function viewHistoryDetail(skId) {
+    // Hide history modal if open
+    const historyModalEl = document.getElementById('modalHistory');
+    const historyModal = bootstrap.Modal.getInstance(historyModalEl);
+    if (historyModal) {
+        historyModal.hide();
+    }
+    
+    // Slight delay to allow modal backdrop to clean up or avoid conflicts
+    setTimeout(() => {
+        showDetail(skId);
+    }, 400);
 }
 
 function displayDetail(sk, dekan) {
@@ -693,6 +725,87 @@ function submitRejection() {
         console.error('Error:', error);
         alert('Terjadi kesalahan saat menolak SK');
     });
+}
+
+function showHistory() {
+    const modal = new bootstrap.Modal(document.getElementById('modalHistory'));
+    modal.show();
+    
+    fetch('{{ route('dekan.sk.beban-mengajar.history') }}')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                renderHistory(data.history);
+            } else {
+                document.getElementById('historyContent').innerHTML = `
+                    <div class="alert alert-danger">${data.message || 'Gagal memuat history'}</div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            document.getElementById('historyContent').innerHTML = `
+                <div class="alert alert-danger">Terjadi kesalahan saat memuat data</div>
+            `;
+        });
+}
+
+function renderHistory(history) {
+    if (!history || history.length === 0) {
+        document.getElementById('historyContent').innerHTML = `
+            <div class="alert alert-info">Belum ada history SK yang diproses.</div>
+        `;
+        return;
+    }
+
+    let html = `
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Semester/Tahun</th>
+                        <th>Nomor Surat</th>
+                        <th>Tanggal TTD</th>
+                        <th>Status</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+
+    history.forEach((sk, index) => {
+        const date = sk['Tanggal-Persetujuan-Dekan'] ? new Date(sk['Tanggal-Persetujuan-Dekan']).toLocaleDateString('id-ID', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        }) : '-';
+        
+        const statusClass = sk.Status === 'Selesai' ? 'success' : 'danger';
+
+        html += `
+            <tr>
+                <td>${index + 1}</td>
+                <td>${sk.Semester} ${sk.Tahun_Akademik}</td>
+                <td>${sk.Nomor_Surat || '-'}</td>
+                <td>${date}</td>
+                <td><span class="badge bg-${statusClass}">${sk.Status}</span></td>
+                <td class="text-center">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="viewHistoryDetail(${sk.No})">
+                        <i class="fas fa-eye me-1"></i> Detail
+                    </button>
+                </td>
+            </tr>
+        `;
+    });
+
+    html += `
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    document.getElementById('historyContent').innerHTML = html;
 }
 </script>
 @endpush
