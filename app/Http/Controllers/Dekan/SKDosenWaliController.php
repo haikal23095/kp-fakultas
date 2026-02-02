@@ -6,12 +6,23 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use App\Models\AccDekanDosenWali;
 use App\Models\Dosen;
+use App\Models\Notifikasi;
+use App\Models\User;
 use App\Helpers\QrCodeHelper;
+use App\Services\WahaService;
 
 class SKDosenWaliController extends Controller
 {
+    protected $waha;
+
+    public function __construct(WahaService $waha)
+    {
+        $this->waha = $waha;
+    }
+
     /**
      * Tampilkan daftar SK Dosen Wali yang menunggu persetujuan Dekan
      */
@@ -84,8 +95,12 @@ class SKDosenWaliController extends Controller
      */
     public function approve($id)
     {
+        set_time_limit(180);
+
         try {
-            Log::info('Starting SK approval', ['sk_id' => $id]);
+            DB::beginTransaction();
+
+            Log::info('Starting SK Dosen Wali approval', ['sk_id' => $id]);
 
             $sk = AccDekanDosenWali::findOrFail($id);
 
@@ -99,11 +114,25 @@ class SKDosenWaliController extends Controller
                 throw new \Exception('SK tidak dapat disetujui. Status saat ini: ' . $sk->Status);
             }
 
+            // Ambil data Dekan
+            $dekan = Dosen::where('Id_Pejabat', 1)->first();
+            if (!$dekan) {
+                throw new \Exception('Data Dekan tidak ditemukan');
+            }
+
+            $dekanId = $dekan->Id_Dosen;
+            $dekanName = $dekan->Nama_Dosen;
+            $dekanNip = $dekan->NIP;
+
+            Log::info('Dekan data retrieved', [
+                'dekan_id' => $dekanId,
+                'dekan_name' => $dekanName
+            ]);
+
             // Generate QR Code untuk verifikasi
             $qrContent = url("/verify-sk-dosen-wali/{$sk->No}");
             Log::info('Generating QR Code', ['content' => $qrContent]);
 
-            // QrCodeHelper::generate() sekarang return path relatif (e.g., 'qr-codes/qr_xxx.png')
             $qrPath = QrCodeHelper::generate($qrContent, 10);
 
             if (!$qrPath) {
@@ -115,7 +144,7 @@ class SKDosenWaliController extends Controller
 
             // Update status dan simpan QR code path relatif
             $sk->Status = 'Selesai';
-            $sk->QR_Code = $qrPath; // Simpan path relatif ke database (e.g., 'qr-codes/qr_xxx.png')
+            $sk->QR_Code = $qrPath;
             $sk->{'Tanggal-Persetujuan-Dekan'} = now();
             $sk->Id_Dekan = Auth::user()->Id_User;
             $sk->save();
@@ -134,57 +163,189 @@ class SKDosenWaliController extends Controller
                 'updated_count' => $updatedCount
             ]);
 
-            // Kirim notifikasi ke Kaprodi yang mengajukan
+            DB::commit();
+
+            // --- PROSES NOTIFIKASI (DI LUAR TRANSAKSI) ---
+
+            // 1. Kirim notifikasi ke Admin Fakultas (Pegawai_Fakultas)
+            $adminUsers = User::whereHas('role', function ($q) {
+                $q->where('Name_Role', 'Pegawai_Fakultas');
+            })->get();
+
+            $adminNotificationsSent = 0;
+            foreach ($adminUsers as $adminUser) {
+                try {
+                    Notifikasi::create([
+                        'Dest_user' => $adminUser->Id_User,
+                        'Source_User' => Auth::id(),
+                        'Tipe_Notifikasi' => 'Accepted',
+                        'Pesan' => 'SK Dosen Wali ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditandatangani oleh Dekan',
+                        'Data_Tambahan' => json_encode([
+                            'acc_id' => $sk->No,
+                            'nomor_surat' => $sk->Nomor_Surat,
+                            'semester' => $sk->Semester,
+                            'tahun_akademik' => $sk->Tahun_Akademik,
+                            'qr_code' => $qrPath
+                        ]),
+                        'Is_Read' => false
+                    ]);
+
+                    if ($adminUser->No_WA) {
+                        $pesanWA = "✅ *SK DOSEN WALI DISETUJUI*\n\nSK Dosen Wali Semester {$sk->Semester} Tahun Akademik {$sk->Tahun_Akademik} telah ditandatangani oleh Dekan.\n\n*Nomor Surat:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                        $this->waha->sendMessage($adminUser->No_WA, $pesanWA);
+                    }
+                    $adminNotificationsSent++;
+                } catch (\Exception $e) {
+                    Log::error('Error sending admin notification: ' . $e->getMessage());
+                }
+            }
+
+            Log::info('Notifications sent to Admin Fakultas on approval', ['count' => $adminNotificationsSent]);
+
+            // 2. Kirim notifikasi ke Kaprodi yang mengajukan
             $reqSKList = $sk->reqSKDosenWali()->with('kaprodi.user')->get();
-            $notifiedKaprodi = [];
+            $kaprodiNotificationsSent = 0;
+            $sentToKaprodiIds = [];
 
             foreach ($reqSKList as $reqSK) {
                 if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
                     $kaprodiUserId = $reqSK->kaprodi->user->Id_User;
 
                     // Hindari duplikasi notifikasi untuk Kaprodi yang sama
-                    if (!in_array($kaprodiUserId, $notifiedKaprodi)) {
-                        \App\Models\Notifikasi::create([
-                            'Dest_user' => $kaprodiUserId,
-                            'Source_User' => Auth::user()->Id_User, // Id_User Dekan
-                            'Tipe_Notifikasi' => 'Accepted',
-                            'Pesan' => "SK Dosen Wali No. {$sk->Nomor_Surat} telah disetujui dan ditandatangani oleh Dekan",
-                            'Is_Read' => false,
-                            'Data_Tambahan' => [
-                                'judul' => 'SK Dosen Wali Disetujui Dekan',
-                                'link' => route('kaprodi.sk.dosen-wali.index'),
-                                'sk_id' => $sk->No,
-                                'nomor_surat' => $sk->Nomor_Surat,
-                                'semester' => $sk->Semester,
-                                'tahun_akademik' => $sk->Tahun_Akademik
-                            ]
-                        ]);
+                    if (!in_array($kaprodiUserId, $sentToKaprodiIds)) {
+                        try {
+                            Notifikasi::create([
+                                'Dest_user' => $kaprodiUserId,
+                                'Source_User' => Auth::id(),
+                                'Tipe_Notifikasi' => 'Accepted',
+                                'Pesan' => 'SK Dosen Wali ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' yang Anda ajukan telah ditandatangani oleh Dekan.',
+                                'Data_Tambahan' => json_encode([
+                                    'acc_id' => $sk->No,
+                                    'nomor_surat' => $sk->Nomor_Surat,
+                                    'semester' => $sk->Semester,
+                                    'tahun_akademik' => $sk->Tahun_Akademik,
+                                    'qr_code' => $qrPath
+                                ]),
+                                'Is_Read' => false
+                            ]);
 
-                        $notifiedKaprodi[] = $kaprodiUserId;
+                            if ($reqSK->kaprodi->user->No_WA) {
+                                $pesanWA = "✅ *SK DOSEN WALI DISETUJUI*\n\nSK Dosen Wali Semester {$sk->Semester} {$sk->Tahun_Akademik} yang Anda ajukan telah ditandatangani oleh Dekan.\n\n*Nomor SK:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                                $this->waha->sendMessage($reqSK->kaprodi->user->No_WA, $pesanWA);
+                                Log::info('WhatsApp notification sent to Kaprodi', ['no_wa' => $reqSK->kaprodi->user->No_WA]);
+                            }
 
-                        Log::info('Notification sent to Kaprodi', [
+                            $sentToKaprodiIds[] = $kaprodiUserId;
+                            $kaprodiNotificationsSent++;
+                        } catch (\Exception $e) {
+                            Log::error('Error sending kaprodi notification: ' . $e->getMessage());
+                        }
+
+                        Log::info('Internal notification sent to Kaprodi on approval', [
                             'kaprodi_id' => $kaprodiUserId,
-                            'kaprodi_name' => $reqSK->kaprodi->user->name,
                             'sk_no' => $sk->No
                         ]);
                     }
                 }
             }
 
-            Log::info('Total Kaprodi notified', [
-                'count' => count($notifiedKaprodi),
-                'kaprodi_ids' => $notifiedKaprodi
-            ]);
+            Log::info('Total notifications sent to Kaprodi on approval', ['count' => $kaprodiNotificationsSent]);
+
+            // 3. Kirim notifikasi ke semua Dosen yang ada di Data_Dosen_Wali
+            $dataDosenWali = $sk->Data_Dosen_Wali;
+            if (is_string($dataDosenWali)) {
+                $dataDosenWali = json_decode($dataDosenWali, true);
+            }
+
+            $dosenNotificationsSent = 0;
+            $allDosenNips = [];
+            $allDosenIds = [];
+
+            if (is_array($dataDosenWali)) {
+                foreach ($dataDosenWali as $dosenData) {
+                    // Extract NIP dan ID Dosen dari berbagai kemungkinan struktur data
+                    if (!empty($dosenData['nip']))
+                        $allDosenNips[] = $dosenData['nip'];
+                    if (!empty($dosenData['NIP']))
+                        $allDosenNips[] = $dosenData['NIP'];
+                    if (!empty($dosenData['id_dosen']))
+                        $allDosenIds[] = $dosenData['id_dosen'];
+                    if (!empty($dosenData['Id_Dosen']))
+                        $allDosenIds[] = $dosenData['Id_Dosen'];
+                }
+
+                $uniqueDosenNips = array_unique(array_filter($allDosenNips));
+                $uniqueDosenIds = array_unique(array_filter($allDosenIds));
+
+                Log::info('Dosen to notify from Data_Dosen_Wali', [
+                    'nips' => $uniqueDosenNips,
+                    'ids' => $uniqueDosenIds
+                ]);
+
+                // Ambil data dosen berdasarkan NIP atau ID Dosen
+                $dosensToNotify = Dosen::with(['user'])
+                    ->where(function ($query) use ($uniqueDosenNips, $uniqueDosenIds) {
+                        if (!empty($uniqueDosenNips)) {
+                            $query->whereIn('NIP', $uniqueDosenNips);
+                        }
+                        if (!empty($uniqueDosenIds)) {
+                            $query->orWhereIn('Id_Dosen', $uniqueDosenIds);
+                        }
+                    })
+                    ->get();
+
+                foreach ($dosensToNotify as $dosen) {
+                    if ($dosen && $dosen->user) {
+                        try {
+                            Notifikasi::create([
+                                'Dest_user' => $dosen->user->Id_User,
+                                'Source_User' => Auth::id(),
+                                'Tipe_Notifikasi' => 'Accepted',
+                                'Pesan' => 'Anda telah ditetapkan sebagai Dosen Wali untuk semester ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . '. SK telah ditandatangani oleh Dekan.',
+                                'Data_Tambahan' => json_encode([
+                                    'acc_id' => $sk->No,
+                                    'nomor_surat' => $sk->Nomor_Surat,
+                                    'semester' => $sk->Semester,
+                                    'tahun_akademik' => $sk->Tahun_Akademik,
+                                    'qr_code' => $qrPath
+                                ]),
+                                'Is_Read' => false
+                            ]);
+
+                            if ($dosen->user->No_WA) {
+                                $pesanWA = "✅ *SK PENETAPAN DOSEN WALI*\n\nAnda telah ditetapkan sebagai Dosen Wali untuk Semester {$sk->Semester} {$sk->Tahun_Akademik}.\n\nSK telah ditandatangani oleh Dekan.\n\n*Nomor SK:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                                $this->waha->sendMessage($dosen->user->No_WA, $pesanWA);
+                                Log::info('WhatsApp notification sent to Dosen Wali', ['no_wa' => $dosen->user->No_WA, 'dosen_name' => $dosen->Nama_Dosen]);
+                            }
+                            $dosenNotificationsSent++;
+
+                            Log::info('Internal notification sent to Dosen Wali on approval', [
+                                'dosen_id' => $dosen->Id_Dosen,
+                                'user_id' => $dosen->user->Id_User,
+                                'nama_dosen' => $dosen->Nama_Dosen
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Error sending dosen notification: ' . $e->getMessage());
+                        }
+                    }
+                }
+            }
+
+            Log::info('Total notifications sent to Dosen Wali on approval', ['count' => $dosenNotificationsSent]);
 
             // Build URL untuk ditampilkan di preview
             $qrUrl = asset('storage/' . $qrPath);
 
             return response()->json([
                 'success' => true,
-                'message' => 'SK Dosen Wali berhasil disetujui dan ditandatangani. Notifikasi telah dikirim ke Kaprodi.',
-                'qr_code' => $qrUrl  // Return URL untuk ditampilkan di HTML
+                'message' => 'SK Dosen Wali berhasil disetujui dan ditandatangani. Notifikasi telah dikirim.',
+                'qr_code' => $qrUrl
             ]);
+
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             Log::error('SK not found', [
                 'sk_id' => $id,
                 'error' => $e->getMessage()
@@ -195,12 +356,13 @@ class SKDosenWaliController extends Controller
                 'message' => 'SK tidak ditemukan'
             ], 404);
         } catch (\Exception $e) {
-            Log::error('Error approving SK', [
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
+            Log::error('Error approving SK Dosen Wali', [
                 'sk_id' => $id,
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine()
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json([

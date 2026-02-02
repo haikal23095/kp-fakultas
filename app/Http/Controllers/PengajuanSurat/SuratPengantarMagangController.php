@@ -4,9 +4,7 @@ namespace App\Http\Controllers\PengajuanSurat;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\TugasSurat;
 use App\Models\SuratMagang;
-use App\Models\JenisSurat;
 use App\Models\Mahasiswa;
 use App\Models\Prodi;
 use App\Models\SuratMagangInvitation;
@@ -165,34 +163,17 @@ class SuratPengantarMagangController extends Controller
                 ];
             }
 
-            // Status workflow magang (untuk Surat_Magang)
+            // Status workflow magang
             $statusMagang = $adaTemanDiajak ? 'Draft' : 'Diajukan-ke-koordinator';
 
-            // Buat Tugas_Surat (semua data spesifik ada di Surat_Magang)
-            $tugasSurat = new TugasSurat();
-            $tugasSurat->Id_Jenis_Surat = $jenisSuratId;
-
-            // FIX: Mahasiswa adalah PEMBERI tugas (requestor), Kaprodi/Admin adalah PENERIMA
-            $tugasSurat->Id_Pemberi_Tugas_Surat = $mahasiswaId;
-            $tugasSurat->Id_Penerima_Tugas_Surat = $kaprodiUser ? $kaprodiUser->Id_User : null;
-
-            $tugasSurat->Status = 'baru'; // Status Tugas_Surat selalu baru untuk pengajuan baru
-            $tugasSurat->Tanggal_Diberikan_Tugas_Surat = Carbon::now()->format('Y-m-d');
-            $tugasSurat->Tanggal_Tenggat_Tugas_Surat = Carbon::now()->addDays(5)->format('Y-m-d');
-
-            // Tambahkan Judul Tugas Surat agar muncul di tabel
-            $tugasSurat->Judul_Tugas_Surat = "Pengajuan Surat Pengantar Magang ke " . $request->input('data_spesifik.nama_instansi');
-
-            $tugasSurat->save();
-
-            \Log::info('[MAGANG] TugasSurat created', [
-                'tugas_surat_id' => $tugasSurat->Id_Tugas_Surat,
-                'status_tugas_surat' => 'baru',
+            \Log::info('[MAGANG] Preparing to create Surat_Magang', [
                 'status_magang' => $statusMagang,
-                'ada_teman' => $adaTemanDiajak
+                'ada_teman' => $adaTemanDiajak,
+                'pemberi_tugas' => $mahasiswaId,
+                'penerima_tugas' => $kaprodiUser ? $kaprodiUser->Id_User : null
             ]);
 
-            // === 6. BUAT SURAT MAGANG ===
+            // === 6. BUAT SURAT MAGANG (Langsung tanpa TugasSurat) ===
             // Siapkan data dosen pembimbing JSON
             $dataDosenPembimbing = [
                 'dosen_pembimbing_1' => $request->input('data_spesifik.dosen_pembimbing_1'),
@@ -200,7 +181,9 @@ class SuratPengantarMagangController extends Controller
             ];
 
             $suratMagang = new SuratMagang();
-            $suratMagang->Id_Tugas_Surat = $tugasSurat->Id_Tugas_Surat;
+            $suratMagang->Id_Pemberi_Tugas = $mahasiswaId;
+            $suratMagang->Id_Penerima_Tugas = $kaprodiUser ? $kaprodiUser->Id_User : null;
+            $suratMagang->Tanggal_Diberikan = Carbon::now()->format('Y-m-d');
             $suratMagang->Data_Mahasiswa = json_encode($dataMahasiswaArray);
             $suratMagang->Data_Dosen_pembiming = json_encode($dataDosenPembimbing);
             $suratMagang->Judul_Penelitian = $request->input('data_spesifik.judul_penelitian');
@@ -365,6 +348,7 @@ class SuratPengantarMagangController extends Controller
             ]);
 
             // Notify pembuat
+            $suratMagang = $invitation->suratMagang;
             Notifikasi::create([
                 'Tipe_Notifikasi' => 'Accepted',
                 'Pesan' => $mahasiswa->Nama_Mahasiswa . ' menerima undangan magang Anda',
@@ -372,8 +356,8 @@ class SuratPengantarMagangController extends Controller
                 'Source_User' => Auth::user()->Id_User,
                 'Is_Read' => false,
                 'Data_Tambahan' => json_encode([
-                    'invitation_id' => $invitation->id_invitation,
-                    'id_surat_magang' => $suratMagang->Id_Surat_Magang,
+                    'invitation_id' => $invitation->id,
+                    'id_surat_magang' => $suratMagang->id_no,
                     'jenis_surat' => 'magang',
                     'action_url' => route('mahasiswa.riwayat.magang'),
                 ]),
@@ -381,20 +365,18 @@ class SuratPengantarMagangController extends Controller
 
             // Cek apakah semua invitation sudah accepted
             $suratMagang = $invitation->suratMagang;
-            $allInvitations = SuratMagangInvitation::where('id_surat_magang', $suratMagang->Id_Surat_Magang)->get();
+            $allInvitations = SuratMagangInvitation::where('id_surat_magang', $suratMagang->id_no)->get();
             $allAccepted = $allInvitations->every(function ($inv) {
                 return $inv->status === 'accepted';
             });
 
             if ($allAccepted) {
                 // Semua sudah accept - update status Surat_Magang
-                $tugasSurat = $suratMagang->tugasSurat;
-                $tugasSurat->Status = 'Diajukan-ke-koordinator';
-                $tugasSurat->save();
+                $suratMagang->Status = 'Diajukan-ke-koordinator';
+                $suratMagang->save();
 
                 \Log::info('[INVITATION] All accepted, status updated to Diajukan-ke-koordinator', [
-                    'surat_magang_id' => $suratMagang->Id_Surat_Magang,
-                    'tugas_surat_id' => $tugasSurat->Id_Tugas_Surat
+                    'surat_magang_id' => $suratMagang->id_no
                 ]);
 
                 // Notify pembuat bahwa semua sudah accept
@@ -405,8 +387,7 @@ class SuratPengantarMagangController extends Controller
                     'Source_User' => Auth::user()->Id_User,
                     'Is_Read' => false,
                     'Data_Tambahan' => json_encode([
-                        'id_surat_magang' => $suratMagang->Id_Surat_Magang,
-                        'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
+                        'id_surat_magang' => $suratMagang->id_no,
                         'jenis_surat' => 'magang',
                         'action_url' => route('mahasiswa.riwayat.magang'),
                     ]),
@@ -461,7 +442,6 @@ class SuratPengantarMagangController extends Controller
 
             // HAPUS Surat_Magang karena ada yang reject
             $suratMagang = $invitation->suratMagang;
-            $tugasSurat = $suratMagang->tugasSurat;
 
             // Notify pembuat tentang rejection
             Notifikasi::create([
@@ -473,17 +453,13 @@ class SuratPengantarMagangController extends Controller
             ]);
 
             // Hapus semua invitation terkait
-            SuratMagangInvitation::where('id_surat_magang', $suratMagang->Id_Surat_Magang)->delete();
+            SuratMagangInvitation::where('id_surat_magang', $suratMagang->id_no)->delete();
 
             // Hapus Surat_Magang
             $suratMagang->delete();
 
-            // Hapus Tugas_Surat
-            $tugasSurat->delete();
-
-            \Log::info('[INVITATION] Surat_Magang and TugasSurat deleted due to rejection', [
-                'surat_magang_id' => $suratMagang->Id_Surat_Magang,
-                'tugas_surat_id' => $tugasSurat->Id_Tugas_Surat
+            \Log::info('[INVITATION] Surat_Magang deleted due to rejection', [
+                'surat_magang_id' => $suratMagang->id_no
             ]);
 
             DB::commit();

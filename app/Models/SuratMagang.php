@@ -14,7 +14,11 @@ class SuratMagang extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'Id_Tugas_Surat',
+        'Id_Pemberi_Tugas',
+        'Id_Penerima_Tugas',
+        'Nomor_Surat',
+        'Tanggal_Diberikan',
+        'Tanggal_Diselesaikan',
         'Nama_Instansi',
         'Alamat_Instansi',
         'Judul_Penelitian',
@@ -23,7 +27,6 @@ class SuratMagang extends Model
         'Foto_ttd',
         'Qr_code',
         'Qr_code_dekan',
-        // 'Nomor_Surat', // KOLOM INI TIDAK ADA DI DATABASE, ada di Tugas_Surat
         'Data_Mahasiswa',
         'Data_Dosen_pembiming',
         'Dokumen_Proposal',
@@ -43,14 +46,32 @@ class SuratMagang extends Model
     protected $casts = [
         'Data_Mahasiswa' => 'array',
         'Data_Dosen_pembiming' => 'array',
+        'Tanggal_Diberikan' => 'date',
+        'Tanggal_Diselesaikan' => 'date',
     ];
 
     /**
-     * Relasi ke TugasSurat
+     * Relasi ke User Pemberi Tugas (Mahasiswa yang mengajukan)
      */
-    public function tugasSurat()
+    public function pemberiTugas()
     {
-        return $this->belongsTo(TugasSurat::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');
+        return $this->belongsTo(User::class, 'Id_Pemberi_Tugas', 'Id_User');
+    }
+
+    /**
+     * Relasi ke User Penerima Tugas
+     */
+    public function penerimaTugas()
+    {
+        return $this->belongsTo(User::class, 'Id_Penerima_Tugas', 'Id_User');
+    }
+
+    /**
+     * Relasi ke Jenis Surat
+     */
+    public function jenisSurat()
+    {
+        return $this->belongsTo(JenisSurat::class, 'Id_Jenis_Surat', 'Id_Jenis_Surat');
     }
 
     /**

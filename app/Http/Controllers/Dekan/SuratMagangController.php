@@ -5,12 +5,21 @@ namespace App\Http\Controllers\Dekan;
 use App\Http\Controllers\Controller;
 use App\Models\SuratMagang;
 use App\Models\Notifikasi;
+use App\Models\Mahasiswa;
+use App\Services\WahaService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
 class SuratMagangController extends Controller
 {
+    protected $waha;
+
+    public function __construct(WahaService $waha)
+    {
+        $this->waha = $waha;
+    }
     public function index()
     {
         // Ambil surat magang yang statusnya "Diajukan-ke-dekan" (Menunggu Persetujuan)
@@ -97,30 +106,57 @@ class SuratMagangController extends Controller
             ? $surat->Data_Mahasiswa
             : json_decode($surat->Data_Mahasiswa, true);
 
+        $notificationsSent = 0;
         if ($dataMahasiswa && is_array($dataMahasiswa)) {
             foreach ($dataMahasiswa as $mhs) {
                 if (isset($mhs['nim'])) {
                     // Update Status_KP
-                    \App\Models\Mahasiswa::where('NIM', $mhs['nim'])
+                    Mahasiswa::where('NIM', $mhs['nim'])
                         ->update(['Status_KP' => 'Sedang_Melaksanakan']);
 
                     // Kirim notifikasi ke setiap mahasiswa yang mengajukan
-                    $mahasiswa = \App\Models\Mahasiswa::where('NIM', $mhs['nim'])->first();
+                    $mahasiswa = Mahasiswa::with('user')->where('NIM', $mhs['nim'])->first();
                     if ($mahasiswa && $mahasiswa->Id_User) {
+                        // Notifikasi internal
                         Notifikasi::create([
-                            'Dest_user' => $mahasiswa->Id_User, // Id_User mahasiswa
-                            'Source_User' => Auth::id(), // Id_User Dekan yang login
+                            'Dest_user' => $mahasiswa->Id_User,
+                            'Source_User' => Auth::id(),
                             'Tipe_Notifikasi' => 'Accepted',
                             'Pesan' => 'Surat pengantar magang Anda dengan nomor ' . ($surat->Nomor_Surat ?? 'N/A') . ' telah disetujui dan ditandatangani oleh Dekan. Anda dapat melihat dan mengunduh surat di halaman riwayat surat.',
                             'Is_Read' => false
                         ]);
+
+                        // Kirim notifikasi WhatsApp
+                        if ($mahasiswa->user && $mahasiswa->user->No_WA) {
+                            try {
+                                $pesanWA = "✅ *SURAT MAGANG DISETUJUI*\n\nHalo {$mahasiswa->Nama_Mahasiswa},\n\nSurat pengantar magang Anda telah disetujui dan ditandatangani oleh Dekan.\n\n*Nomor Surat:* " . ($surat->Nomor_Surat ?? '-') . "\n*Instansi:* {$surat->Nama_Instansi}\n\nSilakan unduh surat Anda di halaman riwayat surat.\n\n_Sistem SIFAKULTAS_";
+                                $this->waha->sendMessage($mahasiswa->user->No_WA, $pesanWA);
+                                $notificationsSent++;
+                                Log::info('WhatsApp notification sent to mahasiswa', [
+                                    'nim' => $mhs['nim'],
+                                    'nama' => $mahasiswa->Nama_Mahasiswa,
+                                    'no_wa' => $mahasiswa->user->No_WA
+                                ]);
+                            } catch (\Exception $e) {
+                                Log::error('Failed to send WhatsApp to mahasiswa', [
+                                    'nim' => $mhs['nim'],
+                                    'error' => $e->getMessage()
+                                ]);
+                            }
+                        }
                     }
                 }
             }
         }
 
+        Log::info('Surat Magang approved', [
+            'surat_id' => $surat->id_no,
+            'nomor_surat' => $surat->Nomor_Surat,
+            'wa_notifications_sent' => $notificationsSent
+        ]);
+
         return redirect()->route('dekan.surat_magang.index')
-            ->with('success', 'Surat magang berhasil disetujui dan ditandatangani.');
+            ->with('success', 'Surat magang berhasil disetujui dan ditandatangani. Notifikasi telah dikirim ke ' . $notificationsSent . ' mahasiswa.');
     }
 
     public function reject(Request $request, $id)

@@ -31,8 +31,6 @@ use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use App\Models\Prodi;
 use App\Models\Pejabat;
-use App\Models\JenisSurat; // Pastikan ini ada
-use App\Models\TugasSurat;
 use App\Models\Role;
 use Carbon\Carbon;
 
@@ -566,6 +564,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.beban-mengajar.detail');
         Route::get('/sk/beban-mengajar/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadBebanMengajar'])
             ->name('sk.beban-mengajar.download');
+        Route::get('/sk/beban-mengajar/{id}/edit', [\App\Http\Controllers\Kaprodi\SKController::class, 'editBebanMengajar'])
+            ->name('sk.beban-mengajar.edit');
+        Route::put('/sk/beban-mengajar/{id}', [\App\Http\Controllers\Kaprodi\SKController::class, 'updateBebanMengajar'])
+            ->name('sk.beban-mengajar.update');
 
         // SK Beban Mengajar - Kelola Kelas
         Route::get('/sk/beban-mengajar/kelas', [\App\Http\Controllers\Kaprodi\SKController::class, 'getKelasMataKuliah'])
@@ -586,6 +588,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.dosen-wali.detail');
         Route::get('/sk/dosen-wali/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadDosenWali'])
             ->name('sk.dosen-wali.download');
+        Route::get('/sk/dosen-wali/{id}/edit', [\App\Http\Controllers\Kaprodi\SKController::class, 'editDosenWali'])
+            ->name('sk.dosen-wali.edit');
+        Route::put('/sk/dosen-wali/{id}', [\App\Http\Controllers\Kaprodi\SKController::class, 'updateDosenWali'])
+            ->name('sk.dosen-wali.update');
 
         // SK Pembimbing & Penguji Skripsi
         Route::get('/sk/pembimbing-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPembimbingSkripsi'])
@@ -596,6 +602,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.pembimbing-skripsi.history');
         Route::get('/sk/pembimbing-skripsi/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadPembimbingSkripsi'])
             ->name('sk.pembimbing-skripsi.download');
+        Route::get('/sk/pembimbing-skripsi/{id}/edit', [\App\Http\Controllers\Kaprodi\SKController::class, 'editPembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.edit');
+        Route::put('/sk/pembimbing-skripsi/{id}', [\App\Http\Controllers\Kaprodi\SKController::class, 'updatePembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.update');
         Route::get('/sk/penguji-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPengujiSkripsi'])
             ->name('sk.penguji-skripsi.create');
         Route::post('/sk/penguji-skripsi/store', [\App\Http\Controllers\Kaprodi\SKController::class, 'storePengujiSkripsi'])
@@ -604,6 +614,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.penguji-skripsi.history');
         Route::get('/sk/penguji-skripsi/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadPengujiSkripsi'])
             ->name('sk.penguji-skripsi.download');
+        Route::get('/sk/penguji-skripsi/{id}/edit', [\App\Http\Controllers\Kaprodi\SKController::class, 'editPengujiSkripsi'])
+            ->name('sk.penguji-skripsi.edit');
+        Route::put('/sk/penguji-skripsi/{id}', [\App\Http\Controllers\Kaprodi\SKController::class, 'updatePengujiSkripsi'])
+            ->name('sk.penguji-skripsi.update');
 
         Route::get('/kurikulum', function () {
             return view('kaprodi.kurikulum');
@@ -619,16 +633,11 @@ Route::middleware('auth')->group(function () {
         // --- ROUTE GET: HALAMAN PILIHAN JENIS SURAT (CARD VIEW) ---
         Route::get('/pengajuan-surat', function () {
             // Definisikan surat apa saja yang boleh diajukan Mahasiswa
-            $namaSuratMahasiswa = [
-                'Surat Keterangan Aktif',
-                'Surat Rekomendasi',
-                'Surat Pengantar KP/Magang'
+            $jenis_surats = [
+                (object) ['Id_Jenis_Surat' => 1, 'Nama_Surat' => 'Surat Keterangan Aktif'],
+                (object) ['Id_Jenis_Surat' => 2, 'Nama_Surat' => 'Surat Pengantar KP/Magang'],
+                (object) ['Id_Jenis_Surat' => 3, 'Nama_Surat' => 'Surat Rekomendasi'],
             ];
-
-            // Ambil dari DB HANYA surat-surat yang ada di daftar statis
-            $jenis_surats = JenisSurat::whereIn('Nama_Surat', $namaSuratMahasiswa)
-                ->orderBy('Nama_Surat', 'asc')
-                ->get();
 
             return view('mahasiswa.pilih_jenis_surat', [
                 'jenis_surats' => $jenis_surats
@@ -645,13 +654,16 @@ Route::middleware('auth')->group(function () {
                 $prodi = Prodi::find($mahasiswa->Id_Prodi);
             }
 
-            // Ambil ID jenis surat
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Keterangan Aktif')->first();
+            // Hardcode jenis surat untuk Surat Keterangan Aktif (ID: 1)
+            $jenisSurat = (object) [
+                'Id_Jenis_Surat' => 1,
+                'Nama_Surat' => 'Surat Keterangan Aktif'
+            ];
 
             return view('mahasiswa.form_surat_aktif', [
                 'mahasiswa' => $mahasiswa,
                 'prodi' => $prodi,
-                'jenisSurat' => $jenisSurat
+                'jenisSurat' => $jenisSurat,
             ]);
         })->name('pengajuan.aktif.form');
 
@@ -707,7 +719,11 @@ Route::middleware('auth')->group(function () {
                 }
             }
 
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Pengantar KP/Magang')->first();
+            // Hardcode jenis surat untuk Surat Pengantar KP/Magang (ID: 2)
+            $jenisSurat = (object) [
+                'Id_Jenis_Surat' => 2,
+                'Nama_Surat' => 'Surat Pengantar KP/Magang'
+            ];
 
             return view('mahasiswa.magang.form_surat_magang', [
                 'mahasiswa' => $mahasiswa,

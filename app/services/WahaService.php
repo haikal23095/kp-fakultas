@@ -13,7 +13,8 @@ class WahaService
 
     public function __construct()
     {
-        $this->baseUrl = env('WAHA_URL');
+        // Remove trailing slash from base URL to prevent double slashes
+        $this->baseUrl = rtrim(env('WAHA_URL'), '/');
         $this->session = env('WAHA_SESSION', 'default');
         $this->apiKey = env('WAHA_API_KEY');
     }
@@ -26,22 +27,41 @@ class WahaService
         $chatId = $this->formatPhoneNumber($phoneNumber);
 
         try {
+            $url = "{$this->baseUrl}/api/sendText";
+
+            Log::info('WAHA: Attempting to send message', [
+                'url' => $url,
+                'chatId' => $chatId,
+                'session' => $this->session
+            ]);
+
             $response = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
-            ])->timeout(10)->post("{$this->baseUrl}/api/sendText", [
+            ])->timeout(30)->post($url, [
                         'session' => $this->session,
                         'chatId' => $chatId,
                         'text' => $message,
                     ]);
 
-            if (!$response->successful()) {
-                Log::error("WAHA Failed Response: " . $response->body());
-                echo "WAHA Error Body: " . $response->body() . "\n";
+            if ($response->successful()) {
+                Log::info('WAHA: Message sent successfully', [
+                    'chatId' => $chatId,
+                    'status' => $response->status()
+                ]);
+                return true;
+            } else {
+                Log::error("WAHA Failed Response", [
+                    'status' => $response->status(),
+                    'body' => $response->body(),
+                    'chatId' => $chatId
+                ]);
+                return false;
             }
-
-            return $response->successful();
         } catch (\Exception $e) {
-            Log::error("WAHA Error: " . $e->getMessage());
+            Log::error("WAHA Error", [
+                'message' => $e->getMessage(),
+                'chatId' => $chatId
+            ]);
             return false;
         }
     }

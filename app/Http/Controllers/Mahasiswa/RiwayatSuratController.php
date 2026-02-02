@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
-use App\Models\TugasSurat;
 use App\Models\SuratVerification;
 use App\Models\SuratKetAktif;
 use App\Models\SuratMagang;
@@ -25,49 +24,24 @@ class RiwayatSuratController extends Controller
         $user = Auth::user();
         $type = $request->query('type');
 
-        // Hitung jumlah surat per jenis (sesuai dengan method detail masing-masing)
-        
-        // Count Surat Keterangan Aktif (Id_Jenis_Surat = 1, sesuai riwayatAktif())
-        $countAktif = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->where('Id_Jenis_Surat', 1)
-            ->count();
+        // Hitung jumlah surat per jenis dari tabel child langsung
 
-        // Count Magang - langsung dari tabel Surat_Magang (sesuai riwayatMagang())
-        $countMagang = SuratMagang::whereHas('tugasSurat', function ($query) use ($user) {
-            $query->where('Id_Pemberi_Tugas_Surat', $user->Id_User);
-        })->count();
+        // Count Surat Keterangan Aktif
+        $countAktif = SuratKetAktif::where('Id_Pemberi_Tugas', $user->Id_User)->count();
 
-        // Count Legalisir - langsung dari tabel Surat_Legalisir (sesuai riwayatLegalisir())
+        // Count Magang - langsung dari tabel Surat_Magang
+        $countMagang = SuratMagang::where('Id_Pemberi_Tugas', $user->Id_User)->count();
+
+        // Count Legalisir - langsung dari tabel Surat_Legalisir
         $countLegalisir = SuratLegalisir::where('Id_User', $user->Id_User)->count();
 
-        // Count Peminjaman Mobil Dinas (Id_Jenis_Surat = 4)
-        $countMobilDinas = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->where('Id_Jenis_Surat', 4)
-            ->count();
-        
-        // Count Tidak Menerima Beasiswa (sesuai riwayatTidakBeasiswa())
-        $countTidakBeasiswa = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->where('Id_Jenis_Surat', 6)
-            ->whereHas('suratTidakBeasiswa')
-            ->count();
-        
-        // Count Dispensasi (sesuai riwayatDispensasi())
-        $countDispensasi = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->whereHas('suratDispensasi')
-            ->count();
-        
-        // Count Berkelakuan Baik (sesuai riwayatBerkelakuanBaik())
-        $countBerkelakuanBaik = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->whereHas('jenisSurat', function($q) {
-                $q->where('Nama_Surat', 'LIKE', '%Berkelakuan Baik%');
-            })
-            ->count();
-        
-        // Count Surat Tugas (belum tersedia - return 0)
-        $countSuratTugas = 0;
-        
-        // Count yang sudah dihapus dari view (tidak perlu lagi tapi tetap ada untuk backward compatibility)
+        // TODO: Count untuk surat lainnya akan ditambahkan setelah tabel diupdate
+        $countMobilDinas = 0;
+        $countTidakBeasiswa = 0;
         $countCekPlagiasi = 0;
+        $countDispensasi = 0;
+        $countBerkelakuanBaik = 0;
+        $countSuratTugas = 0;
         $countMBKM = 0;
         $countPeminjamanGedung = 0;
         $countLembur = 0;
@@ -97,16 +71,10 @@ class RiwayatSuratController extends Controller
     {
         $user = Auth::user();
 
-        // Query surat keterangan aktif dengan relasi ke Surat_Ket_Aktif
-        $riwayatSurat = TugasSurat::with([
-            'jenisSurat',
-            'penerimaTugas',
-            'suratKetAktif', // Relasi ke tabel Surat_Ket_Aktif
-            'verification'
-        ])
-            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->where('Id_Jenis_Surat', 1) // ID untuk Surat Keterangan Aktif
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+        // Query surat keterangan aktif langsung dari tabel Surat_Ket_Aktif
+        $riwayatSurat = SuratKetAktif::with(['pemberiTugas', 'penerimaTugas'])
+            ->where('Id_Pemberi_Tugas', $user->Id_User)
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->get();
 
         return view('mahasiswa.riwayat_aktif', [
@@ -122,15 +90,8 @@ class RiwayatSuratController extends Controller
         $user = Auth::user();
 
         // Query langsung dari Surat_Magang dan filter berdasarkan mahasiswa
-        $riwayatSurat = SuratMagang::with([
-            'tugasSurat.jenisSurat',
-            'tugasSurat.penerimaTugas',
-            'tugasSurat.verification',
-            'koordinator'
-        ])
-            ->whereHas('tugasSurat', function ($query) use ($user) {
-                $query->where('Id_Pemberi_Tugas_Surat', $user->Id_User);
-            })
+        $riwayatSurat = SuratMagang::with(['pemberiTugas', 'penerimaTugas', 'koordinator', 'dekan'])
+            ->where('Id_Pemberi_Tugas', $user->Id_User)
             ->orderBy('id_no', 'desc')
             ->get();
 
@@ -146,8 +107,8 @@ class RiwayatSuratController extends Controller
     {
         $user = Auth::user();
 
-        // Ambil data legalisir langsung dari tabel Surat_Legalisir (tidak perlu Jenis_Surat)
-        $daftarRiwayat = SuratLegalisir::with(['tugasSurat', 'user.mahasiswa.prodi'])
+        // Ambil data legalisir langsung dari tabel Surat_Legalisir
+        $daftarRiwayat = SuratLegalisir::with(['user.mahasiswa.prodi'])
             ->where('Id_User', $user->Id_User)
             ->orderBy('id_no', 'desc')
             ->get();
@@ -294,9 +255,13 @@ class RiwayatSuratController extends Controller
         ]);
     }
 
-    public function riwayatMobilDinas() { return $this->getGenericRiwayat(4, 'Riwayat Peminjaman Mobil Dinas'); }
-    
-    public function riwayatTidakBeasiswa() { 
+    public function riwayatMobilDinas()
+    {
+        return $this->getGenericRiwayat(4, 'Riwayat Peminjaman Mobil Dinas');
+    }
+
+    public function riwayatTidakBeasiswa()
+    {
         $user = Auth::user();
         $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratTidakBeasiswa', 'verification'])
             ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
@@ -310,15 +275,15 @@ class RiwayatSuratController extends Controller
             'title' => 'Riwayat Surat Keterangan Tidak Menerima Beasiswa'
         ]);
     }
-    
+
     // public function riwayatCekPlagiasi() { return $this->getGenericRiwayat(0, 'Riwayat Cek Plagiasi'); } // Belum ada di seeder
     public function riwayatDispensasi()
     {
         $user = Auth::user();
-        
+
         // Query dengan relasi suratDispensasi, verification, dan accWadek3
         $riwayatSurat = TugasSurat::with([
-            'jenisSurat', 
+            'jenisSurat',
             'suratDispensasi.accWadek3.dosen',
             'suratDispensasi.accWadek3.pegawaiFakultas',
             'verification'
@@ -333,14 +298,15 @@ class RiwayatSuratController extends Controller
             'title' => 'Riwayat Surat Dispensasi'
         ]);
     }
-    
-    public function riwayatBerkelakuanBaik() { 
+
+    public function riwayatBerkelakuanBaik()
+    {
         $user = Auth::user();
-        
+
         // Query dengan relasi suratKelakuanBaik dan verification
         $riwayatSurat = TugasSurat::with(['jenisSurat', 'suratKelakuanBaik', 'verification'])
             ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->whereHas('jenisSurat', function($q) {
+            ->whereHas('jenisSurat', function ($q) {
                 $q->where('Nama_Surat', 'LIKE', '%Berkelakuan Baik%');
             })
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
@@ -351,38 +317,48 @@ class RiwayatSuratController extends Controller
             'title' => 'Riwayat Surat Keterangan Berkelakuan Baik'
         ]);
     }
-    
+
     // Method di bawah ini untuk jenis surat yang belum ada di seeder - sementara return kosong
-    public function riwayatCekPlagiasi() { 
+    public function riwayatCekPlagiasi()
+    {
         return view('mahasiswa.riwayat_generic', [
             'riwayatSurat' => collect([]),
             'title' => 'Riwayat Cek Plagiasi'
         ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
     }
-    
-    public function riwayatSuratTugas() { 
+
+    public function riwayatSuratTugas()
+    {
         return view('mahasiswa.riwayat_generic', [
             'riwayatSurat' => collect([]),
             'title' => 'Riwayat Surat Tugas'
         ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
     }
-    
-    public function riwayatMBKM() { 
+
+    public function riwayatMBKM()
+    {
         return view('mahasiswa.riwayat_generic', [
             'riwayatSurat' => collect([]),
             'title' => 'Riwayat Surat Rekomendasi MBKM'
         ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
     }
-    
-    public function riwayatPeminjamanRuang() { 
+
+    public function riwayatPeminjamanRuang()
+    {
         return view('mahasiswa.riwayat_generic', [
             'riwayatSurat' => collect([]),
             'title' => 'Riwayat Peminjaman Ruang'
         ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
     }
-    
-    public function riwayatPeminjamanGedung() { return $this->getGenericRiwayat(10, 'Riwayat Peminjaman Gedung'); }
-    public function riwayatLembur() { return $this->getGenericRiwayat(11, 'Riwayat Surat Perintah Lembur'); }
+
+    public function riwayatPeminjamanGedung()
+    {
+        return $this->getGenericRiwayat(10, 'Riwayat Peminjaman Gedung');
+    }
+    public function riwayatLembur()
+    {
+        return $this->getGenericRiwayat(11, 'Riwayat Surat Perintah Lembur');
+    }
 
     /**
      * Download PDF Surat Dispensasi yang sudah di-ACC Wadek3
@@ -416,23 +392,23 @@ class RiwayatSuratController extends Controller
         // Jika file tidak ada, generate PDF on-the-fly dari data yang ada
         try {
             \Log::info('Generating PDF on-the-fly for dispensasi', ['id' => $id]);
-            
+
             // Get data untuk PDF
             $mahasiswa = Auth::user()->mahasiswa;
             $verification = $tugasSurat->verification;
-            
+
             if (!$verification || !$verification->qr_path) {
                 return redirect()->back()->with('error', 'Data QR Code tidak ditemukan. Harap hubungi admin.');
             }
-            
+
             $penandatangan = User::find($verification->signed_by_user_id);
             if (!$penandatangan) {
                 return redirect()->back()->with('error', 'Data penandatangan tidak ditemukan.');
             }
-            
+
             // QR Code path
             $qrAbsolutePath = storage_path('app/public/' . $verification->qr_path);
-            
+
             // Data untuk PDF
             $data = [
                 'nomor_surat' => $surat->nomor_surat,
@@ -451,7 +427,7 @@ class RiwayatSuratController extends Controller
                 'penandatangan_nama' => $penandatangan->Name_User,
                 'penandatangan_nip' => $penandatangan->dosen->NIP ?? $penandatangan->pegawaiFakultas->NIP ?? '-',
             ];
-            
+
             // Generate PDF
             $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('wadek3.kemahasiswaan.pdf-dispensasi', $data);
             $pdf->setPaper('A4', 'portrait');
@@ -460,10 +436,10 @@ class RiwayatSuratController extends Controller
                 'isRemoteEnabled' => true,
                 'chroot' => public_path(),
             ]);
-            
+
             // Stream PDF langsung ke browser (seperti print/Ctrl+P)
             return $pdf->stream('Surat_Dispensasi_' . $mahasiswa->NIM . '.pdf');
-            
+
         } catch (\Exception $e) {
             \Log::error('Error generating PDF on-the-fly', [
                 'id' => $id,

@@ -116,7 +116,7 @@
                             @forelse($riwayatTerkini ?? [] as $surat)
                             @php
                                 // Status logic
-                                $statusRaw = optional($surat->suratMagang)->Status ?? '';
+                                $statusRaw = $surat->Status ?? '';
                                 $status = strtolower(trim($statusRaw));
                                 $badgeClass = match($status) {
                                     'success' => 'bg-success',
@@ -137,12 +137,12 @@
                             @endphp
                             <tr>
                                 <td class="ps-4">
-                                    <div class="fw-bold text-dark">{{ $surat->tugasSurat->jenisSurat->Nama_Surat ?? 'Tidak Diketahui' }}</div>
-                                    <div class="small text-muted">ID: #{{ $surat->Id_Tugas_Surat }}</div>
+                                    <div class="fw-bold text-dark">Surat Magang</div>
+                                    <div class="small text-muted">ID: #{{ $surat->id_no }}</div>
                                 </td>
                                 <td>
                                     <i class="far fa-calendar me-1 text-muted"></i>
-                                    {{ $surat->tugasSurat ? \Carbon\Carbon::parse($surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') : '-' }}
+                                    {{ $surat->Tanggal_Diberikan ? \Carbon\Carbon::parse($surat->Tanggal_Diberikan)->format('d M Y') : '-' }}
                                 </td>
                                 <td><span class="badge {{ $badgeClass }} rounded-pill px-3">{{ $statusText }}</span></td>
                                 <td class="text-center pe-4">

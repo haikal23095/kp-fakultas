@@ -14,7 +14,6 @@ class SuratDispensasi extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'Id_Tugas_Surat',
         'Id_User',
         'Id_Pejabat_Wadek3',
         'nama_kegiatan',
@@ -32,7 +31,14 @@ class SuratDispensasi extends Model
         'keterangan_status',
     ];
 
-    // Relasi ke TugasSurat
+    protected $casts = [
+        'tanggal_mulai' => 'date',
+        'tanggal_selesai' => 'date',
+        'verifikasi_admin_at' => 'date',
+        'acc_wadek3_at' => 'date',
+    ];
+
+    // @deprecated Relasi ke TugasSurat sudah tidak digunakan
     public function tugasSurat()
     {
         return $this->belongsTo(TugasSurat::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');

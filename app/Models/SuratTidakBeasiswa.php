@@ -14,7 +14,6 @@ class SuratTidakBeasiswa extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'Id_Tugas_Surat',
         'Id_User',
         'Id_Pejabat',
         'Nama_Orang_Tua',
@@ -26,6 +25,11 @@ class SuratTidakBeasiswa extends Model
         'Nomor_Surat',
     ];
 
+    protected $casts = [
+        'Pendapatan_Orang_Tua' => 'decimal:2',
+    ];
+
+    // @deprecated Relasi ke TugasSurat sudah tidak digunakan
     public function tugasSurat()
     {
         return $this->belongsTo(TugasSurat::class, 'Id_Tugas_Surat', 'Id_Tugas_Surat');

@@ -6,7 +6,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use App\Models\User;
-use App\Models\TugasSurat;
 
 class AuthController extends Controller
 {
@@ -333,41 +332,48 @@ class AuthController extends Controller
     public function dashboardMahasiswa()
     {
         $user = Auth::user();
+        $mahasiswa = $user->mahasiswa;
 
-        // Ambil statistik dari tabel Surat_Magang berdasarkan Id_Pemberi_Tugas_Surat mahasiswa
-        $ditolak = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->whereHas('suratMagang', function ($query) {
-                $query->where('Status', 'Ditolak');
-            })
-            ->count();
+        if (!$mahasiswa) {
+            return view('dashboard.mahasiswa', [
+                'totalPengajuan' => 0,
+                'diterima' => 0,
+                'ditolak' => 0,
+                'riwayatTerkini' => collect([]),
+            ]);
+        }
 
-        // Diterima (status = 'Success' di Surat_Magang)
-        $diterima = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->whereHas('suratMagang', function ($query) {
-                $query->where('Status', 'Success');
-            })
-            ->count();
+        // Hitung total pengajuan dari semua jenis surat
+        $totalPengajuan = 0;
+        $diterima = 0;
+        $ditolak = 0;
 
-        // Total Pengajuan
-        $totalPengajuan = TugasSurat::where('Id_Pemberi_Tugas_Surat', $user->Id_User)
-            ->has('suratMagang')
-            ->count();
+        // Surat Magang
+        $totalPengajuan += \App\Models\SuratMagang::where('Id_Pemberi_Tugas', $user->Id_User)->count();
+        $diterima += \App\Models\SuratMagang::where('Id_Pemberi_Tugas', $user->Id_User)
+            ->where('Status', 'Success')->count();
+        $ditolak += \App\Models\SuratMagang::where('Id_Pemberi_Tugas', $user->Id_User)
+            ->where('Status', 'Ditolak')->count();
 
-        // Ambil 5 riwayat pengajuan terkini dari Surat_Magang
-        $riwayatTerkini = \App\Models\SuratMagang::whereHas('tugasSurat', function ($query) use ($user) {
-            $query->where('Id_Pemberi_Tugas_Surat', $user->Id_User);
-        })
-            ->with(['tugasSurat.jenisSurat'])
+        // TODO: Tambahkan perhitungan dari tabel surat lainnya
+        // $totalPengajuan += \App\Models\SuratKetAktif::where('Id_Pemberi_Tugas', $user->Id_User)->count();
+        // $totalPengajuan += \App\Models\SuratLegalisir::where('Id_User', $user->Id_User)->count();
+        // $totalPengajuan += \App\Models\SuratDispensasi::where('Id_User', $user->Id_User)->count();
+        // dst...
+
+        // Ambil riwayat terkini (5 terakhir)
+        $riwayatTerkini = \App\Models\SuratMagang::with(['jenisSurat', 'pemberiTugas'])
+            ->where('Id_Pemberi_Tugas', $user->Id_User)
             ->orderBy('id_no', 'desc')
             ->take(5)
             ->get();
 
-        return view('dashboard.mahasiswa', [
-            'ditolak' => $ditolak,
-            'diterima' => $diterima,
-            'totalPengajuan' => $totalPengajuan,
-            'riwayatTerkini' => $riwayatTerkini
-        ]);
+        return view('dashboard.mahasiswa', compact(
+            'totalPengajuan',
+            'diterima',
+            'ditolak',
+            'riwayatTerkini'
+        ));
     }
 
     public function dashboardDefault()
