@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\General;
 
+use App\Http\Controllers\Controller;
 use App\Models\SuratMagang;
 use App\Models\SuratVerification;
 use Illuminate\Http\Request;

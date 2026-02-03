@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\General;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SuratVerification;
 use App\Models\TugasSurat;
@@ -41,7 +42,7 @@ class SuratVerificationController extends Controller
             'surat' => $verification->tugasSurat
         ]);
     }
-    
+
     /**
      * API endpoint untuk validasi QR (opsional, untuk mobile app dll)
      * Route: GET /api/verify-surat/{token}

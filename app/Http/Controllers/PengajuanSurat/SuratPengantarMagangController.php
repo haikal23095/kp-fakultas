@@ -7,6 +7,8 @@ use Illuminate\Http\Request;
 use App\Models\SuratMagang;
 use App\Models\Mahasiswa;
 use App\Models\Prodi;
+use App\Models\Dosen;
+use App\Models\User;
 use App\Models\SuratMagangInvitation;
 use App\Models\Notifikasi;
 use Illuminate\Support\Facades\Auth;
@@ -17,6 +19,79 @@ use Illuminate\Support\Facades\DB;
 
 class SuratPengantarMagangController extends Controller
 {
+    /**
+     * Tampilkan form pengajuan Surat Pengantar Magang/KP
+     */
+    public function create()
+    {
+        $user = Auth::user();
+        $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
+
+        $prodi = null;
+        $jurusan = null;
+        if ($mahasiswa && $mahasiswa->Id_Prodi) {
+            $prodi = Prodi::with('jurusan')->find($mahasiswa->Id_Prodi);
+            if ($prodi && $prodi->jurusan) {
+                $jurusan = $prodi->jurusan;
+            }
+        }
+
+        // Filter dosen berdasarkan prodi mahasiswa
+        $dosens = Dosen::query()
+            ->when($mahasiswa && $mahasiswa->Id_Prodi, function ($query) use ($mahasiswa) {
+                return $query->where('Id_Prodi', $mahasiswa->Id_Prodi);
+            })
+            ->orderBy('Nama_Dosen', 'asc')
+            ->get();
+
+        // Ambil Kaprodi
+        $kaprodi = null;
+        $kaprodiName = null;
+        $kaprodiNIP = null;
+
+        if ($mahasiswa && $mahasiswa->Id_Prodi) {
+            $kaprodiUser = User::where('Id_Role', 4)
+                ->where(function ($query) use ($mahasiswa) {
+                    $query->whereHas('dosen', function ($q) use ($mahasiswa) {
+                        $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                    })
+                        ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
+                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
+                        });
+                })
+                ->with(['dosen', 'pegawai'])
+                ->first();
+
+            if ($kaprodiUser) {
+                $kaprodi = $kaprodiUser;
+                if ($kaprodiUser->dosen) {
+                    $kaprodiName = $kaprodiUser->dosen->Nama_Dosen;
+                    $kaprodiNIP = $kaprodiUser->dosen->NIP;
+                } elseif ($kaprodiUser->pegawai) {
+                    $kaprodiName = $kaprodiUser->pegawai->Nama_Pegawai;
+                    $kaprodiNIP = $kaprodiUser->pegawai->NIP;
+                }
+            }
+        }
+
+        // Hardcode jenis surat untuk Surat Pengantar KP/Magang (ID: 2)
+        $jenisSurat = (object) [
+            'Id_Jenis_Surat' => 2,
+            'Nama_Surat' => 'Surat Pengantar KP/Magang'
+        ];
+
+        return view('mahasiswa.magang.form_surat_magang', [
+            'mahasiswa' => $mahasiswa,
+            'prodi' => $prodi,
+            'jurusan' => $jurusan,
+            'dosens' => $dosens,
+            'kaprodi' => $kaprodi,
+            'kaprodiName' => $kaprodiName,
+            'kaprodiNIP' => $kaprodiNIP,
+            'jenisSurat' => $jenisSurat
+        ]);
+    }
+
     /**
      * Menyimpan pengajuan Surat Pengantar Magang/KP
      */

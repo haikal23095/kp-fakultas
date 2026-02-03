@@ -1,14 +1,15 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Admin_Fakultas;
 
+use App\Http\Controllers\Controller;
 use App\Models\SuratPeminjamanMobil;
 use App\Models\Kendaraan;
 use App\Models\TugasSurat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class PeminjamanMobilAdminController extends Controller
+class PeminjamanMobilController extends Controller
 {
     /**
      * Tampilkan daftar pengajuan peminjaman mobil yang masuk (Status: Diajukan)
@@ -36,7 +37,7 @@ class PeminjamanMobilAdminController extends Controller
         // Ambil kendaraan tersedia yang tidak bentrok tanggal
         $kendaraanTersedia = Kendaraan::tersedia()
             ->get()
-            ->filter(function($kendaraan) use ($peminjaman) {
+            ->filter(function ($kendaraan) use ($peminjaman) {
                 return !SuratPeminjamanMobil::isTanggalBentrok(
                     $kendaraan->id,
                     $peminjaman->tanggal_pemakaian_mulai,
@@ -68,12 +69,14 @@ class PeminjamanMobilAdminController extends Controller
             $peminjaman = SuratPeminjamanMobil::findOrFail($id);
 
             // Cek apakah kendaraan bentrok
-            if (SuratPeminjamanMobil::isTanggalBentrok(
-                $request->Id_Kendaraan,
-                $peminjaman->tanggal_pemakaian_mulai,
-                $peminjaman->tanggal_pemakaian_selesai,
-                $id
-            )) {
+            if (
+                SuratPeminjamanMobil::isTanggalBentrok(
+                    $request->Id_Kendaraan,
+                    $peminjaman->tanggal_pemakaian_mulai,
+                    $peminjaman->tanggal_pemakaian_selesai,
+                    $id
+                )
+            ) {
                 throw new \Exception('Kendaraan tidak tersedia pada tanggal yang dipilih');
             }
 
@@ -155,7 +158,7 @@ class PeminjamanMobilAdminController extends Controller
 
         // Generate PDF draft surat
         $pdf = \PDF::loadView('pdf.surat_peminjaman_mobil_draft', compact('peminjaman'));
-        
+
         return $pdf->stream('Draft_Surat_Peminjaman_Mobil_' . $peminjaman->id . '.pdf');
     }
 
@@ -173,7 +176,7 @@ class PeminjamanMobilAdminController extends Controller
 
         // Generate PDF surat final dengan nomor surat
         $pdf = \PDF::loadView('pdf.surat_peminjaman_mobil', compact('peminjaman'));
-        
+
         return $pdf->download('Surat_Peminjaman_Mobil_' . $peminjaman->tugasSurat->Nomor_Surat . '.pdf');
     }
 
@@ -257,7 +260,7 @@ class PeminjamanMobilAdminController extends Controller
     public function kendaraanDestroy($id)
     {
         $kendaraan = Kendaraan::findOrFail($id);
-        
+
         // Cek apakah kendaraan masih digunakan
         if ($kendaraan->peminjamanMobil()->exists()) {
             return back()->with('error', 'Kendaraan tidak dapat dihapus karena masih terdapat riwayat peminjaman');

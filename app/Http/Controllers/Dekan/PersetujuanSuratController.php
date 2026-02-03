@@ -418,4 +418,12 @@ class PersetujuanSuratController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Tampilkan halaman arsip surat
+     */
+    public function arsip()
+    {
+        return view('dekan.arsip_surat');
+    }
 }

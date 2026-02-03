@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\General;
 
+use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -22,12 +23,16 @@ class ProfileController extends Controller
         // Determine the layout based on user role
         $roleId = $user->Id_Role;
         $layout = match ($roleId) {
-            1 => 'admin',
+            1 => 'admin_prodi',
             2 => 'dekan',
             3 => 'kajur',
             4 => 'kaprodi',
             5 => 'dosen',
             6 => 'mahasiswa',
+            7 => 'admin_fakultas',
+            8 => 'wadek1',
+            9 => 'wadek2',
+            10 => 'wadek3',
             default => 'mahasiswa',
         };
 

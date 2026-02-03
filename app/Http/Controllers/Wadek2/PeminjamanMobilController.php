@@ -1,7 +1,8 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Wadek2;
 
+use App\Http\Controllers\Controller;
 use App\Models\SuratPeminjamanMobil;
 use App\Models\TugasSurat;
 use App\Models\Pejabat;
@@ -12,7 +13,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
-class PeminjamanMobilWadek2Controller extends Controller
+class PeminjamanMobilController extends Controller
 {
     /**
      * Tampilkan daftar pengajuan yang perlu disetujui Wadek2 (Status: Diverifikasi_Admin)
@@ -81,7 +82,7 @@ class PeminjamanMobilWadek2Controller extends Controller
 
             // Generate QR Code dan simpan path-nya
             $qrPath = QrCodeHelper::generateAndGetPath(
-                json_encode($qrData), 
+                json_encode($qrData),
                 'peminjaman_mobil_' . $peminjaman->id
             );
 
@@ -176,7 +177,7 @@ class PeminjamanMobilWadek2Controller extends Controller
 
         // Generate PDF draft surat
         $pdf = \PDF::loadView('pdf.surat_peminjaman_mobil_draft', compact('peminjaman'));
-        
+
         return $pdf->stream('Draft_Surat_Peminjaman_Mobil_' . $peminjaman->id . '.pdf');
     }
 
@@ -207,7 +208,7 @@ class PeminjamanMobilWadek2Controller extends Controller
 
         // Generate PDF surat final dengan QR Code
         $pdf = \PDF::loadView('pdf.surat_peminjaman_mobil', compact('peminjaman'));
-        
+
         return $pdf->download('Surat_Peminjaman_Mobil_' . $peminjaman->nomor_surat . '.pdf');
     }
 }

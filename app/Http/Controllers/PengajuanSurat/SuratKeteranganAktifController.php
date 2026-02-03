@@ -5,6 +5,8 @@ namespace App\Http\Controllers\PengajuanSurat;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SuratKetAktif;
+use App\Models\Mahasiswa;
+use App\Models\Prodi;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use Carbon\Carbon;
@@ -12,6 +14,32 @@ use Illuminate\Support\Facades\Log;
 
 class SuratKeteranganAktifController extends Controller
 {
+    /**
+     * Tampilkan form pengajuan Surat Keterangan Mahasiswa Aktif
+     */
+    public function create()
+    {
+        $user = Auth::user();
+        $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
+
+        $prodi = null;
+        if ($mahasiswa && $mahasiswa->Id_Prodi) {
+            $prodi = Prodi::find($mahasiswa->Id_Prodi);
+        }
+
+        // Hardcode jenis surat untuk Surat Keterangan Aktif (ID: 1)
+        $jenisSurat = (object) [
+            'Id_Jenis_Surat' => 1,
+            'Nama_Surat' => 'Surat Keterangan Aktif'
+        ];
+
+        return view('mahasiswa.form_surat_aktif', [
+            'mahasiswa' => $mahasiswa,
+            'prodi' => $prodi,
+            'jenisSurat' => $jenisSurat,
+        ]);
+    }
+
     /**
      * Menyimpan pengajuan Surat Keterangan Mahasiswa Aktif
      */
