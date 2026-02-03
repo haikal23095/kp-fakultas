@@ -21,11 +21,6 @@ return new class extends Migration
             $table->string('qr_path')->nullable()->comment('Path file QR Code image');
             $table->timestamps();
             
-            // Foreign key (no constraint karena type mismatch bisa terjadi)
-            // $table->foreign('id_tugas_surat')
-            //       ->references('Id_Tugas_Surat')
-            //       ->on('Tugas_Surat')
-            //       ->onDelete('cascade');
         });
     }
 

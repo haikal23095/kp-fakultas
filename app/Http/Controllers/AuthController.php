@@ -126,38 +126,28 @@ class AuthController extends Controller
 
         // Base query TANPA filter prodi (Menampilkan semua surat di Fakultas Teknik)
         $baseQuery = function () {
-            return \App\Models\TugasSurat::query();
+            return \App\Models\SuratMagang::query();
         };
 
         // Ambil statistik surat berdasarkan status dengan filter prodi
         // Status sekarang ada di tabel spesifik (Surat_Magang)
         $permohonanBaru = $baseQuery()
-            ->whereHas('suratMagang', function ($q) {
-                $q->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin']);
-            })->count();
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])->count();
         $menungguTTE = $baseQuery()
-            ->whereHas('suratMagang', function ($q) {
-                $q->where('Status', 'Diajukan-ke-dekan');
-            })->count();
+            ->where('Status', 'Diajukan-ke-dekan')->count();
         $suratSelesaiBulanIni = $baseQuery()
-            ->whereHas('suratMagang', function ($q) {
-                $q->where('Status', 'Success');
-            })
+            ->where('Status', 'Success')
             ->whereMonth('Tanggal_Diselesaikan', date('m'))
             ->whereYear('Tanggal_Diselesaikan', date('Y'))
             ->count();
         $totalArsip = $baseQuery()
-            ->whereHas('suratMagang', function ($q) {
-                $q->where('Status', 'Success');
-            })->count();
+            ->where('Status', 'Success')->count();
 
         // Ambil antrian permohonan terbaru (5 terakhir)
         $antrianSurat = $baseQuery()
-            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai', 'jenisSurat', 'suratMagang'])
-            ->whereHas('suratMagang', function ($q) {
-                $q->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin']);
-            })
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai'])
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->take(5)
             ->get();
 
@@ -182,7 +172,7 @@ class AuthController extends Controller
 
         // Base query dengan filter fakultas (filter berdasarkan PEMBERI tugas = yang mengajukan)
         $baseQuery = function () use ($fakultasId) {
-            return \App\Models\TugasSurat::query()
+            return \App\Models\SuratMagang::query()
                 ->where(function ($q) use ($fakultasId) {
                     $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
                         $subQ->where('Id_Fakultas', $fakultasId);
@@ -199,32 +189,22 @@ class AuthController extends Controller
         // Ambil statistik surat berdasarkan status dengan filter fakultas
         // Status sekarang ada di tabel spesifik (Surat_Magang)
         $permohonanBaru = $baseQuery()
-            ->whereHas('suratMagang', function ($q) {
-                $q->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin']);
-            })->count();
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])->count();
         $menungguTTE = $baseQuery()
-            ->whereHas('suratMagang', function ($q) {
-                $q->where('Status', 'Diajukan-ke-dekan');
-            })->count();
+            ->where('Status', 'Diajukan-ke-dekan')->count();
         $suratSelesaiBulanIni = $baseQuery()
-            ->whereHas('suratMagang', function ($q) {
-                $q->where('Status', 'Success');
-            })
+            ->where('Status', 'Success')
             ->whereMonth('Tanggal_Diselesaikan', date('m'))
             ->whereYear('Tanggal_Diselesaikan', date('Y'))
             ->count();
         $totalArsip = $baseQuery()
-            ->whereHas('suratMagang', function ($q) {
-                $q->where('Status', 'Success');
-            })->count();
+            ->where('Status', 'Success')->count();
 
         // Ambil antrian permohonan terbaru (5 terakhir) dengan filter fakultas
         $antrianSurat = $baseQuery()
-            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai', 'jenisSurat', 'suratMagang'])
-            ->whereHas('suratMagang', function ($q) {
-                $q->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin']);
-            })
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai'])
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->take(5)
             ->get();
 
@@ -289,7 +269,7 @@ class AuthController extends Controller
 
         // Hitung Surat Masuk: Surat Magang dengan Acc_Koordinator = false dari mahasiswa di prodi ini
         $suratMasuk = \App\Models\SuratMagang::query()
-            ->whereHas('tugasSurat.pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
+            ->whereHas('pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
                 $q->where('Id_Prodi', $prodiId);
             })
             ->where('Acc_Koordinator', false)
@@ -298,8 +278,8 @@ class AuthController extends Controller
 
         // Ambil data antrian surat magang untuk ditampilkan di tabel
         $antrianSurat = \App\Models\SuratMagang::query()
-            ->with(['tugasSurat.pemberiTugas.mahasiswa'])
-            ->whereHas('tugasSurat.pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
+            ->with(['pemberiTugas.mahasiswa'])
+            ->whereHas('pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
                 $q->where('Id_Prodi', $prodiId);
             })
             ->where('Acc_Koordinator', false)
@@ -355,14 +335,8 @@ class AuthController extends Controller
         $ditolak += \App\Models\SuratMagang::where('Id_Pemberi_Tugas', $user->Id_User)
             ->where('Status', 'Ditolak')->count();
 
-        // TODO: Tambahkan perhitungan dari tabel surat lainnya
-        // $totalPengajuan += \App\Models\SuratKetAktif::where('Id_Pemberi_Tugas', $user->Id_User)->count();
-        // $totalPengajuan += \App\Models\SuratLegalisir::where('Id_User', $user->Id_User)->count();
-        // $totalPengajuan += \App\Models\SuratDispensasi::where('Id_User', $user->Id_User)->count();
-        // dst...
-
         // Ambil riwayat terkini (5 terakhir)
-        $riwayatTerkini = \App\Models\SuratMagang::with(['jenisSurat', 'pemberiTugas'])
+        $riwayatTerkini = \App\Models\SuratMagang::with(['pemberiTugas'])
             ->where('Id_Pemberi_Tugas', $user->Id_User)
             ->orderBy('id_no', 'desc')
             ->take(5)

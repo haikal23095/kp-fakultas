@@ -28,11 +28,16 @@ class SuratPeminjamanMobil extends Model
         'file_surat_final',
         'qr_code_path',
         'status_pengajuan',
+        'Status',
+        'Tanggal_Diberikan',
+        'Tanggal_Diselesaikan',
     ];
 
     protected $casts = [
         'tanggal_pemakaian_mulai' => 'date',
         'tanggal_pemakaian_selesai' => 'date',
+        'Tanggal_Diberikan' => 'datetime',
+        'Tanggal_Diselesaikan' => 'datetime',
     ];
 
     /**
@@ -97,7 +102,7 @@ class SuratPeminjamanMobil extends Model
     public function scopeArsip($query)
     {
         return $query->whereIn('status_pengajuan', ['Disetujui_Wadek2', 'Selesai'])
-                     ->whereNotNull('nomor_surat');
+            ->whereNotNull('nomor_surat');
     }
 
     /**
@@ -114,15 +119,15 @@ class SuratPeminjamanMobil extends Model
     public static function isTanggalBentrok($kendaraanId, $mulai, $selesai, $excludeId = null)
     {
         $query = self::where('Id_Kendaraan', $kendaraanId)
-                     ->whereIn('status_pengajuan', ['Diverifikasi_Admin', 'Disetujui_Wadek2'])
-                     ->where(function($q) use ($mulai, $selesai) {
-                         $q->whereBetween('tanggal_pemakaian_mulai', [$mulai, $selesai])
-                           ->orWhereBetween('tanggal_pemakaian_selesai', [$mulai, $selesai])
-                           ->orWhere(function($q2) use ($mulai, $selesai) {
-                               $q2->where('tanggal_pemakaian_mulai', '<=', $mulai)
-                                  ->where('tanggal_pemakaian_selesai', '>=', $selesai);
-                           });
-                     });
+            ->whereIn('status_pengajuan', ['Diverifikasi_Admin', 'Disetujui_Wadek2'])
+            ->where(function ($q) use ($mulai, $selesai) {
+                $q->whereBetween('tanggal_pemakaian_mulai', [$mulai, $selesai])
+                    ->orWhereBetween('tanggal_pemakaian_selesai', [$mulai, $selesai])
+                    ->orWhere(function ($q2) use ($mulai, $selesai) {
+                        $q2->where('tanggal_pemakaian_mulai', '<=', $mulai)
+                            ->where('tanggal_pemakaian_selesai', '>=', $selesai);
+                    });
+            });
 
         if ($excludeId) {
             $query->where('id', '!=', $excludeId);

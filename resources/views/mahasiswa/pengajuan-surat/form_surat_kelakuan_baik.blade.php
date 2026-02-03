@@ -30,7 +30,6 @@
         <div class="card-body">
             <form action="{{ route('mahasiswa.pengajuan.kelakuan_baik.store') }}" method="POST">
                 @csrf
-                <input type="hidden" name="Id_Jenis_Surat" value="{{ $jenisSurat->Id_Jenis_Surat }}">
 
                 {{-- Data Mahasiswa (Readonly) --}}
                 <h5 class="mb-3 text-gray-800 border-bottom pb-2">Data Mahasiswa</h5>

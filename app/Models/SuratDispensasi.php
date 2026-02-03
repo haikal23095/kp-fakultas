@@ -29,6 +29,10 @@ class SuratDispensasi extends Model
         'acc_wadek3_at',
         'file_surat_selesai',
         'keterangan_status',
+        'Status',
+        'Tanggal_Diberikan',
+        'Tanggal_Diselesaikan',
+        'Id_Penerima_Tugas',
     ];
 
     protected $casts = [
@@ -36,6 +40,8 @@ class SuratDispensasi extends Model
         'tanggal_selesai' => 'date',
         'verifikasi_admin_at' => 'date',
         'acc_wadek3_at' => 'date',
+        'Tanggal_Diberikan' => 'datetime',
+        'Tanggal_Diselesaikan' => 'datetime',
     ];
 
     // @deprecated Relasi ke TugasSurat sudah tidak digunakan

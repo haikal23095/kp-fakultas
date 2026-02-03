@@ -10,6 +10,8 @@ class SuratVerification extends Model
 
     protected $fillable = [
         'id_tugas_surat',
+        'id_letter',
+        'letter_type',
         'token',
         'signed_by',
         'signed_by_user_id',
@@ -22,12 +24,12 @@ class SuratVerification extends Model
     ];
 
     /**
-     * Relasi ke TugasSurat
+     * @deprecated Relasi ke TugasSurat sudah tidak digunakan karena tabel dihapus
      */
-    public function tugasSurat()
-    {
-        return $this->belongsTo(TugasSurat::class, 'id_tugas_surat', 'Id_Tugas_Surat');
-    }
+    // public function tugasSurat()
+    // {
+    //     return $this->belongsTo(TugasSurat::class, 'id_tugas_surat', 'Id_Tugas_Surat');
+    // }
 
     /**
      * Relasi ke User (Penandatangan)

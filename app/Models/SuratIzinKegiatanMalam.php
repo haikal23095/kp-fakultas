@@ -11,7 +11,7 @@ class SuratIzinKegiatanMalam extends Model
 
     // Nama tabel eksplisit
     protected $table = 'surat_izin_kegiatan_malams';
-    
+
     // Primary Key
     protected $primaryKey = 'id';
 
@@ -19,7 +19,6 @@ class SuratIzinKegiatanMalam extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'id_tugas_surat',
         'id_user',
         'id_pejabat',
         'nama_kegiatan',
@@ -29,11 +28,16 @@ class SuratIzinKegiatanMalam extends Model
         'jumlah_peserta',
         'alasan',
         'nomor_surat',
+        'Status',
+        'Tanggal_Diberikan',
+        'Tanggal_Diselesaikan',
     ];
 
     protected $casts = [
         'waktu_mulai' => 'datetime',
         'waktu_selesai' => 'datetime',
+        'Tanggal_Diberikan' => 'datetime',
+        'Tanggal_Diselesaikan' => 'datetime',
     ];
 
     /**

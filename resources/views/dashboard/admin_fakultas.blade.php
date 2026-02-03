@@ -97,42 +97,42 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @forelse($antrianSurat as $surat)
-                            <tr>
-                                <td>{{ $surat->jenisSurat->Nama_Surat ?? 'N/A' }}</td>
-                                <td>
-                                    @php
-                                        // Ambil nama pemohon (pemberi tugas = yang mengajukan)
-                                        $namaPemohon = $surat->pemberiTugas->Name_User ?? 'N/A';
-                                    @endphp
-                                    {{ $namaPemohon }}
-                                </td>
-                                <td>{{ $surat->Tanggal_Diberikan_Tugas_Surat ? $surat->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}</td>
-                                <td>
-                                    @php
-                                        $roleName = $surat->pemberiTugas->role->Name_Role ?? 'N/A';
-                                        $badgeClass = 'secondary';
-                                        
-                                        if (str_contains($roleName, 'Dosen')) {
-                                            $badgeClass = 'primary';
-                                        } elseif (str_contains($roleName, 'Mahasiswa')) {
-                                            $badgeClass = 'info';
-                                        } elseif (str_contains($roleName, 'Dekan')) {
-                                            $badgeClass = 'danger';
-                                        } elseif (str_contains($roleName, 'Kajur') || str_contains($roleName, 'Kaprodi')) {
-                                            $badgeClass = 'warning';
-                                        } elseif (str_contains($roleName, 'Admin') || str_contains($roleName, 'Pegawai')) {
-                                            $badgeClass = 'success';
-                                        }
-                                    @endphp
-                                    <span class="badge bg-{{ $badgeClass }}">{{ $roleName }}</span>
-                                </td>
-                                <td>
-                                    <a href="{{ route('admin_fakultas.surat.detail', $surat->Id_Tugas_Surat) }}" class="btn btn-primary btn-sm">
-                                        <i class="fas fa-eye"></i> Proses
-                                    </a>
-                                </td>
-                            </tr>
+                        @forelse($antrianSurat as $surat)
+                        <tr>
+                            <td>Surat Magang</td>
+                            <td>
+                                @php
+                                    // Ambil nama pemohon (pemberi tugas = yang mengajukan)
+                                    $namaPemohon = $surat->pemberiTugas->Name_User ?? 'N/A';
+                                @endphp
+                                {{ $namaPemohon }}
+                            </td>
+                            <td>{{ $surat->Tanggal_Diberikan ? $surat->Tanggal_Diberikan->format('d M Y') : '-' }}</td>
+                            <td>
+                                @php
+                                    $roleName = $surat->pemberiTugas->role->Name_Role ?? 'N/A';
+                                    $badgeClass = 'secondary';
+                                    
+                                    if (str_contains($roleName, 'Dosen')) {
+                                        $badgeClass = 'primary';
+                                    } elseif (str_contains($roleName, 'Mahasiswa')) {
+                                        $badgeClass = 'info';
+                                    } elseif (str_contains($roleName, 'Dekan')) {
+                                        $badgeClass = 'danger';
+                                    } elseif (str_contains($roleName, 'Kajur') || str_contains($roleName, 'Kaprodi')) {
+                                        $badgeClass = 'warning';
+                                    } elseif (str_contains($roleName, 'Admin') || str_contains($roleName, 'Pegawai')) {
+                                        $badgeClass = 'success';
+                                    }
+                                @endphp
+                                <span class="badge bg-{{ $badgeClass }}">{{ $roleName }}</span>
+                            </td>
+                            <td>
+                                <a href="{{ route('admin_fakultas.surat.detail', $surat->id_no) }}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Proses
+                                </a>
+                            </td>
+                        </tr>
                             @empty
                             <tr>
                                 <td colspan="5" class="text-center text-muted py-4">

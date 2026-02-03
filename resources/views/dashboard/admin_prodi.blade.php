@@ -142,8 +142,8 @@
                                         <i class="fas fa-file-alt text-primary"></i>
                                     </div>
                                     <div>
-                                        <span class="fw-semibold text-dark d-block">{{ $surat->jenisSurat->Nama_Surat ?? 'N/A' }}</span>
-                                        <small class="text-muted">ID: #{{ $surat->Id_Tugas_Surat }}</small>
+                                        <span class="fw-semibold text-dark d-block">Surat Magang</span>
+                                        <small class="text-muted">ID: #{{ $surat->id_no }}</small>
                                     </div>
                                 </div>
                             </td>
@@ -153,7 +153,7 @@
                             <td>
                                 <span class="text-muted">
                                     <i class="far fa-clock me-1"></i>
-                                    {{ $surat->Tanggal_Diberikan_Tugas_Surat ? $surat->Tanggal_Diberikan_Tugas_Surat->format('d M Y') : '-' }}
+                                    {{ $surat->Tanggal_Diberikan ? $surat->Tanggal_Diberikan->format('d M Y') : '-' }}
                                 </span>
                             </td>
                             <td>
@@ -172,7 +172,7 @@
                                 <span class="badge {{ $badgeClass }} rounded-pill px-3">{{ $roleName }}</span>
                             </td>
                             <td class="text-end px-4">
-                                <a href="{{ route('admin_prodi.surat.detail', $surat->Id_Tugas_Surat) }}" class="btn btn-sm btn-primary rounded-pill px-3">
+                                <a href="{{ route('admin_prodi.surat.detail', $surat->id_no) }}" class="btn btn-sm btn-primary rounded-pill px-3">
                                     Proses <i class="fas fa-chevron-right ms-1"></i>
                                 </a>
                             </td>

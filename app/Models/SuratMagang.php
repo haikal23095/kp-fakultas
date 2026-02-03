@@ -67,14 +67,6 @@ class SuratMagang extends Model
     }
 
     /**
-     * Relasi ke Jenis Surat
-     */
-    public function jenisSurat()
-    {
-        return $this->belongsTo(JenisSurat::class, 'Id_Jenis_Surat', 'Id_Jenis_Surat');
-    }
-
-    /**
      * Relasi ke Dosen (Koordinator KP/Magang)
      */
     public function koordinator()

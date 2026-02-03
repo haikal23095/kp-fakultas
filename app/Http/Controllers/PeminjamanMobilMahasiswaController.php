@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\SuratPeminjamanMobil;
-use App\Models\TugasSurat;
-use App\Models\JenisSurat;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use App\Models\Notifikasi;
+use Carbon\Carbon;
 
 class PeminjamanMobilMahasiswaController extends Controller
 {
@@ -44,24 +45,8 @@ class PeminjamanMobilMahasiswaController extends Controller
 
         DB::beginTransaction();
         try {
-            // Ambil jenis surat untuk Peminjaman Mobil
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'LIKE', '%Mobil Dinas%')->first();
-            
-            if (!$jenisSurat) {
-                throw new \Exception('Jenis surat Peminjaman Mobil tidak ditemukan. Silakan hubungi admin.');
-            }
-
-            // 1. Insert ke Tugas_Surat
-            $tugasSurat = TugasSurat::create([
-                'Id_User' => Auth::id(),
-                'Id_Jenis_Surat' => $jenisSurat->Id_Jenis_Surat,
-                'Status_Surat' => 'Baru',
-                'Tanggal_Pengajuan' => now(),
-            ]);
-
-            // 2. Insert ke Surat_Peminjaman_Mobil
-            SuratPeminjamanMobil::create([
-                'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
+            // Insert langsung ke Surat_Peminjaman_Mobil
+            $surat = SuratPeminjamanMobil::create([
                 'Id_User' => Auth::id(),
                 'tujuan' => $validated['tujuan'],
                 'keperluan' => $validated['keperluan'],
@@ -69,20 +54,22 @@ class PeminjamanMobilMahasiswaController extends Controller
                 'tanggal_pemakaian_selesai' => $validated['tanggal_pemakaian_selesai'],
                 'jumlah_penumpang' => $validated['jumlah_penumpang'],
                 'status_pengajuan' => 'Diajukan',
+                'Status' => 'baru',
+                'Tanggal_Diberikan' => Carbon::now(),
             ]);
 
             // 3. Kirim notifikasi ke Admin Fakultas (Id_Role = 7)
-            $adminFakultas = \App\Models\User::where('Id_Role', 7)->get();
+            $adminFakultas = User::where('Id_Role', 7)->get();
             foreach ($adminFakultas as $admin) {
-                \App\Models\Notifikasi::create([
+                Notifikasi::create([
                     'Tipe_Notifikasi' => "Invitation",
                     'Pesan' => "Pengajuan baru: Peminjaman Mobil Dinas dari " . Auth::user()->Name_User,
                     'Dest_user' => $admin->Id_User,
                     'Source_User' => Auth::id(),
                     'Is_Read' => false,
                     'Data_Tambahan' => json_encode([
-                        'id_tugas_surat' => $tugasSurat->Id_Tugas_Surat,
-                        'jenis_surat' => 'mobil_dinas',
+                        'id_letter' => $surat->id,
+                        'letter_type' => 'mobil_dinas',
                         'action_url' => route('admin_fakultas.surat.mobil_dinas'),
                     ]),
                 ]);
@@ -108,10 +95,10 @@ class PeminjamanMobilMahasiswaController extends Controller
     public function riwayat()
     {
         $userId = Auth::id();
-        
+
         $riwayat = SuratPeminjamanMobil::where('Id_User', $userId)
-            ->with(['tugasSurat', 'kendaraan', 'pejabat'])
-            ->orderBy('created_at', 'desc')
+            ->with(['kendaraan', 'pejabat'])
+            ->orderBy('id', 'desc')
             ->get();
 
         return view('mahasiswa.peminjaman_mobil.riwayat', compact('riwayat'));
@@ -160,10 +147,10 @@ class PeminjamanMobilMahasiswaController extends Controller
 
         // Generate PDF
         $pdf = \PDF::loadView('pdf.surat_peminjaman_mobil', compact('peminjaman'));
-        
+
         $fileName = 'Surat_Peminjaman_Mobil_' . $peminjaman->nomor_surat . '.pdf';
         $fileName = str_replace('/', '_', $fileName);
-        
+
         return $pdf->download($fileName);
     }
 }

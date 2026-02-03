@@ -7,11 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Models\TugasSurat;
 use App\Models\SuratKelakuanBaik;
-use App\Models\JenisSurat;
 use App\Models\Pejabat;
 use App\Models\Mahasiswa;
+use App\Models\SuratVerification;
 use Carbon\Carbon;
 
 class SuratKelakuanBaikController extends Controller
@@ -28,16 +27,7 @@ class SuratKelakuanBaikController extends Controller
             return redirect()->back()->with('error', 'Data mahasiswa tidak ditemukan.');
         }
 
-        // Ambil ID Jenis Surat
-        $jenisSurat = JenisSurat::where('Nama_Surat', 'LIKE', '%Berkelakuan Baik%')
-            ->orWhere('Nama_Surat', 'LIKE', '%Kelakuan Baik%')
-            ->first();
-
-        if (!$jenisSurat) {
-            return redirect()->back()->with('error', 'Jenis surat tidak ditemukan di database. Hubungi admin.');
-        }
-
-        return view('mahasiswa.pengajuan-surat.form_surat_kelakuan_baik', compact('mahasiswa', 'jenisSurat'));
+        return view('mahasiswa.pengajuan-surat.form_surat_kelakuan_baik', compact('mahasiswa'));
     }
 
     /**
@@ -47,7 +37,6 @@ class SuratKelakuanBaikController extends Controller
     {
         // Validasi
         $validator = Validator::make($request->all(), [
-            'Id_Jenis_Surat' => 'required|integer',
             'keperluan' => 'required|string|max:500',
         ], [
             'keperluan.required' => 'Keperluan surat wajib diisi.',
@@ -68,22 +57,21 @@ class SuratKelakuanBaikController extends Controller
             }
 
             // Cari Pejabat (Wakil Dekan 3)
-            $pejabat = Pejabat::where(function($query) {
+            $pejabat = Pejabat::where(function ($query) {
                 $query->where('Nama_Jabatan', 'LIKE', '%Wakil Dekan III%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%Wakil Dekan 3%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%Kemahasiswaan%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%WD3%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%WD 3%');
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%Wakil Dekan 3%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%Kemahasiswaan%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%WD3%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%WD 3%');
             })
-            ->first();
+                ->first();
 
             $idPejabat = $pejabat ? $pejabat->Id_Pejabat : null;
 
             // Ambil semester dan tahun akademik otomatis
-            // Logika sederhana: bulan 1-6 = genap tahun sebelumnya, 7-12 = ganjil tahun ini
             $currentMonth = Carbon::now()->month;
             $currentYear = Carbon::now()->year;
-            
+
             if ($currentMonth >= 1 && $currentMonth <= 6) {
                 $semester = 'Genap';
                 $tahunAkademik = ($currentYear - 1) . '/' . $currentYear;
@@ -92,30 +80,21 @@ class SuratKelakuanBaikController extends Controller
                 $tahunAkademik = $currentYear . '/' . ($currentYear + 1);
             }
 
-            // Insert ke Tabel Induk (Tugas_Surat)
-            $tugasSurat = TugasSurat::create([
-                'Id_Pemberi_Tugas_Surat' => $user->Id_User,
-                'Id_Jenis_Surat' => $request->Id_Jenis_Surat,
-                'Judul_Tugas_Surat' => 'Permohonan Surat Keterangan Berkelakuan Baik',
-                'Status' => 'baru',
-                'Tanggal_Diberikan_Tugas_Surat' => Carbon::now(),
-                'Tanggal_Tenggat_Tugas_Surat' => Carbon::now()->addDays(5),
-            ]);
-
-            // Insert ke Tabel Child (Surat_Kelakuan_Baik)
+            // Insert langsung ke tabel Surat_Kelakuan_Baik
             SuratKelakuanBaik::create([
-                'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
                 'Id_User' => $user->Id_User,
                 'Id_Pejabat' => $idPejabat,
                 'Keperluan' => $request->keperluan,
                 'Semester' => $semester,
                 'Tahun_Akademik' => $tahunAkademik,
+                'Status' => 'baru',
+                'Tanggal_Diberikan' => Carbon::now(),
             ]);
 
             DB::commit();
 
-            return redirect()->route('mahasiswa.pengajuan.create')
-                ->with('success', 'Pengajuan surat berhasil dikirim. Silakan cek status di menu Riwayat.');
+            return redirect()->route('mahasiswa.riwayat.berkelakuan_baik')
+                ->with('success', 'Pengajuan surat berhasil dikirim. Silakan cek status di bawah.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -131,13 +110,11 @@ class SuratKelakuanBaikController extends Controller
      */
     public function indexAdmin()
     {
-        // Ambil TugasSurat yang memiliki relasi suratKelakuanBaik
-        $daftarPengajuan = TugasSurat::whereHas('suratKelakuanBaik')
-            ->with([
-                'suratKelakuanBaik', 
-                'pemberiTugas.mahasiswa.prodi'
-            ])
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+        // Ambil SuratKelakuanBaik langsung
+        $daftarPengajuan = SuratKelakuanBaik::with([
+            'user.mahasiswa.prodi'
+        ])
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->get();
 
         return view('admin_fakultas.surat_kelakuan_baik.index', compact('daftarPengajuan'));
@@ -154,14 +131,10 @@ class SuratKelakuanBaikController extends Controller
 
         DB::beginTransaction();
         try {
-            $tugasSurat = TugasSurat::with('suratKelakuanBaik')->findOrFail($id);
-            
-            if (!$tugasSurat->suratKelakuanBaik) {
-                throw new \Exception('Data surat kelakuan baik tidak ditemukan.');
-            }
+            $surat = SuratKelakuanBaik::findOrFail($id);
 
             // Update nomor surat
-            $tugasSurat->suratKelakuanBaik->update([
+            $surat->update([
                 'Nomor_Surat' => $request->nomor_surat
             ]);
 
@@ -181,18 +154,14 @@ class SuratKelakuanBaikController extends Controller
     {
         DB::beginTransaction();
         try {
-            $tugasSurat = TugasSurat::with('suratKelakuanBaik')->findOrFail($id);
-            
-            if (!$tugasSurat->suratKelakuanBaik) {
-                throw new \Exception('Data surat kelakuan baik tidak ditemukan.');
-            }
+            $surat = SuratKelakuanBaik::findOrFail($id);
 
-            if (!$tugasSurat->suratKelakuanBaik->Nomor_Surat) {
+            if (!$surat->Nomor_Surat) {
                 throw new \Exception('Nomor surat belum diberikan.');
             }
 
             // Update status
-            $tugasSurat->update([
+            $surat->update([
                 'Status' => 'menunggu-ttd'
             ]);
 
@@ -201,11 +170,11 @@ class SuratKelakuanBaikController extends Controller
             if ($wadek3) {
                 \App\Models\Notifikasi::create([
                     'Tipe_Notifikasi' => 'New',
-                    'Pesan' => 'Surat Berkelakuan Baik dari mahasiswa ' . ($tugasSurat->pemberiTugas->Name_User ?? '-') . ' siap untuk ditandatangani.',
+                    'Pesan' => 'Surat Berkelakuan Baik dari mahasiswa ' . ($surat->user->Name_User ?? '-') . ' siap untuk ditandatangani.',
                     'Dest_user' => $wadek3->Id_User,
                     'Source_User' => auth()->user()->Id_User,
                     'Is_Read' => false,
-                    'Data_Tambahan' => json_encode(['entity' => 'kelakuan_baik', 'id' => $tugasSurat->Id_Tugas_Surat]),
+                    'Data_Tambahan' => json_encode(['entity' => 'kelakuan_baik', 'id' => $surat->id]),
                 ]);
             }
 
@@ -225,42 +194,35 @@ class SuratKelakuanBaikController extends Controller
     {
         $user = Auth::user();
 
-        // Ambil surat dengan verifikasi QR
-        $tugasSurat = TugasSurat::with([
-            'jenisSurat',
-            'pemberiTugas.mahasiswa.prodi.fakultas',
-            'penerimaTugas',
-            'suratKelakuanBaik.user.mahasiswa',
-            'verification.penandatangan.pegawai',
-            'verification.penandatangan.dosen'
+        // Ambil surat langsung
+        $surat = SuratKelakuanBaik::with([
+            'user.mahasiswa.prodi.fakultas',
+            'pejabat'
         ])
-            ->where('Id_Tugas_Surat', $id)
-            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('id', $id)
+            ->where('Id_User', $user->Id_User)
             ->firstOrFail();
 
         // Cek apakah surat sudah selesai
-        $statusLower = strtolower(trim($tugasSurat->Status));
-        if ($statusLower !== 'selesai' && $statusLower !== 'telah ditandatangani dekan') {
+        $statusLower = strtolower(trim($surat->Status));
+        if ($statusLower !== 'selesai' && $statusLower !== 'telah ditandatangani dekan' && $statusLower !== 'success') {
             return redirect()->route('mahasiswa.riwayat.berkelakuan_baik')
-                ->with('error', 'Surat belum dapat diunduh. Status: ' . $tugasSurat->Status);
+                ->with('error', 'Surat belum dapat diunduh. Status: ' . $surat->Status);
         }
 
-        // Cek apakah ada data surat berkelakuan baik
-        if (!$tugasSurat->suratKelakuanBaik) {
-            return redirect()->route('mahasiswa.riwayat.berkelakuan_baik')
-                ->with('error', 'Data surat tidak ditemukan.');
-        }
+        // Ambil verification menggunakan ID child
+        $verification = SuratVerification::with(['penandatangan.pegawai', 'penandatangan.dosen'])
+            ->where('id_tugas_surat', $id)
+            ->first();
 
-        $mahasiswa = $tugasSurat->suratKelakuanBaik->user->mahasiswa ?? $tugasSurat->pemberiTugas->mahasiswa;
-        $suratKelakuanBaik = $tugasSurat->suratKelakuanBaik;
+        $mahasiswa = $surat->user->mahasiswa;
 
-        // Render PDF view menggunakan template yang sama seperti preview dekan
+        // Render PDF view
         return view('mahasiswa.pdf.surat_kelakuan_baik', [
-            'surat' => $tugasSurat,
+            'surat' => $surat,
             'mahasiswa' => $mahasiswa,
-            'jenisSurat' => $tugasSurat->jenisSurat,
-            'suratKelakuanBaik' => $suratKelakuanBaik,
-            'verification' => $tugasSurat->verification,
+            'suratKelakuanBaik' => $surat,
+            'verification' => $verification,
             'mode' => 'download'
         ]);
     }
