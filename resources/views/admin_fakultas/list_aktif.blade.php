@@ -50,8 +50,12 @@
                     @forelse($daftarTugas as $tugas)
                     <tr>
                         <td>
-                            {{ $tugas->Tanggal_Diberikan_Tugas_Surat->format('d M Y') }}
-                            @if(optional($tugas->suratKetAktif)->is_urgent)
+                            @if($tugas->Tanggal_Diberikan)
+                                {{ \Carbon\Carbon::parse($tugas->Tanggal_Diberikan)->format('d M Y') }}
+                            @else
+                                <span class="text-muted">-</span>
+                            @endif
+                            @if($tugas->is_urgent)
                                 <br><span class="badge bg-danger"><i class="fas fa-exclamation-circle me-1"></i>URGENT</span>
                             @endif
                         </td>
@@ -69,10 +73,10 @@
                             </small>
                         </td>
                         <td>
-                            {{ optional($tugas->suratKetAktif)->Deskripsi ?? 'N/A' }}
-                            @if(optional($tugas->suratKetAktif)->is_urgent && optional($tugas->suratKetAktif)->urgent_reason)
+                            {{ $tugas->Deskripsi ?? 'N/A' }}
+                            @if($tugas->is_urgent && $tugas->urgent_reason)
                                 <div class="mt-1 small text-danger border-start border-danger ps-2">
-                                    <strong>Alasan:</strong> {{ \Illuminate\Support\Str::limit($tugas->suratKetAktif->urgent_reason, 50) }}
+                                    <strong>Alasan:</strong> {{ \Illuminate\Support\Str::limit($tugas->urgent_reason, 50) }}
                                 </div>
                             @endif
                         </td>
@@ -97,7 +101,7 @@
                             @endif
                         </td>
                         <td class="text-center">
-                            <a href="{{ route('admin_fakultas.surat.detail', $tugas->Id_Tugas_Surat) }}" 
+                            <a href="{{ route('admin_fakultas.surat.detail', $tugas->id_no) }}" 
                                class="btn btn-sm btn-outline-primary shadow-sm">
                                 <i class="fas fa-eye me-1"></i> Detail
                             </a>

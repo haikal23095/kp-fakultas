@@ -71,7 +71,7 @@
                     <tbody>
                         @forelse($daftarSurat as $index => $surat)
                         @php
-                            $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
+                            $mahasiswa = $surat->pemberiTugas->mahasiswa ?? null;
                             $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
                             $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
                             $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');
@@ -92,7 +92,7 @@
                             </td>
                             <td>
                                 <span class="text-sm font-weight-bold text-dark">
-                                    {{ $surat->tugasSurat->jenisSurat->Nama_Surat ?? 'Surat Pengantar Magang' }}
+                                    {{ 'Surat Pengantar Magang' }}
                                 </span>
                             </td>
                             <td>
@@ -110,8 +110,8 @@
                             </td>
                             <td>
                                 <span class="text-secondary text-xs font-weight-bold">
-                                    @if($surat->tugasSurat && $surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)
-                                        {{ \Carbon\Carbon::parse($surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') }}
+                                    @if($surat->Tanggal_Diberikan)
+                                        {{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan)->format('d M Y') }}
                                     @else
                                         -
                                     @endif
@@ -157,7 +157,7 @@
 {{-- Modals --}}
 @foreach($daftarSurat as $index => $surat)
 @php
-    $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
+    $mahasiswa = $surat->pemberiTugas->mahasiswa ?? null;
     $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
     $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
     $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');

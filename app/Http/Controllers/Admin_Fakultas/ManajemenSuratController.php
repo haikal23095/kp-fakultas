@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\Admin_Fakultas;
 
 use App\Http\Controllers\Controller;
-use App\Models\TugasSurat;
 use App\Models\Role;
 use App\Models\SKDosenWali;
+use App\Models\SuratMagang;
+use App\Models\SuratKetAktif;
+use App\Models\SuratLegalisir;
+use App\Models\SuratPeminjamanMobil;
+use App\Models\SuratDispensasi;
+use App\Models\SuratKelakuanBaik;
+use App\Models\SuratTidakBeasiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -16,96 +22,83 @@ class ManajemenSuratController extends Controller
      */
     public function index()
     {
-        // Update status tugas yang terlambat
-        TugasSurat::updateStatusTerlambat();
-
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        // Base query dengan filter fakultas
-        $baseQuery = function () use ($fakultasId) {
-            return TugasSurat::query()
-                ->where(function ($q) use ($fakultasId) {
-                    $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    })
-                        ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                            $subQ->where('Id_Fakultas', $fakultasId);
-                        })
-                        ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                            $subQ->where('Id_Fakultas', $fakultasId);
-                        });
-                });
-        };
+        // Count total dari semua jenis surat
+        $totalSemua = 0;
 
-        // Total semua surat
-        $totalSemua = $baseQuery()->count();
-
-        // Total semua surat
-        $totalSemua = $baseQuery()->count();
-
-        // Hitung untuk Surat Keterangan Aktif - GUNAKAN RELASI (exclude yang sudah selesai, ditolak, dan punya nomor)
-        $countAktif = $baseQuery()
-            ->has('suratKetAktif')
-            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'Telah ditandatangani Dekan', 'ditolak', 'Ditolak'])
+        // Hitung untuk Surat Keterangan Aktif
+        $countAktif = SuratKetAktif::whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
+            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'ditolak', 'Ditolak'])
             ->where(function ($q) {
                 $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
             })
             ->count();
-        $pendingAktif = $baseQuery()
-            ->has('suratKetAktif')
-            ->whereNotIn('Status', ['ditolak', 'Ditolak'])
+
+        $pendingAktif = SuratKetAktif::whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
+            ->whereIn('Status', ['baru', 'pending', 'Diajukan'])
             ->where(function ($q) {
                 $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
             })
-            ->whereIn('Status', ['baru', 'pending', 'Diajukan-ke-koordinator'])
             ->count();
-        $prosesAktif = $baseQuery()
-            ->has('suratKetAktif')
-            ->where(function ($q) {
-                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
-            })
+
+        $prosesAktif = SuratKetAktif::whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
             ->whereIn('Status', ['proses', 'Dikerjakan-admin'])
-            ->count();
-        $selesaiAktif = 0; // Selesai sudah pindah ke arsip
-
-        // Hitung untuk Surat Magang - GUNAKAN RELASI (hanya yang belum ada nomor surat)
-        $countMagang = $baseQuery()->has('suratMagang')->where(function ($q) {
-            $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
-        })->count();
-        $pendingMagang = $baseQuery()
-            ->has('suratMagang')
             ->where(function ($q) {
                 $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
             })
-            ->whereIn('Status', ['baru', 'pending', 'Diajukan-ke-koordinator'])
             ->count();
-        $prosesMagang = $baseQuery()
-            ->has('suratMagang')
-            ->where(function ($q) {
-                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
-            })
-            ->whereIn('Status', ['proses', 'Dikerjakan-admin'])
-            ->count();
-        $selesaiMagang = 0; // Selesai pindah ke arsip (yang sudah ada nomor)
 
-        // Hitung untuk Legalisir - QUERY LANGSUNG ke Surat_Legalisir (exclude selesai dan ditolak) dengan filter fakultas
-        $countLegalisir = \App\Models\SuratLegalisir::whereNotIn('Status', ['selesai', 'ditolak'])
+        $selesaiAktif = 0;
+        $totalSemua += $countAktif;
+
+        // Hitung untuk Surat Magang
+        $countMagang = SuratMagang::whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
+            ->whereNotIn('Status', ['Success', 'Ditolak-Kaprodi', 'Ditolak-Dekan'])
+            ->count();
+
+        $pendingMagang = SuratMagang::whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
+            ->where('Status', 'Diajukan-ke-koordinator')
+            ->count();
+
+        $prosesMagang = SuratMagang::whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
+            ->whereIn('Status', ['Dikerjakan-admin', 'Diajukan-ke-dekan'])
+            ->count();
+
+        $selesaiMagang = 0;
+        $totalSemua += $countMagang;
+
+        // Hitung untuk Legalisir
+        $countLegalisir = SuratLegalisir::whereNotIn('Status', ['selesai', 'ditolak'])
             ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
                 $q->where('Id_Fakultas', $fakultasId);
             })
             ->count();
-        $pendingLegalisir = \App\Models\SuratLegalisir::whereIn('Status', ['menunggu_pembayaran'])
+        $pendingLegalisir = SuratLegalisir::whereIn('Status', ['menunggu_pembayaran'])
             ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
                 $q->where('Id_Fakultas', $fakultasId);
             })
             ->count();
-        $prosesLegalisir = \App\Models\SuratLegalisir::whereIn('Status', ['pembayaran_lunas', 'menunggu_ttd_pimpinan', 'siap_diambil'])
+        $prosesLegalisir = SuratLegalisir::whereIn('Status', ['pembayaran_lunas', 'menunggu_ttd_pimpinan', 'siap_diambil'])
             ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
                 $q->where('Id_Fakultas', $fakultasId);
             })
             ->count();
-        $selesaiLegalisir = 0; // Selesai pindah ke arsip
+        $selesaiLegalisir = 0;
+        $totalSemua += $countLegalisir;
 
         // Hitung untuk SK Dosen Wali - dari tabel Req_SK_Dosen_Wali
         $countSKDosen = SKDosenWali::whereHas('prodi.fakultas', function ($q) use ($fakultasId) {
@@ -124,70 +117,48 @@ class ManajemenSuratController extends Controller
             $q->where('Id_Fakultas', $fakultasId);
         })->where('Status', 'Selesai')->count();
 
+        $totalSemua += $countSKDosen;
+
         // Hitung untuk Peminjaman Mobil Dinas dengan filter fakultas
-        $countMobilDinas = \App\Models\SuratPeminjamanMobil::where('status_pengajuan', 'Diajukan')
+        $countMobilDinas = SuratPeminjamanMobil::where('status_pengajuan', 'Diajukan')
             ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
                 $q->where('Id_Fakultas', $fakultasId);
             })
             ->count();
+        $totalSemua += $countMobilDinas;
 
-        // Hitung untuk Surat Dispensasi - gunakan relasi TugasSurat
-        $countDispensasi = \App\Models\SuratDispensasi::whereHas('tugasSurat', function ($q) use ($fakultasId) {
-            // Gunakan subquery yang sama untuk filter fakultas
-            $q->where(function ($subQ) use ($fakultasId) {
-                $subQ->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                    $innerQ->where('Id_Fakultas', $fakultasId);
-                })
-                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                        $innerQ->where('Id_Fakultas', $fakultasId);
-                    })
-                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                        $innerQ->where('Id_Fakultas', $fakultasId);
-                    });
+        // Hitung untuk Surat Dispensasi
+        $countDispensasi = SuratDispensasi::whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
+            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'ditolak', 'Ditolak'])
+            ->where(function ($q) {
+                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
             })
-                ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'ditolak', 'Ditolak'])
-                ->where(function ($subQ) {
-                    $subQ->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
-                });
-        })->count();
+            ->count();
+        $totalSemua += $countDispensasi;
 
         // Hitung untuk Surat Berkelakuan Baik
-        $countBerkelakuanBaik = \App\Models\SuratKelakuanBaik::whereHas('tugasSurat', function ($q) use ($fakultasId) {
-            $q->where(function ($subQ) use ($fakultasId) {
-                $subQ->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                    $innerQ->where('Id_Fakultas', $fakultasId);
-                })
-                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                        $innerQ->where('Id_Fakultas', $fakultasId);
-                    })
-                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                        $innerQ->where('Id_Fakultas', $fakultasId);
-                    });
+        $countBerkelakuanBaik = SuratKelakuanBaik::whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
+            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'ditolak', 'Ditolak'])
+            ->where(function ($q) {
+                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
             })
-                ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'ditolak', 'Ditolak'])
-                ->where(function ($subQ) {
-                    $subQ->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
-                });
-        })->count();
+            ->count();
+        $totalSemua += $countBerkelakuanBaik;
 
         // Hitung untuk Surat Tidak Menerima Beasiswa
-        $countTidakBeasiswa = \App\Models\SuratTidakBeasiswa::whereHas('tugasSurat', function ($q) use ($fakultasId) {
-            $q->where(function ($subQ) use ($fakultasId) {
-                $subQ->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                    $innerQ->where('Id_Fakultas', $fakultasId);
-                })
-                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                        $innerQ->where('Id_Fakultas', $fakultasId);
-                    })
-                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($innerQ) use ($fakultasId) {
-                        $innerQ->where('Id_Fakultas', $fakultasId);
-                    });
+        $countTidakBeasiswa = SuratTidakBeasiswa::whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+            $q->where('Id_Fakultas', $fakultasId);
+        })
+            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'ditolak', 'Ditolak'])
+            ->where(function ($q) {
+                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
             })
-                ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'ditolak', 'Ditolak'])
-                ->where(function ($subQ) {
-                    $subQ->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
-                });
-        })->count();
+            ->count();
+        $totalSemua += $countTidakBeasiswa;
 
         // TODO: Counter untuk jenis surat baru (setelah database dibuat)
         $countCuti = 0;
@@ -229,36 +200,22 @@ class ManajemenSuratController extends Controller
      */
     public function listAktif()
     {
-        TugasSurat::updateStatusTerlambat();
-
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        $baseQuery = TugasSurat::query()
-            ->has('suratKetAktif') // GUNAKAN RELASI BUKAN Id_Jenis_Surat
-            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'Telah ditandatangani Dekan', 'ditolak', 'Ditolak']) // Filter surat yang sudah selesai dan ditolak
-            ->where(function ($q) {
-                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', ''); // Hanya yang belum ada nomor surat
+        $daftarTugas = SuratKetAktif::query()
+            ->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
             })
-            ->where(function ($q) use ($fakultasId) {
-                $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                    $subQ->where('Id_Fakultas', $fakultasId);
-                })
-                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    })
-                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    });
-            });
-
-        $daftarTugas = $baseQuery->with([
-            'pemberiTugas.role',
-            'pemberiTugas.mahasiswa.prodi',
-            'jenisSurat',
-            'suratKetAktif'
-        ])
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->whereNotIn('Status', ['selesai', 'Selesai', 'SELESAI', 'ditolak', 'Ditolak'])
+            ->where(function ($q) {
+                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', '');
+            })
+            ->with([
+                'pemberiTugas.role',
+                'pemberiTugas.mahasiswa.prodi'
+            ])
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->paginate(15);
 
         return view('admin_fakultas.list_aktif', compact('daftarTugas'));
@@ -269,36 +226,20 @@ class ManajemenSuratController extends Controller
      */
     public function listMagang()
     {
-        TugasSurat::updateStatusTerlambat();
-
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        $baseQuery = TugasSurat::query()
-            ->has('suratMagang') // GUNAKAN RELASI BUKAN Id_Jenis_Surat
-            ->whereNotIn('Status', ['ditolak', 'Ditolak']) // Filter yang ditolak
-            ->where(function ($q) {
-                $q->whereNull('Nomor_Surat')->orWhere('Nomor_Surat', ''); // Hanya yang belum ada nomor surat
+        $daftarTugas = SuratMagang::query()
+            ->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
             })
-            ->where(function ($q) use ($fakultasId) {
-                $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                    $subQ->where('Id_Fakultas', $fakultasId);
-                })
-                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    })
-                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    });
-            });
-
-        $daftarTugas = $baseQuery->with([
-            'pemberiTugas.role',
-            'pemberiTugas.mahasiswa.prodi',
-            'jenisSurat',
-            'suratMagang'
-        ])
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->whereNotIn('Status', ['Success', 'Ditolak-Kaprodi', 'Ditolak-Dekan'])
+            ->with([
+                'pemberiTugas.role',
+                'pemberiTugas.mahasiswa.prodi',
+                'koordinator'
+            ])
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->paginate(15);
 
         return view('admin_fakultas.list_magang', compact('daftarTugas'));
@@ -309,9 +250,8 @@ class ManajemenSuratController extends Controller
      */
     public function showMagang($id)
     {
-        $surat = \App\Models\SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi.fakultas',
-            'tugasSurat.jenisSurat',
+        $surat = SuratMagang::with([
+            'pemberiTugas.mahasiswa.prodi.fakultas',
             'koordinator'
         ])->findOrFail($id);
 
@@ -339,18 +279,12 @@ class ManajemenSuratController extends Controller
             'nomor_surat.max' => 'Nomor surat maksimal 100 karakter'
         ]);
 
-        $surat = \App\Models\SuratMagang::findOrFail($id);
+        $surat = SuratMagang::findOrFail($id);
 
-        // Update status di tabel Surat_Magang - pakai 'Diajukan-ke-dekan' (enum Surat_Magang)
+        // Update Nomor_Surat dan Status di Surat_Magang
+        $surat->Nomor_Surat = $request->nomor_surat;
         $surat->Status = 'Diajukan-ke-dekan';
         $surat->save();
-
-        // Update Nomor_Surat dan Status di TugasSurat - pakai 'Diajukan ke Dekan' (enum Tugas_Surat)
-        if ($surat->tugasSurat) {
-            $surat->tugasSurat->Nomor_Surat = $request->nomor_surat;
-            $surat->tugasSurat->Status = 'Diajukan ke Dekan'; // ENUM: dengan spasi, bukan dash
-            $surat->tugasSurat->save();
-        }
 
         return redirect()->route('admin_fakultas.surat.magang')
             ->with('success', 'Nomor surat berhasil diberikan dan diteruskan ke Dekan.');
@@ -361,7 +295,7 @@ class ManajemenSuratController extends Controller
      */
     public function downloadProposalMagang($id)
     {
-        $surat = \App\Models\SuratMagang::findOrFail($id);
+        $surat = SuratMagang::findOrFail($id);
 
         if (!$surat->Dokumen_Proposal) {
             return back()->with('error', 'Dokumen proposal tidak ditemukan.');
@@ -381,31 +315,25 @@ class ManajemenSuratController extends Controller
      */
     public function downloadSuratPengantarMagang($id)
     {
-        $tugasSurat = TugasSurat::with([
-            'jenisSurat',
+        $surat = SuratMagang::with([
             'pemberiTugas.mahasiswa.prodi',
-            'suratMagang.koordinator',
-            'suratMagang.dekan'
+            'koordinator',
+            'dekan'
         ])
-            ->where('Id_Tugas_Surat', $id)
+            ->where('Id_Surat_Magang', $id)
             ->firstOrFail();
 
-        // Cek apakah surat magang ada
-        if (!$tugasSurat->suratMagang) {
-            return back()->with('error', 'Bukan surat magang.');
-        }
-
         // Cek apakah sudah disetujui (koordinator atau dekan)
-        if (!$tugasSurat->suratMagang->Acc_Koordinator && !$tugasSurat->suratMagang->Acc_Dekan) {
+        if (!$surat->Acc_Koordinator && !$surat->Acc_Dekan) {
             return back()->with('error', 'Surat Pengantar belum disetujui.');
         }
 
         // Render PDF view
         return view('mahasiswa.pdf.surat_pengantar', [
-            'surat' => $tugasSurat,
-            'magang' => $tugasSurat->suratMagang,
-            'mahasiswa' => $tugasSurat->pemberiTugas->mahasiswa,
-            'koordinator' => $tugasSurat->suratMagang->koordinator,
+            'surat' => $surat,
+            'magang' => $surat,
+            'mahasiswa' => $surat->pemberiTugas->mahasiswa,
+            'koordinator' => $surat->koordinator,
             'mode' => 'preview'
         ]);
     }
@@ -464,73 +392,124 @@ class ManajemenSuratController extends Controller
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        // Ambil semua surat yang SUDAH ADA NOMOR SURAT (sudah selesai diproses)
-        $arsipTugas = TugasSurat::query()
+        // Query each surat type individually with fakultas filter, only ones with nomor surat (archived)
+        $arsipAktif = SuratKetAktif::with(['pemberiTugas.mahasiswa.prodi'])
             ->whereNotNull('Nomor_Surat')
             ->where('Nomor_Surat', '!=', '')
-            ->where(function ($q) use ($fakultasId) {
-                $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                    $subQ->where('Id_Fakultas', $fakultasId);
-                })
-                    ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    })
-                    ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    });
+            ->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
             })
-            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa.prodi', 'jenisSurat', 'suratKetAktif', 'suratMagang', 'suratLegalisir'])
-            ->orderBy('Tanggal_Diselesaikan', 'desc')
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->get();
 
-        // TAMBAHAN: Ambil legalisir yang sudah selesai (status = selesai) untuk ditambahkan ke arsip
-        $arsipLegalisir = \App\Models\SuratLegalisir::with(['user.mahasiswa.prodi', 'tugasSurat.jenisSurat'])
+        $arsipMagang = SuratMagang::with(['pemberiTugas.mahasiswa.prodi'])
+            ->whereNotNull('Nomor_Surat')
+            ->where('Nomor_Surat', '!=', '')
+            ->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
+            })
+            ->orderBy('Tanggal_Diberikan', 'desc')
+            ->get();
+
+        $arsipLegalisir = SuratLegalisir::with(['user.mahasiswa.prodi'])
             ->where('Status', 'selesai')
             ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
                 $q->where('Id_Fakultas', $fakultasId);
             })
+            ->orderBy('id_no', 'desc')
             ->get();
 
-        // Gabungkan arsip tugas dan legalisir
-        $arsipGabungan = $arsipTugas;
+        $arsipSKDosen = SKDosenWali::with(['dosen.prodi'])
+            ->whereNotNull('Nomor_SK')
+            ->where('Nomor_SK', '!=', '')
+            ->whereHas('dosen.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
+            })
+            ->orderBy('id', 'desc')
+            ->get();
 
-        // Hitung arsip per jenis surat (SESUAI DATABASE)
-        $countArsipAktif = $arsipTugas->where('Id_Jenis_Surat', 1)->count();
-        $countArsipMagang = $arsipTugas->where('Id_Jenis_Surat', 2)->count();
-        $countArsipLegalisir = $arsipLegalisir->count(); // Legalisir dari tabel terpisah
-        $countArsipSKDosen = $arsipTugas->where('Id_Jenis_Surat', 12)->count(); // ID 12
-        $countArsipBerkelakuanBaik = $arsipTugas->where('Id_Jenis_Surat', 8)->count(); // ID 8
-        $countArsipDispensasi = $arsipTugas->where('Id_Jenis_Surat', 7)->count(); // ID 7
-        $countArsipTidakBeasiswa = $arsipTugas->where('Id_Jenis_Surat', 6)->count(); // ID 6
-        $countArsipMobilDinas = $arsipTugas->where('Id_Jenis_Surat', 13)->count(); // ID 13 (Peminjaman Mobil Dinas)
+        $arsipMobilDinas = SuratPeminjamanMobil::with(['user'])
+            ->where('status_pengajuan', 'Selesai')
+            ->whereNotNull('no_surat')
+            ->where('no_surat', '!=', '')
+            ->orderBy('updated_at', 'desc')
+            ->get();
 
-        // Ambil jenis surat yang digunakan (exclude SK Fakultas, Peminjaman Gedung, Cuti, Lembur)
-        $excludedNames = [
-            'SK Fakultas',
-            'Peminjaman Gedung',
-            'Surat Cuti',
-            'Surat Lembur',
-            'SK Fakultas Teknik',
-            'Peminjaman Ruang',
-            'Cuti Dosen'
-        ];
-        $allJenisSurat = \App\Models\JenisSurat::whereNotIn('Nama_Surat', $excludedNames)->get();
+        $arsipBerkelakuanBaik = SuratKelakuanBaik::with(['user.mahasiswa.prodi'])
+            ->whereNotNull('Nomor_Surat')
+            ->where('Nomor_Surat', '!=', '')
+            ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
+            })
+            ->orderBy('id', 'desc')
+            ->get();
 
-        // Grouping manual agar semua jenis surat masuk list
-        $arsipByJenis = $allJenisSurat->map(function ($jenis) use ($arsipTugas, $arsipLegalisir) {
+        $arsipDispensasi = SuratDispensasi::with(['user.mahasiswa.prodi'])
+            ->whereNotNull('Nomor_Surat')
+            ->where('Nomor_Surat', '!=', '')
+            ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
+            })
+            ->orderBy('id', 'desc')
+            ->get();
 
-            // KHUSUS LEGALISIR (ID=3): HANYA ambil dari $arsipLegalisir, JANGAN dari $arsipTugas
-            if ($jenis->Id_Jenis_Surat == 3) {
-                $items = $arsipLegalisir; // Hanya dari Surat_Legalisir
-            } else {
-                $items = $arsipTugas->where('Id_Jenis_Surat', $jenis->Id_Jenis_Surat);
-            }
+        $arsipTidakBeasiswa = SuratTidakBeasiswa::with(['user.mahasiswa.prodi'])
+            ->whereNotNull('Nomor_Surat')
+            ->where('Nomor_Surat', '!=', '')
+            ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
+            })
+            ->orderBy('id', 'desc')
+            ->get();
 
-            return (object) [
-                'jenis' => $jenis,
-                'items' => $items
-            ];
-        });
+        // Count archives per type
+        $countArsipAktif = $arsipAktif->count();
+        $countArsipMagang = $arsipMagang->count();
+        $countArsipLegalisir = $arsipLegalisir->count();
+        $countArsipSKDosen = $arsipSKDosen->count();
+        $countArsipBerkelakuanBaik = $arsipBerkelakuanBaik->count();
+        $countArsipDispensasi = $arsipDispensasi->count();
+        $countArsipTidakBeasiswa = $arsipTidakBeasiswa->count();
+        $countArsipMobilDinas = $arsipMobilDinas->count();
+
+        // Group by jenis for the view
+        $arsipByJenis = collect([
+            (object) [
+                'jenis' => (object) ['Id_Jenis_Surat' => 1, 'Nama_Surat' => 'Surat Keterangan Aktif'],
+                'items' => $arsipAktif
+            ],
+            (object) [
+                'jenis' => (object) ['Id_Jenis_Surat' => 2, 'Nama_Surat' => 'Surat Pengantar Magang'],
+                'items' => $arsipMagang
+            ],
+            (object) [
+                'jenis' => (object) ['Id_Jenis_Surat' => 3, 'Nama_Surat' => 'Surat Legalisir'],
+                'items' => $arsipLegalisir
+            ],
+            (object) [
+                'jenis' => (object) ['Id_Jenis_Surat' => 12, 'Nama_Surat' => 'SK Dosen Wali'],
+                'items' => $arsipSKDosen
+            ],
+            (object) [
+                'jenis' => (object) ['Id_Jenis_Surat' => 8, 'Nama_Surat' => 'Surat Kelakuan Baik'],
+                'items' => $arsipBerkelakuanBaik
+            ],
+            (object) [
+                'jenis' => (object) ['Id_Jenis_Surat' => 7, 'Nama_Surat' => 'Surat Dispensasi'],
+                'items' => $arsipDispensasi
+            ],
+            (object) [
+                'jenis' => (object) ['Id_Jenis_Surat' => 6, 'Nama_Surat' => 'Surat Tidak Beasiswa'],
+                'items' => $arsipTidakBeasiswa
+            ],
+            (object) [
+                'jenis' => (object) ['Id_Jenis_Surat' => 13, 'Nama_Surat' => 'Peminjaman Mobil Dinas'],
+                'items' => $arsipMobilDinas
+            ]
+        ]);
+
+        // For backward compatibility with view
+        $arsipTugas = collect();
 
         return view('admin_fakultas.arsip_surat', compact(
             'arsipTugas',
@@ -548,53 +527,76 @@ class ManajemenSuratController extends Controller
 
     public function archiveDetail($id)
     {
-        $jenisSurat = \App\Models\JenisSurat::findOrFail($id);
+        // Map ID to jenis surat name and model
+        $jenisSuratMap = [
+            1 => ['name' => 'Surat Keterangan Aktif', 'model' => SuratKetAktif::class, 'relation' => 'pemberiTugas'],
+            2 => ['name' => 'Surat Pengantar Magang', 'model' => SuratMagang::class, 'relation' => 'pemberiTugas'],
+            3 => ['name' => 'Surat Legalisir', 'model' => SuratLegalisir::class, 'relation' => 'user'],
+            6 => ['name' => 'Surat Tidak Beasiswa', 'model' => SuratTidakBeasiswa::class, 'relation' => 'user'],
+            7 => ['name' => 'Surat Dispensasi', 'model' => SuratDispensasi::class, 'relation' => 'user'],
+            8 => ['name' => 'Surat Kelakuan Baik', 'model' => SuratKelakuanBaik::class, 'relation' => 'user'],
+            12 => ['name' => 'SK Dosen Wali', 'model' => SKDosenWali::class, 'relation' => 'dosen'],
+            13 => ['name' => 'Peminjaman Mobil Dinas', 'model' => SuratPeminjamanMobil::class, 'relation' => 'user']
+        ];
+
+        if (!isset($jenisSuratMap[$id])) {
+            abort(404, 'Jenis surat tidak ditemukan');
+        }
+
+        $jenisSurat = (object) [
+            'Id_Jenis_Surat' => $id,
+            'Nama_Surat' => $jenisSuratMap[$id]['name']
+        ];
+
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        // KHUSUS LEGALISIR (ID=3): HANYA query Surat_Legalisir, TIDAK query Tugas_Surat
+        $modelClass = $jenisSuratMap[$id]['model'];
+        $relation = $jenisSuratMap[$id]['relation'];
+
+        // Query based on model type
         if ($id == 3) {
-            $arsipTugas = collect(); // Kosongkan Tugas_Surat untuk legalisir
-            $arsipLegalisir = \App\Models\SuratLegalisir::with(['user.mahasiswa.prodi', 'user.role', 'tugasSurat.jenisSurat'])
+            // Legalisir - uses Status = 'selesai'
+            $arsipTugas = $modelClass::with([$relation . '.mahasiswa.prodi', $relation . '.role'])
                 ->where('Status', 'selesai')
-                ->whereHas('user.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                ->whereHas($relation . '.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
                     $q->where('Id_Fakultas', $fakultasId);
                 })
                 ->orderBy('id_no', 'desc')
                 ->get();
-        }
-        // KHUSUS PEMINJAMAN MOBIL DINAS (ID=13): Query dari Surat_Peminjaman_Mobil
-        elseif ($id == 13) {
-            $arsipTugas = \App\Models\SuratPeminjamanMobil::with(['user', 'tugasSurat', 'kendaraan', 'pejabat'])
+            $arsipLegalisir = $arsipTugas;
+            $arsipTugas = collect();
+        } elseif ($id == 13) {
+            // Peminjaman Mobil Dinas - different status field
+            $arsipTugas = $modelClass::with([$relation, 'kendaraan', 'pejabat'])
                 ->where('status_pengajuan', 'Selesai')
-                ->whereHas('tugasSurat', function ($q) {
-                    $q->whereNotNull('Nomor_Surat')
-                        ->where('Nomor_Surat', '!=', '');
-                })
+                ->whereNotNull('no_surat')
+                ->where('no_surat', '!=', '')
                 ->orderBy('updated_at', 'desc')
                 ->get();
             $arsipLegalisir = collect();
+        } elseif ($id == 12) {
+            // SK Dosen Wali - different structure
+            $arsipTugas = $modelClass::with([$relation . '.prodi'])
+                ->whereNotNull('Nomor_SK')
+                ->where('Nomor_SK', '!=', '')
+                ->whereHas($relation . '.prodi.fakultas', function ($q) use ($fakultasId) {
+                    $q->where('Id_Fakultas', $fakultasId);
+                })
+                ->orderBy('id', 'desc')
+                ->get();
+            $arsipLegalisir = collect();
         } else {
-            // Untuk surat lain, query Tugas_Surat berdasarkan yang sudah ada nomor surat
-            $arsipTugas = TugasSurat::query()
-                ->where('Id_Jenis_Surat', $id)
+            // Other surat types - use Nomor_Surat field
+            $arsipTugas = $modelClass::with([$relation . '.mahasiswa.prodi', $relation . '.role'])
                 ->whereNotNull('Nomor_Surat')
                 ->where('Nomor_Surat', '!=', '')
-                ->where(function ($q) use ($fakultasId) {
-                    $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                        $subQ->where('Id_Fakultas', $fakultasId);
-                    })
-                        ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                            $subQ->where('Id_Fakultas', $fakultasId);
-                        })
-                        ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                            $subQ->where('Id_Fakultas', $fakultasId);
-                        });
+                ->whereHas($relation . '.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                    $q->where('Id_Fakultas', $fakultasId);
                 })
-                ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa.prodi', 'jenisSurat', 'suratMagang'])
-                ->orderBy('Tanggal_Diselesaikan', 'desc')
+                ->orderBy($id == 1 ? 'Tanggal_Diberikan' : ($id == 2 ? 'Tanggal_Diberikan' : 'id'), 'desc')
                 ->get();
-            $arsipLegalisir = collect(); // Kosongkan legalisir untuk surat lain
+            $arsipLegalisir = collect();
         }
 
         return view('admin_fakultas.arsip_detail', compact('jenisSurat', 'arsipTugas', 'arsipLegalisir'));

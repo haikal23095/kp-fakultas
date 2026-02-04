@@ -24,8 +24,7 @@ class SuratMagangController extends Controller
     {
         // Ambil surat magang yang statusnya "Diajukan-ke-dekan" (Menunggu Persetujuan)
         $daftarSurat = SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi',
-            'tugasSurat.jenisSurat',
+            'pemberiTugas.mahasiswa.prodi',
             'koordinator'
         ])
             ->where('Status', 'Diajukan-ke-dekan')
@@ -34,8 +33,7 @@ class SuratMagangController extends Controller
 
         // Ambil riwayat surat yang sudah disetujui (Status = Success)
         $riwayatSurat = SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi',
-            'tugasSurat.jenisSurat',
+            'pemberiTugas.mahasiswa.prodi',
             'koordinator'
         ])
             ->where('Status', 'Success')
@@ -49,8 +47,7 @@ class SuratMagangController extends Controller
     public function show($id)
     {
         $surat = SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi.fakultas',
-            'tugasSurat.jenisSurat',
+            'pemberiTugas.mahasiswa.prodi.fakultas',
             'koordinator'
         ])->findOrFail($id);
 

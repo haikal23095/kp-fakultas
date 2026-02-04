@@ -57,7 +57,7 @@
 
                 <div class="row mb-3">
                     <div class="col-md-4 fw-bold">Program Studi:</div>
-                    <div class="col-md-8">{{ $surat->tugasSurat?->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi ?? 'N/A' }}</div>
+                    <div class="col-md-8">{{ $surat->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi ?? 'N/A' }}</div>
                 </div>
 
                 <div class="row mb-3">
@@ -224,7 +224,7 @@
                                 </td>
                                 <td style="border: 1px solid #000; padding: 8px;">
                                     @php
-                                        $prodiName = $surat->tugasSurat?->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi 
+                                        $prodiName = $surat->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi 
                                             ?? ($mhs['program-studi'] ?? $mhs['jurusan'] ?? 'Teknik Industri');
                                     @endphp
                                     {{ $prodiName }}
@@ -268,7 +268,7 @@
                                     
                                     @php
                                         // Ambil Dekan dari fakultas mahasiswa yang mengajukan
-                                        $mahasiswaPengaju = $surat->tugasSurat?->pemberiTugas?->mahasiswa;
+                                        $mahasiswaPengaju = $surat->pemberiTugas?->mahasiswa;
                                         $fakultas = $mahasiswaPengaju?->prodi?->fakultas;
                                         
                                         // Ambil data Dekan langsung dari Id_Dekan di tabel Fakultas

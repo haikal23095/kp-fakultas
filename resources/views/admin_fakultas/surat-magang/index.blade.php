@@ -70,7 +70,7 @@
                     <tbody>
                         @forelse($daftarSurat as $index => $surat)
                         @php
-                            $mahasiswa = $surat->tugasSurat?->pemberiTugas?->mahasiswa ?? null;
+                            $mahasiswa = $surat->pemberiTugas?->mahasiswa ?? null;
                             $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
                             $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
                             $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');
@@ -80,10 +80,10 @@
                             <td class="ps-4">
                                 <div class="fw-bold text-primary">#SM-{{ str_pad($surat->id_no, 4, '0', STR_PAD_LEFT) }}</div>
                                 <small class="text-muted">
-                                    @if($surat->tugasSurat && $surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)
-                                        {{ \Carbon\Carbon::parse($surat->tugasSurat->Tanggal_Diberikan_Tugas_Surat)->format('d M Y') }}
+                                    @if($surat->Tanggal_Diberikan)
+                                        {{ \Carbon\Carbon::parse($surat->Tanggal_Diberikan)->format('d M Y') }}
                                     @else
-                                        {{ \Carbon\Carbon::parse($surat->created_at ?? now())->format('d M Y') }}
+                                        -
                                     @endif
                                 </small>
                             </td>
@@ -160,7 +160,7 @@
 {{-- Modal Review - Lihat Dokumen --}}
 @foreach($daftarSurat as $surat)
 @php
-    $mahasiswa = $surat->tugasSurat?->pemberiTugas?->mahasiswa ?? null;
+    $mahasiswa = $surat->pemberiTugas?->mahasiswa ?? null;
     $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
     $dataDosenPembimbing = is_array($surat->Data_Dosen_pembiming) ? $surat->Data_Dosen_pembiming : json_decode($surat->Data_Dosen_pembiming, true);
 @endphp
