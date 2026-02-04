@@ -18,7 +18,7 @@ class PeminjamanMobilController extends Controller
      */
     public function create()
     {
-        return view('mahasiswa.pengajuan-surat.form_peminjaman_mobil');
+        return view('mahasiswa.pengajuan.form_peminjaman_mobil');
     }
 
     /**
@@ -102,23 +102,25 @@ class PeminjamanMobilController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('mahasiswa.peminjaman_mobil.riwayat', compact('riwayat'));
+        return view('mahasiswa.riwayat.mobil_dinas', compact('riwayat'));
     }
 
     /**
      * Tampilkan detail pengajuan
+     * Note: Method ini tidak digunakan, detail ditampilkan via modal di view mobil_dinas.blade.php
      */
-    public function show($id)
-    {
-        $peminjaman = SuratPeminjamanMobil::with(['tugasSurat', 'kendaraan', 'pejabat', 'user'])
-            ->where('Id_User', Auth::id())
-            ->findOrFail($id);
-
-        return view('mahasiswa.peminjaman_mobil.show', compact('peminjaman'));
-    }
+    // public function show($id)
+    // {
+    //     $peminjaman = SuratPeminjamanMobil::with(['tugasSurat', 'kendaraan', 'pejabat', 'user'])
+    //         ->where('Id_User', Auth::id())
+    //         ->findOrFail($id);
+    //
+    //     return view('mahasiswa.riwayat.mobil_dinas', compact('peminjaman'));
+    // }
 
     /**
      * Preview surat final (HTML)
+     * TODO: Buat view mahasiswa.pdf.peminjaman_mobil untuk preview surat
      */
     public function previewSurat($id)
     {
@@ -130,7 +132,9 @@ class PeminjamanMobilController extends Controller
             return back()->with('error', 'Surat belum selesai diproses');
         }
 
-        return view('mahasiswa.peminjaman_mobil.preview_surat', compact('peminjaman'));
+        // TODO: Buat view mahasiswa/pdf/peminjaman_mobil.blade.php untuk preview HTML surat
+        return redirect()->route('mahasiswa.peminjaman.mobil.download', $id);
+        // return view('mahasiswa.pdf.peminjaman_mobil', compact('peminjaman'));
     }
 
     /**

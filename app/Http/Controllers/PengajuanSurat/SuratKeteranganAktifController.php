@@ -33,7 +33,7 @@ class SuratKeteranganAktifController extends Controller
             'Nama_Surat' => 'Surat Keterangan Aktif'
         ];
 
-        return view('mahasiswa.form_surat_aktif', [
+        return view('mahasiswa.pengajuan.form_surat_aktif', [
             'mahasiswa' => $mahasiswa,
             'prodi' => $prodi,
             'jenisSurat' => $jenisSurat,

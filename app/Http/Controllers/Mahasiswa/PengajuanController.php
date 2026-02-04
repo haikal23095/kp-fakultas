@@ -40,7 +40,7 @@ class PengajuanController extends Controller
             $prodi = Prodi::find($mahasiswa->Id_Prodi);
         }
 
-        return view('mahasiswa.form_surat_rekomendasi', [
+        return view('mahasiswa.pengajuan.form_surat_rekomendasi', [
             'mahasiswa' => $mahasiswa,
             'prodi' => $prodi
         ]);

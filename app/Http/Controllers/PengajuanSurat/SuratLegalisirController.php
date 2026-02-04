@@ -20,7 +20,7 @@ class SuratLegalisirController extends Controller
      */
     public function create()
     {
-        return view('mahasiswa.form_legalisir');
+        return view('mahasiswa.pengajuan.legalisir');
     }
 
     /**
@@ -44,7 +44,7 @@ class SuratLegalisirController extends Controller
 
             // Cari ID Jenis Surat untuk 'Surat Legalisir'
             $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Legalisir')->first();
-            $idJenisSurat = $jenisSurat ? $jenisSurat->Id_Jenis_Surat : 3; 
+            $idJenisSurat = $jenisSurat ? $jenisSurat->Id_Jenis_Surat : 3;
 
             // Buat Tugas Surat (Parent)
             $tugasSurat = TugasSurat::create([
@@ -78,7 +78,7 @@ class SuratLegalisirController extends Controller
                 'Source_User' => $userId,
                 'Is_Read' => false,
                 'Data_Tambahan' => json_encode([
-                    'entity' => 'legalisir', 
+                    'entity' => 'legalisir',
                     'id_tugas' => $tugasSurat->Id_Tugas_Surat,
                     'jenis_surat' => 'legalisir',
                     'action_url' => route('mahasiswa.riwayat.legalisir'),
@@ -118,7 +118,7 @@ class SuratLegalisirController extends Controller
             // Cek apakah user adalah Pegawai Fakultas
             // Menggunakan relasi di model User: public function pegawaiFakultas()
             $isPegawaiFakultas = $user->pegawaiFakultas()->exists();
-            
+
             if (!$isPegawaiFakultas) {
                 return response()->json(['message' => 'Unauthorized. Hanya Pegawai Fakultas yang dapat memverifikasi pembayaran.'], 403);
             }

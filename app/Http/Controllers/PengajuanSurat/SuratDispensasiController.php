@@ -28,7 +28,7 @@ class SuratDispensasiController extends Controller
             return redirect()->back()->with('error', 'Data mahasiswa tidak ditemukan.');
         }
 
-        return view('mahasiswa.pengajuan-surat.form_surat_dispensasi', compact('mahasiswa'));
+        return view('mahasiswa.pengajuan.form_surat_dispensasi', compact('mahasiswa'));
     }
 
     /**

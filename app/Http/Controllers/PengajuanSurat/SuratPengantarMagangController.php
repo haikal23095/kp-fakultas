@@ -80,7 +80,7 @@ class SuratPengantarMagangController extends Controller
             'Nama_Surat' => 'Surat Pengantar KP/Magang'
         ];
 
-        return view('mahasiswa.magang.form_surat_magang', [
+        return view('mahasiswa.pengajuan.form_surat_magang', [
             'mahasiswa' => $mahasiswa,
             'prodi' => $prodi,
             'jurusan' => $jurusan,

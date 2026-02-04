@@ -27,7 +27,7 @@ class SuratTidakBeasiswaController extends Controller
             return redirect()->back()->with('error', 'Data mahasiswa tidak ditemukan.');
         }
 
-        return view('mahasiswa.pengajuan-surat.form_surat_tidak_beasiswa', compact('mahasiswa'));
+        return view('mahasiswa.pengajuan.form_surat_tidak_beasiswa', compact('mahasiswa'));
     }
 
     /**

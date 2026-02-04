@@ -58,7 +58,7 @@ class RiwayatSuratController extends Controller
         $countLembur = 0;
         $countPeminjamanRuang = 0;
 
-        return view('mahasiswa.riwayat', [
+        return view('mahasiswa.riwayat.index', [
             'countAktif' => $countAktif,
             'countMagang' => $countMagang,
             'countLegalisir' => $countLegalisir,
@@ -88,7 +88,7 @@ class RiwayatSuratController extends Controller
             ->orderBy('Tanggal_Diberikan', 'desc')
             ->get();
 
-        return view('mahasiswa.riwayat_aktif', [
+        return view('mahasiswa.riwayat.aktif', [
             'riwayatSurat' => $riwayatSurat
         ]);
     }
@@ -106,7 +106,7 @@ class RiwayatSuratController extends Controller
             ->orderBy('id_no', 'desc')
             ->get();
 
-        return view('mahasiswa.magang.riwayat_magang', [
+        return view('mahasiswa.riwayat.magang', [
             'riwayatSurat' => $riwayatSurat
         ]);
     }
@@ -124,7 +124,7 @@ class RiwayatSuratController extends Controller
             ->orderBy('id_no', 'desc')
             ->get();
 
-        return view('mahasiswa.riwayat_legalisir', [
+        return view('mahasiswa.riwayat.legalisir', [
             'daftarRiwayat' => $daftarRiwayat
         ]);
     }
@@ -246,7 +246,7 @@ class RiwayatSuratController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('mahasiswa.riwayat_peminjaman_mobil', [
+        return view('mahasiswa.riwayat.mobil_dinas', [
             'riwayatSurat' => $riwayatSurat,
             'title' => 'Riwayat Peminjaman Mobil Dinas'
         ]);
@@ -260,7 +260,7 @@ class RiwayatSuratController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('mahasiswa.riwayat_tidak_beasiswa', [
+        return view('mahasiswa.riwayat.tidak_beasiswa', [
             'riwayatSurat' => $riwayatSurat,
             'title' => 'Riwayat Surat Keterangan Tidak Menerima Beasiswa'
         ]);
@@ -279,7 +279,7 @@ class RiwayatSuratController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('mahasiswa.riwayat_dispensasi', [
+        return view('mahasiswa.riwayat.dispensasi', [
             'riwayatSurat' => $riwayatSurat,
             'title' => 'Riwayat Surat Dispensasi'
         ]);
@@ -295,7 +295,7 @@ class RiwayatSuratController extends Controller
             ->orderBy('id', 'desc')
             ->get();
 
-        return view('mahasiswa.riwayat_berkelakuan_baik', [
+        return view('mahasiswa.riwayat.berkelakuan_baik', [
             'riwayatSurat' => $riwayatSurat,
             'title' => 'Riwayat Surat Keterangan Berkelakuan Baik'
         ]);
@@ -304,7 +304,7 @@ class RiwayatSuratController extends Controller
     // Method di bawah ini untuk jenis surat yang belum ada di seeder - sementara return kosong
     public function riwayatCekPlagiasi()
     {
-        return view('mahasiswa.riwayat_generic', [
+        return view('mahasiswa.riwayat.generic', [
             'riwayatSurat' => collect([]),
             'title' => 'Riwayat Cek Plagiasi'
         ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
@@ -312,7 +312,7 @@ class RiwayatSuratController extends Controller
 
     public function riwayatSuratTugas()
     {
-        return view('mahasiswa.riwayat_generic', [
+        return view('mahasiswa.riwayat.generic', [
             'riwayatSurat' => collect([]),
             'title' => 'Riwayat Surat Tugas'
         ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
@@ -320,7 +320,7 @@ class RiwayatSuratController extends Controller
 
     public function riwayatMBKM()
     {
-        return view('mahasiswa.riwayat_generic', [
+        return view('mahasiswa.riwayat.generic', [
             'riwayatSurat' => collect([]),
             'title' => 'Riwayat Surat Rekomendasi MBKM'
         ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
@@ -328,7 +328,7 @@ class RiwayatSuratController extends Controller
 
     public function riwayatPeminjamanRuang()
     {
-        return view('mahasiswa.riwayat_generic', [
+        return view('mahasiswa.riwayat.generic', [
             'riwayatSurat' => collect([]),
             'title' => 'Riwayat Peminjaman Ruang'
         ])->with('info', 'Jenis surat ini belum tersedia di sistem.');
