@@ -51,6 +51,15 @@ class SKDosenWali extends Model
     }
 
     /**
+     * Alias relasi ke Dosen untuk kompatibilitas view/controller.
+     * Beberapa query mengakses `dosen` — arahkan ke `kaprodi`.
+     */
+    public function dosen()
+    {
+        return $this->belongsTo(Dosen::class, 'Id_Dosen_Kaprodi', 'Id_Dosen');
+    }
+
+    /**
      * Relasi ke Acc_SK_Dosen_Wali (SK yang sudah digabungkan oleh admin)
      */
     public function accSK()

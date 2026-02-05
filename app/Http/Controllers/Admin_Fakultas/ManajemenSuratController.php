@@ -222,6 +222,30 @@ class ManajemenSuratController extends Controller
     }
 
     /**
+     * History Surat Keterangan Aktif (status: Diajukan-ke-Dekan, Selesai, Ditolak-Admin, Ditolak-Dekan)
+     */
+    public function historyAktif()
+    {
+        $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
+
+        $historyData = SuratKetAktif::query()
+            ->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($q) use ($fakultasId) {
+                $q->where('Id_Fakultas', $fakultasId);
+            })
+            ->whereIn('Status', ['Diajukan-ke-Dekan', 'Success', 'Selesai', 'Ditolak-Admin', 'Ditolak-Dekan'])
+            ->with([
+                'pemberiTugas.role',
+                'pemberiTugas.mahasiswa.prodi',
+                'penerimaTugas.role'
+            ])
+            ->orderBy('Tanggal_Diberikan', 'desc')
+            ->paginate(15);
+
+        return view('admin_fakultas.history_aktif', compact('historyData'));
+    }
+
+    /**
      * List Surat Magang
      */
     public function listMagang()
@@ -420,18 +444,18 @@ class ManajemenSuratController extends Controller
             ->get();
 
         $arsipSKDosen = SKDosenWali::with(['dosen.prodi'])
-            ->whereNotNull('Nomor_SK')
-            ->where('Nomor_SK', '!=', '')
+            ->whereNotNull('Nomor_Surat')
+            ->where('Nomor_Surat', '!=', '')
             ->whereHas('dosen.prodi.fakultas', function ($q) use ($fakultasId) {
                 $q->where('Id_Fakultas', $fakultasId);
             })
-            ->orderBy('id', 'desc')
+            ->orderBy('No', 'desc')
             ->get();
 
         $arsipMobilDinas = SuratPeminjamanMobil::with(['user'])
             ->where('status_pengajuan', 'Selesai')
-            ->whereNotNull('no_surat')
-            ->where('no_surat', '!=', '')
+            ->whereNotNull('nomor_surat')
+            ->where('nomor_surat', '!=', '')
             ->orderBy('updated_at', 'desc')
             ->get();
 
@@ -570,20 +594,20 @@ class ManajemenSuratController extends Controller
             // Peminjaman Mobil Dinas - different status field
             $arsipTugas = $modelClass::with([$relation, 'kendaraan', 'pejabat'])
                 ->where('status_pengajuan', 'Selesai')
-                ->whereNotNull('no_surat')
-                ->where('no_surat', '!=', '')
+                ->whereNotNull('nomor_surat')
+                ->where('nomor_surat', '!=', '')
                 ->orderBy('updated_at', 'desc')
                 ->get();
             $arsipLegalisir = collect();
         } elseif ($id == 12) {
             // SK Dosen Wali - different structure
             $arsipTugas = $modelClass::with([$relation . '.prodi'])
-                ->whereNotNull('Nomor_SK')
-                ->where('Nomor_SK', '!=', '')
+                ->whereNotNull('Nomor_Surat')
+                ->where('Nomor_Surat', '!=', '')
                 ->whereHas($relation . '.prodi.fakultas', function ($q) use ($fakultasId) {
                     $q->where('Id_Fakultas', $fakultasId);
                 })
-                ->orderBy('id', 'desc')
+                ->orderBy('No', 'desc')
                 ->get();
             $arsipLegalisir = collect();
         } else {

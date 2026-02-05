@@ -143,9 +143,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat-aktif', [FakultasManajemenSuratController::class, 'listAktif'])
             ->name('surat.aktif');
 
+        // Route untuk History Surat Keterangan Aktif
+        Route::get('/surat-aktif/history', [FakultasManajemenSuratController::class, 'historyAktif'])
+            ->name('surat.aktif.history');
+
         // Routes untuk Surat Magang (menggunakan SuratMagangController)
         Route::get('/surat-magang', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'index'])
             ->name('surat.magang');
+        Route::get('/surat-magang/history', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'history'])
+            ->name('surat.magang.history');
         Route::get('/surat-magang/{id}', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'show'])
             ->name('surat.magang.detail');
         Route::get('/surat-magang/{id}/download-proposal', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'downloadProposal'])

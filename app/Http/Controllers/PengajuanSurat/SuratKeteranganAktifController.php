@@ -109,7 +109,8 @@ class SuratKeteranganAktifController extends Controller
             $suratKetAktif = new SuratKetAktif();
             $suratKetAktif->Id_Pemberi_Tugas = $pemberi_tugas_id;
             $suratKetAktif->Id_Penerima_Tugas = $penerima_tugas_id;
-            $suratKetAktif->Status = 'Diajukan-ke-koordinator'; // Status awal
+            // Untuk pengajuan oleh mahasiswa, initial status adalah Dikerjakan-admin
+            $suratKetAktif->Status = 'Dikerjakan-admin';
             $suratKetAktif->Tanggal_Diberikan = Carbon::now();
             $suratKetAktif->Tahun_Akademik = $dataSpesifik['tahun_akademik'] ?? null;
             $suratKetAktif->KRS = $pathDokumenPendukung;
@@ -123,23 +124,6 @@ class SuratKeteranganAktifController extends Controller
                 'Id_Pemberi' => $pemberi_tugas_id,
                 'dokumen_pendukung' => $pathDokumenPendukung,
             ]);
-
-            // TODO: Kirim notifikasi ke admin fakultas
-            // if ($adminUser) {
-            //     Notifikasi::create([
-            //         'Tipe_Notifikasi' => 'Invitation',
-            //         'Pesan' => '📬 Pengajuan surat baru: Surat Keterangan Mahasiswa Aktif dari ' . Auth::user()->Name_User,
-            //         'Dest_user' => $adminUser->Id_User,
-            //         'Source_User' => Auth::id(),
-            //         'Is_Read' => false,
-            //         'Data_Tambahan' => json_encode([
-            //             'id_no' => $suratKetAktif->id_no,
-            //             'jenis_surat' => 'aktif',
-            //             'action_url' => route('admin_fakultas.surat.kelola'),
-            //         ]),
-            //         'created_at' => now(),
-            //     ]);
-            // }
 
             return redirect()->route('mahasiswa.riwayat')
                 ->with('success', 'Pengajuan surat berhasil dikirim! Silakan cek status di Riwayat Surat.');

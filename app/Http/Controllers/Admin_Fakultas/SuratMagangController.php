@@ -91,4 +91,20 @@ class SuratMagangController extends Controller
         return redirect()->route('admin_fakultas.surat.magang')
             ->with('success', 'Nomor surat berhasil diberikan dan surat diteruskan ke Dekan!');
     }
+
+    /**
+     * Menampilkan history surat magang
+     */
+    public function history()
+    {
+        $historyData = SuratMagang::with([
+            'pemberiTugas.mahasiswa.prodi',
+            'koordinator'
+        ])
+            ->whereIn('Status', ['Diajukan-ke-dekan', 'Success', 'Ditolak-Dekan'])
+            ->orderBy('id_no', 'desc')
+            ->paginate(10);
+
+        return view('admin_fakultas.surat-magang.history', compact('historyData'));
+    }
 }

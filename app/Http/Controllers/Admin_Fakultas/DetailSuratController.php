@@ -117,7 +117,8 @@ class DetailSuratController extends Controller
         $surat = SuratKetAktif::findOrFail($id);
 
         $surat->Nomor_Surat = $request->input('nomor_surat');
-        $surat->Status = 'Menunggu-TTD-Dekan';
+        // Set status to indicate the surat is forwarded to Dean for approval
+        $surat->Status = 'Diajukan-ke-Dekan';
 
         // Cari user Dekan
         $dekan = User::whereHas('role', function ($q) {

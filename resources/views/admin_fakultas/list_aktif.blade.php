@@ -8,9 +8,14 @@
         <h1 class="h3 mb-1 text-gray-800">Daftar Surat Keterangan Aktif</h1>
         <p class="text-muted small mb-0">Kelola pengajuan surat keterangan mahasiswa aktif kuliah</p>
     </div>
-    <a href="{{ route('admin_fakultas.surat.manage') }}" class="btn btn-outline-secondary">
-        <i class="fas fa-arrow-left me-2"></i>Kembali
-    </a>
+    <div class="d-flex gap-2">
+        <a href="{{ route('admin_fakultas.surat.aktif.history') }}" class="btn btn-outline-info">
+            <i class="fas fa-history me-2"></i>History
+        </a>
+        <a href="{{ route('admin_fakultas.surat.manage') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-2"></i>Kembali
+        </a>
+    </div>
 </div>
 
 @if(session('success'))

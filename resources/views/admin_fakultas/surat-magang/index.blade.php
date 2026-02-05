@@ -9,13 +9,14 @@
             <h1 class="h3 fw-bold text-gray-800">Surat Pengantar KP/Magang</h1>
             <p class="text-muted mb-0">Kelola pengajuan surat pengantar magang mahasiswa.</p>
         </div>
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb mb-0">
-                <li class="breadcrumb-item"><a href="{{ route('dashboard.admin_fakultas') }}">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('admin_fakultas.surat.manage') }}">Manajemen Surat</a></li>
-                <li class="breadcrumb-item active" aria-current="page">Surat Magang</li>
-            </ol>
-        </nav>
+        <div class="d-flex align-items-center gap-2">
+            <a href="{{ route('admin_fakultas.surat.magang.history') }}" class="btn btn-outline-info">
+                <i class="fas fa-history me-2"></i>History
+            </a>
+            <a href="{{ route('admin_fakultas.surat.manage') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Kembali
+            </a>
+        </div>
     </div>
 
     @if(session('success'))

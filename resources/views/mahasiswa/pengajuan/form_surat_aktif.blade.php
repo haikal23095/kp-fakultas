@@ -113,6 +113,22 @@
 
             {{-- Tombol Aksi --}}
             <hr>
+            <h5 class="mb-3">Pengaturan Urgent</h5>
+
+            <div class="mb-3">
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="checkbox" id="is_urgent" name="is_urgent" value="1" {{ old('is_urgent') ? 'checked' : '' }}>
+                    <label class="form-check-label" for="is_urgent"><strong>Urgent</strong> - Centang jika pengajuan mendesak</label>
+                </div>
+
+                <div class="mb-3" id="urgent_reason_wrapper" style="{{ old('is_urgent') ? '' : 'display:none;' }}">
+                    <label for="urgent_reason" class="form-label"><strong>Alasan Urgent</strong></label>
+                    <textarea class="form-control" name="urgent_reason" id="urgent_reason" rows="3">{{ old('urgent_reason') }}</textarea>
+                    <div class="form-text">Jelaskan alasan kenapa surat ini perlu diproses cepat.</div>
+                </div>
+            </div>
+
+            <hr>
             <div class="d-flex justify-content-end">
                 <a href="{{ route('mahasiswa.pengajuan.create') }}" class="btn btn-secondary me-2">Batal</a>
                 <button type="submit" class="btn btn-primary">
@@ -126,5 +142,24 @@
 @endsection
 
 @push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const checkbox = document.getElementById('is_urgent');
+    const wrapper = document.getElementById('urgent_reason_wrapper');
+
+    if (!checkbox || !wrapper) return;
+
+    checkbox.addEventListener('change', function () {
+        if (checkbox.checked) {
+            wrapper.style.display = '';
+        } else {
+            wrapper.style.display = 'none';
+            // clear textarea when unchecked
+            const ta = document.getElementById('urgent_reason');
+            if (ta) ta.value = '';
+        }
+    });
+});
+</script>
 
 @endpush
