@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\General;
 
 use App\Http\Controllers\Controller;
+use App\Models\Mahasiswa;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -80,5 +81,33 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('profile.index')->with('success', 'Password berhasil diperbarui!');
+    }
+
+    /**
+     * Toggle Status_KP mahasiswa antara Sedang_Melaksanakan dan Tidak_Sedang_Melaksanakan
+     */
+    public function toggleStatusKP()
+    {
+        $user = Auth::user();
+
+        // Pastikan user adalah mahasiswa
+        if (!$user->mahasiswa) {
+            return back()->with('error', 'Fitur ini hanya untuk mahasiswa.');
+        }
+
+        $mahasiswa = $user->mahasiswa;
+
+        // Toggle status
+        if ($mahasiswa->Status_KP === 'Sedang_Melaksanakan') {
+            $mahasiswa->Status_KP = 'Tidak_Sedang_Melaksanakan';
+            $message = 'Status KP diubah menjadi "Tidak Sedang Melaksanakan"';
+        } else {
+            $mahasiswa->Status_KP = 'Sedang_Melaksanakan';
+            $message = 'Status KP diubah menjadi "Sedang Melaksanakan"';
+        }
+
+        $mahasiswa->save();
+
+        return back()->with('success', $message);
     }
 }

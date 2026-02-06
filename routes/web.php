@@ -88,6 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/toggle-status-kp', [ProfileController::class, 'toggleStatusKP'])->name('profile.toggleStatusKP');
 
     // NOTIFIKASI ROUTES (Available for all authenticated users)
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');

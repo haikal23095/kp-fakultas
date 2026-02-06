@@ -98,21 +98,20 @@ class SuratMagangController extends Controller
 
         $surat->save();
 
-        // Update Status_KP mahasiswa menjadi "Sedang_Melaksanakan"
+        // Kirim notifikasi ke mahasiswa
         $dataMahasiswa = is_array($surat->Data_Mahasiswa)
             ? $surat->Data_Mahasiswa
             : json_decode($surat->Data_Mahasiswa, true);
 
         $notificationsSent = 0;
+
         if ($dataMahasiswa && is_array($dataMahasiswa)) {
             foreach ($dataMahasiswa as $mhs) {
                 if (isset($mhs['nim'])) {
-                    // Update Status_KP
-                    Mahasiswa::where('NIM', $mhs['nim'])
-                        ->update(['Status_KP' => 'Sedang_Melaksanakan']);
+                    $nim = trim($mhs['nim']);
 
                     // Kirim notifikasi ke setiap mahasiswa yang mengajukan
-                    $mahasiswa = Mahasiswa::with('user')->where('NIM', $mhs['nim'])->first();
+                    $mahasiswa = Mahasiswa::with('user')->where('NIM', $nim)->first();
                     if ($mahasiswa && $mahasiswa->Id_User) {
                         // Notifikasi internal
                         Notifikasi::create([
@@ -130,13 +129,13 @@ class SuratMagangController extends Controller
                                 $this->waha->sendMessage($mahasiswa->user->No_WA, $pesanWA);
                                 $notificationsSent++;
                                 Log::info('WhatsApp notification sent to mahasiswa', [
-                                    'nim' => $mhs['nim'],
+                                    'nim' => $nim,
                                     'nama' => $mahasiswa->Nama_Mahasiswa,
                                     'no_wa' => $mahasiswa->user->No_WA
                                 ]);
                             } catch (\Exception $e) {
                                 Log::error('Failed to send WhatsApp to mahasiswa', [
-                                    'nim' => $mhs['nim'],
+                                    'nim' => $nim,
                                     'error' => $e->getMessage()
                                 ]);
                             }
