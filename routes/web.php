@@ -518,6 +518,11 @@ Route::middleware('auth')->group(function () {
         Route::get('/sk/pembimbing-skripsi', [\App\Http\Controllers\Dosen\SKController::class, 'indexPembimbingSkripsi'])->name('sk.pembimbing-skripsi.index');
         Route::get('/sk/pembimbing-skripsi/{id}/detail', [\App\Http\Controllers\Dosen\SKController::class, 'detailPembimbingSkripsi'])->name('sk.pembimbing-skripsi.detail');
         Route::get('/sk/pembimbing-skripsi/{id}/download', [\App\Http\Controllers\Dosen\SKController::class, 'downloadPembimbingSkripsi'])->name('sk.pembimbing-skripsi.download');
+
+        // SK Penguji Skripsi
+        Route::get('/sk/penguji-skripsi', [\App\Http\Controllers\Dosen\SKController::class, 'indexPengujiSkripsi'])->name('sk.penguji-skripsi.index');
+        Route::get('/sk/penguji-skripsi/{id}/detail', [\App\Http\Controllers\Dosen\SKController::class, 'detailPengujiSkripsi'])->name('sk.penguji-skripsi.detail');
+        Route::get('/sk/penguji-skripsi/{id}/download', [\App\Http\Controllers\Dosen\SKController::class, 'downloadPengujiSkripsi'])->name('sk.penguji-skripsi.download');
     });
 
     // FITUR KAJUR
