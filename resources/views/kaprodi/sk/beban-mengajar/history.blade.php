@@ -266,6 +266,13 @@
                                         <button type="button" class="btn btn-info" onclick="lihatDetail({{ $sk->No }})" title="Lihat Detail">
                                             <i class="fas fa-eye"></i>
                                         </button>
+                                        @if(in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan']))
+                                        <a href="{{ route('kaprodi.sk.beban-mengajar.edit', $sk->No) }}" 
+                                           class="btn btn-warning" 
+                                           title="Edit & Ajukan Ulang">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        @endif
                                         @if($sk->Status == 'Selesai' && $sk->Nomor_Surat)
                                         <button type="button" class="btn btn-success" onclick="downloadSK({{ $sk->No }})" title="Download SK">
                                             <i class="fas fa-download"></i>

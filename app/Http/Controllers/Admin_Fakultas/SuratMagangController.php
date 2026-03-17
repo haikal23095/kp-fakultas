@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin_Fakultas;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\SuratMagang;
-use App\Models\TugasSurat;
 use Illuminate\Support\Facades\Storage;
 
 class SuratMagangController extends Controller
@@ -16,8 +15,7 @@ class SuratMagangController extends Controller
     public function index()
     {
         $daftarSurat = SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi',
-            'tugasSurat.jenisSurat',
+            'pemberiTugas.mahasiswa.prodi',
             'koordinator'
         ])
             ->where('Status', 'Dikerjakan-admin')
@@ -33,8 +31,7 @@ class SuratMagangController extends Controller
     public function show($id)
     {
         $surat = SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi',
-            'tugasSurat.jenisSurat',
+            'pemberiTugas.mahasiswa.prodi',
             'koordinator'
         ])->findOrFail($id);
 
@@ -93,5 +90,21 @@ class SuratMagangController extends Controller
 
         return redirect()->route('admin_fakultas.surat.magang')
             ->with('success', 'Nomor surat berhasil diberikan dan surat diteruskan ke Dekan!');
+    }
+
+    /**
+     * Menampilkan history surat magang
+     */
+    public function history()
+    {
+        $historyData = SuratMagang::with([
+            'pemberiTugas.mahasiswa.prodi',
+            'koordinator'
+        ])
+            ->whereIn('Status', ['Diajukan-ke-dekan', 'Success', 'Ditolak-Dekan'])
+            ->orderBy('id_no', 'desc')
+            ->paginate(10);
+
+        return view('admin_fakultas.surat-magang.history', compact('historyData'));
     }
 }

@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\SuratMagang;
-use App\Models\TugasSurat;
 use Illuminate\Support\Facades\Storage;
 use BaconQrCode\Renderer\ImageRenderer;
 use BaconQrCode\Renderer\Image\SvgImageBackEnd;
@@ -40,15 +39,14 @@ class PermintaanSuratController extends Controller
 
         // Ambil Surat Magang yang:
         // 1. Nama_Koordinator = ID Kaprodi yang sedang login
-        // 2. Status = 'Diajukan-ke-koordinator' atau 'Dikerjakan-admin' (sudah disetujui)
+        // 2. Status = 'Diajukan-ke-koordinator' (menunggu persetujuan)
         $daftarSurat = SuratMagang::query()
             ->with([
-                'tugasSurat.pemberiTugas.mahasiswa.prodi',
-                'tugasSurat.jenisSurat',
+                'pemberiTugas.mahasiswa.prodi',
                 'koordinator' // Load relasi ke Dosen (Koordinator)
             ])
             ->where('Nama_Koordinator', $kaprodiId)
-            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])
+            ->where('Status', 'Diajukan-ke-koordinator')
             ->orderBy('id_no', 'desc')
             ->get();
 
@@ -65,8 +63,7 @@ class PermintaanSuratController extends Controller
     {
         $user = Auth::user();
         $suratMagang = SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi',
-            'tugasSurat.jenisSurat',
+            'pemberiTugas.mahasiswa.prodi',
             'koordinator'
         ])->findOrFail($id);
 
@@ -75,7 +72,7 @@ class PermintaanSuratController extends Controller
         $kaprodiPegawai = $user->pegawai;
         $prodiId = $kaprodiDosen?->Id_Prodi ?? $kaprodiPegawai?->Id_Prodi;
 
-        $mahasiswa = $suratMagang->tugasSurat->pemberiTugas->mahasiswa ?? null;
+        $mahasiswa = $suratMagang->pemberiTugas->mahasiswa ?? null;
         if (!$mahasiswa || $mahasiswa->Id_Prodi != $prodiId) {
             abort(403, 'Anda tidak memiliki akses untuk melihat surat ini.');
         }
@@ -103,7 +100,8 @@ class PermintaanSuratController extends Controller
                 'dosen_pembimbing' => $dataDosen,
                 'dokumen_proposal' => $suratMagang->Dokumen_Proposal,
                 'foto_ttd' => $suratMagang->Foto_ttd,
-                'tanggal_pengajuan' => $suratMagang->tugasSurat?->Tanggal_Diberikan_Tugas_Surat,
+                // Use Surat_Magang.Tanggal_Diberikan as tanggal pengajuan (field exists on Surat_Magang)
+                'tanggal_pengajuan' => $suratMagang->Tanggal_Diberikan ?? null,
                 'prodi' => $mahasiswa->prodi->Nama_Prodi ?? 'N/A',
             ]
         ]);
@@ -221,7 +219,7 @@ class PermintaanSuratController extends Controller
         $kaprodiPegawai = $user->pegawai;
         $prodiId = $kaprodiDosen?->Id_Prodi ?? $kaprodiPegawai?->Id_Prodi;
 
-        $mahasiswa = $suratMagang->tugasSurat->pemberiTugas->mahasiswa ?? null;
+        $mahasiswa = $suratMagang->pemberiTugas->mahasiswa ?? null;
         if (!$mahasiswa || $mahasiswa->Id_Prodi != $prodiId) {
             abort(403, 'Anda tidak memiliki akses untuk mengunduh dokumen ini.');
         }
@@ -266,8 +264,7 @@ class PermintaanSuratController extends Controller
         // Ambil Surat Magang yang sudah diproses (disetujui atau ditolak)
         $daftarSurat = SuratMagang::query()
             ->with([
-                'tugasSurat.pemberiTugas.mahasiswa.prodi',
-                'tugasSurat.jenisSurat',
+                'pemberiTugas.mahasiswa.prodi',
                 'koordinator'
             ])
             ->where('Nama_Koordinator', $kaprodiId)

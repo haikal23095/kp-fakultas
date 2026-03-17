@@ -7,6 +7,8 @@ use App\Models\AccDekanDosenWali;
 use App\Models\AccSKBebanMengajar;
 use App\Models\AccSKPembimbingSkripsi;
 use App\Models\ReqSKPembimbingSkripsi;
+use App\Models\AccSKPengujiSkripsi;
+use App\Models\ReqSKPengujiSkripsi;
 use App\Models\Dosen as ModelDosen;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -245,6 +247,26 @@ class SKController extends Controller
             return false;
         });
 
+        // Pre-calculate mahasiswa counts for the view
+        foreach ($filteredSK as $sk) {
+            $pembimbingData = is_string($sk->Data_Pembimbing_Skripsi)
+                ? json_decode($sk->Data_Pembimbing_Skripsi, true)
+                : $sk->Data_Pembimbing_Skripsi;
+
+            $sk->totalMahasiswa = is_array($pembimbingData) ? count($pembimbingData) : 0;
+
+            $sk->myMahasiswa = collect($pembimbingData)->filter(function ($mhs) use ($dosen) {
+                // Check pembimbing 1
+                $isP1 = isset($mhs['pembimbing_1']['nama_dosen']) &&
+                    stripos($mhs['pembimbing_1']['nama_dosen'], $dosen->Nama_Dosen) !== false;
+                // Check pembimbing 2
+                $isP2 = isset($mhs['pembimbing_2']['nama_dosen']) &&
+                    stripos($mhs['pembimbing_2']['nama_dosen'], $dosen->Nama_Dosen) !== false;
+
+                return $isP1 || $isP2;
+            })->count();
+        }
+
         return view('dosen.sk.pembimbing-skripsi.index', compact('filteredSK', 'dosen'));
     }
 
@@ -280,7 +302,184 @@ class SKController extends Controller
             $skData->Tahun_Akademik = $sk->Tahun_Akademik;
             $skData->prodi = $sk->prodi;
 
-            return view('kaprodi.sk.pembimbing-skripsi.download', [
+            return view('dosen.sk.pembimbing-skripsi.download', [
+                'sk' => $skData,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip,
+                'qrCodePath' => $qrCodePath
+            ]);
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Gagal mengunduh SK: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get detail SK Pembimbing Skripsi for preview.
+     */
+    public function detailPembimbingSkripsi($id)
+    {
+        try {
+            $sk = ReqSKPembimbingSkripsi::with(['accSKPembimbingSkripsi.dekan', 'prodi'])->findOrFail($id);
+
+            $accSK = $sk->accSKPembimbingSkripsi;
+            if (!$accSK) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Detail persetujuan SK belum tersedia'
+                ], 404);
+            }
+
+            $dekanName = $accSK->dekan ? $accSK->dekan->Nama_Dosen : 'Dekan';
+            $dekanNip = $accSK->dekan ? $accSK->dekan->NIP : '-';
+
+            // Get QR Code path
+            $qrCodePath = null;
+            if ($accSK->QR_Code) {
+                $qrCodePath = asset('storage/' . $accSK->QR_Code);
+            }
+
+            // Prepare data
+            $skData = $accSK->toArray();
+            $skData['Data_Pembimbing_Skripsi'] = is_string($sk->Data_Pembimbing_Skripsi)
+                ? json_decode($sk->Data_Pembimbing_Skripsi, true)
+                : $sk->Data_Pembimbing_Skripsi;
+            $skData['Semester'] = $sk->Semester;
+            $skData['Tahun_Akademik'] = $sk->Tahun_Akademik;
+            $skData['prodi'] = $sk->prodi;
+
+            return response()->json([
+                'success' => true,
+                'sk' => $skData,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip,
+                'qrCodePath' => $qrCodePath
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Gagal mengambil detail SK: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Display SK Penguji Skripsi yang melibatkan dosen login.
+     */
+    public function indexPengujiSkripsi()
+    {
+        $user = Auth::user();
+        $dosen = ModelDosen::where('Id_User', $user->Id_User)->first();
+
+        if (!$dosen) {
+            return redirect()->route('dosen.sk.index')->with('error', 'Data dosen tidak ditemukan');
+        }
+
+        // Ambil SK yang sudah disetujui Dekan
+        $skList = ReqSKPengujiSkripsi::where('Status', 'Selesai')
+            ->with(['accSKPengujiSkripsi.dekan', 'prodi'])
+            ->orderBy('No', 'desc')
+            ->get();
+
+        // Filter SK yang melibatkan dosen ini sebagai penguji
+        $filteredSK = $skList->filter(function ($sk) use ($dosen) {
+            $dataPenguji = is_string($sk->Data_Penguji_Skripsi)
+                ? json_decode($sk->Data_Penguji_Skripsi, true)
+                : $sk->Data_Penguji_Skripsi;
+
+            if (!is_array($dataPenguji)) {
+                return false;
+            }
+
+            foreach ($dataPenguji as $mhs) {
+                if (
+                    (isset($mhs['nama_penguji_1']) && stripos($mhs['nama_penguji_1'], $dosen->Nama_Dosen) !== false) ||
+                    (isset($mhs['nama_penguji_2']) && stripos($mhs['nama_penguji_2'], $dosen->Nama_Dosen) !== false) ||
+                    (isset($mhs['nama_penguji_3']) && stripos($mhs['nama_penguji_3'], $dosen->Nama_Dosen) !== false)
+                ) {
+                    return true;
+                }
+            }
+            return false;
+        });
+
+        // Pre-calculate mahasiswa counts for the view
+        foreach ($filteredSK as $sk) {
+            $pengujiData = is_string($sk->Data_Penguji_Skripsi)
+                ? json_decode($sk->Data_Penguji_Skripsi, true)
+                : $sk->Data_Penguji_Skripsi;
+
+            $sk->totalMahasiswa = is_array($pengujiData) ? count($pengujiData) : 0;
+            $sk->myMahasiswa = collect($pengujiData)->filter(function ($mhs) use ($dosen) {
+                return (isset($mhs['nama_penguji_1']) && stripos($mhs['nama_penguji_1'], $dosen->Nama_Dosen) !== false) ||
+                    (isset($mhs['nama_penguji_2']) && stripos($mhs['nama_penguji_2'], $dosen->Nama_Dosen) !== false) ||
+                    (isset($mhs['nama_penguji_3']) && stripos($mhs['nama_penguji_3'], $dosen->Nama_Dosen) !== false);
+            })->count();
+        }
+
+        return view('dosen.sk.penguji-skripsi.index', compact('filteredSK', 'dosen'));
+    }
+
+    /**
+     * Get detail SK Penguji Skripsi for preview.
+     */
+    public function detailPengujiSkripsi($id)
+    {
+        try {
+            $sk = ReqSKPengujiSkripsi::with(['accSKPengujiSkripsi.dekan', 'prodi'])->findOrFail($id);
+            $accSK = $sk->accSKPengujiSkripsi;
+
+            if (!$accSK) {
+                return response()->json(['success' => false, 'message' => 'Detail persetujuan SK belum tersedia'], 404);
+            }
+
+            $dekanName = $accSK->dekan ? $accSK->dekan->Nama_Dosen : 'Dekan';
+            $dekanNip = $accSK->dekan ? $accSK->dekan->NIP : '-';
+            $qrCodePath = $accSK->QR_Code ? asset('storage/' . $accSK->QR_Code) : null;
+
+            $skData = $accSK->toArray();
+            $skData['Data_Penguji_Skripsi'] = is_string($sk->Data_Penguji_Skripsi)
+                ? json_decode($sk->Data_Penguji_Skripsi, true)
+                : $sk->Data_Penguji_Skripsi;
+            $skData['Semester'] = $sk->Semester;
+            $skData['Tahun_Akademik'] = $sk->Tahun_Akademik;
+            $skData['prodi'] = $sk->prodi;
+
+            return response()->json([
+                'success' => true,
+                'sk' => $skData,
+                'dekanName' => $dekanName,
+                'dekanNip' => $dekanNip,
+                'qrCodePath' => $qrCodePath
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Gagal mengambil detail SK: ' . $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Download SK Penguji Skripsi as PDF.
+     */
+    public function downloadPengujiSkripsi($id)
+    {
+        try {
+            $sk = ReqSKPengujiSkripsi::with(['accSKPengujiSkripsi.dekan', 'prodi'])->findOrFail($id);
+            $accSK = $sk->accSKPengujiSkripsi;
+
+            if (!$accSK || !$accSK->Nomor_Surat) {
+                return redirect()->back()->with('error', 'Nomor surat belum tersedia');
+            }
+
+            $dekanName = $accSK->dekan ? $accSK->dekan->Nama_Dosen : 'Dekan';
+            $dekanNip = $accSK->dekan ? $accSK->dekan->NIP : '-';
+            $qrCodePath = $accSK->QR_Code ? asset('storage/' . $accSK->QR_Code) : null;
+
+            $skData = $accSK;
+            $skData->Data_Penguji_Skripsi = $sk->Data_Penguji_Skripsi;
+            $skData->Semester = $sk->Semester;
+            $skData->Tahun_Akademik = $sk->Tahun_Akademik;
+            $skData->prodi = $sk->prodi;
+
+            return view('dosen.sk.penguji-skripsi.download', [
                 'sk' => $skData,
                 'dekanName' => $dekanName,
                 'dekanNip' => $dekanNip,

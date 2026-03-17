@@ -261,14 +261,14 @@
                                 <td class="text-center">
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button class="btn btn-primary" onclick="showDetail({{ $sk->No }})" title="Lihat Detail">
-                                            <i class="fas fa-eye"></i>
+                                            <i class="fas fa-eye me-1"></i> Detail
                                         </button>
                                         @if($sk->Status === 'Menunggu-Persetujuan-Dekan')
                                             <button class="btn btn-success" onclick="approveSK({{ $sk->No }})" title="Setujui & TTD">
-                                                <i class="fas fa-check"></i>
+                                                <i class="fas fa-check-circle"></i>
                                             </button>
                                             <button class="btn btn-danger" onclick="rejectSK({{ $sk->No }})" title="Tolak SK">
-                                                <i class="fas fa-times"></i>
+                                                <i class="fas fa-times-circle"></i>
                                             </button>
                                         @else
                                             <button class="btn btn-secondary" disabled title="Sudah Diproses">

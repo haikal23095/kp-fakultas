@@ -19,6 +19,7 @@ use App\Models\Pejabat;
 use App\Models\User;
 use App\Models\Notifikasi;
 use App\Models\Role;
+use App\Services\WahaService;
 
 class SKController extends Controller
 {
@@ -484,20 +485,32 @@ class SKController extends Controller
                 $sk->save();
 
                 // Create notification to Kaprodi
+                $notifPesan = 'SK Dosen Wali untuk ' .
+                    ($sk->prodi->Nama_Prodi ?? 'Prodi') .
+                    ' Semester ' . $sk->Semester .
+                    ' TA ' . $sk->Tahun_Akademik .
+                    ' telah ditolak. Alasan: ' . $request->alasan;
+
                 \App\Models\Notifikasi::create([
                     'Source_User' => $adminUser->Id_User,
                     'Dest_user' => $kaprodiUser->Id_User,
                     'Tipe_Notifikasi' => 'Rejected',
-                    'Pesan' => 'SK Dosen Wali untuk ' .
-                        ($sk->prodi->Nama_Prodi ?? 'Prodi') .
-                        ' Semester ' . $sk->Semester .
-                        ' TA ' . $sk->Tahun_Akademik .
-                        ' telah ditolak. Alasan: ' . $request->alasan,
+                    'Pesan' => $notifPesan,
                     'Data_Tambahan' => json_encode([
                         'url' => route('kaprodi.sk.dosen-wali.index')
                     ]),
                     'Is_Read' => false
                 ]);
+
+                // Kirim WhatsApp (WAHA)
+                if ($kaprodiUser && $kaprodiUser->No_WA) {
+                    try {
+                        $waha = new WahaService();
+                        $waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Gagal kirim WA penolakan: ' . $e->getMessage());
+                    }
+                }
 
                 DB::commit();
 
@@ -920,20 +933,32 @@ class SKController extends Controller
                 $sk->save();
 
                 // Create notification to Kaprodi
+                $notifPesan = 'SK Beban Mengajar untuk ' .
+                    ($sk->prodi->Nama_Prodi ?? 'Prodi') .
+                    ' Semester ' . $sk->Semester .
+                    ' TA ' . $sk->Tahun_Akademik .
+                    ' telah ditolak. Alasan: ' . $request->alasan;
+
                 \App\Models\Notifikasi::create([
                     'Source_User' => $adminUser->Id_User,
                     'Dest_user' => $kaprodiUser->Id_User,
                     'Tipe_Notifikasi' => 'Rejected',
-                    'Pesan' => 'SK Beban Mengajar untuk ' .
-                        ($sk->prodi->Nama_Prodi ?? 'Prodi') .
-                        ' Semester ' . $sk->Semester .
-                        ' TA ' . $sk->Tahun_Akademik .
-                        ' telah ditolak. Alasan: ' . $request->alasan,
+                    'Pesan' => $notifPesan,
                     'Data_Tambahan' => json_encode([
                         'url' => route('kaprodi.sk.beban-mengajar.index')
                     ]),
                     'Is_Read' => false
                 ]);
+
+                // Kirim WhatsApp (WAHA)
+                if ($kaprodiUser && $kaprodiUser->No_WA) {
+                    try {
+                        $waha = new WahaService();
+                        $waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Gagal kirim WA penolakan: ' . $e->getMessage());
+                    }
+                }
 
                 DB::commit();
 
@@ -1072,21 +1097,33 @@ class SKController extends Controller
                 $sk->save();
 
                 // Create notification to Kaprodi
+                $notifPesan = 'SK Pembimbing Skripsi untuk ' .
+                    ($sk->prodi->Nama_Prodi ?? 'Prodi') .
+                    ' Semester ' . $sk->Semester .
+                    ' TA ' . $sk->Tahun_Akademik .
+                    ' telah ditolak oleh Admin Fakultas. Alasan: ' . $request->alasan;
+
                 \App\Models\Notifikasi::create([
                     'Source_User' => $adminUser->Id_User,
                     'Dest_user' => $kaprodiUser->Id_User,
                     'Tipe_Notifikasi' => 'Rejected',
-                    'Pesan' => 'SK Pembimbing Skripsi untuk ' .
-                        ($sk->prodi->Nama_Prodi ?? 'Prodi') .
-                        ' Semester ' . $sk->Semester .
-                        ' TA ' . $sk->Tahun_Akademik .
-                        ' telah ditolak oleh Admin Fakultas. Alasan: ' . $request->alasan,
+                    'Pesan' => $notifPesan,
                     'Data_Tambahan' => json_encode([
                         'url' => route('kaprodi.sk.pembimbing-skripsi.create'),
                         'sk_id' => $sk->No
                     ]),
                     'Is_Read' => false
                 ]);
+
+                // Kirim WhatsApp (WAHA)
+                if ($kaprodiUser && $kaprodiUser->No_WA) {
+                    try {
+                        $waha = new WahaService();
+                        $waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                    } catch (\Exception $e) {
+                        \Illuminate\Support\Facades\Log::error('Gagal kirim WA penolakan: ' . $e->getMessage());
+                    }
+                }
 
                 DB::commit();
 
@@ -1448,11 +1485,14 @@ class SKController extends Controller
                 // Send notification to Kaprodi if user exists
                 $adminUser = Auth::user();
                 if ($sk->kaprodi && $sk->kaprodi->user) {
+                    $kaprodiUser = $sk->kaprodi->user;
+                    $notifPesan = 'SK Penguji Skripsi untuk ' . ($sk->prodi->Nama_Prodi ?? 'Prodi') . ' periode ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' ditolak oleh Admin Fakultas. Alasan: ' . $request->alasan;
+
                     \App\Models\Notifikasi::create([
                         'Source_User' => $adminUser->Id_User,
-                        'Dest_user' => $sk->kaprodi->user->Id_User,
+                        'Dest_user' => $kaprodiUser->Id_User,
                         'Tipe_Notifikasi' => 'Rejected',
-                        'Pesan' => 'SK Penguji Skripsi untuk ' . ($sk->prodi->Nama_Prodi ?? 'Prodi') . ' periode ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' ditolak oleh Admin Fakultas. Alasan: ' . $request->alasan,
+                        'Pesan' => $notifPesan,
                         'Data_Tambahan' => json_encode([
                             'url' => route('kaprodi.sk.penguji-skripsi.history'),
                             'sk_id' => $sk->No
@@ -1460,6 +1500,16 @@ class SKController extends Controller
                         'Is_Read' => false,
                         'created_at' => now()
                     ]);
+
+                    // Kirim WhatsApp (WAHA)
+                    if ($kaprodiUser->No_WA) {
+                        try {
+                            $waha = new WahaService();
+                            $waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                        } catch (\Exception $e) {
+                            \Illuminate\Support\Facades\Log::error('Gagal kirim WA penolakan: ' . $e->getMessage());
+                        }
+                    }
                 }
 
                 DB::commit();

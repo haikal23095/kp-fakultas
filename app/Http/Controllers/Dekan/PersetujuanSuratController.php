@@ -6,7 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Models\TugasSurat;
+use App\Models\SuratMagang;
+use App\Models\SuratKetAktif;
+use App\Models\SuratLegalisir;
+use App\Models\SuratTidakBeasiswa;
 use App\Models\Dosen;
 use App\Models\Mahasiswa;
 use App\Models\Pegawai;
@@ -25,35 +28,22 @@ class PersetujuanSuratController extends Controller
         $user = Auth::user();
 
         // Hitung jumlah surat per jenis yang menunggu persetujuan
-        $countAktif = TugasSurat::where('Id_Jenis_Surat', 1)
-            ->where(function ($q) {
-                $q->where('Status', 'menunggu-ttd')
-                    ->orWhereHas('suratKetAktif', function ($subQ) {
-                        $subQ->where('Status', 'menunggu-ttd');
-                    });
-            })
+        $countAktif = SuratKetAktif::where('Status', 'Diajukan-ke-dekan')
             ->count();
 
-        $countMagang = TugasSurat::where('Id_Jenis_Surat', 2)
-            ->whereHas('suratMagang', function ($subQ) {
-                $subQ->where('Status', 'Diajukan-ke-dekan');
-            })
+        $countMagang = SuratMagang::where('Status', 'Diajukan-ke-dekan')
             ->count();
 
-        $countLegalisir = TugasSurat::where('Id_Jenis_Surat', 14) // Legalisir menggunakan Id_Jenis_Surat = 14
-            ->whereHas('suratLegalisir') // Hanya yang punya relasi ke Surat_Legalisir
+        $countLegalisir = SuratLegalisir::where('Status', 'menunggu_ttd_pimpinan')
             ->count();
 
         // TODO: Implementasi counting untuk jenis surat baru
-        // Untuk sementara set 0, bisa diimplementasikan setelah tabel database dibuat
-        $countCutiDosen = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
-        $countTidakBeasiswa = TugasSurat::where('Id_Jenis_Surat', 6)
-            ->whereHas('suratTidakBeasiswa')
-            ->where('Status', 'menunggu-ttd')
+        $countCutiDosen = 0;
+        $countTidakBeasiswa = SuratTidakBeasiswa::where('Status', 'Diajukan-ke-dekan')
             ->count();
-        $countSKFakultas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
-        $countSuratTugas = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
-        $countMBKM = 0; // TODO: Implementasi dengan Id_Jenis_Surat yang sesuai
+        $countSKFakultas = 0;
+        $countSuratTugas = 0;
+        $countMBKM = 0;
 
         // Hitung jumlah SK Dosen yang menunggu persetujuan
         $countSKDosen = \App\Models\AccDekanDosenWali::where('Status', 'Menunggu-Persetujuan-Dekan')->count();
@@ -78,24 +68,15 @@ class PersetujuanSuratController extends Controller
     {
         $user = Auth::user();
 
-        $daftarSurat = TugasSurat::with([
-            'jenisSurat',
-            'pemberiTugas.role',
-            'penerimaTugas',
-            'suratKetAktif',
-            'pemberiTugas.mahasiswa.prodi'
+        $daftarSurat = SuratKetAktif::with([
+            'pemberiTugas.mahasiswa.prodi',
+            'penerimaTugas'
         ])
-            ->where('Id_Jenis_Surat', 1)
-            ->where(function ($q) {
-                $q->where('Status', 'menunggu-ttd')
-                    ->orWhereHas('suratKetAktif', function ($subQ) {
-                        $subQ->where('Status', 'menunggu-ttd');
-                    });
-            })
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->where('Status', 'Diajukan-ke-dekan')
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->get();
 
-        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+        return view('dekan.persetujuan_surat', ['daftarSurat' => $daftarSurat, 'type' => 'aktif']);
     }
 
     /**
@@ -105,17 +86,13 @@ class PersetujuanSuratController extends Controller
     {
         $user = Auth::user();
 
-        $daftarSurat = TugasSurat::with([
-            'jenisSurat',
-            'pemberiTugas.role',
+        $daftarSurat = SuratMagang::with([
+            'pemberiTugas.mahasiswa.prodi',
             'penerimaTugas',
-            'suratMagang',
-            'pemberiTugas.mahasiswa.prodi'
+            'koordinator'
         ])
-            ->where('Id_Jenis_Surat', 2)
-            ->whereHas('suratMagang', function ($subQ) {
-                $subQ->where('Status', 'Diajukan-ke-dekan');
-            })
+            ->where('Status', 'Diajukan-ke-dekan')
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->get();
 
         return view('dekan.surat_magang.index', compact('daftarSurat'));
@@ -129,10 +106,9 @@ class PersetujuanSuratController extends Controller
         $user = Auth::user();
 
         // Ambil data legalisir langsung dari tabel Surat_Legalisir dengan status menunggu_ttd_pimpinan
-        $daftarLegalisir = \App\Models\SuratLegalisir::with([
+        $daftarLegalisir = SuratLegalisir::with([
             'user.mahasiswa.prodi',
             'user.role',
-            'tugasSurat.jenisSurat',
             'pejabat'
         ])
             ->where('Status', 'menunggu_ttd_pimpinan')
@@ -144,25 +120,11 @@ class PersetujuanSuratController extends Controller
 
     /**
      * Tampilkan daftar surat cuti dosen yang menunggu persetujuan
-     * TODO: Implementasi lengkap setelah tabel database dibuat
      */
     public function listCutiDosen()
     {
-        $user = Auth::user();
-
-        // TODO: Ganti dengan query yang sesuai setelah tabel surat_cuti_dosen dibuat
-        $daftarSurat = TugasSurat::with([
-            'jenisSurat',
-            'pemberiTugas.role',
-            'penerimaTugas'
-        ])
-            ->where('Id_Jenis_Surat', 99) // TODO: Ganti dengan Id_Jenis_Surat yang benar
-            ->where('Status', 'menunggu-ttd')
-            ->where('Id_Penerima_Tugas_Surat', $user->Id_User)
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
-            ->get();
-
-        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+        // TODO: Implementasi surat cuti dosen
+        return view('dekan.persetujuan_surat', ['daftarSurat' => collect([]), 'type' => 'cuti_dosen']);
     }
 
     /**
@@ -172,20 +134,15 @@ class PersetujuanSuratController extends Controller
     {
         $user = Auth::user();
 
-        $daftarSurat = TugasSurat::with([
-            'jenisSurat',
-            'pemberiTugas.role',
+        $daftarSurat = SuratTidakBeasiswa::with([
             'pemberiTugas.mahasiswa.prodi',
-            'penerimaTugas',
-            'suratTidakBeasiswa'
+            'penerimaTugas'
         ])
-            ->where('Id_Jenis_Surat', 6)
-            ->whereHas('suratTidakBeasiswa')
-            ->where('Status', 'menunggu-ttd')
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->where('Status', 'Diajukan-ke-dekan')
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->get();
 
-        return view('dekan.persetujuan_surat', compact('daftarSurat'));
+        return view('dekan.persetujuan_surat', ['daftarSurat' => $daftarSurat, 'type' => 'tidak_beasiswa']);
     }
 
     /**
@@ -442,11 +399,17 @@ class PersetujuanSuratController extends Controller
             // Get URL untuk ditampilkan di preview
             $qrUrl = asset('storage/' . $qrPath);
 
+            // Ambil data Dekan
+            $dekan = \App\Models\Dosen::where('Id_Pejabat', 1)->first();
+            if (!$dekan) {
+                throw new \Exception('Data Dekan tidak ditemukan');
+            }
+
             // Update status dan simpan QR code path
             $sk->Status = 'Disetujui Dekan';
             $sk->QR_Code = $qrPath; // Simpan path relatif ke database
             $sk->Tanggal_Persetujuan_Dekan = now();
-            $sk->Id_Dekan = Auth::user()->Id_User;
+            $sk->Id_Dekan = $dekan->Id_Dosen;
             $sk->save();
 
             return response()->json([
@@ -460,5 +423,13 @@ class PersetujuanSuratController extends Controller
                 'message' => 'Gagal menyetujui SK: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Tampilkan halaman arsip surat
+     */
+    public function arsip()
+    {
+        return view('dekan.arsip_surat');
     }
 }

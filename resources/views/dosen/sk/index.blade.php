@@ -74,7 +74,7 @@
 
     <!-- SK Penguji Skripsi -->
     <div class="col-xl-3 col-md-6">
-        <div class="card border-0 shadow-sm h-100 hover-card opacity-50">
+        <div class="card border-0 shadow-sm h-100 hover-card">
             <div class="card-body text-center p-4">
                 <div class="icon-wrapper mb-3">
                     <div class="icon-circle bg-danger bg-opacity-10 mx-auto" style="width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border-radius: 50%;">
@@ -85,9 +85,9 @@
                 <p class="card-text text-muted small mb-4">
                     Lihat SK penguji skripsi yang melibatkan Anda
                 </p>
-                <button class="btn btn-danger btn-sm w-100" disabled>
-                    <i class="fas fa-lock me-2"></i>Segera Hadir
-                </button>
+                <a href="{{ route('dosen.sk.penguji-skripsi.index') }}" class="btn btn-danger btn-sm w-100">
+                    <i class="fas fa-eye me-2"></i>Lihat SK
+                </a>
             </div>
         </div>
     </div>

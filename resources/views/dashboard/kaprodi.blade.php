@@ -84,7 +84,7 @@
                         @php
                             $mahasiswaList = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
                             $namaMahasiswa = $mahasiswaList[0]['nama'] ?? 'N/A';
-                            $tanggalMasuk = $surat->tugasSurat?->Tanggal_Diberikan_Tugas_Surat ?? now();
+                            $tanggalMasuk = $surat->Tanggal_Diberikan ?? now();
                         @endphp
                         <tr>
                             <td>{{ $namaMahasiswa }}</td>

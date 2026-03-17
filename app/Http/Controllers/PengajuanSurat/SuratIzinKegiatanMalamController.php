@@ -37,7 +37,7 @@ class SuratIzinKegiatanMalamController extends Controller
             return redirect()->back()->with('error', 'Jenis surat tidak ditemukan di database. Hubungi admin.');
         }
 
-        return view('mahasiswa.pengajuan-surat.form_izin_malam', compact('mahasiswa', 'jenisSurat'));
+        return view('mahasiswa.pengajuan.form_izin_malam', compact('mahasiswa', 'jenisSurat'));
     }
 
     /**
@@ -84,14 +84,14 @@ class SuratIzinKegiatanMalamController extends Controller
             }
 
             // Cari Pejabat (Wakil Dekan 3)
-            $pejabat = Pejabat::where(function($query) {
+            $pejabat = Pejabat::where(function ($query) {
                 $query->where('Nama_Jabatan', 'LIKE', '%Wakil Dekan III%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%Wakil Dekan 3%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%Kemahasiswaan%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%WD3%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%WD 3%');
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%Wakil Dekan 3%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%Kemahasiswaan%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%WD3%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%WD 3%');
             })
-            ->first();
+                ->first();
 
             $idPejabat = $pejabat ? $pejabat->Id_Pejabat : null;
 
@@ -140,7 +140,7 @@ class SuratIzinKegiatanMalamController extends Controller
         // Ambil TugasSurat yang memiliki relasi suratIzinKegiatanMalam
         $daftarPengajuan = TugasSurat::whereHas('suratIzinKegiatanMalam')
             ->with([
-                'suratIzinKegiatanMalam', 
+                'suratIzinKegiatanMalam',
                 'pemberiTugas.mahasiswa.prodi'
             ])
             ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')

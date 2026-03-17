@@ -8,11 +8,10 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
-use App\Models\TugasSurat;
 use App\Models\SuratDispensasi;
-use App\Models\JenisSurat;
 use App\Models\Pejabat;
 use App\Models\Mahasiswa;
+use App\Models\SuratVerification;
 use Carbon\Carbon;
 
 class SuratDispensasiController extends Controller
@@ -22,7 +21,14 @@ class SuratDispensasiController extends Controller
      */
     public function create()
     {
-        return view('mahasiswa.pengajuan-surat.form_surat_dispensasi');
+        $user = Auth::user();
+        $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->with('prodi')->first();
+
+        if (!$mahasiswa) {
+            return redirect()->back()->with('error', 'Data mahasiswa tidak ditemukan.');
+        }
+
+        return view('mahasiswa.pengajuan.form_surat_dispensasi', compact('mahasiswa'));
     }
 
     /**
@@ -60,20 +66,13 @@ class SuratDispensasiController extends Controller
                 throw new \Exception('Data mahasiswa tidak ditemukan.');
             }
 
-            // Cari Jenis Surat Dispensasi
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'LIKE', '%Dispensasi%')->first();
-            
-            if (!$jenisSurat) {
-                throw new \Exception('Jenis surat Dispensasi tidak ditemukan di database. Hubungi admin.');
-            }
-
             // Cari Pejabat (Wakil Dekan 3)
-            $pejabat = Pejabat::where(function($query) {
+            $pejabat = Pejabat::where(function ($query) {
                 $query->where('Nama_Jabatan', 'LIKE', '%Wakil Dekan III%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%Wakil Dekan 3%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%Kemahasiswaan%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%WD3%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%WD 3%');
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%Wakil Dekan 3%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%Kemahasiswaan%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%WD3%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%WD 3%');
             })->first();
 
             $idPejabat = $pejabat ? $pejabat->Id_Pejabat : null;
@@ -82,57 +81,29 @@ class SuratDispensasiController extends Controller
             $fileLampiranPath = null;
             if ($request->hasFile('file_lampiran')) {
                 $fileLampiran = $request->file('file_lampiran');
-                
-                // Validate file
+
                 if (!$fileLampiran->isValid()) {
                     throw new \Exception('File upload gagal. File tidak valid.');
                 }
-                
+
                 $extension = $fileLampiran->getClientOriginalExtension();
                 $fileLampiranName = 'lampiran_dispen_' . $mahasiswa->NIM . '_' . time() . '.' . $extension;
-                
-                // Store file to public disk (storage/app/public/surat_dispensasi/)
+
                 $storedPath = Storage::disk('public')->putFileAs(
                     'surat_dispensasi',
                     $fileLampiran,
                     $fileLampiranName
                 );
-                
+
                 if (!$storedPath) {
                     throw new \Exception('File upload gagal. Tidak bisa menyimpan ke storage.');
                 }
-                
-                // Verify file exists using Storage facade
-                if (!Storage::disk('public')->exists($storedPath)) {
-                    \Log::error('File upload dispensasi: File tidak ditemukan setelah upload', [
-                        'expected_path' => $storedPath,
-                        'full_path' => storage_path('app/public/' . $storedPath)
-                    ]);
-                    throw new \Exception('File upload gagal. File tidak ditemukan setelah disimpan.');
-                }
-                
-                \Log::info('File upload dispensasi berhasil', [
-                    'filename' => $fileLampiranName,
-                    'stored_path' => $storedPath,
-                    'full_path' => storage_path('app/public/' . $storedPath),
-                    'size' => Storage::disk('public')->size($storedPath)
-                ]);
-                
-                $fileLampiranPath = $storedPath; // Will be 'surat_dispensasi/filename.ext'
+
+                $fileLampiranPath = $storedPath;
             }
 
-            // Insert ke Tabel Tugas_Surat
-            $tugasSurat = TugasSurat::create([
-                'Id_Pemberi_Tugas_Surat' => $user->Id_User,
-                'Id_Jenis_Surat' => $jenisSurat->Id_Jenis_Surat,
-                'Judul_Tugas_Surat' => 'Permohonan Surat Dispensasi - ' . $request->nama_kegiatan,
-                'Status' => 'baru',
-                'Tanggal_Pembuatan_Tugas' => Carbon::now()->toDateString(),
-            ]);
-
-            // Insert ke Tabel Surat_Dispensasi
+            // Insert langsung ke Surat_Dispensasi
             SuratDispensasi::create([
-                'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
                 'Id_User' => $user->Id_User,
                 'Id_Pejabat_Wadek3' => $idPejabat,
                 'nama_kegiatan' => $request->nama_kegiatan,
@@ -141,15 +112,57 @@ class SuratDispensasiController extends Controller
                 'tanggal_mulai' => $request->tanggal_mulai,
                 'tanggal_selesai' => $request->tanggal_selesai,
                 'file_lampiran' => $fileLampiranPath,
+                'Status' => 'baru',
+                'Tanggal_Diberikan' => Carbon::now(),
             ]);
 
             DB::commit();
 
-            return redirect()->route('mahasiswa.pengajuan.create')->with('success', 'Surat Dispensasi berhasil diajukan! Mohon tunggu proses verifikasi dari Admin dan Wakil Dekan 3.');
+            return redirect()->route('mahasiswa.riwayat.dispensasi')
+                ->with('success', 'Surat Dispensasi berhasil diajukan! Silakan cek status di menu Riwayat.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            return redirect()->back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage())->withInput();
+            \Log::error('Error store Surat Dispensasi: ' . $e->getMessage());
+            return redirect()->back()
+                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage())
+                ->withInput();
         }
+    }
+
+    /**
+     * Download / Preview surat (untuk mahasiswa)
+     */
+    public function downloadSurat($id)
+    {
+        $user = Auth::user();
+
+        $surat = SuratDispensasi::with([
+            'user.mahasiswa.prodi.fakultas',
+            'pejabatWadek3'
+        ])
+            ->where('id', $id)
+            ->where('Id_User', $user->Id_User)
+            ->firstOrFail();
+
+        $statusLower = strtolower(trim($surat->Status));
+        if ($statusLower !== 'selesai' && $statusLower !== 'telah ditandatangani dekan' && $statusLower !== 'success') {
+            return redirect()->route('mahasiswa.riwayat.dispensasi')
+                ->with('error', 'Surat belum dapat diunduh. Status: ' . $surat->Status);
+        }
+
+        $verification = SuratVerification::with(['penandatangan.pegawai', 'penandatangan.dosen'])
+            ->where('id_letter', $id)
+            ->where('letter_type', 'dispensasi')
+            ->first();
+
+        $mahasiswa = $surat->user->mahasiswa;
+
+        return view('mahasiswa.pdf.surat_dispensasi', [
+            'surat' => $surat,
+            'mahasiswa' => $mahasiswa,
+            'verification' => $verification,
+            'mode' => 'download'
+        ]);
     }
 }

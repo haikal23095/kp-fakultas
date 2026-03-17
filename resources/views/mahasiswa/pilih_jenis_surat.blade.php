@@ -84,7 +84,7 @@
     }
 
     .card-berkelakuan-baik .surat-icon {
-        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
         color: white;
     }
 </style>

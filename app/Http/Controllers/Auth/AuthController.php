@@ -1,0 +1,358 @@
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+
+class AuthController extends Controller
+{
+    /**
+     * Menampilkan halaman login
+     */
+    public function showLoginForm()
+    {
+        return view('auth.login');
+    }
+
+    /**
+     * Proses login
+     */
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        $user = User::where('email', $request->email)->first();
+
+        if ($user) {
+            // Check if password is hashed or plain text
+            $passwordMatches = false;
+
+            if (str_starts_with($user->password, '$2y$')) {
+                // Password is hashed, use normal check
+                $passwordMatches = Hash::check($request->password, $user->password);
+            } else {
+                // Password is plain text, compare directly
+                $passwordMatches = ($request->password === $user->password);
+            }
+
+            if ($passwordMatches) {
+                Auth::login($user, $request->filled('remember'));
+                $request->session()->regenerate();
+
+                // Redirect berdasarkan role
+                return $this->redirectToRoleDashboard($user->Id_Role);
+            }
+        }
+
+        return back()->withErrors([
+            'email' => 'Email atau password salah.',
+        ])->onlyInput('email');
+    }
+
+    /**
+     * Proses logout
+     */
+    public function logout(Request $request)
+    {
+        Auth::logout();
+
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/login');
+    }
+
+    /**
+     * Menampilkan dashboard setelah login
+     */
+    public function dashboard()
+    {
+        $user = Auth::user();
+        return $this->redirectToRoleDashboard($user->Id_Role);
+    }
+
+    /**
+     * Redirect ke dashboard berdasarkan role
+     */
+    private function redirectToRoleDashboard($roleId)
+    {
+        switch ($roleId) {
+            case 1:
+                return redirect()->route('dashboard.admin_prodi');
+            case 2:
+                return redirect()->route('dashboard.dekan');
+            case 3:
+                return redirect()->route('dashboard.kajur');
+            case 4:
+                return redirect()->route('dashboard.kaprodi');
+            case 5:
+                return redirect()->route('dashboard.dosen');
+            case 6:
+                return redirect()->route('dashboard.mahasiswa');
+            case 7:
+                return redirect()->route('dashboard.admin_fakultas');
+            case 8:
+                return redirect()->route('dashboard.wadek1');
+            case 9:
+                return redirect()->route('dashboard.wadek2');
+            case 10:
+                return redirect()->route('dashboard.wadek3');
+            default:
+                return redirect()->route('dashboard.default');
+        }
+    }
+
+    // Dashboard untuk setiap role
+    public function dashboardAdmin()
+    {
+        // Ambil Id_Prodi dari user yang login (semua user pasti punya prodi)
+        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai.prodi']);
+
+        // Ambil nama prodi (untuk tampilan dashboard)
+        $namaProdi = $user->dosen?->prodi?->Nama_Prodi ??
+            $user->mahasiswa?->prodi?->Nama_Prodi ??
+            $user->pegawai?->prodi?->Nama_Prodi ??
+            'Fakultas Teknik'; // Default jika Admin Fakultas (tidak terikat prodi)
+
+        // NOTE: Untuk Admin Fakultas (Role 1), kita asumsikan mereka bisa melihat SEMUA surat dalam fakultas.
+        // Jadi kita TIDAK memfilter berdasarkan Prodi spesifik admin tersebut.
+        // Jika nanti ada kebutuhan "Admin Prodi", logika ini bisa disesuaikan.
+
+        // Base query TANPA filter prodi (Menampilkan semua surat di Fakultas Teknik)
+        $baseQuery = function () {
+            return \App\Models\SuratMagang::query();
+        };
+
+        // Ambil statistik surat berdasarkan status dengan filter prodi
+        // Status sekarang ada di tabel spesifik (Surat_Magang)
+        $permohonanBaru = $baseQuery()
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])->count();
+        $menungguTTE = $baseQuery()
+            ->where('Status', 'Diajukan-ke-dekan')->count();
+        $suratSelesaiBulanIni = $baseQuery()
+            ->where('Status', 'Success')
+            ->whereMonth('Tanggal_Diselesaikan', date('m'))
+            ->whereYear('Tanggal_Diselesaikan', date('Y'))
+            ->count();
+        $totalArsip = $baseQuery()
+            ->where('Status', 'Success')->count();
+
+        // Ambil antrian permohonan terbaru (5 terakhir)
+        $antrianSurat = $baseQuery()
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai'])
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])
+            ->orderBy('Tanggal_Diberikan', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('dashboard.admin_prodi', compact(
+            'permohonanBaru',
+            'menungguTTE',
+            'suratSelesaiBulanIni',
+            'totalArsip',
+            'antrianSurat',
+            'namaProdi'
+        ));
+    }
+
+    public function dashboardAdminFakultas()
+    {
+        // Ambil Id_Fakultas dari user yang login
+        $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
+        $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
+
+        // Ambil nama fakultas
+        $namaFakultas = $user->pegawaiFakultas?->fakultas?->Nama_Fakultas ?? 'Fakultas';
+
+        // Base query dengan filter fakultas (filter berdasarkan PEMBERI tugas = yang mengajukan)
+        $baseQuery = function () use ($fakultasId) {
+            return \App\Models\SuratMagang::query()
+                ->where(function ($q) use ($fakultasId) {
+                    $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                        $subQ->where('Id_Fakultas', $fakultasId);
+                    })
+                        ->orWhereHas('pemberiTugas.dosen.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                            $subQ->where('Id_Fakultas', $fakultasId);
+                        })
+                        ->orWhereHas('pemberiTugas.pegawai.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                            $subQ->where('Id_Fakultas', $fakultasId);
+                        });
+                });
+        };
+
+        // Ambil statistik surat berdasarkan status dengan filter fakultas
+        // Status sekarang ada di tabel spesifik (Surat_Magang)
+        $permohonanBaru = $baseQuery()
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])->count();
+        $menungguTTE = $baseQuery()
+            ->where('Status', 'Diajukan-ke-dekan')->count();
+        $suratSelesaiBulanIni = $baseQuery()
+            ->where('Status', 'Success')
+            ->whereMonth('Tanggal_Diselesaikan', date('m'))
+            ->whereYear('Tanggal_Diselesaikan', date('Y'))
+            ->count();
+        $totalArsip = $baseQuery()
+            ->where('Status', 'Success')->count();
+
+        // Ambil antrian permohonan terbaru (5 terakhir) dengan filter fakultas
+        $antrianSurat = $baseQuery()
+            ->with(['pemberiTugas.role', 'pemberiTugas.mahasiswa', 'pemberiTugas.dosen', 'pemberiTugas.pegawai'])
+            ->whereIn('Status', ['Diajukan-ke-koordinator', 'Dikerjakan-admin'])
+            ->orderBy('Tanggal_Diberikan', 'desc')
+            ->take(5)
+            ->get();
+
+        // Get SK Dosen Wali pending count
+        $skDosenWaliPending = \App\Models\SKDosenWali::where('Status', 'Dikerjakan admin')->count();
+
+        return view('dashboard.admin_fakultas', compact(
+            'permohonanBaru',
+            'menungguTTE',
+            'suratSelesaiBulanIni',
+            'totalArsip',
+            'antrianSurat',
+            'namaFakultas',
+            'skDosenWaliPending'
+        ));
+    }
+
+    public function dashboardDekan()
+    {
+        return view('dashboard.dekan');
+    }
+
+    public function dashboardWadek1()
+    {
+        return view('dashboard.wadek1');
+    }
+
+    public function dashboardWadek2()
+    {
+        return view('dashboard.wadek2');
+    }
+
+    public function dashboardWadek3()
+    {
+        return view('dashboard.wadek3');
+    }
+
+    public function dashboardKajur()
+    {
+        return view('dashboard.kajur');
+    }
+
+    public function dashboardKaprodi()
+    {
+        $user = Auth::user();
+
+        // Ambil data Kaprodi (bisa dari Dosen atau Pegawai)
+        $kaprodiDosen = $user->dosen;
+        $kaprodiPegawai = $user->pegawai;
+
+        // Ambil Id_Prodi dari Kaprodi
+        $prodiId = $kaprodiDosen?->Id_Prodi ?? $kaprodiPegawai?->Id_Prodi;
+
+        if (!$prodiId) {
+            return view('dashboard.kaprodi', [
+                'suratMasuk' => 0,
+                'suratKeluar' => 4, // statis
+                'jumlahDosen' => 0,
+                'totalArsip' => 45, // statis
+            ]);
+        }
+
+        // Hitung Surat Masuk: Surat Magang dengan Acc_Koordinator = false dari mahasiswa di prodi ini
+        $suratMasuk = \App\Models\SuratMagang::query()
+            ->whereHas('pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
+                $q->where('Id_Prodi', $prodiId);
+            })
+            ->where('Acc_Koordinator', false)
+            ->where('Status', 'Diajukan-ke-koordinator')
+            ->count();
+
+        // Ambil data antrian surat magang untuk ditampilkan di tabel
+        $antrianSurat = \App\Models\SuratMagang::query()
+            ->with(['pemberiTugas.mahasiswa'])
+            ->whereHas('pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
+                $q->where('Id_Prodi', $prodiId);
+            })
+            ->where('Acc_Koordinator', false)
+            ->where('Status', 'Diajukan-ke-koordinator')
+            ->orderBy('id_no', 'desc')
+            ->limit(3)
+            ->get();
+
+        // Hitung Jumlah Dosen di prodi ini
+        $jumlahDosen = \App\Models\Dosen::where('Id_Prodi', $prodiId)->count();
+
+        // Surat Keluar dan Total Arsip tetap statis dulu
+        $suratKeluar = 4;
+        $totalArsip = 45;
+
+        return view('dashboard.kaprodi', compact(
+            'suratMasuk',
+            'suratKeluar',
+            'jumlahDosen',
+            'totalArsip',
+            'antrianSurat'
+        ));
+    }
+
+    public function dashboardDosen()
+    {
+        return view('dashboard.dosen');
+    }
+
+    public function dashboardMahasiswa()
+    {
+        $user = Auth::user();
+        $mahasiswa = $user->mahasiswa;
+
+        if (!$mahasiswa) {
+            return view('dashboard.mahasiswa', [
+                'totalPengajuan' => 0,
+                'diterima' => 0,
+                'ditolak' => 0,
+                'riwayatTerkini' => collect([]),
+            ]);
+        }
+
+        // Hitung total pengajuan dari semua jenis surat
+        $totalPengajuan = 0;
+        $diterima = 0;
+        $ditolak = 0;
+
+        // Surat Magang
+        $totalPengajuan += \App\Models\SuratMagang::where('Id_Pemberi_Tugas', $user->Id_User)->count();
+        $diterima += \App\Models\SuratMagang::where('Id_Pemberi_Tugas', $user->Id_User)
+            ->where('Status', 'Success')->count();
+        $ditolak += \App\Models\SuratMagang::where('Id_Pemberi_Tugas', $user->Id_User)
+            ->where('Status', 'Ditolak')->count();
+
+        // Ambil riwayat terkini (5 terakhir)
+        $riwayatTerkini = \App\Models\SuratMagang::with(['pemberiTugas'])
+            ->where('Id_Pemberi_Tugas', $user->Id_User)
+            ->orderBy('id_no', 'desc')
+            ->take(5)
+            ->get();
+
+        return view('dashboard.mahasiswa', compact(
+            'totalPengajuan',
+            'diterima',
+            'ditolak',
+            'riwayatTerkini'
+        ));
+    }
+
+    public function dashboardDefault()
+    {
+        return view('dashboard.default');
+    }
+}

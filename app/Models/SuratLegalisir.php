@@ -20,10 +20,9 @@ class SuratLegalisir extends Model
 
     /**
      * Kolom yang dapat diisi melalui mass assignment.
-     * Pastikan nama kolom di sini SAMA PERSIS dengan di database (Case Sensitive).
+     * Disesuaikan dengan struktur database (tidak ada Id_Tugas_Surat).
      */
     protected $fillable = [
-        'Id_Tugas_Surat',
         'Id_User',
         'Id_Pejabat',
         'Jenis_Dokumen',
@@ -36,6 +35,17 @@ class SuratLegalisir extends Model
         'TTD_Oleh',
         'TTD_At',
         'Status',
+    ];
+
+    /**
+     * Cast tipe data kolom
+     */
+    protected $casts = [
+        'Is_Verified' => 'boolean',
+        'TTD_At' => 'datetime',
+        'Tanggal_Bayar' => 'date',
+        'Jumlah_Salinan' => 'integer',
+        'Biaya' => 'integer',
     ];
 
     /**

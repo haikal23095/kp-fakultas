@@ -88,7 +88,7 @@
                     <tbody>
                         @forelse($daftarSurat as $index => $surat)
                         @php
-                            $mahasiswa = $surat->tugasSurat?->pemberiTugas?->mahasiswa ?? null;
+                            $mahasiswa = $surat->pemberiTugas?->mahasiswa ?? null;
                             $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
                             $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
                             $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');
@@ -181,7 +181,7 @@
                             <tbody>
                                 @forelse($riwayatSurat as $index => $surat)
                                 @php
-                                    $mahasiswa = $surat->tugasSurat?->pemberiTugas?->mahasiswa ?? null;
+                                    $mahasiswa = $surat->pemberiTugas?->mahasiswa ?? null;
                                     $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
                                     $namaMahasiswa = $mahasiswa?->Nama_Mahasiswa ?? ($dataMahasiswa[0]['nama'] ?? 'N/A');
                                     $nimMahasiswa = $mahasiswa?->NIM ?? ($dataMahasiswa[0]['nim'] ?? 'N/A');

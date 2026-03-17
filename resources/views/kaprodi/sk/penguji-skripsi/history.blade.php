@@ -277,6 +277,13 @@
                                             data-bs-target="#detailModal">
                                             <i class="fas fa-eye"></i>
                                         </button>
+                                        @if(in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan']))
+                                        <a href="{{ route('kaprodi.sk.penguji-skripsi.edit', $sk->No) }}" 
+                                           class="btn btn-sm btn-outline-warning" 
+                                           title="Edit & Ajukan Ulang">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        @endif
                                         @if($sk->Status == 'Selesai')
                                         <a href="{{ route('kaprodi.sk.penguji-skripsi.download', $sk->No) }}" 
                                            class="btn btn-sm btn-outline-success" 

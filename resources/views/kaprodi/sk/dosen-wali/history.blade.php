@@ -96,6 +96,13 @@
                                     <button class="btn btn-sm btn-outline-primary" onclick="showDetail({{ $sk->No }})">
                                         <i class="fas fa-eye me-1"></i>Detail
                                     </button>
+                                    @if(in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan', 'Ditolak']))
+                                    <a href="{{ route('kaprodi.sk.dosen-wali.edit', $sk->No) }}" 
+                                       class="btn btn-sm btn-outline-warning" 
+                                       title="Edit & Ajukan Ulang">
+                                        <i class="fas fa-edit me-1"></i>Edit
+                                    </a>
+                                    @endif
                                     @if($sk->Status === 'Selesai')
                                         <button class="btn btn-sm btn-outline-success" onclick="showSKPreview({{ $sk->No }})">
                                             <i class="fas fa-file-pdf me-1"></i>Lihat SK

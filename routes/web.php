@@ -6,15 +6,15 @@ Route::get('/admin-prodi/surat/preview-magang/{id_no}', [\App\Http\Controllers\A
     ->name('admin_prodi.surat.preview_magang');
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
-use App\Http\Controllers\AuthController;
+use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Admin_Prodi\DetailSuratController;
 use App\Http\Controllers\Admin_Prodi\ManajemenSuratController;
 use App\Http\Controllers\Admin_Fakultas\DetailSuratController as FakultasDetailSuratController;
 use App\Http\Controllers\Admin_Fakultas\ManajemenSuratController as FakultasManajemenSuratController;
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\NotifikasiController;
-use App\Http\Controllers\SuratVerificationController;
-use App\Http\Controllers\QrCodeVerificationController;
+use App\Http\Controllers\General\ProfileController;
+use App\Http\Controllers\General\NotifikasiController;
+use App\Http\Controllers\General\SuratVerificationController;
+use App\Http\Controllers\General\QrCodeVerificationController;
 
 // Import Controller untuk Pengajuan Surat (Modular)
 use App\Http\Controllers\PengajuanSurat\SuratKeteranganAktifController;
@@ -23,16 +23,20 @@ use App\Http\Controllers\PengajuanSurat\SuratLegalisirController;
 use App\Http\Controllers\PengajuanSurat\SuratTidakBeasiswaController;
 use App\Http\Controllers\PengajuanSurat\SuratDispensasiController;
 use App\Http\Controllers\Admin_Fakultas\SuratLegalisirController as FakultasSuratLegalisirController;
-use App\Http\Controllers\PeminjamanMobilMahasiswaController;
-use App\Http\Controllers\PeminjamanMobilAdminController;
+use App\Http\Controllers\Mahasiswa\PeminjamanMobilController as PeminjamanMobilMahasiswaController;
+use App\Http\Controllers\Admin_Fakultas\PeminjamanMobilController as PeminjamanMobilAdminController;
+use App\Http\Controllers\Wadek2\PeminjamanMobilController as PeminjamanMobilWadek2Controller;
+use App\Http\Controllers\Mahasiswa\AjakanMagangController;
+use App\Http\Controllers\Mahasiswa\PengajuanController;
+use App\Http\Controllers\Dosen\DosenController;
+use App\Http\Controllers\Kajur\KajurController;
+use App\Http\Controllers\Kaprodi\KaprodiController;
 
 // Impor Model untuk route pengajuan
 use App\Models\Mahasiswa;
 use App\Models\Dosen;
 use App\Models\Prodi;
 use App\Models\Pejabat;
-use App\Models\JenisSurat; // Pastikan ini ada
-use App\Models\TugasSurat;
 use App\Models\Role;
 use Carbon\Carbon;
 
@@ -84,6 +88,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password');
+    Route::post('/profile/toggle-status-kp', [ProfileController::class, 'toggleStatusKP'])->name('profile.toggleStatusKP');
 
     // NOTIFIKASI ROUTES (Available for all authenticated users)
     Route::get('/notifikasi', [NotifikasiController::class, 'index'])->name('notifikasi.index');
@@ -125,9 +130,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/arsip-surat', [ManajemenSuratController::class, 'archive'])
             ->name('surat.archive');
 
-        Route::get('/pengaturan', function () {
-            return view('admin_prodi.pengaturan');
-        })->name('settings.index');
+        Route::get('/pengaturan', [ManajemenSuratController::class, 'settings'])
+            ->name('settings.index');
     });
 
     // FITUR ADMIN FAKULTAS
@@ -140,9 +144,15 @@ Route::middleware('auth')->group(function () {
         Route::get('/surat-aktif', [FakultasManajemenSuratController::class, 'listAktif'])
             ->name('surat.aktif');
 
+        // Route untuk History Surat Keterangan Aktif
+        Route::get('/surat-aktif/history', [FakultasManajemenSuratController::class, 'historyAktif'])
+            ->name('surat.aktif.history');
+
         // Routes untuk Surat Magang (menggunakan SuratMagangController)
         Route::get('/surat-magang', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'index'])
             ->name('surat.magang');
+        Route::get('/surat-magang/history', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'history'])
+            ->name('surat.magang.history');
         Route::get('/surat-magang/{id}', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'show'])
             ->name('surat.magang.detail');
         Route::get('/surat-magang/{id}/download-proposal', [App\Http\Controllers\Admin_Fakultas\SuratMagangController::class, 'downloadProposal'])
@@ -293,9 +303,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/sk/penguji-skripsi/{id}/download', [\App\Http\Controllers\Admin_Fakultas\SKController::class, 'downloadPengujiSkripsi'])
             ->name('sk.penguji-skripsi.download');
 
-        Route::get('/pengaturan', function () {
-            return view('admin_fakultas.pengaturan');
-        })->name('settings.index');
+        Route::get('/pengaturan', [FakultasManajemenSuratController::class, 'settings'])
+            ->name('settings.index');
     });
 
     // FITUR DEKAN
@@ -361,9 +370,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/surat-magang/{id}/reject', [App\Http\Controllers\Dekan\SuratMagangController::class, 'reject'])->name('surat_magang.reject');
         Route::get('/surat-magang/{id}/download', [App\Http\Controllers\Dekan\SuratMagangController::class, 'download'])->name('surat_magang.download');
 
-        Route::get('/arsip-surat', function () {
-            return view('dekan.arsip_surat');
-        })->name('arsip.index');
+        Route::get('/arsip-surat', [App\Http\Controllers\Dekan\PersetujuanSuratController::class, 'arsip'])->name('arsip.index');
     });
 
     // FITUR WADEK 1
@@ -427,21 +434,21 @@ Route::middleware('auth')->group(function () {
     // FITUR WADEK 2
     Route::prefix('wadek2')->name('wadek2.')->group(function () {
         // Sarana Prasarana - Peminjaman Mobil
-        Route::get('/sarpras/peminjaman-mobil', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'index'])
+        Route::get('/sarpras/peminjaman-mobil', [PeminjamanMobilWadek2Controller::class, 'index'])
             ->name('sarpras.peminjaman_mobil.index');
-        Route::get('/sarpras/peminjaman-mobil/{id}/preview-draft', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'previewDraft'])
+        Route::get('/sarpras/peminjaman-mobil/{id}/preview-draft', [PeminjamanMobilWadek2Controller::class, 'previewDraft'])
             ->name('sarpras.peminjaman_mobil.preview_draft');
-        Route::put('/sarpras/peminjaman-mobil/{id}/setujui', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'setujui'])
+        Route::put('/sarpras/peminjaman-mobil/{id}/setujui', [PeminjamanMobilWadek2Controller::class, 'setujui'])
             ->name('sarpras.peminjaman_mobil.setujui');
-        Route::put('/sarpras/peminjaman-mobil/{id}/tolak', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'tolak'])
+        Route::put('/sarpras/peminjaman-mobil/{id}/tolak', [PeminjamanMobilWadek2Controller::class, 'tolak'])
             ->name('sarpras.peminjaman_mobil.tolak');
-        Route::get('/sarpras/peminjaman-mobil/arsip', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'arsip'])
+        Route::get('/sarpras/peminjaman-mobil/arsip', [PeminjamanMobilWadek2Controller::class, 'arsip'])
             ->name('sarpras.peminjaman_mobil.arsip');
-        Route::get('/sarpras/peminjaman-mobil/{id}/download', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'downloadSurat'])
+        Route::get('/sarpras/peminjaman-mobil/{id}/download', [PeminjamanMobilWadek2Controller::class, 'downloadSurat'])
             ->name('sarpras.peminjaman_mobil.download');
 
         // Legacy route (keep for compatibility)
-        Route::get('/sarpras/persetujuan-mobil', [\App\Http\Controllers\PeminjamanMobilWadek2Controller::class, 'index'])
+        Route::get('/sarpras/persetujuan-mobil', [PeminjamanMobilWadek2Controller::class, 'index'])
             ->name('sarpras.persetujuan-mobil');
 
         Route::get('/sarpras/persetujuan-ruang', [\App\Http\Controllers\Wadek2\PeminjamanController::class, 'persetujuanRuang'])
@@ -490,15 +497,9 @@ Route::middleware('auth')->group(function () {
     // FITUR DOSEN
     Route::prefix('dosen')->name('dosen.')->group(function () {
         // PENANDA: Rute yang hilang ditambahkan di sini
-        Route::get('/riwayat', function () {
-            return view('dosen.riwayat');
-        })->name('riwayat.index');
-        Route::get('/input-nilai', function () {
-            return view('dosen.input_nilai');
-        })->name('nilai.index');
-        Route::get('/bimbingan', function () {
-            return view('dosen.bimbingan_akademik');
-        })->name('bimbingan.index');
+        Route::get('/riwayat', [DosenController::class, 'riwayat'])->name('riwayat.index');
+        Route::get('/input-nilai', [DosenController::class, 'inputNilai'])->name('nilai.index');
+        Route::get('/bimbingan', [DosenController::class, 'bimbingan'])->name('bimbingan.index');
 
         // SK Dosen Routes
         Route::get('/sk', [\App\Http\Controllers\Dosen\SKController::class, 'index'])->name('sk.index');
@@ -517,19 +518,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/sk/pembimbing-skripsi', [\App\Http\Controllers\Dosen\SKController::class, 'indexPembimbingSkripsi'])->name('sk.pembimbing-skripsi.index');
         Route::get('/sk/pembimbing-skripsi/{id}/detail', [\App\Http\Controllers\Dosen\SKController::class, 'detailPembimbingSkripsi'])->name('sk.pembimbing-skripsi.detail');
         Route::get('/sk/pembimbing-skripsi/{id}/download', [\App\Http\Controllers\Dosen\SKController::class, 'downloadPembimbingSkripsi'])->name('sk.pembimbing-skripsi.download');
+
+        // SK Penguji Skripsi
+        Route::get('/sk/penguji-skripsi', [\App\Http\Controllers\Dosen\SKController::class, 'indexPengujiSkripsi'])->name('sk.penguji-skripsi.index');
+        Route::get('/sk/penguji-skripsi/{id}/detail', [\App\Http\Controllers\Dosen\SKController::class, 'detailPengujiSkripsi'])->name('sk.penguji-skripsi.detail');
+        Route::get('/sk/penguji-skripsi/{id}/download', [\App\Http\Controllers\Dosen\SKController::class, 'downloadPengujiSkripsi'])->name('sk.penguji-skripsi.download');
     });
 
     // FITUR KAJUR
     Route::prefix('kajur')->name('kajur.')->group(function () {
-        Route::get('/verifikasi-rps', function () {
-            return view('kajur.verifikasi_rps');
-        })->name('rps.index');
-        Route::get('/laporan', function () {
-            return view('kajur.laporan_jurusan');
-        })->name('laporan.index');
-        Route::get('/persetujuan-surat', function () {
-            return view('kajur.persetujuan-surat');
-        })->name('persetujuan.index');
+        Route::get('/verifikasi-rps', [KajurController::class, 'verifikasiRps'])->name('rps.index');
+        Route::get('/laporan', [KajurController::class, 'laporan'])->name('laporan.index');
+        Route::get('/persetujuan-surat', [KajurController::class, 'persetujuanSurat'])->name('persetujuan.index');
     });
 
     // FITUR KAPRODI
@@ -566,6 +566,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.beban-mengajar.detail');
         Route::get('/sk/beban-mengajar/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadBebanMengajar'])
             ->name('sk.beban-mengajar.download');
+        Route::get('/sk/beban-mengajar/{id}/edit', [\App\Http\Controllers\Kaprodi\SKController::class, 'editBebanMengajar'])
+            ->name('sk.beban-mengajar.edit');
+        Route::put('/sk/beban-mengajar/{id}', [\App\Http\Controllers\Kaprodi\SKController::class, 'updateBebanMengajar'])
+            ->name('sk.beban-mengajar.update');
 
         // SK Beban Mengajar - Kelola Kelas
         Route::get('/sk/beban-mengajar/kelas', [\App\Http\Controllers\Kaprodi\SKController::class, 'getKelasMataKuliah'])
@@ -586,6 +590,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.dosen-wali.detail');
         Route::get('/sk/dosen-wali/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadDosenWali'])
             ->name('sk.dosen-wali.download');
+        Route::get('/sk/dosen-wali/{id}/edit', [\App\Http\Controllers\Kaprodi\SKController::class, 'editDosenWali'])
+            ->name('sk.dosen-wali.edit');
+        Route::put('/sk/dosen-wali/{id}', [\App\Http\Controllers\Kaprodi\SKController::class, 'updateDosenWali'])
+            ->name('sk.dosen-wali.update');
 
         // SK Pembimbing & Penguji Skripsi
         Route::get('/sk/pembimbing-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPembimbingSkripsi'])
@@ -596,6 +604,10 @@ Route::middleware('auth')->group(function () {
             ->name('sk.pembimbing-skripsi.history');
         Route::get('/sk/pembimbing-skripsi/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadPembimbingSkripsi'])
             ->name('sk.pembimbing-skripsi.download');
+        Route::get('/sk/pembimbing-skripsi/{id}/edit', [\App\Http\Controllers\Kaprodi\SKController::class, 'editPembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.edit');
+        Route::put('/sk/pembimbing-skripsi/{id}', [\App\Http\Controllers\Kaprodi\SKController::class, 'updatePembimbingSkripsi'])
+            ->name('sk.pembimbing-skripsi.update');
         Route::get('/sk/penguji-skripsi/create', [\App\Http\Controllers\Kaprodi\SKController::class, 'createPengujiSkripsi'])
             ->name('sk.penguji-skripsi.create');
         Route::post('/sk/penguji-skripsi/store', [\App\Http\Controllers\Kaprodi\SKController::class, 'storePengujiSkripsi'])
@@ -604,122 +616,26 @@ Route::middleware('auth')->group(function () {
             ->name('sk.penguji-skripsi.history');
         Route::get('/sk/penguji-skripsi/{id}/download', [\App\Http\Controllers\Kaprodi\SKController::class, 'downloadPengujiSkripsi'])
             ->name('sk.penguji-skripsi.download');
+        Route::get('/sk/penguji-skripsi/{id}/edit', [\App\Http\Controllers\Kaprodi\SKController::class, 'editPengujiSkripsi'])
+            ->name('sk.penguji-skripsi.edit');
+        Route::put('/sk/penguji-skripsi/{id}', [\App\Http\Controllers\Kaprodi\SKController::class, 'updatePengujiSkripsi'])
+            ->name('sk.penguji-skripsi.update');
 
-        Route::get('/kurikulum', function () {
-            return view('kaprodi.kurikulum');
-        })->name('kurikulum.index');
-        Route::get('/jadwal-kuliah', function () {
-            return view('kaprodi.jadwal_kuliah');
-        })->name('jadwal.index');
+        Route::get('/kurikulum', [KaprodiController::class, 'kurikulum'])->name('kurikulum.index');
+        Route::get('/jadwal-kuliah', [KaprodiController::class, 'jadwalKuliah'])->name('jadwal.index');
     });
 
     // FITUR MAHASISWA
     Route::prefix('mahasiswa')->name('mahasiswa.')->group(function () {
 
         // --- ROUTE GET: HALAMAN PILIHAN JENIS SURAT (CARD VIEW) ---
-        Route::get('/pengajuan-surat', function () {
-            // Definisikan surat apa saja yang boleh diajukan Mahasiswa
-            $namaSuratMahasiswa = [
-                'Surat Keterangan Aktif',
-                'Surat Rekomendasi',
-                'Surat Pengantar KP/Magang'
-            ];
-
-            // Ambil dari DB HANYA surat-surat yang ada di daftar statis
-            $jenis_surats = JenisSurat::whereIn('Nama_Surat', $namaSuratMahasiswa)
-                ->orderBy('Nama_Surat', 'asc')
-                ->get();
-
-            return view('mahasiswa.pilih_jenis_surat', [
-                'jenis_surats' => $jenis_surats
-            ]);
-        })->name('pengajuan.create');
+        Route::get('/pengajuan-surat', [PengajuanController::class, 'index'])->name('pengajuan.create');
 
         // --- ROUTE GET: FORM SURAT KETERANGAN AKTIF ---
-        Route::get('/pengajuan-surat/aktif', function () {
-            $user = Auth::user();
-            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
-
-            $prodi = null;
-            if ($mahasiswa && $mahasiswa->Id_Prodi) {
-                $prodi = Prodi::find($mahasiswa->Id_Prodi);
-            }
-
-            // Ambil ID jenis surat
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Keterangan Aktif')->first();
-
-            return view('mahasiswa.form_surat_aktif', [
-                'mahasiswa' => $mahasiswa,
-                'prodi' => $prodi,
-                'jenisSurat' => $jenisSurat
-            ]);
-        })->name('pengajuan.aktif.form');
+        Route::get('/pengajuan-surat/aktif', [SuratKeteranganAktifController::class, 'create'])->name('pengajuan.aktif.form');
 
         // --- ROUTE GET & POST: SURAT PENGANTAR MAGANG ---
-        Route::get('/pengajuan-surat/magang', function () {
-            $user = Auth::user();
-            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
-
-            $prodi = null;
-            $jurusan = null;
-            if ($mahasiswa && $mahasiswa->Id_Prodi) {
-                $prodi = Prodi::with('jurusan')->find($mahasiswa->Id_Prodi);
-                if ($prodi && $prodi->jurusan) {
-                    $jurusan = $prodi->jurusan;
-                }
-            }
-
-            // Filter dosen berdasarkan prodi mahasiswa
-            $dosens = Dosen::query()
-                ->when($mahasiswa && $mahasiswa->Id_Prodi, function ($query) use ($mahasiswa) {
-                    return $query->where('Id_Prodi', $mahasiswa->Id_Prodi);
-                })
-                ->orderBy('Nama_Dosen', 'asc')
-                ->get();
-
-            // Ambil Kaprodi
-            $kaprodi = null;
-            $kaprodiName = null;
-            $kaprodiNIP = null;
-
-            if ($mahasiswa && $mahasiswa->Id_Prodi) {
-                $kaprodiUser = \App\Models\User::where('Id_Role', 4)
-                    ->where(function ($query) use ($mahasiswa) {
-                        $query->whereHas('dosen', function ($q) use ($mahasiswa) {
-                            $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
-                        })
-                            ->orWhereHas('pegawai', function ($q) use ($mahasiswa) {
-                                $q->where('Id_Prodi', $mahasiswa->Id_Prodi);
-                            });
-                    })
-                    ->with(['dosen', 'pegawai'])
-                    ->first();
-
-                if ($kaprodiUser) {
-                    $kaprodi = $kaprodiUser;
-                    if ($kaprodiUser->dosen) {
-                        $kaprodiName = $kaprodiUser->dosen->Nama_Dosen;
-                        $kaprodiNIP = $kaprodiUser->dosen->NIP;
-                    } elseif ($kaprodiUser->pegawai) {
-                        $kaprodiName = $kaprodiUser->pegawai->Nama_Pegawai;
-                        $kaprodiNIP = $kaprodiUser->pegawai->NIP;
-                    }
-                }
-            }
-
-            $jenisSurat = JenisSurat::where('Nama_Surat', 'Surat Pengantar KP/Magang')->first();
-
-            return view('mahasiswa.magang.form_surat_magang', [
-                'mahasiswa' => $mahasiswa,
-                'prodi' => $prodi,
-                'jurusan' => $jurusan,
-                'dosens' => $dosens,
-                'kaprodi' => $kaprodi,
-                'kaprodiName' => $kaprodiName,
-                'kaprodiNIP' => $kaprodiNIP,
-                'jenisSurat' => $jenisSurat
-            ]);
-        })->name('pengajuan.magang.form');
+        Route::get('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'create'])->name('pengajuan.magang.form');
 
         Route::post('/pengajuan-surat/magang', [SuratPengantarMagangController::class, 'store'])->name('pengajuan.magang.store');
 
@@ -731,20 +647,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/invitation/{id}/reject', [SuratPengantarMagangController::class, 'rejectInvitation'])->name('invitation.reject');
 
         // --- ROUTE GET: FORM SURAT REKOMENDASI ---
-        Route::get('/pengajuan-surat/rekomendasi', function () {
-            $user = Auth::user();
-            $mahasiswa = Mahasiswa::where('Id_User', $user->Id_User)->first();
-
-            $prodi = null;
-            if ($mahasiswa && $mahasiswa->Id_Prodi) {
-                $prodi = Prodi::find($mahasiswa->Id_Prodi);
-            }
-
-            return view('mahasiswa.form_surat_rekomendasi', [
-                'mahasiswa' => $mahasiswa,
-                'prodi' => $prodi
-            ]);
-        })->name('pengajuan.rekomendasi.form');
+        Route::get('/pengajuan-surat/rekomendasi', [PengajuanController::class, 'rekomendasi'])->name('pengajuan.rekomendasi.form');
 
         // --- ROUTE POST: MENYIMPAN PENGAJUAN SURAT (MODULAR) ---
         // Route untuk Surat Keterangan Mahasiswa Aktif
@@ -808,11 +711,11 @@ Route::middleware('auth')->group(function () {
             ->name('surat.preview_form_pengantar');
 
         // --- AJAKAN MAGANG ROUTES ---
-        Route::get('/ajakan-magang', [\App\Http\Controllers\AjakanMagangController::class, 'index'])
+        Route::get('/ajakan-magang', [AjakanMagangController::class, 'index'])
             ->name('ajakan-magang');
-        Route::post('/ajakan-magang/{id}/accept', [\App\Http\Controllers\AjakanMagangController::class, 'accept'])
+        Route::post('/ajakan-magang/{id}/accept', [AjakanMagangController::class, 'accept'])
             ->name('ajakan-magang.accept');
-        Route::post('/ajakan-magang/{id}/reject', [\App\Http\Controllers\AjakanMagangController::class, 'reject'])
+        Route::post('/ajakan-magang/{id}/reject', [AjakanMagangController::class, 'reject'])
             ->name('ajakan-magang.reject');
 
         // --- ROUTE SURAT LEGALISIR ---

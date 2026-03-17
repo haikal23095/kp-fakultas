@@ -1069,4 +1069,357 @@ class SKController extends Controller
             ], 500);
         }
     }
+
+    // ===== EDIT & UPDATE METHODS FOR REJECTED SK =====
+
+    /**
+     * Show form to edit rejected SK Beban Mengajar
+     */
+    public function editBebanMengajar($id)
+    {
+        $sk = SKBebanMengajar::with(['prodi'])->findOrFail($id);
+
+        // Only allow editing if status is rejected
+        if (!in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])) {
+            return redirect()->back()->with('error', 'SK tidak dapat diedit karena statusnya bukan ditolak');
+        }
+
+        // Get user info
+        $user = Auth::user();
+        $prodi = null;
+        if ($user->dosen) {
+            $prodi = $user->dosen->prodi;
+        } elseif ($user->pegawai) {
+            $prodi = Prodi::find($user->pegawai->Id_Prodi);
+        }
+
+        $prodis = Prodi::orderBy('Nama_Prodi', 'asc')->get();
+        $dosens = Dosen::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })->orderBy('Nama_Dosen', 'asc')->get();
+
+        // Get mata kuliah with kelas
+        $mataKuliahList = MataKuliah::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })->orderBy('Nama_Matakuliah', 'asc')->get();
+
+        return view('kaprodi.sk.beban-mengajar.edit', compact('sk', 'prodis', 'dosens', 'prodi', 'mataKuliahList'));
+    }
+
+    /**
+     * Update rejected SK Beban Mengajar and resubmit
+     */
+    public function updateBebanMengajar(Request $request, $id)
+    {
+        $request->validate([
+            'prodi_id' => 'required|exists:Prodi,Id_Prodi',
+            'semester' => 'required|in:Ganjil,Genap',
+            'tahun_akademik' => 'required|string',
+            'beban' => 'required|array|min:1',
+        ]);
+
+        try {
+            $sk = SKBebanMengajar::findOrFail($id);
+
+            if (!in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])) {
+                return redirect()->back()->with('error', 'SK tidak dapat diedit karena statusnya bukan ditolak');
+            }
+
+            $dataBeban = [];
+            foreach ($request->beban as $beban) {
+                $dosenInfo = Dosen::find($beban['dosen_id']);
+                $mataKuliahInfo = MataKuliah::find($beban['mata_kuliah_id']);
+
+                $dataBeban[] = [
+                    'id_dosen' => $beban['dosen_id'],
+                    'nama_dosen' => $dosenInfo->Nama_Dosen,
+                    'nip' => $dosenInfo->NIP,
+                    'id_mata_kuliah' => $beban['mata_kuliah_id'],
+                    'nama_mata_kuliah' => $mataKuliahInfo->Nama_Matakuliah,
+                    'kelas' => $mataKuliahInfo->Kelas,
+                    'sks' => $beban['sks']
+                ];
+            }
+
+            $sk->update([
+                'Id_Prodi' => $request->prodi_id,
+                'Semester' => $request->semester,
+                'Tahun_Akademik' => $request->tahun_akademik,
+                'Data_Beban_Mengajar' => $dataBeban,
+                'Status' => 'Dikerjakan admin',
+                'Alasan-Tolak' => null,
+                'Tanggal-Pengajuan' => Carbon::now(),
+                'Tanggal-Tenggat' => Carbon::now()->addDays(3),
+            ]);
+
+            return redirect()->route('kaprodi.sk.beban-mengajar.index')
+                ->with('success', 'SK Beban Mengajar berhasil diperbarui dan diajukan ulang!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui SK: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show form to edit rejected SK Dosen Wali
+     */
+    public function editDosenWali($id)
+    {
+        $sk = SKDosenWali::with(['prodi'])->findOrFail($id);
+
+        if (!in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan', 'Ditolak'])) {
+            return redirect()->back()->with('error', 'SK tidak dapat diedit karena statusnya bukan ditolak');
+        }
+
+        $user = Auth::user();
+        $prodi = null;
+        if ($user->dosen) {
+            $prodi = $user->dosen->prodi;
+        } elseif ($user->pegawai) {
+            $prodi = Prodi::find($user->pegawai->Id_Prodi);
+        }
+
+        $prodis = Prodi::orderBy('Nama_Prodi', 'asc')->get();
+        $dosens = Dosen::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })->orderBy('Nama_Dosen', 'asc')->get();
+
+        return view('kaprodi.sk.dosen-wali.edit', compact('sk', 'prodis', 'dosens', 'prodi'));
+    }
+
+    /**
+     * Update rejected SK Dosen Wali and resubmit
+     */
+    public function updateDosenWali(Request $request, $id)
+    {
+        $request->validate([
+            'id_prodi' => 'required|exists:Prodi,Id_Prodi',
+            'semester' => 'required|in:Ganjil,Genap',
+            'tahun_akademik' => 'required|string',
+            'dosen' => 'required|array|min:1',
+        ]);
+
+        try {
+            $sk = SKDosenWali::findOrFail($id);
+
+            if (!in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan', 'Ditolak'])) {
+                return redirect()->back()->with('error', 'SK tidak dapat diedit karena statusnya bukan ditolak');
+            }
+
+            $dataDosen = [];
+            foreach ($request->dosen as $dosen) {
+                $dosenInfo = Dosen::find($dosen['id_dosen']);
+                $dataDosen[] = [
+                    'id_dosen' => $dosen['id_dosen'],
+                    'nama_dosen' => $dosenInfo->Nama_Dosen,
+                    'nip' => $dosenInfo->NIP,
+                    'jumlah_anak_wali' => $dosen['jumlah_anak_wali'],
+                    'prodi' => $dosenInfo->prodi->Nama_Prodi ?? '-'
+                ];
+            }
+
+            $sk->update([
+                'Id_Prodi' => $request->id_prodi,
+                'Semester' => $request->semester,
+                'Tahun_Akademik' => $request->tahun_akademik,
+                'Data_Dosen_Wali' => $dataDosen,
+                'Status' => 'Dikerjakan admin',
+                'Alasan-Tolak' => null,
+                'Tanggal-Pengajuan' => Carbon::now(),
+                'Tanggal-Tenggat' => Carbon::now()->addDays(3),
+            ]);
+
+            return redirect()->route('kaprodi.sk.dosen-wali.index')
+                ->with('success', 'SK Dosen Wali berhasil diperbarui dan diajukan ulang!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui SK: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show form to edit rejected SK Pembimbing Skripsi
+     */
+    public function editPembimbingSkripsi($id)
+    {
+        $sk = ReqSKPembimbingSkripsi::with(['prodi'])->findOrFail($id);
+
+        if (!in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])) {
+            return redirect()->back()->with('error', 'SK tidak dapat diedit karena statusnya bukan ditolak');
+        }
+
+        $user = Auth::user();
+        $prodi = null;
+        if ($user->dosen) {
+            $prodi = $user->dosen->prodi;
+        } elseif ($user->pegawai) {
+            $prodi = Prodi::find($user->pegawai->Id_Prodi);
+        }
+
+        $prodis = Prodi::orderBy('Nama_Prodi', 'asc')->get();
+        $dosens = Dosen::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })->orderBy('Nama_Dosen', 'asc')->get();
+        $mahasiswas = Mahasiswa::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })->orderBy('Nama_Mahasiswa', 'asc')->get();
+
+        return view('kaprodi.sk.pembimbing-skripsi.edit', compact('sk', 'prodis', 'dosens', 'mahasiswas', 'prodi'));
+    }
+
+    /**
+     * Update rejected SK Pembimbing Skripsi and resubmit
+     */
+    public function updatePembimbingSkripsi(Request $request, $id)
+    {
+        $request->validate([
+            'prodi_id' => 'required|exists:Prodi,Id_Prodi',
+            'semester' => 'required|in:Ganjil,Genap',
+            'tahun_akademik' => 'required|string',
+            'pembimbing' => 'required|array|min:1',
+            'pembimbing.*.mahasiswa_id' => 'required|exists:Mahasiswa,Id_Mahasiswa',
+            'pembimbing.*.judul_skripsi' => 'required|string|max:500',
+            'pembimbing.*.pembimbing_1' => 'required|exists:Dosen,Id_Dosen',
+            'pembimbing.*.pembimbing_2' => 'required|exists:Dosen,Id_Dosen',
+        ]);
+
+        try {
+            $sk = ReqSKPembimbingSkripsi::findOrFail($id);
+
+            if (!in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])) {
+                return redirect()->back()->with('error', 'SK tidak dapat diedit karena statusnya bukan ditolak');
+            }
+
+            $dataPembimbing = [];
+            foreach ($request->pembimbing as $item) {
+                $mahasiswaInfo = Mahasiswa::find($item['mahasiswa_id']);
+                $dosen1Info = Dosen::find($item['pembimbing_1']);
+                $dosen2Info = Dosen::find($item['pembimbing_2']);
+
+                $dataPembimbing[] = [
+                    'id_mahasiswa' => $item['mahasiswa_id'],
+                    'nama_mahasiswa' => $mahasiswaInfo->Nama_Mahasiswa,
+                    'nim' => $mahasiswaInfo->NIM,
+                    'judul_skripsi' => $item['judul_skripsi'],
+                    'pembimbing_1' => [
+                        'id_dosen' => $item['pembimbing_1'],
+                        'nama_dosen' => $dosen1Info->Nama_Dosen,
+                        'nip' => $dosen1Info->NIP,
+                    ],
+                    'pembimbing_2' => [
+                        'id_dosen' => $item['pembimbing_2'],
+                        'nama_dosen' => $dosen2Info->Nama_Dosen,
+                        'nip' => $dosen2Info->NIP,
+                    ],
+                ];
+            }
+
+            $sk->update([
+                'Id_Prodi' => $request->prodi_id,
+                'Semester' => $request->semester,
+                'Tahun_Akademik' => $request->tahun_akademik,
+                'Data_Pembimbing_Skripsi' => $dataPembimbing,
+                'Status' => 'Dikerjakan admin',
+                'Alasan-Tolak' => null,
+                'Tanggal-Pengajuan' => Carbon::now(),
+                'Tanggal-Tenggat' => Carbon::now()->addDays(3),
+            ]);
+
+            return redirect()->route('kaprodi.sk.pembimbing-skripsi.index')
+                ->with('success', 'SK Pembimbing Skripsi berhasil diperbarui dan diajukan ulang!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui SK: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Show form to edit rejected SK Penguji Skripsi
+     */
+    public function editPengujiSkripsi($id)
+    {
+        $sk = ReqSKPengujiSkripsi::with(['prodi'])->findOrFail($id);
+
+        if (!in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])) {
+            return redirect()->back()->with('error', 'SK tidak dapat diedit karena statusnya bukan ditolak');
+        }
+
+        $user = Auth::user();
+        $prodi = null;
+        if ($user->dosen) {
+            $prodi = $user->dosen->prodi;
+        } elseif ($user->pegawai) {
+            $prodi = Prodi::find($user->pegawai->Id_Prodi);
+        }
+
+        $prodis = Prodi::orderBy('Nama_Prodi', 'asc')->get();
+        $dosens = Dosen::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })->orderBy('Nama_Dosen', 'asc')->get();
+        $mahasiswas = Mahasiswa::when($prodi, function ($query) use ($prodi) {
+            return $query->where('Id_Prodi', $prodi->Id_Prodi);
+        })->orderBy('Nama_Mahasiswa', 'asc')->get();
+
+        return view('kaprodi.sk.penguji-skripsi.edit', compact('sk', 'prodis', 'dosens', 'mahasiswas', 'prodi'));
+    }
+
+    /**
+     * Update rejected SK Penguji Skripsi and resubmit
+     */
+    public function updatePengujiSkripsi(Request $request, $id)
+    {
+        $request->validate([
+            'prodi_id' => 'required|exists:Prodi,Id_Prodi',
+            'semester' => 'required|in:Ganjil,Genap',
+            'tahun_akademik' => 'required|string',
+            'penguji' => 'required|array|min:1',
+            'penguji.*.mahasiswa_id' => 'required|exists:Mahasiswa,Id_Mahasiswa',
+            'penguji.*.judul_skripsi' => 'required|string',
+            'penguji.*.penguji_1' => 'required|exists:Dosen,Id_Dosen',
+            'penguji.*.penguji_2' => 'required|exists:Dosen,Id_Dosen',
+            'penguji.*.penguji_3' => 'required|exists:Dosen,Id_Dosen',
+        ]);
+
+        try {
+            $sk = ReqSKPengujiSkripsi::findOrFail($id);
+
+            if (!in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan'])) {
+                return redirect()->back()->with('error', 'SK tidak dapat diedit karena statusnya bukan ditolak');
+            }
+
+            $dataPenguji = [];
+            foreach ($request->penguji as $item) {
+                $mahasiswa = Mahasiswa::find($item['mahasiswa_id']);
+                $p1 = Dosen::find($item['penguji_1']);
+                $p2 = Dosen::find($item['penguji_2']);
+                $p3 = Dosen::find($item['penguji_3']);
+
+                $dataPenguji[] = [
+                    'mahasiswa_id' => $item['mahasiswa_id'],
+                    'nama_mahasiswa' => $mahasiswa->Nama_Mahasiswa,
+                    'nim' => $mahasiswa->NIM,
+                    'judul_skripsi' => $item['judul_skripsi'],
+                    'penguji_1_id' => $item['penguji_1'],
+                    'nama_penguji_1' => $p1->Nama_Dosen,
+                    'penguji_2_id' => $item['penguji_2'],
+                    'nama_penguji_2' => $p2->Nama_Dosen,
+                    'penguji_3_id' => $item['penguji_3'],
+                    'nama_penguji_3' => $p3->Nama_Dosen,
+                ];
+            }
+
+            $sk->update([
+                'Id_Prodi' => $request->prodi_id,
+                'Semester' => $request->semester,
+                'Tahun_Akademik' => $request->tahun_akademik,
+                'Data_Penguji_Skripsi' => $dataPenguji,
+                'Status' => 'Dikerjakan admin',
+                'Alasan-Tolak' => null,
+                'Tanggal-Pengajuan' => Carbon::now(),
+                'Tanggal-Tenggat' => Carbon::now()->addDays(3),
+            ]);
+
+            return redirect()->route('kaprodi.sk.penguji-skripsi.index')
+                ->with('success', 'SK Penguji Skripsi berhasil diperbarui dan diajukan ulang!');
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Gagal memperbarui SK: ' . $e->getMessage());
+        }
+    }
 }

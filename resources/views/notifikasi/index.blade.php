@@ -70,6 +70,18 @@
                                 <i class="fas fa-clock me-1"></i>
                                 {{ $notif->created_at ? $notif->created_at->diffForHumans() : 'Baru saja' }}
                             </small>
+                            <br>
+                            <small class="mt-1 d-inline-block">
+                                @if(!$notif->Is_Read)
+                                    <span class="badge bg-warning text-dark">
+                                        <i class="fas fa-circle me-1" style="font-size: 6px;"></i>Belum Dibaca
+                                    </span>
+                                @else
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-check me-1"></i>Sudah Dibaca
+                                    </span>
+                                @endif
+                            </small>
                             
                             {{-- Action buttons untuk invitation --}}
                             @if(strtolower($notif->Tipe_Notifikasi) == 'invitation')
@@ -124,6 +136,14 @@
                             @endif
                         </div>
                         <div class="btn-group" onclick="event.stopPropagation();">
+                            @if(!$notif->Is_Read)
+                            <form action="{{ route('notifikasi.markRead', $notif->Id_Notifikasi) }}" method="POST" class="d-inline" onsubmit="event.stopPropagation();">
+                                @csrf
+                                <button type="submit" class="btn btn-sm btn-outline-primary" title="Tandai Sudah Dibaca">
+                                    <i class="fas fa-check"></i>
+                                </button>
+                            </form>
+                            @endif
                             <form action="{{ route('notifikasi.delete', $notif->Id_Notifikasi) }}" method="POST" class="d-inline" onsubmit="event.stopPropagation(); return confirm('Hapus notifikasi ini?');">
                                 @csrf
                                 @method('DELETE')

@@ -164,152 +164,170 @@ class SKPembimbingSkripsiController extends Controller
 
             Log::info('Related requests updated to Selesai');
 
-            // Kirim notifikasi ke Admin Fakultas (Pegawai_Fakultas)
-            $adminUser = User::whereHas('role', function ($q) {
+            DB::commit();
+
+            // --- PROSES NOTIFIKASI (DI LUAR TRANSAKSI) ---
+
+            // 1. Kirim notifikasi ke Admin Fakultas (Pegawai_Fakultas)
+            $adminUsers = User::whereHas('role', function ($q) {
                 $q->where('Name_Role', 'Pegawai_Fakultas');
-            })->first();
+            })->get();
 
-            if ($adminUser) {
-                Notifikasi::create([
-                    'Dest_user' => $adminUser->Id_User,
-                    'Source_User' => Auth::id(),
-                    'Tipe_Notifikasi' => 'Accepted',
-                    'Pesan' => 'SK Pembimbing Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditandatangani oleh Dekan',
-                    'Data_Tambahan' => json_encode([
-                        'acc_id' => $sk->No,
-                        'nomor_surat' => $sk->Nomor_Surat,
-                        'semester' => $sk->Semester,
-                        'tahun_akademik' => $sk->Tahun_Akademik,
-                        'qr_code' => $qrCodePath
-                    ]),
-                    'Is_Read' => false
-                ]);
-
-                Log::info('Notification sent to Admin Fakultas on approval', ['admin_id' => $adminUser->Id_User]);
-
-                // Kirim Notifikasi WhatsApp ke Admin via WAHA
-                if ($adminUser->No_WA) {
-                    try {
-                        $pesanWA = "✅ *SK PEMBIMBING SKRIPSI DISETUJUI*\n\nSK Pembimbing Skripsi Semester {$sk->Semester} Tahun Akademik {$sk->Tahun_Akademik} telah disetujui dan ditandatangani oleh Dekan.\n\n*Nomor Surat:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
-                        $this->waha->sendMessage($adminUser->No_WA, $pesanWA);
-                        Log::info('WhatsApp notification sent to Admin Fakultas');
-                    } catch (\Exception $e) {
-                        Log::error('Error sending WhatsApp notification to Admin: ' . $e->getMessage());
-                    }
-                }
-            } else {
-                Log::warning('Admin Fakultas user not found for approval notification');
-            }
-
-            // Kirim notifikasi ke Kaprodi terkait
-            $reqSKList = ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $sk->No)
-                ->with('kaprodi.user')
-                ->get();
-
-            $notificationsSent = 0;
-            foreach ($reqSKList as $reqSK) {
-                if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
+            $adminNotificationsSent = 0;
+            foreach ($adminUsers as $adminUser) {
+                try {
                     Notifikasi::create([
-                        'Dest_user' => $reqSK->kaprodi->user->Id_User,
+                        'Dest_user' => $adminUser->Id_User,
                         'Source_User' => Auth::id(),
                         'Tipe_Notifikasi' => 'Accepted',
-                        'Pesan' => 'SK Pembimbing Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' yang Anda ajukan telah ditandatangani oleh Dekan',
+                        'Pesan' => 'SK Pembimbing Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditandatangani oleh Dekan',
                         'Data_Tambahan' => json_encode([
-                            'req_id' => $reqSK->No,
                             'acc_id' => $sk->No,
+                            'nomor_surat' => $sk->Nomor_Surat,
                             'semester' => $sk->Semester,
-                            'tahun_akademik' => $sk->Tahun_Akademik
+                            'tahun_akademik' => $sk->Tahun_Akademik,
+                            'qr_code' => $qrCodePath
                         ]),
                         'Is_Read' => false
                     ]);
-                    $notificationsSent++;
 
-                    Log::info('Notification sent to Kaprodi on approval', [
-                        'kaprodi_id' => $reqSK->kaprodi->user->Id_User,
-                        'req_id' => $reqSK->No
-                    ]);
+                    if ($adminUser->No_WA) {
+                        $pesanWA = "✅ *SK PEMBIMBING SKRIPSI DISETUJUI*\n\nSK Pembimbing Skripsi Semester {$sk->Semester} Tahun Akademik {$sk->Tahun_Akademik} telah disetujui dan ditandatangani oleh Dekan.\n\n*Nomor Surat:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                        $this->waha->sendMessage($adminUser->No_WA, $pesanWA);
+                    }
+                    $adminNotificationsSent++;
+                } catch (\Exception $e) {
+                    Log::error('Error sending admin notification: ' . $e->getMessage());
+                }
+            }
 
-                    // Kirim Notifikasi WhatsApp ke Kaprodi via WAHA
-                    if ($reqSK->kaprodi && $reqSK->kaprodi->user && $reqSK->kaprodi->user->No_WA) {
+            Log::info('Notifications sent to Admin Fakultas on approval', ['count' => $adminNotificationsSent]);
+
+            // 2. Kirim notifikasi ke Kaprodi terkait
+            $reqSKList = ReqSKPembimbingSkripsi::where('Id_Acc_SK_Pembimbing_Skripsi', $sk->No)
+                ->with(['kaprodi.user'])
+                ->get();
+
+            $kaprodiNotificationsSent = 0;
+            $sentToKaprodiIds = [];
+            foreach ($reqSKList as $reqSK) {
+                if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
+                    $kaprodiUserId = $reqSK->kaprodi->user->Id_User;
+
+                    // Hindari duplikasi notifikasi untuk kaprodi yang sama
+                    if (!in_array($kaprodiUserId, $sentToKaprodiIds)) {
                         try {
-                            $pesanWA = "✅ *SK PEMBIMBING SKRIPSI DISETUJUI*\n\nSK Pembimbing Skripsi Semester {$sk->Semester} Tahun Akademik {$sk->Tahun_Akademik} yang Anda ajukan telah disetujui dan ditandatangani oleh Dekan.\n\n*Nomor Surat:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
-                            $this->waha->sendMessage($reqSK->kaprodi->user->No_WA, $pesanWA);
+                            Notifikasi::create([
+                                'Dest_user' => $kaprodiUserId,
+                                'Source_User' => Auth::id(),
+                                'Tipe_Notifikasi' => 'Accepted',
+                                'Pesan' => 'SK Pembimbing Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' yang Anda ajukan telah ditandatangani oleh Dekan.',
+                                'Data_Tambahan' => json_encode([
+                                    'req_id' => $reqSK->No,
+                                    'acc_id' => $sk->No,
+                                    'semester' => $sk->Semester,
+                                    'tahun_akademik' => $sk->Tahun_Akademik,
+                                    'qr_code' => $qrCodePath
+                                ]),
+                                'Is_Read' => false
+                            ]);
+
+                            if ($reqSK->kaprodi->user->No_WA) {
+                                $pesanWA = "✅ *SK PEMBIMBING SKRIPSI DISETUJUI*\n\nSK Pembimbing Skripsi Semester {$sk->Semester} {$sk->Tahun_Akademik} yang Anda ajukan telah ditandatangani oleh Dekan.\n\n*Nomor SK:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
+                                $this->waha->sendMessage($reqSK->kaprodi->user->No_WA, $pesanWA);
+                                Log::info('WhatsApp notification sent to Kaprodi', ['no_wa' => $reqSK->kaprodi->user->No_WA]);
+                            }
+
+                            $sentToKaprodiIds[] = $kaprodiUserId;
+                            $kaprodiNotificationsSent++;
                         } catch (\Exception $e) {
-                            Log::error('Error sending WhatsApp notification to Kaprodi: ' . $e->getMessage());
+                            Log::error('Error sending kaprodi notification: ' . $e->getMessage());
                         }
+
+                        Log::info('Internal notification sent to Kaprodi on approval', [
+                            'kaprodi_id' => $kaprodiUserId,
+                            'req_id' => $reqSK->No
+                        ]);
                     }
                 }
             }
 
-            Log::info('Total notifications sent to Kaprodi on approval', ['count' => $notificationsSent]);
+            Log::info('Total notifications sent to Kaprodi on approval', ['count' => $kaprodiNotificationsSent]);
 
-            // Kirim notifikasi ke semua Dosen yang ada di Data_Pembimbing_Skripsi
+            // 3. Kirim notifikasi ke semua Dosen yang ada di Data_Pembimbing_Skripsi
             $dataPembimbing = $sk->Data_Pembimbing_Skripsi;
             if (is_string($dataPembimbing)) {
                 $dataPembimbing = json_decode($dataPembimbing, true);
             }
 
             $dosenNotificationsSent = 0;
-            $uniqueDosenIds = [];
+            $allDosenNips = [];
+            $allDosenIds = [];
 
             if (is_array($dataPembimbing)) {
                 foreach ($dataPembimbing as $mahasiswa) {
-                    // Ambil ID pembimbing 1
-                    if (isset($mahasiswa['pembimbing_1']) && isset($mahasiswa['pembimbing_1']['id_dosen'])) {
-                        $uniqueDosenIds[] = $mahasiswa['pembimbing_1']['id_dosen'];
-                    }
-
-                    // Ambil ID pembimbing 2
-                    if (isset($mahasiswa['pembimbing_2']) && isset($mahasiswa['pembimbing_2']['id_dosen'])) {
-                        $uniqueDosenIds[] = $mahasiswa['pembimbing_2']['id_dosen'];
+                    foreach (['pembimbing_1', 'pembimbing_2'] as $pKey) {
+                        if (isset($mahasiswa[$pKey])) {
+                            $p = $mahasiswa[$pKey];
+                            if (is_array($p)) {
+                                if (!empty($p['nip']))
+                                    $allDosenNips[] = $p['nip'];
+                                if (!empty($p['id_dosen']))
+                                    $allDosenIds[] = $p['id_dosen'];
+                            } elseif (!empty($p)) {
+                                $allDosenIds[] = $p;
+                            }
+                        }
                     }
                 }
 
-                // Hapus duplikat ID dosen
-                $uniqueDosenIds = array_unique($uniqueDosenIds);
+                $uniqueDosenNips = array_unique(array_filter($allDosenNips));
+                $uniqueDosenIds = array_unique(array_filter($allDosenIds));
 
-                // Kirim notifikasi ke setiap dosen pembimbing
-                foreach ($uniqueDosenIds as $idDosen) {
-                    $dosen = Dosen::with('user')->find($idDosen);
+                // Ambil data dosen berdasarkan NIP atau ID Dosen (Id_User via Dosen -> Users)
+                $dosensToNotify = Dosen::with(['user'])
+                    ->whereIn('NIP', $uniqueDosenNips)
+                    ->orWhereIn('Id_Dosen', $uniqueDosenIds)
+                    ->get();
+
+                foreach ($dosensToNotify as $dosen) {
                     if ($dosen && $dosen->user) {
-                        Notifikasi::create([
-                            'Dest_user' => $dosen->user->Id_User,
-                            'Source_User' => Auth::id(),
-                            'Tipe_Notifikasi' => 'Accepted',
-                            'Pesan' => 'Anda telah ditetapkan sebagai Dosen Pembimbing Skripsi untuk semester ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . '. SK telah ditandatangani oleh Dekan.',
-                            'Data_Tambahan' => json_encode([
-                                'acc_id' => $sk->No,
-                                'nomor_surat' => $sk->Nomor_Surat,
-                                'semester' => $sk->Semester,
-                                'tahun_akademik' => $sk->Tahun_Akademik,
-                                'qr_code' => $qrCodePath
-                            ]),
-                            'Is_Read' => false
-                        ]);
-                        $dosenNotificationsSent++;
+                        try {
+                            Notifikasi::create([
+                                'Dest_user' => $dosen->user->Id_User,
+                                'Source_User' => Auth::id(),
+                                'Tipe_Notifikasi' => 'Accepted',
+                                'Pesan' => 'Anda telah ditetapkan sebagai Dosen Pembimbing Skripsi untuk semester ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . '. SK telah ditandatangani oleh Dekan.',
+                                'Data_Tambahan' => json_encode([
+                                    'acc_id' => $sk->No,
+                                    'nomor_surat' => $sk->Nomor_Surat,
+                                    'semester' => $sk->Semester,
+                                    'tahun_akademik' => $sk->Tahun_Akademik,
+                                    'qr_code' => $qrCodePath
+                                ]),
+                                'Is_Read' => false
+                            ]);
 
-                        Log::info('Notification sent to Dosen Pembimbing on approval', [
-                            'dosen_id' => $dosen->Id_Dosen,
-                            'user_id' => $dosen->user->Id_User,
-                            'nama_dosen' => $dosen->Nama_Dosen
-                        ]);
-
-                        // Kirim Notifikasi WhatsApp ke Dosen Pembimbing via WAHA
-                        if ($dosen->user->No_WA) {
-                            try {
-                                $pesanWA = "✅ *SK PENETAPAN DOSEN PEMBIMBING*\n\nAnda telah ditetapkan sebagai Dosen Pembimbing Skripsi untuk semester {$sk->Semester} {$sk->Tahun_Akademik}.\n\n*Nomor SK:* {$sk->Nomor_Surat}\n\nSK telah ditandatangani oleh Dekan. Silakan cek di sistem SIFAKULTAS.\n\n_Sistem SIFAKULTAS_";
+                            if ($dosen->user->No_WA) {
+                                $pesanWA = "✅ *SK PENETAPAN DOSEN PEMBIMBING*\n\nAnda telah ditetapkan sebagai Dosen Pembimbing Skripsi untuk Semester {$sk->Semester} {$sk->Tahun_Akademik}.\n\nSK telah ditandatangani oleh Dekan.\n\n*Nomor SK:* {$sk->Nomor_Surat}\n\n_Sistem SIFAKULTAS_";
                                 $this->waha->sendMessage($dosen->user->No_WA, $pesanWA);
-                            } catch (\Exception $e) {
-                                Log::error('Error sending WhatsApp notification to Dosen: ' . $e->getMessage());
+                                Log::info('WhatsApp notification sent to Dosen Pembimbing', ['no_wa' => $dosen->user->No_WA, 'dosen_name' => $dosen->Nama_Dosen]);
                             }
+                            $dosenNotificationsSent++;
+
+                            Log::info('Internal notification sent to Dosen Pembimbing on approval', [
+                                'dosen_id' => $dosen->Id_Dosen,
+                                'user_id' => $dosen->user->Id_User,
+                                'nama_dosen' => $dosen->Nama_Dosen
+                            ]);
+                        } catch (\Exception $e) {
+                            Log::error('Error sending dosen notification: ' . $e->getMessage());
                         }
                     }
                 }
             }
 
             Log::info('Total notifications sent to Dosen Pembimbing on approval', ['count' => $dosenNotificationsSent]);
-
-            DB::commit();
 
             return response()->json([
                 'success' => true,
@@ -318,7 +336,10 @@ class SKPembimbingSkripsiController extends Controller
             ]);
 
         } catch (\Exception $e) {
-            DB::rollBack();
+            // Jika dalam transaksi, rollback
+            if (DB::transactionLevel() > 0) {
+                DB::rollBack();
+            }
             Log::error('Error approving SK Pembimbing Skripsi', [
                 'error' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
@@ -408,11 +429,14 @@ class SKPembimbingSkripsiController extends Controller
                 $notificationsSent = 0;
                 foreach ($reqSKList as $reqSK) {
                     if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
+                        $kaprodiUser = $reqSK->kaprodi->user;
+                        $notifPesan = 'SK Pembimbing Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' ditolak oleh Dekan. Alasan: ' . $request->alasan;
+
                         Notifikasi::create([
-                            'Dest_user' => $reqSK->kaprodi->user->Id_User,
+                            'Dest_user' => $kaprodiUser->Id_User,
                             'Source_User' => Auth::id(),
                             'Tipe_Notifikasi' => 'Rejected',
-                            'Pesan' => 'SK Pembimbing Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' ditolak oleh Dekan. Alasan: ' . $request->alasan,
+                            'Pesan' => $notifPesan,
                             'Data_Tambahan' => json_encode([
                                 'req_id' => $reqSK->No,
                                 'acc_id' => $sk->No,
@@ -422,10 +446,20 @@ class SKPembimbingSkripsiController extends Controller
                             ]),
                             'Is_Read' => false
                         ]);
+
+                        // Kirim WhatsApp (WAHA)
+                        if ($kaprodiUser->No_WA) {
+                            try {
+                                $this->waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                            } catch (\Exception $e) {
+                                Log::error('Dekan Reject - WA Error: ' . $e->getMessage());
+                            }
+                        }
+
                         $notificationsSent++;
 
                         Log::info('Notification sent to Kaprodi on rejection', [
-                            'kaprodi_id' => $reqSK->kaprodi->user->Id_User,
+                            'kaprodi_id' => $kaprodiUser->Id_User,
                             'req_id' => $reqSK->No
                         ]);
                     }

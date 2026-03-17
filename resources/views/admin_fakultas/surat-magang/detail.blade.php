@@ -39,7 +39,7 @@
                 <div class="row mb-3">
                     <div class="col-md-4 fw-bold">Nomor Surat:</div>
                     <div class="col-md-8">
-                        <span class="badge bg-primary">{{ $surat->tugasSurat?->Nomor_Surat ?? $surat->Nomor_Surat ?? '-' }}</span>
+                        <span class="badge bg-primary">{{ $surat->Nomor_Surat ?? '-' }}</span>
                     </div>
                 </div>
 
@@ -57,7 +57,7 @@
 
                 <div class="row mb-3">
                     <div class="col-md-4 fw-bold">Program Studi:</div>
-                    <div class="col-md-8">{{ $surat->tugasSurat?->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi ?? 'N/A' }}</div>
+                    <div class="col-md-8">{{ $surat->pemberiTugas?->mahasiswa?->prodi?->Nama_Prodi ?? 'N/A' }}</div>
                 </div>
 
                 <div class="row mb-3">
@@ -146,7 +146,7 @@
                                id="nomor_surat" 
                                name="nomor_surat" 
                                placeholder="Contoh: 123/UN16.FT/TU/2025"
-                               value="{{ old('nomor_surat', $surat->tugasSurat?->Nomor_Surat ?? '') }}"
+                               value="{{ old('nomor_surat', $surat->Nomor_Surat ?? '') }}"
                                required>
                         @error('nomor_surat')
                             <div class="invalid-feedback">{{ $message }}</div>
@@ -184,8 +184,8 @@
                 <div class="mb-2">
                     <small class="text-muted">Nomor Surat:</small>
                     <br>
-                    @if($surat->tugasSurat && $surat->tugasSurat->Nomor_Surat)
-                        <span class="badge bg-success"><i class="fas fa-check"></i> {{ $surat->tugasSurat->Nomor_Surat }}</span>
+                    @if($surat->Nomor_Surat)
+                        <span class="badge bg-success"><i class="fas fa-check"></i> {{ $surat->Nomor_Surat }}</span>
                     @else
                         <span class="badge bg-secondary"><i class="fas fa-clock"></i> Belum Diberikan</span>
                     @endif

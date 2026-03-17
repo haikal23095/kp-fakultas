@@ -42,7 +42,15 @@
                     <div class="text-start">
                         <p class="mb-1"><strong>NIM:</strong> {{ $user->mahasiswa->NIM }}</p>
                         <p class="mb-1"><strong>Prodi:</strong> {{ $user->mahasiswa->prodi->Nama_Prodi ?? '-' }}</p>
-                        <p class="mb-0"><strong>Semester:</strong> {{ $user->mahasiswa->Semester ?? '-' }}</p>
+                        <p class="mb-1"><strong>Semester:</strong> {{ $user->mahasiswa->Semester ?? '-' }}</p>
+                        <p class="mb-0">
+                            <strong>Status KP:</strong> 
+                            @if($user->mahasiswa->Status_KP === 'Sedang_Melaksanakan')
+                                <span class="badge bg-success">Sedang Melaksanakan</span>
+                            @else
+                                <span class="badge bg-secondary">Tidak Sedang Melaksanakan</span>
+                            @endif
+                        </p>
                     </div>
                     @endif
 
@@ -142,6 +150,60 @@
                     </form>
                 </div>
             </div>
+
+            {{-- Status KP (Khusus Mahasiswa) --}}
+            @if($user->mahasiswa)
+            <div class="card shadow mt-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Status Kerja Praktek</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div>
+                            <h5 class="mb-1">Status KP Saat Ini</h5>
+                            <p class="mb-0 text-muted">Ubah status pelaksanaan Kerja Praktek Anda</p>
+                        </div>
+                        <div>
+                            @if($user->mahasiswa->Status_KP === 'Sedang_Melaksanakan')
+                                <span class="badge bg-success fs-6 px-3 py-2">
+                                    <i class="fas fa-check-circle me-1"></i> Sedang Melaksanakan
+                                </span>
+                            @else
+                                <span class="badge bg-secondary fs-6 px-3 py-2">
+                                    <i class="fas fa-times-circle me-1"></i> Tidak Sedang Melaksanakan
+                                </span>
+                            @endif
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info py-2 mb-3">
+                        <small>
+                            <i class="fas fa-info-circle me-1"></i> 
+                            @if($user->mahasiswa->Status_KP === 'Sedang_Melaksanakan')
+                                Anda sedang dalam status <strong>Sedang Melaksanakan KP</strong>. Klik tombol di bawah untuk mengubah status menjadi "Tidak Sedang Melaksanakan".
+                            @else
+                                Anda sedang dalam status <strong>Tidak Sedang Melaksanakan KP</strong>. Klik tombol di bawah untuk mengubah status menjadi "Sedang Melaksanakan".
+                            @endif
+                        </small>
+                    </div>
+
+                    <form action="{{ route('profile.toggleStatusKP') }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin mengubah Status KP?')">
+                        @csrf
+                        <div class="d-flex justify-content-end">
+                            @if($user->mahasiswa->Status_KP === 'Sedang_Melaksanakan')
+                                <button type="submit" class="btn btn-success btn-lg">
+                                    <i class="fas fa-toggle-on me-2"></i>Ubah ke Tidak Sedang Melaksanakan
+                                </button>
+                            @else
+                                <button type="submit" class="btn btn-secondary btn-lg">
+                                    <i class="fas fa-toggle-off me-2"></i>Ubah ke Sedang Melaksanakan
+                                </button>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+            </div>
+            @endif
         </div>
     </div>
 </div>

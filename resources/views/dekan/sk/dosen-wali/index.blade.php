@@ -266,16 +266,16 @@
                                     @endswitch
                                 </td>
                                 <td class="text-center">
-                                    <div class="d-flex gap-2 justify-content-center">
-                                        <button type="button" class="btn btn-info btn-sm" title="Lihat Detail" onclick="showDetail({{ $sk->No }})">
+                                    <div class="btn-group btn-group-sm" role="group">
+                                        <button type="button" class="btn btn-primary" title="Lihat Detail" onclick="showDetail({{ $sk->No }})">
                                             <i class="fas fa-eye me-1"></i> Detail
                                         </button>
                                         @if($sk->Status == 'Menunggu-Persetujuan-Dekan')
-                                            <button type="button" class="btn btn-success btn-sm" title="Setujui & TTD" onclick="approveSK({{ $sk->No }})">
-                                                <i class="fas fa-check me-1"></i> Setujui
+                                            <button type="button" class="btn btn-success" title="Setujui & TTD" onclick="approveSK({{ $sk->No }})">
+                                                <i class="fas fa-check-circle"></i>
                                             </button>
-                                            <button type="button" class="btn btn-danger btn-sm" title="Tolak" onclick="rejectSK({{ $sk->No }})">
-                                                <i class="fas fa-times me-1"></i> Tolak
+                                            <button type="button" class="btn btn-danger" title="Tolak" onclick="rejectSK({{ $sk->No }})">
+                                                <i class="fas fa-times-circle"></i>
                                             </button>
                                         @endif
                                     </div>

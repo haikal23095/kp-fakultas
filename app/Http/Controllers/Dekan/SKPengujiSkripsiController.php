@@ -459,11 +459,14 @@ class SKPengujiSkripsiController extends Controller
 
                         // Hindari duplikasi notifikasi untuk kaprodi yang sama
                         if (!in_array($kaprodiUserId, $sentToKaprodiIds)) {
+                            $kaprodiUser = $reqSK->kaprodi->user;
+                            $notifPesan = 'SK Penguji Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' ditolak oleh Dekan. Alasan: ' . $request->alasan;
+
                             Notifikasi::create([
                                 'Dest_user' => $kaprodiUserId,
                                 'Source_User' => Auth::id(),
                                 'Tipe_Notifikasi' => 'Rejected',
-                                'Pesan' => 'SK Penguji Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' ditolak oleh Dekan. Alasan: ' . $request->alasan,
+                                'Pesan' => $notifPesan,
                                 'Data_Tambahan' => json_encode([
                                     'req_id' => $reqSK->No,
                                     'acc_id' => $sk->No,
@@ -473,6 +476,15 @@ class SKPengujiSkripsiController extends Controller
                                 ]),
                                 'Is_Read' => false
                             ]);
+
+                            // Kirim WhatsApp (WAHA)
+                            if ($kaprodiUser->No_WA) {
+                                try {
+                                    $this->waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                                } catch (\Exception $e) {
+                                    Log::error('Dekan Reject - WA Error: ' . $e->getMessage());
+                                }
+                            }
 
                             $sentToKaprodiIds[] = $kaprodiUserId;
                             $notificationsSent++;

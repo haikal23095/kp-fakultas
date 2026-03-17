@@ -7,11 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use App\Models\TugasSurat;
 use App\Models\SuratTidakBeasiswa;
-use App\Models\JenisSurat;
 use App\Models\Pejabat;
 use App\Models\Mahasiswa;
+use App\Models\SuratVerification;
 use Carbon\Carbon;
 
 class SuratTidakBeasiswaController extends Controller
@@ -28,16 +27,7 @@ class SuratTidakBeasiswaController extends Controller
             return redirect()->back()->with('error', 'Data mahasiswa tidak ditemukan.');
         }
 
-        // Ambil ID Jenis Surat
-        $jenisSurat = JenisSurat::where('Nama_Surat', 'LIKE', '%Tidak%Beasiswa%')
-            ->orWhere('Nama_Surat', 'LIKE', '%Tidak Menerima Beasiswa%')
-            ->first();
-
-        if (!$jenisSurat) {
-            return redirect()->back()->with('error', 'Jenis surat tidak ditemukan di database. Hubungi admin.');
-        }
-
-        return view('mahasiswa.pengajuan-surat.form_surat_tidak_beasiswa', compact('mahasiswa', 'jenisSurat'));
+        return view('mahasiswa.pengajuan.form_surat_tidak_beasiswa', compact('mahasiswa'));
     }
 
     /**
@@ -47,7 +37,6 @@ class SuratTidakBeasiswaController extends Controller
     {
         // Validasi
         $validator = Validator::make($request->all(), [
-            'Id_Jenis_Surat' => 'required|integer',
             'nama_orang_tua' => 'required|string|max:255',
             'pekerjaan_orang_tua' => 'required|string|max:255',
             'pendapatan_orang_tua' => 'required|numeric|min:0',
@@ -80,33 +69,22 @@ class SuratTidakBeasiswaController extends Controller
             }
 
             // Cari Pejabat (Wakil Dekan 3 / Kemahasiswaan)
-            $pejabat = Pejabat::where(function($query) {
+            $pejabat = Pejabat::where(function ($query) {
                 $query->where('Nama_Jabatan', 'LIKE', '%Wakil Dekan III%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%Wakil Dekan 3%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%Kemahasiswaan%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%WD3%')
-                      ->orWhere('Nama_Jabatan', 'LIKE', '%WD 3%');
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%Wakil Dekan 3%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%Kemahasiswaan%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%WD3%')
+                    ->orWhere('Nama_Jabatan', 'LIKE', '%WD 3%');
             })
-            ->first();
+                ->first();
 
             $idPejabat = $pejabat ? $pejabat->Id_Pejabat : null;
 
             // Upload File
             $path = $request->file('file_pernyataan')->store('surat_pernyataan', 'public');
 
-            // Insert ke Tabel Induk (Tugas_Surat)
-            $tugasSurat = TugasSurat::create([
-                'Id_Pemberi_Tugas_Surat' => $user->Id_User,
-                'Id_Jenis_Surat' => $request->Id_Jenis_Surat,
-                'Judul_Tugas_Surat' => 'Permohonan Surat Keterangan Tidak Menerima Beasiswa',
-                'Status' => 'baru',
-                'Tanggal_Diberikan_Tugas_Surat' => Carbon::now(),
-                'Tanggal_Tenggat_Tugas_Surat' => Carbon::now()->addDays(5),
-            ]);
-
-            // Insert ke Tabel Child (Surat_Tidak_Beasiswa)
+            // Insert langsung ke Surat_Tidak_Beasiswa
             SuratTidakBeasiswa::create([
-                'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
                 'Id_User' => $user->Id_User,
                 'Id_Pejabat' => $idPejabat,
                 'Nama_Orang_Tua' => $request->nama_orang_tua,
@@ -115,11 +93,13 @@ class SuratTidakBeasiswaController extends Controller
                 'NIP_Orang_Tua' => $request->nip_orang_tua,
                 'Keperluan' => $request->keperluan,
                 'File_Pernyataan' => $path,
+                'Status' => 'baru',
+                'Tanggal_Diberikan' => Carbon::now(),
             ]);
 
             DB::commit();
 
-            return redirect()->route('mahasiswa.pengajuan.create')
+            return redirect()->route('mahasiswa.riwayat.tidak_beasiswa')
                 ->with('success', 'Pengajuan surat berhasil dikirim. Silakan cek status di menu Riwayat.');
 
         } catch (\Exception $e) {
@@ -139,21 +119,18 @@ class SuratTidakBeasiswaController extends Controller
         $user = Auth::user()->load(['pegawaiFakultas.fakultas']);
         $fakultasId = $user->pegawaiFakultas?->Id_Fakultas;
 
-        // Ambil TugasSurat yang memiliki relasi suratTidakBeasiswa
-        $daftarTugas = TugasSurat::whereHas('suratTidakBeasiswa')
-            ->when($fakultasId, function ($q) use ($fakultasId) {
-                // Filter berdasarkan fakultas pengaju (mahasiswa)
-                $q->whereHas('pemberiTugas.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
-                    $subQ->where('Id_Fakultas', $fakultasId);
-                });
-            })
+        // Ambil SuratTidakBeasiswa langsung
+        $daftarTugas = SuratTidakBeasiswa::when($fakultasId, function ($q) use ($fakultasId) {
+            // Filter berdasarkan fakultas pengaju (mahasiswa)
+            $q->whereHas('user.mahasiswa.prodi.fakultas', function ($subQ) use ($fakultasId) {
+                $subQ->where('Id_Fakultas', $fakultasId);
+            });
+        })
             ->with([
-                'suratTidakBeasiswa',
-                'pemberiTugas.role',
-                'pemberiTugas.mahasiswa.prodi',
-                'jenisSurat'
+                'user.mahasiswa.prodi',
+                'pejabat'
             ])
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->orderBy('Tanggal_Diberikan', 'desc')
             ->paginate(15);
 
         return view('admin_fakultas.surat_tidak_beasiswa.index', compact('daftarTugas'));
@@ -166,43 +143,37 @@ class SuratTidakBeasiswaController extends Controller
     {
         $user = Auth::user();
 
-        // Ambil surat dengan verifikasi QR
-        $tugasSurat = TugasSurat::with([
-            'jenisSurat',
-            'pemberiTugas.mahasiswa.prodi.fakultas',
-            'penerimaTugas',
-            'suratTidakBeasiswa.pejabat',
-            'verification.penandatangan.pegawai',
-            'verification.penandatangan.dosen'
+        // Ambil surat langsung
+        $surat = SuratTidakBeasiswa::with([
+            'user.mahasiswa.prodi.fakultas',
+            'pejabat'
         ])
-            ->where('Id_Tugas_Surat', $id)
-            ->where('Id_Pemberi_Tugas_Surat', $user->Id_User)
+            ->where('id', $id)
+            ->where('Id_User', $user->Id_User)
             ->firstOrFail();
 
         // Cek apakah surat sudah selesai
-        $statusLower = strtolower(trim($tugasSurat->Status));
-        if ($statusLower !== 'selesai' && $statusLower !== 'telah ditandatangani dekan') {
+        $statusLower = strtolower(trim($surat->Status));
+        if ($statusLower !== 'selesai' && $statusLower !== 'telah ditandatangani dekan' && $statusLower !== 'success') {
             return redirect()->route('mahasiswa.riwayat.tidak_beasiswa')
-                ->with('error', 'Surat belum dapat diunduh. Status: ' . $tugasSurat->Status);
+                ->with('error', 'Surat belum dapat diunduh. Status: ' . $surat->Status);
         }
 
-        // Cek apakah ada data surat tidak beasiswa
-        if (!$tugasSurat->suratTidakBeasiswa) {
-            return redirect()->route('mahasiswa.riwayat.tidak_beasiswa')
-                ->with('error', 'Data surat tidak ditemukan.');
-        }
+        // Ambil verification
+        $verification = SuratVerification::with(['penandatangan.pegawai', 'penandatangan.dosen'])
+            ->where('id_letter', $id)
+            ->where('letter_type', 'tidak_beasiswa')
+            ->first();
 
-        $mahasiswa = $tugasSurat->pemberiTugas->mahasiswa;
-        $suratTidakBeasiswa = $tugasSurat->suratTidakBeasiswa;
+        $mahasiswa = $surat->user->mahasiswa;
 
         // Render PDF view
         return view('mahasiswa.pdf.surat_tidak_beasiswa', [
-            'surat' => $tugasSurat,
+            'surat' => $surat,
             'mahasiswa' => $mahasiswa,
-            'jenisSurat' => $tugasSurat->jenisSurat,
-            'suratTidakBeasiswa' => $suratTidakBeasiswa,
-            'verification' => $tugasSurat->verification,
-            'mode' => 'preview'
+            'suratTidakBeasiswa' => $surat,
+            'verification' => $verification,
+            'mode' => 'download'
         ]);
     }
 }

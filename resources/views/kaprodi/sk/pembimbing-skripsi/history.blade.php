@@ -277,6 +277,13 @@
                                                 title="Lihat Detail">
                                             <i class="fas fa-eye"></i> Detail
                                         </button>
+                                        @if(in_array($sk->Status, ['Ditolak-Admin', 'Ditolak-Wadek1', 'Ditolak-Dekan']))
+                                        <a href="{{ route('kaprodi.sk.pembimbing-skripsi.edit', $sk->No) }}" 
+                                           class="btn btn-outline-warning" 
+                                           title="Edit & Ajukan Ulang">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        @endif
                                         @if($sk->Status == 'Selesai' && $sk->accSKPembimbingSkripsi && $sk->accSKPembimbingSkripsi->Nomor_Surat)
                                         <a href="{{ route('kaprodi.sk.pembimbing-skripsi.download', $sk->No) }}" 
                                            class="btn btn-outline-warning" 

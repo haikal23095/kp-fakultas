@@ -4,7 +4,6 @@ namespace App\Http\Controllers\Admin_Prodi;
 
 
 use App\Http\Controllers\Controller;
-use App\Models\TugasSurat;
 use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,12 +31,11 @@ class ManajemenSuratController extends Controller
 
         // ===== SURAT MAGANG =====
         // Query surat magang yang sudah ACC Kaprodi (Status = 'Dikerjakan-admin')
-        $suratMagang = \App\Models\SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi',
-            'tugasSurat.jenisSurat',
+        $suratMagang = SuratMagang::with([
+            'pemberiTugas.mahasiswa.prodi',
             'koordinator'
         ])
-            ->whereHas('tugasSurat.pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
+            ->whereHas('pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
                 $q->where('Id_Prodi', $prodiId); // Filter by prodi admin
             })
             ->where('Acc_Koordinator', true) // Sudah disetujui Kaprodi
@@ -52,34 +50,29 @@ class ManajemenSuratController extends Controller
 
         $suratMagangSemua = $suratMagang->filter(function ($surat) {
             $status = strtolower(trim($surat->Status ?? ''));
-            return $status !== 'selesai' && $status !== 'ditolak';
+            return !in_array($status, ['success', 'ditolak']);
         });
 
         // ===== SURAT KETERANGAN AKTIF =====
         // Query surat aktif yang perlu diproses admin
-        $suratAktif = TugasSurat::with([
-            'pemberiTugas.mahasiswa.prodi',
-            'jenisSurat',
-            'suratKetAktif'
+        $suratAktif = SuratKetAktif::with([
+            'pemberiTugas.mahasiswa.prodi'
         ])
             ->whereHas('pemberiTugas.mahasiswa', function ($q) use ($prodiId) {
                 $q->where('Id_Prodi', $prodiId); // Filter by prodi admin
             })
-            ->whereHas('jenisSurat', function ($q) {
-                $q->where('Nama_Surat', 'LIKE', '%Keterangan Aktif%');
-            })
-            ->orderBy('Tanggal_Diberikan_Tugas_Surat', 'desc')
+            ->orderBy('id_no', 'desc')
             ->get();
 
         // Pisahkan pending vs semua
-        $suratAktifPending = $suratAktif->filter(function ($tugas) {
-            $status = strtolower(trim($tugas->Status ?? ''));
-            return $status === 'diterima admin' || $status === 'baru';
+        $suratAktifPending = $suratAktif->filter(function ($surat) {
+            $status = strtolower(trim($surat->Status ?? ''));
+            return in_array($status, ['diterima admin', 'baru', 'diajukan-ke-koordinator']);
         });
 
-        $suratAktifSemua = $suratAktif->filter(function ($tugas) {
-            $status = strtolower(trim($tugas->Status ?? ''));
-            return $status !== 'selesai' && $status !== 'ditolak';
+        $suratAktifSemua = $suratAktif->filter(function ($surat) {
+            $status = strtolower(trim($surat->Status ?? ''));
+            return !in_array($status, ['success', 'ditolak']);
         });
 
         return view('admin_prodi.manajemen_surat', [
@@ -96,12 +89,11 @@ class ManajemenSuratController extends Controller
     public function previewMagang($idNo)
     {
         $surat = SuratMagang::with([
-            'tugasSurat.pemberiTugas.mahasiswa.prodi',
-            'tugasSurat.jenisSurat',
+            'pemberiTugas.mahasiswa.prodi',
             'koordinator'
         ])->where('id_no', $idNo)->firstOrFail();
 
-        $mahasiswa = $surat->tugasSurat->pemberiTugas->mahasiswa ?? null;
+        $mahasiswa = $surat->pemberiTugas->mahasiswa ?? null;
         $dataMahasiswa = is_array($surat->Data_Mahasiswa) ? $surat->Data_Mahasiswa : json_decode($surat->Data_Mahasiswa, true);
         $dosenPembimbing = is_array($surat->Data_Dosen_pembiming) ? $surat->Data_Dosen_pembiming : json_decode($surat->Data_Dosen_pembiming, true);
 
@@ -115,21 +107,27 @@ class ManajemenSuratController extends Controller
     {
         // Validasi user adalah admin
         $user = Auth::user();
-        if (!$user || $user->Id_Role != 1) {
+        if (!$user || ($user->Id_Role != 1 && $user->Id_Role != 7)) { // Role 1 Admin Prodi, Role 7 Admin Fakultas
             abort(403, 'Unauthorized action.');
         }
 
         // Validasi input
         $validated = $request->validate([
-            'status' => 'required|in:Belum,Proses,Selesai'
+            'status' => 'required|string',
         ]);
 
-        // Update status (delegasi ke model)
-        $tugas = TugasSurat::updateStatusById($id, $validated['status']);
-
-        if (!$tugas) {
-            return redirect()->back()->with('error', 'Tugas tidak ditemukan.');
+        // Cari record
+        $surat = SuratMagang::find($id);
+        if (!$surat) {
+            $surat = SuratKetAktif::find($id);
         }
+
+        if (!$surat) {
+            return redirect()->back()->with('error', 'Surat tidak ditemukan.');
+        }
+
+        $surat->Status = $validated['status'];
+        $surat->save();
 
         return redirect()->back()->with('success', 'Status berhasil diperbarui.');
     }
@@ -139,8 +137,12 @@ class ManajemenSuratController extends Controller
      */
     public function archive()
     {
-        // Ambil arsip tugas yang sudah selesai (delegasi ke model)
-        $arsipTugas = TugasSurat::getArsipSelesai();
+        // Ambil arsip dari kedua tabel yang statusnya Success
+        $arsipMagang = SuratMagang::where('Status', 'Success')->get();
+        $arsipAktif = SuratKetAktif::where('Status', 'Success')->get();
+
+        // Gabungkan untuk tampilan (jika diperlukan satu list)
+        $arsipTugas = $arsipMagang->concat($arsipAktif)->sortByDesc('Tanggal_Diselesaikan');
 
         return view('admin_prodi.arsip_surat', [
             'arsipTugas' => $arsipTugas
@@ -148,32 +150,29 @@ class ManajemenSuratController extends Controller
     }
 
     /**
-     * Preview dokumen pendukung (PDF) untuk surat magang
-     * Menampilkan file dalam iframe/embed
+     * Preview dokumen pendukung (PDF) untuk surat
      */
     public function previewDokumen($id)
     {
-        $tugasSurat = TugasSurat::with(['suratMagang'])->findOrFail($id);
-
+        // Cek Magang
+        $surat = SuratMagang::find($id);
         $dokumenPath = null;
 
-        // 1. Cek di tabel Surat_Magang (Prioritas Utama)
-        if ($tugasSurat->suratMagang && $tugasSurat->suratMagang->Dokumen_Proposal) {
-            $dokumenPath = $tugasSurat->suratMagang->Dokumen_Proposal;
+        if ($surat && $surat->Dokumen_Proposal) {
+            $dokumenPath = $surat->Dokumen_Proposal;
+        } else {
+            // Cek Aktif
+            $surat = SuratKetAktif::find($id);
+            if ($surat && $surat->KRS) {
+                $dokumenPath = $surat->KRS;
+            }
         }
 
-        // 2. Jika tidak ada, cek di data_spesifik (Fallback / Surat Aktif)
-        if (!$dokumenPath) {
-            $dataSpesifik = $tugasSurat->data_spesifik;
-            $dokumenPath = $dataSpesifik['dokumen_pendukung'] ?? null;
-        }
-
-        if (!$dokumenPath || !\Storage::disk('public')->exists($dokumenPath)) {
+        if (!$dokumenPath || !Storage::disk('public')->exists($dokumenPath)) {
             abort(404, 'Dokumen tidak ditemukan');
         }
 
-        // Return file untuk preview (dengan header inline)
-        return \Storage::disk('public')->response($dokumenPath, null, [
+        return Storage::disk('public')->response($dokumenPath, null, [
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="' . basename($dokumenPath) . '"'
         ]);
@@ -189,47 +188,39 @@ class ManajemenSuratController extends Controller
             'nomor_surat' => 'required|string|max:100',
         ]);
 
-        $tugasSurat = TugasSurat::with(['suratMagang', 'suratKetAktif'])->findOrFail($id);
+        // Cari jenis surat 
+        $surat = SuratMagang::find($id);
 
-        // Simpan nomor surat (parent status pakai label aplikasi: 'menunggu-ttd')
-        $tugasSurat->Nomor_Surat = $validated['nomor_surat'];
-        $tugasSurat->Status = 'menunggu-ttd';
-        $tugasSurat->save();
-
-        // Jika surat magang: sinkronkan status child ke enum valid ('Diajukan-ke-dekan')
-        if ($tugasSurat->suratMagang) {
-            try {
-                // Update child hanya dengan nilai enum yang valid (hindari warning truncation)
-                $tugasSurat->suratMagang->Status = 'Diajukan-ke-dekan';
-                $tugasSurat->suratMagang->save();
-            } catch (\Throwable $e) {
-                // Lewati jika terjadi masalah; jangan blokir alur utama
-            }
-
-            // Kirim notifikasi ke Mahasiswa: nomor surat telah diberikan
-            try {
-                $mahasiswaUserId = $tugasSurat->Id_Pemberi_Tugas_Surat; // Pemberi tugas adalah mahasiswa
-                if ($mahasiswaUserId) {
-                    \App\Models\Notifikasi::create([
-                        'Tipe_Notifikasi' => 'Accepted',
-                        'Pesan' => 'Nomor surat KP/Magang telah ditetapkan: ' . $validated['nomor_surat'] . '. Surat Anda akan diproses untuk tanda tangan Dekan.',
-                        'Dest_user' => $mahasiswaUserId,
-                        'Source_User' => Auth::id(),
-                        'Is_Read' => false,
-                        'created_at' => now(),
-                    ]);
-                }
-            } catch (\Throwable $e) {
-                // Biarkan lanjut tanpa mengganggu alur utama
-            }
+        if (!$surat) {
+            $surat = SuratKetAktif::find($id);
         }
-        // Kirim notifikasi ke Dekan
-        $dekan = \App\Models\User::whereHas('role', function ($q) {
-            $q->whereRaw("LOWER(TRIM(Name_Role)) = 'dekan'");
-        })->first();
+
+        if (!$surat) {
+            abort(404, 'Surat tidak ditemukan');
+        }
+
+        // Simpan nomor surat
+        $surat->Nomor_Surat = $validated['nomor_surat'];
+        $surat->Status = 'Diajukan-ke-dekan';
+        $surat->save();
+
+        // Kirim notifikasi ke Mahasiswa
+        if ($surat->Id_Pemberi_Tugas) {
+            Notifikasi::create([
+                'Tipe_Notifikasi' => 'Accepted',
+                'Pesan' => 'Nomor surat telah ditetapkan: ' . $validated['nomor_surat'] . '. Surat Anda sedang diproses untuk tanda tangan Dekan.',
+                'Dest_user' => $surat->Id_Pemberi_Tugas,
+                'Source_User' => Auth::id(),
+                'Is_Read' => false,
+                'created_at' => now(),
+            ]);
+        }
+
+        // Cari Dekan untuk notifikasi
+        $dekan = User::where('Id_Role', 2)->first();
 
         if ($dekan) {
-            \App\Models\Notifikasi::create([
+            Notifikasi::create([
                 'Tipe_Notifikasi' => 'Accepted',
                 'Pesan' => 'Surat baru menunggu tanda tangan: ' . $validated['nomor_surat'],
                 'Dest_user' => $dekan->Id_User,
@@ -238,36 +229,14 @@ class ManajemenSuratController extends Controller
                 'created_at' => now(),
             ]);
 
-            // Update penerima tugas ke Dekan
-            $tugasSurat->Id_Penerima_Tugas_Surat = $dekan->Id_User;
-            $tugasSurat->save();
-        }
-
-        // Buat arsip awal (entry) untuk tracking setelah nomor dibuat
-        try {
-            \App\Models\FileArsip::create([
-                'Id_Tugas_Surat' => $tugasSurat->Id_Tugas_Surat,
-                'Id_Pemberi_Tugas_Surat' => $tugasSurat->Id_Pemberi_Tugas_Surat,
-                'Id_Penerima_Tugas_Surat' => $tugasSurat->Id_Penerima_Tugas_Surat,
-                'Keterangan' => 'Nomor surat ditetapkan: ' . $validated['nomor_surat'] . '. Surat diteruskan untuk tanda tangan Dekan.'
-            ]);
-        } catch (\Throwable $e) {
-            // Lewati jika tabel/model belum tersedia; tidak blokir alur utama
+            // Update penerima tugas ke Dekan 
+            if (isset($surat->Id_Penerima_Tugas)) {
+                $surat->Id_Penerima_Tugas = $dekan->Id_User;
+                $surat->save();
+            }
         }
 
         return redirect()->route('admin_prodi.surat.manage')
             ->with('success', 'Nomor surat berhasil ditambahkan, mahasiswa diberi notifikasi, dan surat diteruskan ke Dekan!');
-    }
-
-    /**
-     * Helper: Ambil Id_Prodi dari user yang login
-     */
-    private function getProdiIdFromUser()
-    {
-        $user = Auth::user()->load(['dosen', 'mahasiswa', 'pegawai']);
-
-        return $user->dosen?->Id_Prodi
-            ?? $user->mahasiswa?->Id_Prodi
-            ?? $user->pegawai?->Id_Prodi;
     }
 }
