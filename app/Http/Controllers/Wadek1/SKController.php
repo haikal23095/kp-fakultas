@@ -18,6 +18,7 @@ use App\Models\Pejabat;
 use App\Models\User;
 use App\Models\Notifikasi;
 use Illuminate\Support\Facades\DB;
+use App\Services\WahaService;
 
 class SKController extends Controller
 {
@@ -312,16 +313,27 @@ class SKController extends Controller
                     ]);
 
                     if ($kaprodiUser) {
+                        $notifPesan = 'Pengajuan SK Dosen Wali ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditolak oleh Wadek 1. Alasan: ' . $request->alasan;
                         $notif = \App\Models\Notifikasi::create([
                             'Source_User' => $wadekUser->Id_User,
                             'Dest_user' => $kaprodiUser->Id_User,
                             'Tipe_Notifikasi' => 'Rejected',
-                            'Pesan' => 'Pengajuan SK Dosen Wali ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditolak oleh Wadek 1. Alasan: ' . $request->alasan,
+                            'Pesan' => $notifPesan,
                             'Data_Tambahan' => json_encode(['url' => route('kaprodi.sk.dosen-wali.index')]),
                             'Is_Read' => false
                         ]);
 
                         \Log::info('Wadek1 Reject SK - Notifikasi to Kaprodi Created:', ['id' => $notif->Id_Notifikasi]);
+
+                        // Kirim WhatsApp (WAHA)
+                        if ($kaprodiUser->No_WA) {
+                            try {
+                                $waha = new WahaService();
+                                $waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                            } catch (\Exception $e) {
+                                \Log::error('Wadek1 Reject SK - WA Error: ' . $e->getMessage());
+                            }
+                        }
                     }
                 }
             }
@@ -596,11 +608,12 @@ class SKController extends Controller
                         ]);
 
                         if ($kaprodiUser) {
+                            $notifPesan = 'Pengajuan SK Beban Mengajar ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditolak oleh Wadek 1. Alasan: ' . $request->alasan;
                             $notif = \App\Models\Notifikasi::create([
                                 'Source_User' => $wadekUser->Id_User,
                                 'Dest_user' => $kaprodiUser->Id_User,
                                 'Tipe_Notifikasi' => 'Rejected',
-                                'Pesan' => 'Pengajuan SK Beban Mengajar ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' telah ditolak oleh Wadek 1. Alasan: ' . $request->alasan,
+                                'Pesan' => $notifPesan,
                                 'Data_Tambahan' => json_encode(['url' => route('kaprodi.sk.beban-mengajar.index')]),
                                 'Is_Read' => false
                             ]);
@@ -613,6 +626,16 @@ class SKController extends Controller
                                 'Id_Dosen_Kaprodi' => $reqSK->Id_Dosen_Kaprodi,
                                 'Id_User' => $kaprodiUser->Id_User
                             ]);
+
+                            // Kirim WhatsApp (WAHA)
+                            if ($kaprodiUser->No_WA) {
+                                try {
+                                    $waha = new WahaService();
+                                    $waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                                } catch (\Exception $e) {
+                                    \Log::error('Wadek1 Reject SK Beban Mengajar - WA Error: ' . $e->getMessage());
+                                }
+                            }
                         }
                     }
                 }
@@ -864,11 +887,14 @@ class SKController extends Controller
 
                 foreach ($reqSKList as $reqSK) {
                     if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
+                        $kaprodiUser = $reqSK->kaprodi->user;
+                        $notifPesan = 'SK Pembimbing Skripsi Anda ditolak oleh Wadek 1. Alasan: ' . $request->alasan;
+
                         Notifikasi::create([
-                            'Dest_user' => $reqSK->kaprodi->user->Id_User,
+                            'Dest_user' => $kaprodiUser->Id_User,
                             'Source_User' => Auth::id(),
                             'Tipe_Notifikasi' => 'Rejected',
-                            'Pesan' => 'SK Pembimbing Skripsi Anda ditolak oleh Wadek 1. Alasan: ' . $request->alasan,
+                            'Pesan' => $notifPesan,
                             'Data_Tambahan' => json_encode([
                                 'req_id' => $reqSK->No,
                                 'acc_id' => $accSK->No,
@@ -876,6 +902,16 @@ class SKController extends Controller
                             ]),
                             'Is_Read' => false
                         ]);
+
+                        // Kirim WhatsApp (WAHA)
+                        if ($kaprodiUser->No_WA) {
+                            try {
+                                $waha = new WahaService();
+                                $waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                            } catch (\Exception $e) {
+                                \Log::error('Wadek1 Reject SK Pembimbing Skripsi - WA Error: ' . $e->getMessage());
+                            }
+                        }
                     }
                 }
 
@@ -1142,11 +1178,14 @@ class SKController extends Controller
 
                 foreach ($reqSKList as $reqSK) {
                     if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
+                        $kaprodiUser = $reqSK->kaprodi->user;
+                        $notifPesan = 'SK Penguji Skripsi Anda ditolak oleh Wadek 1. Alasan: ' . $request->alasan;
+
                         Notifikasi::create([
-                            'Dest_user' => $reqSK->kaprodi->user->Id_User,
+                            'Dest_user' => $kaprodiUser->Id_User,
                             'Source_User' => Auth::id(),
                             'Tipe_Notifikasi' => 'Rejected',
-                            'Pesan' => 'SK Penguji Skripsi Anda ditolak oleh Wadek 1. Alasan: ' . $request->alasan,
+                            'Pesan' => $notifPesan,
                             'Data_Tambahan' => json_encode([
                                 'req_id' => $reqSK->No,
                                 'acc_id' => $accSK->No,
@@ -1154,6 +1193,16 @@ class SKController extends Controller
                             ]),
                             'Is_Read' => false
                         ]);
+
+                        // Kirim WhatsApp (WAHA)
+                        if ($kaprodiUser->No_WA) {
+                            try {
+                                $waha = new WahaService();
+                                $waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                            } catch (\Exception $e) {
+                                \Log::error('Wadek1 Reject SK Penguji Skripsi - WA Error: ' . $e->getMessage());
+                            }
+                        }
                     }
                 }
 

@@ -75,9 +75,14 @@
                                     </span>
                                 </td>
                                 <td class="text-center">
-                                    <button class="btn btn-sm btn-outline-success" onclick="showSKPreview({{ $sk->No }})">
-                                        <i class="fas fa-file-pdf me-1"></i>Lihat SK
-                                    </button>
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary" onclick="showSKPreview({{ $sk->No }})" title="Lihat Detail">
+                                            <i class="fas fa-eye me-1"></i> Detail
+                                        </button>
+                                        <a href="{{ route('dosen.sk.dosen-wali.download', $sk->No) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="Download PDF">
+                                            <i class="fas fa-download"></i>
+                                        </a>
+                                    </div>
                                 </td>
                             </tr>
                         @endforeach

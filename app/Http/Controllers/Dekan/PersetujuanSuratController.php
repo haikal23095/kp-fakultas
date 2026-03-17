@@ -399,11 +399,17 @@ class PersetujuanSuratController extends Controller
             // Get URL untuk ditampilkan di preview
             $qrUrl = asset('storage/' . $qrPath);
 
+            // Ambil data Dekan
+            $dekan = \App\Models\Dosen::where('Id_Pejabat', 1)->first();
+            if (!$dekan) {
+                throw new \Exception('Data Dekan tidak ditemukan');
+            }
+
             // Update status dan simpan QR code path
             $sk->Status = 'Disetujui Dekan';
             $sk->QR_Code = $qrPath; // Simpan path relatif ke database
             $sk->Tanggal_Persetujuan_Dekan = now();
-            $sk->Id_Dekan = Auth::user()->Id_User;
+            $sk->Id_Dekan = $dekan->Id_Dosen;
             $sk->save();
 
             return response()->json([

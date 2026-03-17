@@ -146,7 +146,7 @@ class SKDosenWaliController extends Controller
             $sk->Status = 'Selesai';
             $sk->QR_Code = $qrPath;
             $sk->{'Tanggal-Persetujuan-Dekan'} = now();
-            $sk->Id_Dekan = Auth::user()->Id_User;
+            $sk->Id_Dekan = $dekanId;
             $sk->save();
 
             Log::info('SK updated successfully', [
@@ -496,11 +496,14 @@ class SKDosenWaliController extends Controller
                 // Kirim notifikasi ke Kaprodi
                 $firstReq = $sk->reqSKDosenWali->first();
                 if ($firstReq && $firstReq->kaprodi && $firstReq->kaprodi->user) {
+                    $kaprodiUser = $firstReq->kaprodi->user;
+                    $notifPesan = "SK Dosen Wali No. {$sk->Nomor_Surat} ditolak oleh Dekan. Alasan: {$validated['alasan']}";
+
                     \App\Models\Notifikasi::create([
-                        'Dest_user' => $firstReq->kaprodi->user->Id_User,
+                        'Dest_user' => $kaprodiUser->Id_User,
                         'Source_User' => auth()->id(),
                         'Tipe_Notifikasi' => 'Rejected',
-                        'Pesan' => "SK Dosen Wali No. {$sk->Nomor_Surat} ditolak oleh Dekan. Alasan: {$validated['alasan']}",
+                        'Pesan' => $notifPesan,
                         'Is_Read' => false,
                         'Data_Tambahan' => [
                             'judul' => 'SK Dosen Wali Ditolak oleh Dekan',
@@ -512,8 +515,17 @@ class SKDosenWaliController extends Controller
                     ]);
 
                     Log::info('Dekan Reject - Notification sent to Kaprodi', [
-                        'kaprodi_id' => $firstReq->kaprodi->user->Id_User
+                        'kaprodi_id' => $kaprodiUser->Id_User
                     ]);
+
+                    // Kirim WhatsApp (WAHA)
+                    if ($kaprodiUser->No_WA) {
+                        try {
+                            $this->waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                        } catch (\Exception $e) {
+                            Log::error('Dekan Reject - WA Error: ' . $e->getMessage());
+                        }
+                    }
                 }
             }
 

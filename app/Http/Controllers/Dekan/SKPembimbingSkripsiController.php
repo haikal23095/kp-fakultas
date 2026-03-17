@@ -429,11 +429,14 @@ class SKPembimbingSkripsiController extends Controller
                 $notificationsSent = 0;
                 foreach ($reqSKList as $reqSK) {
                     if ($reqSK->kaprodi && $reqSK->kaprodi->user) {
+                        $kaprodiUser = $reqSK->kaprodi->user;
+                        $notifPesan = 'SK Pembimbing Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' ditolak oleh Dekan. Alasan: ' . $request->alasan;
+
                         Notifikasi::create([
-                            'Dest_user' => $reqSK->kaprodi->user->Id_User,
+                            'Dest_user' => $kaprodiUser->Id_User,
                             'Source_User' => Auth::id(),
                             'Tipe_Notifikasi' => 'Rejected',
-                            'Pesan' => 'SK Pembimbing Skripsi ' . $sk->Semester . ' ' . $sk->Tahun_Akademik . ' ditolak oleh Dekan. Alasan: ' . $request->alasan,
+                            'Pesan' => $notifPesan,
                             'Data_Tambahan' => json_encode([
                                 'req_id' => $reqSK->No,
                                 'acc_id' => $sk->No,
@@ -443,10 +446,20 @@ class SKPembimbingSkripsiController extends Controller
                             ]),
                             'Is_Read' => false
                         ]);
+
+                        // Kirim WhatsApp (WAHA)
+                        if ($kaprodiUser->No_WA) {
+                            try {
+                                $this->waha->sendMessage($kaprodiUser->No_WA, $notifPesan);
+                            } catch (\Exception $e) {
+                                Log::error('Dekan Reject - WA Error: ' . $e->getMessage());
+                            }
+                        }
+
                         $notificationsSent++;
 
                         Log::info('Notification sent to Kaprodi on rejection', [
-                            'kaprodi_id' => $reqSK->kaprodi->user->Id_User,
+                            'kaprodi_id' => $kaprodiUser->Id_User,
                             'req_id' => $reqSK->No
                         ]);
                     }

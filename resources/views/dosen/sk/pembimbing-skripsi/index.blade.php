@@ -75,13 +75,13 @@
                                 <td class="text-center">
                                     <div class="btn-group">
                                         <button type="button" 
-                                                class="btn btn-sm btn-outline-warning" 
+                                                class="btn btn-sm btn-outline-primary" 
                                                 onclick="lihatDetail({{ $sk->No }})"
                                                 title="Lihat Detail Preview">
                                             <i class="fas fa-eye me-1"></i> Detail
                                         </button>
                                         <a href="{{ route('dosen.sk.pembimbing-skripsi.download', $sk->No) }}" 
-                                           class="btn btn-sm btn-outline-warning" 
+                                           class="btn btn-sm btn-outline-primary" 
                                            target="_blank" 
                                            title="Download PDF">
                                             <i class="fas fa-download"></i>

@@ -7,7 +7,7 @@
     <style>
         @page {
             size: A4;
-            margin: 2cm 2.5cm;
+            margin: 2cm 1.5cm;
         }
 
         body {
@@ -28,7 +28,7 @@
         }
 
         .header img {
-            width: 80px;
+            width: 70px;
             position: absolute;
             left: 0;
             top: -5px;
@@ -40,7 +40,7 @@
         }
 
         .header-main {
-            font-size: 14pt;
+            font-size: 13pt;
         }
 
         .header-sub {
@@ -141,7 +141,7 @@
     <!-- Header -->
     <div class="header">
         <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
-        <div class="header-text" style="font-size: 12pt;">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</div>
+        <div class="header-text" style="font-size: 11pt;">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</div>
         <div class="header-text header-main">UNIVERSITAS TRUNODJOYO</div>
         <div class="header-text">FAKULTAS TEKNIK</div>
         <div class="header-address">

@@ -7,7 +7,7 @@
     <style>
         @page {
             size: A4;
-            margin: 1.5cm 2cm;
+            margin: 1.5cm 1.5cm;
         }
 
         body {
@@ -28,7 +28,7 @@
         }
 
         .header img {
-            width: 80px;
+            width: 70px;
             position: absolute;
             left: 0;
             top: 0;
@@ -42,7 +42,7 @@
         }
 
         .header-main {
-            font-size: 14pt;
+            font-size: 13pt;
         }
 
         .header-address {
@@ -136,7 +136,7 @@
     <div class="header">
         <img src="{{ asset('images/logo_unijoyo.png') }}" alt="Logo UTM">
         <div class="header-text" style="font-size: 11pt;">KEMENTERIAN PENDIDIKAN, KEBUDAYAAN, RISET, DAN TEKNOLOGI</div>
-        <div class="header-text header-main" style="font-size: 14pt;">UNIVERSITAS TRUNODJOYO MADURA</div>
+        <div class="header-text header-main" style="font-size: 13pt;">UNIVERSITAS TRUNODJOYO MADURA</div>
         <div class="header-text" style="font-size: 12pt;">FAKULTAS TEKNIK</div>
         <div class="header-address">
             Jl. Raya Telang, PO. Box. 2 Kamal, Bangkalan – Madura<br>

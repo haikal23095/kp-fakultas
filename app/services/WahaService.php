@@ -27,6 +27,14 @@ class WahaService
         $chatId = $this->formatPhoneNumber($phoneNumber);
 
         try {
+            // Check session status first to avoid hanging if session is not working
+            if (!$this->isSessionWorking()) {
+                Log::warning('WAHA: Skipping message send because session is not WORKING', [
+                    'session' => $this->session
+                ]);
+                return false;
+            }
+
             $url = "{$this->baseUrl}/api/sendText";
 
             Log::info('WAHA: Attempting to send message', [
@@ -37,7 +45,7 @@ class WahaService
 
             $response = Http::withHeaders([
                 'X-Api-Key' => $this->apiKey,
-            ])->timeout(30)->post($url, [
+            ])->timeout(60)->post($url, [
                         'session' => $this->session,
                         'chatId' => $chatId,
                         'text' => $message,
@@ -62,6 +70,32 @@ class WahaService
                 'message' => $e->getMessage(),
                 'chatId' => $chatId
             ]);
+            return false;
+        }
+    }
+
+    /**
+     * Cek apakah sesi WAHA aktif dan siap kirim pesan
+     */
+    public function isSessionWorking()
+    {
+        try {
+            $url = "{$this->baseUrl}/api/sessions";
+            $response = Http::withHeaders([
+                'X-Api-Key' => $this->apiKey,
+            ])->timeout(5)->get($url);
+
+            if ($response->successful()) {
+                $sessions = $response->json();
+                foreach ($sessions as $session) {
+                    if ($session['name'] === $this->session) {
+                        return $session['status'] === 'WORKING';
+                    }
+                }
+            }
+            return false;
+        } catch (\Exception $e) {
+            Log::error("WAHA Session Check Error: " . $e->getMessage());
             return false;
         }
     }
